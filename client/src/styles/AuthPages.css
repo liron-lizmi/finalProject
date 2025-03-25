@@ -1,0 +1,89 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #fdf8f3; /* Light beige */
+  padding: 20px;
+}
+
+.auth-box {
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  direction: rtl;
+}
+
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333; /* Dark gray */
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  border-color: #b99b6d; /* Beige-brown */
+  outline: none;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  background-color: black; 
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+}
+
+.error-message {
+  background: #fff3f3;
+  color: #ff4444;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.auth-link span {
+  color: #b99b6d; /* Beige-brown */
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.form-group input,
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+  box-sizing: border-box; /* מוודא שה-padding וה-border לא ישפיעו על הרוחב */
+}

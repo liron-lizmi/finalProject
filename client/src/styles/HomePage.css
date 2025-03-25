@@ -1,0 +1,144 @@
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.homepage-container {
+  text-align: center;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: #fdf8f3; /* Light beige */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  height: 90px;
+}
+
+nav {
+  display: flex;
+  gap: 15px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  background-color: transparent;
+  border: 2px solid #b99b6d; 
+  color: #b99b6d;
+  font-weight: bold;
+}
+
+.btn:hover {
+  transform: scale(1.08);
+}
+
+.hero-section {
+  background: url('../../public/event-garden.png') center/cover no-repeat;
+  position: relative;
+  padding: 80px 20px;
+  color: #333;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(245, 233, 218, 0.8); /* Faded beige overlay */
+}
+
+.text-gradient {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #333; 
+  position: relative;
+  z-index: 1;
+}
+
+.subheader {
+  font-size: 1.5rem;
+  color: #555; 
+  position: relative;
+  z-index: 1;
+}
+
+.cta {
+  background-color: #b99b6d;
+  color: #fff;
+  font-weight: bold;
+  padding: 14px 28px;
+  border-radius: 8px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Features Section */
+.features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 30px;
+  padding: 50px 20px;
+  background-color: #fdf8f3; /* Light beige */
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.feature-card {
+  background: #fdf8f3; /* Very light beige */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+  max-width: 320px;
+}
+
+.feature-card h3 {
+  color: #b99b6d;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.feature-icon {
+  font-size: 40px;
+  color: #b99b6d;
+  margin-bottom: 15px;
+}
+
+/* Footer */
+.footer {
+  background-color: #7d8474; 
+  color: #fff;
+  padding: 25px;
+  margin-top: 50px;
+}
+
+.footer-logo {
+  height: 100px;
+  margin-bottom: 10px;
+}
