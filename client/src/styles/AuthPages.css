@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #fdf8f3; /* Light beige */
+  background-color: #fdf8f3;
   padding: 20px;
 }
 
@@ -20,7 +20,7 @@
 .auth-box h2 {
   text-align: center;
   margin-bottom: 30px;
-  color: #333; /* Dark gray */
+  color: #333;
 }
 
 .form-group {
@@ -37,7 +37,7 @@
 }
 
 .form-group input:focus {
-  border-color: #b99b6d; /* Beige-brown */
+  border-color: #b99b6d;
   outline: none;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .auth-link span {
-  color: #b99b6d; /* Beige-brown */
+  color: #b99b6d;
   cursor: pointer;
   text-decoration: underline;
 }
@@ -85,5 +85,78 @@
   border-radius: 5px;
   font-size: 16px;
   transition: border-color 0.3s;
-  box-sizing: border-box; /* מוודא שה-padding וה-border לא ישפיעו על הרוחב */
+  box-sizing: border-box; 
+}
+
+/* validation styles */
+.form-group input.error {
+  border-color: #e74c3c;
+  background-color: #fff8f8;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.input-error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 5px;
+  margin-right: 2px;
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.password-strength {
+  margin-top: 20px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.password-strength h4 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.password-strength ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-strength li {
+  margin-bottom: 5px;
+  font-size: 13px;
+  position: relative;
+  padding-right: 20px;
+}
+
+.password-strength li.valid {
+  color: #2ecc71;
+}
+
+.password-strength li.invalid {
+  color: #e74c3c;
+}
+
+.password-strength li.valid::before {
+  content: "✓";
+  position: absolute;
+  right: 0;
+}
+
+.password-strength li.invalid::before {
+  content: "✗";
+  position: absolute;
+  right: 0;
 }

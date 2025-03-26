@@ -1,14 +1,12 @@
-require('dotenv').config({ path: '../.env' });;
+//require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-
-// Middleware
-app.use(cors());
-app.use(express.json());
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -18,6 +16,10 @@ if (!MONGO_URI) {
     console.error('MONGO_URI is not defined in environment variables. Check your .env file.');
     process.exit(1);
 }
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 mongoose.connect(MONGO_URI)
 .then(() => {
@@ -33,7 +35,6 @@ mongoose.connect(MONGO_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 
-// Test route
 app.get('/', (req, res) => {
     res.send('API is running...');
 });

@@ -9,25 +9,68 @@ const LoginPage = () => {
     email: '',
     password: ''
   });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'אימייל הוא שדה חובה';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = 'נא להזין כתובת אימייל תקינה';
+      }
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'סיסמה היא שדה חובה';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setServerError('');
+    
     try {
       const response = await axios.post('/api/auth/login', formData);
+      
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'שם משתמש או סיסמה שגויים');
+      console.error('Login error:', err);
+      setServerError(err.response?.data?.message || 'שם משתמש או סיסמה שגויים');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -35,8 +78,8 @@ const LoginPage = () => {
     <div className="auth-container">
       <div className="auth-box">
         <h2>התחברות</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
+        {serverError && <div className="error-message">{serverError}</div>}
+        <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <input
               type="email"
@@ -44,8 +87,9 @@ const LoginPage = () => {
               placeholder="אימייל"
               value={formData.email}
               onChange={handleChange}
-              required
+              className={errors.email ? 'error' : ''}
             />
+            {errors.email && <div className="input-error">{errors.email}</div>}
           </div>
           <div className="form-group">
             <input
@@ -54,13 +98,23 @@ const LoginPage = () => {
               placeholder="סיסמה"
               value={formData.password}
               onChange={handleChange}
-              required
+              className={errors.password ? 'error' : ''}
             />
+            {errors.password && <div className="input-error">{errors.password}</div>}
           </div>
-          <button type="submit" className="auth-button">התחבר</button>
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'מתחבר...' : 'התחבר'}
+          </button>
         </form>
         <p className="auth-link">
           אין לך חשבון? <span onClick={() => navigate('/register')}>הירשם</span>
+        </p>
+        <p className="auth-link">
+          <span onClick={() => navigate('/forgot-password')}>שכחת סיסמה?</span>
         </p>
       </div>
     </div>

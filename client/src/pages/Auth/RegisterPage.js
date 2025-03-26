@@ -12,22 +12,90 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'שם פרטי הוא שדה חובה';
+    } else if (formData.firstName.length < 2) {
+      newErrors.firstName = 'שם פרטי חייב להכיל לפחות 2 תווים';
+    } else if (formData.firstName.length > 50) {
+      newErrors.firstName = 'שם פרטי לא יכול להכיל יותר מ-50 תווים';
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'שם משפחה הוא שדה חובה';
+    } else if (formData.lastName.length < 2) {
+      newErrors.lastName = 'שם משפחה חייב להכיל לפחות 2 תווים';
+    } else if (formData.lastName.length > 50) {
+      newErrors.lastName = 'שם משפחה לא יכול להכיל יותר מ-50 תווים';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'אימייל הוא שדה חובה';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = 'נא להזין כתובת אימייל תקינה';
+      }
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'סיסמה היא שדה חובה';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'הסיסמה צריכה להכיל לפחות 6 תווים';
+    } else if (formData.password.length > 30) {
+      newErrors.password = 'הסיסמה לא יכולה להכיל יותר מ-30 תווים';
+    } else {
+      const hasUpperCase = /[A-Z]/.test(formData.password);
+      const hasLowerCase = /[a-z]/.test(formData.password);
+      const hasNumbers = /\d/.test(formData.password);
+      
+      if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+        newErrors.password = 'הסיסמה חייבת להכיל אות גדולה, אות קטנה, ומספר';
+      }
+    }
+    
+    // בדיקת אימות סיסמה
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'הסיסמאות אינן תואמות';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setError('הסיסמאות אינן תואמות');
+    
+    // בדיקת תקינות הטופס
+    if (!validateForm()) {
       return;
     }
-
+    
+    setIsSubmitting(true);
+    setServerError('');
+    
     try {
       const response = await axios.post('/api/auth/register', {
         firstName: formData.firstName,
@@ -38,10 +106,14 @@ const RegisterPage = () => {
 
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'אירעה שגיאה בתהליך ההרשמה');
+      console.error('Registration error:', err);
+      setServerError(err.response?.data?.message || 'אירעה שגיאה בתהליך ההרשמה');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,8 +121,8 @@ const RegisterPage = () => {
     <div className="auth-container">
       <div className="auth-box">
         <h2>הרשמה</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
+        {serverError && <div className="error-message">{serverError}</div>}
+        <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <input
               type="text"
@@ -58,8 +130,9 @@ const RegisterPage = () => {
               placeholder="שם פרטי"
               value={formData.firstName}
               onChange={handleChange}
-              required
+              className={errors.firstName ? 'error' : ''}
             />
+            {errors.firstName && <div className="input-error">{errors.firstName}</div>}
           </div>
           <div className="form-group">
             <input
@@ -68,8 +141,9 @@ const RegisterPage = () => {
               placeholder="שם משפחה"
               value={formData.lastName}
               onChange={handleChange}
-              required
+              className={errors.lastName ? 'error' : ''}
             />
+            {errors.lastName && <div className="input-error">{errors.lastName}</div>}
           </div>
           <div className="form-group">
             <input
@@ -78,8 +152,9 @@ const RegisterPage = () => {
               placeholder="אימייל"
               value={formData.email}
               onChange={handleChange}
-              required
+              className={errors.email ? 'error' : ''}
             />
+            {errors.email && <div className="input-error">{errors.email}</div>}
           </div>
           <div className="form-group">
             <input
@@ -88,8 +163,9 @@ const RegisterPage = () => {
               placeholder="סיסמה"
               value={formData.password}
               onChange={handleChange}
-              required
+              className={errors.password ? 'error' : ''}
             />
+            {errors.password && <div className="input-error">{errors.password}</div>}
           </div>
           <div className="form-group">
             <input
@@ -98,14 +174,41 @@ const RegisterPage = () => {
               placeholder="אימות סיסמה"
               value={formData.confirmPassword}
               onChange={handleChange}
-              required
+              className={errors.confirmPassword ? 'error' : ''}
             />
+            {errors.confirmPassword && <div className="input-error">{errors.confirmPassword}</div>}
           </div>
-          <button type="submit" className="auth-button">הירשם</button>
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'מבצע רישום...' : 'הירשם'}
+          </button>
         </form>
         <p className="auth-link">
           כבר יש לך חשבון? <span onClick={() => navigate('/login')}>התחבר</span>
         </p>
+        
+        {formData.password && (
+          <div className="password-strength">
+            <h4>דרישות הסיסמה:</h4>
+            <ul>
+              <li className={/[A-Z]/.test(formData.password) ? 'valid' : 'invalid'}>
+                אות גדולה אחת לפחות
+              </li>
+              <li className={/[a-z]/.test(formData.password) ? 'valid' : 'invalid'}>
+                אות קטנה אחת לפחות
+              </li>
+              <li className={/\d/.test(formData.password) ? 'valid' : 'invalid'}>
+                מספר אחד לפחות
+              </li>
+              <li className={formData.password.length >= 6 ? 'valid' : 'invalid'}>
+                אורך מינימלי של 6 תווים
+              </li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
