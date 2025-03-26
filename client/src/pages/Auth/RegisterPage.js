@@ -16,6 +16,8 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,11 +74,10 @@ const RegisterPage = () => {
       const hasNumbers = /\d/.test(formData.password);
       
       if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
-        newErrors.password = 'הסיסמה חייבת להכיל אות גדולה, אות קטנה, ומספר';
+        newErrors.password = 'הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר';
       }
     }
     
-    // בדיקת אימות סיסמה
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'הסיסמאות אינן תואמות';
     }
@@ -88,7 +89,6 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // בדיקת תקינות הטופס
     if (!validateForm()) {
       return;
     }
@@ -117,6 +117,20 @@ const RegisterPage = () => {
     }
   };
 
+  const renderEyeIcon = (isVisible) => {
+    return isVisible ? (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      </svg>
+    );
+  };
+  
   return (
     <div className="auth-container">
       <div className="auth-box">
@@ -156,26 +170,38 @@ const RegisterPage = () => {
             />
             {errors.email && <div className="input-error">{errors.email}</div>}
           </div>
-          <div className="form-group">
+          <div className="form-group password-field">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               placeholder="סיסמה"
               value={formData.password}
               onChange={handleChange}
               className={errors.password ? 'error' : ''}
             />
+            <span 
+              className="password-toggle" 
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {renderEyeIcon(showPassword)}
+            </span>
             {errors.password && <div className="input-error">{errors.password}</div>}
           </div>
-          <div className="form-group">
+          <div className="form-group password-field">
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               placeholder="אימות סיסמה"
               value={formData.confirmPassword}
               onChange={handleChange}
               className={errors.confirmPassword ? 'error' : ''}
             />
+            <span 
+              className="password-toggle" 
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {renderEyeIcon(showConfirmPassword)}
+            </span>
             {errors.confirmPassword && <div className="input-error">{errors.confirmPassword}</div>}
           </div>
           <button 

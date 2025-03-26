@@ -34,9 +34,9 @@ const validateRegistration = (req, res, next) => {
   } else if (password.length > 30) {
     errors.push('הסיסמה לא יכולה להכיל יותר מ-30 תווים');
   } else {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]/;
     if (!passwordRegex.test(password)) {
-      errors.push('הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר ');
+      errors.push('הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות');
     }
   }
 
