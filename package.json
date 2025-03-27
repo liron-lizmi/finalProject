@@ -7,7 +7,7 @@
     "start": "node server/server.js",
     "server": "nodemon server/server.js",
     "client": "cd client && npm start",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "concurrently \"npm run server\" \"wait-on http://localhost:5000 && npm run client\"",
     "install-server": "cd server && npm install",
     "install-client": "cd client && npm install",
     "install-all": "npm install && npm run install-server && npm run install-client",
@@ -27,6 +27,7 @@
     "emailjs-com": "^3.2.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "wait-on": "^8.0.3"
   }
 }
