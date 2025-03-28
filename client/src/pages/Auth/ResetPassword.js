@@ -34,7 +34,6 @@ const ResetPassword = () => {
       return false;
     }
     
-    // בדיקת חוזק הסיסמה
     const hasUpperCase = /[A-Z]/.test(formData.password);
     const hasLowerCase = /[a-z]/.test(formData.password);
     const hasNumbers = /\d/.test(formData.password);
@@ -75,7 +74,13 @@ const ResetPassword = () => {
       }, 3000);
       
     } catch (err) {
-      setError(err.response?.data?.message || 'אירעה שגיאה. אנא נסה שוב מאוחר יותר');
+      const errorMessage = err.response?.data?.message || 'אירעה שגיאה. אנא נסה שוב מאוחר יותר';
+      
+      if (err.response?.data?.code === 'SAME_PASSWORD') {
+        setError('השתמשת בסיסמה זו בעבר, אנא בחר סיסמה חדשה');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }

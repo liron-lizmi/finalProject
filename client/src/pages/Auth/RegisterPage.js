@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import emailjs from 'emailjs-com';
 import '../../styles/AuthPages.css';
 
 const RegisterPage = () => {
@@ -15,6 +16,7 @@ const RegisterPage = () => {
   
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -31,6 +33,30 @@ const RegisterPage = () => {
         ...errors,
         [name]: ''
       });
+    }
+  };
+
+  const sendRegistrationEmail = async (userData) => {
+    try {
+      const serviceId = "service_0b55fva";
+      const templateId = "template_0d6cm7g";
+      const userId = "GzTrzVDcGGlrFwgAi";
+
+      const templateParams = {
+        to_name: `${userData.firstName} ${userData.lastName}`,
+        to_email: userData.email,
+        user_name: `${userData.firstName} ${userData.lastName}`,
+        message: `ברוכים הבאים לאתר שלנו! חשבונך נוצר בהצלחה.`,
+        site_name: 'שם האתר שלך',
+        login_url: `${window.location.origin}/login`
+      };
+
+      const result = await emailjs.send(serviceId, templateId, templateParams, userId);
+      console.log('Email sent successfully:', result.text);
+      return true;
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return false;
     }
   };
 
@@ -95,6 +121,7 @@ const RegisterPage = () => {
     
     setIsSubmitting(true);
     setServerError('');
+    setSuccessMessage('');
     
     try {
       const response = await axios.post('/api/auth/register', {
@@ -107,7 +134,22 @@ const RegisterPage = () => {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/dashboard');
+        
+        const emailSent = await sendRegistrationEmail({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email
+        });
+        
+        const message = emailSent 
+          ? 'נרשמת בהצלחה!' 
+          : 'נרשמת בהצלחה! לא הצלחנו לשלוח אימייל אישור.';
+        
+        setSuccessMessage(message);
+        
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 3000);
       }
     } catch (err) {
       console.error('Registration error:', err);
@@ -136,6 +178,8 @@ const RegisterPage = () => {
       <div className="auth-box">
         <h2>הרשמה</h2>
         {serverError && <div className="error-message">{serverError}</div>}
+        {successMessage && <div className="success-message">{successMessage}</div>}
+        
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <input
