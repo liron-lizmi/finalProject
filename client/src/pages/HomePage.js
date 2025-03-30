@@ -22,7 +22,7 @@ const HomePage = () => {
         <div className="overlay"></div>
         <h1 className="text-gradient">PlanIt - תכנון וניהול אירועים</h1>
         <p className="subheader">הכלים המתקדמים ביותר לניהול האירוע המושלם שלך!</p>
-        <button className="btn cta">התחל עכשיו</button>
+        <button className="btn cta" onClick={() => navigate('/login')}>התחל עכשיו</button>
       </section>
 
       {/* Features Section */}

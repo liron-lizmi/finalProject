@@ -2,8 +2,8 @@ body {
   font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #fff;
+  color: #000;
 }
 
 .homepage-container {
@@ -16,7 +16,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  background-color: #fdf8f3;
+  background-color: white;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -36,20 +36,22 @@ nav {
   font-size: 16px;
   transition: background 0.3s ease, transform 0.2s ease;
   background-color: transparent;
-  border: 2px solid #b99b6d; 
-  color: #b99b6d;
+  border: 2px solid #000;
+  color: #000;
   font-weight: bold;
 }
 
 .btn:hover {
   transform: scale(1.08);
+  background-color: #000;
+  color: #fff;
 }
 
 .hero-section {
   background: url('../../public/event-garden.png') center/cover no-repeat;
   position: relative;
   padding: 80px 20px;
-  color: #333;
+  color: #000;
 }
 
 .overlay {
@@ -58,26 +60,26 @@ nav {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(245, 233, 218, 0.8);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .text-gradient {
   font-size: 3rem;
   font-weight: bold;
-  color: #333; 
+  color: #000;
   position: relative;
   z-index: 1;
 }
 
 .subheader {
   font-size: 1.5rem;
-  color: #555; 
+  color: #555;
   position: relative;
   z-index: 1;
 }
 
 .cta {
-  background-color: #b99b6d;
+  background-color: #000;
   color: #fff;
   font-weight: bold;
   padding: 14px 28px;
@@ -94,7 +96,7 @@ nav {
   flex-wrap: wrap;
   gap: 30px;
   padding: 50px 20px;
-  background-color: #fdf8f3;
+  background-color: #fff;
 }
 
 .features-grid {
@@ -106,17 +108,18 @@ nav {
 }
 
 .feature-card {
-  background: #fdf8f3;
+  background: #fff;
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: center;
   max-width: 320px;
+  border: 2px solid #000;
 }
 
 .feature-card h3 {
-  color: #b99b6d;
+  color: #000;
 }
 
 .feature-card:hover {
@@ -126,13 +129,13 @@ nav {
 
 .feature-icon {
   font-size: 40px;
-  color: #b99b6d;
+  color: #000;
   margin-bottom: 15px;
 }
 
 /* Footer */
 .footer {
-  background-color: #7d8474; 
+  background-color: #000;
   color: #fff;
   padding: 25px;
   margin-top: 50px;

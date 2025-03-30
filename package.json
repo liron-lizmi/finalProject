@@ -23,6 +23,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "appwrite": "^17.0.1",
     "concurrently": "^8.2.2",
     "emailjs-com": "^3.2.0"
   },

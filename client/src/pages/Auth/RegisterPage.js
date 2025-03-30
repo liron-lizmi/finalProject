@@ -132,8 +132,17 @@ const RegisterPage = () => {
       });
 
       if (response.data.token) {
+        // שמירת המידע בלוקל סטורג' בצורה טובה יותר שתהיה זמינה גם לדף Dashboard
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // יצירת אובייקט משתמש מלא יותר לשמירה
+        const userObject = {
+          ...response.data.user,
+          name: `${formData.firstName} ${formData.lastName}`,
+          isLoggedIn: true // סימון שהמשתמש מחובר לצורך בדיקה בדף Dashboard
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userObject));
         
         const emailSent = await sendRegistrationEmail({
           firstName: formData.firstName,
@@ -147,9 +156,7 @@ const RegisterPage = () => {
         
         setSuccessMessage(message);
         
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 3000);
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Registration error:', err);
