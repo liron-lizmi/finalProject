@@ -120,7 +120,34 @@ const Dashboard = () => {
 
     checkUserSession();
     
-    // בעתיד - כאן לטעון את האירועים מהשרת
+    // Check if there's any event data in localStorage
+    // This is temporary until we implement backend storage
+    const checkForEvents = () => {
+      const eventData = localStorage.getItem('eventData');
+      if (eventData) {
+        try {
+          const parsedEvent = JSON.parse(eventData);
+          // Add a unique ID and format date/time for display
+          const formattedEvent = {
+            id: 'event-' + Date.now(),
+            title: parsedEvent.eventName,
+            date: new Date(parsedEvent.eventDate).toLocaleDateString('he-IL'),
+            location: parsedEvent.venue.name,
+            address: parsedEvent.venue.address,
+            guestCount: parsedEvent.guestCount,
+            type: parsedEvent.eventType,
+            // Keep the full data for later use
+            fullData: parsedEvent
+          };
+          setEvents([formattedEvent]);
+        } catch (error) {
+          console.error('Error parsing event data:', error);
+        }
+      }
+    };
+    
+    checkForEvents();
+    
   }, [navigate]);
 
   // פונקציה להתנתקות
@@ -148,6 +175,13 @@ const Dashboard = () => {
     // תחילה נפנה למסך בחירת מקום האירוע
     navigate('/venues');
   };
+  
+  // Function to handle clicking on an event
+  const handleEventClick = (eventId) => {
+    // In the future, this would navigate to event details
+    console.log('Clicked on event:', eventId);
+    // navigate(`/event/${eventId}`);
+  };
 
   // אם עדיין טוען, נציג מסך טעינה
   if (loading) {
@@ -164,7 +198,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>ברוך הבא, {user?.name || 'אורטל ניסים'}</h1>
+        <h1>ברוך הבא, {user?.name}</h1>
         <button className="logout-button" onClick={handleLogout}>התנתק</button>
       </div>
       
@@ -174,10 +208,24 @@ const Dashboard = () => {
           <div className="events-container">
             {events.length > 0 ? (
               events.map(event => (
-                <div key={event.id} className="event-card">
+                <div 
+                  key={event.id} 
+                  className="event-card" 
+                  onClick={() => handleEventClick(event.id)}
+                >
                   <h3>{event.title}</h3>
-                  <p>{event.date}</p>
-                  <p>{event.location}</p>
+                  <p className="event-date">{event.date}</p>
+                  <p className="event-location">{event.location}</p>
+                  <div className="event-details">
+                    <span className="event-guests">{event.guestCount} אורחים</span>
+                    <span className="event-type">{
+                      event.type === 'wedding' ? 'חתונה' :
+                      event.type === 'bar_mitzvah' ? 'בר/בת מצווה' :
+                      event.type === 'birthday' ? 'יום הולדת' :
+                      event.type === 'corporate' ? 'אירוע חברה' :
+                      event.type === 'conference' ? 'כנס' : 'אירוע'
+                    }</span>
+                  </div>
                 </div>
               ))
             ) : (

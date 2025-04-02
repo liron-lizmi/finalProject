@@ -6,7 +6,6 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-const venueRoutes = require('./routes/venueRoutes');
 
 
 
@@ -36,12 +35,6 @@ mongoose.connect(MONGO_URI)
 
 // Routes
 app.use('/api/auth', authRoutes);
-
-app.use('/api/venues', venueRoutes);
-app.use('/api/geocode', (req, res) => {
-  // שימוש בפונקציית ה-geocode מ-venueController
-  require('./controllers/venueController').geocodeAddress(req, res);
-});
 
 app.get('/', (req, res) => {
     res.send('API is running...');
