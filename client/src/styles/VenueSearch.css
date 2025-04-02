@@ -1,0 +1,506 @@
+/* styles/VenueSearch.css */
+
+/* כללי */
+.venue-search-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  direction: rtl;
+  font-family: 'Rubik', sans-serif;
+  color: #333;
+}
+
+/* כותרת הדף */
+.venue-search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #4f46e5;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.venue-search-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.back-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* פאנל חיפוש */
+.search-panel {
+  padding: 1rem 2rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.filter-toggle,
+.search-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.filter-toggle {
+  background-color: #f3f4f6;
+  color: #333;
+}
+
+.filter-toggle:hover {
+  background-color: #e5e7eb;
+}
+
+.search-button {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.search-button:hover {
+  background-color: #4338ca;
+}
+
+/* פילטרים */
+.search-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #444;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.location-input-container {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #777;
+}
+
+.location-input-container input {
+  width: 100%;
+  padding-left: 2rem;
+}
+
+/* תוכן ראשי */
+.venue-search-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* רשימת תוצאות */
+.results-container {
+  width: 40%;
+  overflow-y: auto;
+  padding: 1rem;
+  background-color: #f9fafb;
+}
+
+.venues-list h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.venues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.venue-card {
+  position: relative;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.venue-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.venue-card.selected {
+  border: 2px solid #4f46e5;
+}
+
+.venue-number {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4f46e5;
+  color: white;
+  font-weight: bold;
+  border-radius: 50%;
+  font-size: 0.8rem;
+}
+
+.venue-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.venue-address {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.venue-rating {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.view-details-button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.view-details-button:hover {
+  background-color: #e5e7eb;
+}
+
+/* מפה */
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+/* מודאל פרטי מקום */
+.venue-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.venue-details-content {
+  position: relative;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.venue-details-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.venue-details-header h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.venue-details-header p {
+  margin: 0;
+  color: #666;
+}
+
+.venue-details-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .venue-details-body {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.venue-photos {
+  grid-column: 1 / -1;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.photo-item {
+  position: relative;
+  padding-bottom: 75%; /* 4:3 aspect ratio */
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.photo-item img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-photos {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+}
+
+.venue-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-item {
+  line-height: 1.5;
+}
+
+.hours-list {
+  margin: 0.5rem 0 0 0;
+  padding-right: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.venue-reviews h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.review-item {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.reviewer-name {
+  font-weight: 600;
+}
+
+.review-rating {
+  color: #666;
+}
+
+.review-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.venue-details-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.select-venue-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.select-venue-button:hover {
+  background-color: #4338ca;
+}
+
+/* מצבי טעינה ושגיאה */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(79, 70, 229, 0.2);
+  border-radius: 50%;
+  border-top-color: #4f46e5;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  padding: 1rem;
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.no-results {
+  padding: 2rem;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 8px;
+}
+
+.no-results h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.no-results ol {
+  display: inline-block;
+  text-align: right;
+  margin-bottom: 2rem;
+}
+
+.no-results li {
+  margin-bottom: 0.5rem;
+}
+
+/* מצבי טעינה ושגיאה כלליים */
+.venue-search-loading,
+.venue-search-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.venue-search-error h2 {
+  margin-top: 0;
+  color: #b91c1c;
+}
+
+/* תאימות למובייל */
+@media (max-width: 768px) {
+  .venue-search-content {
+    flex-direction: column;
+  }
+  
+  .results-container,
+  .map-container {
+    width: 100%;
+    height: 50vh;
+  }
+  
+  .search-filters {
+    grid-template-columns: 1fr;
+  }
+}

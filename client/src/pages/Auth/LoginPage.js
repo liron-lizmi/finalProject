@@ -1,3 +1,4 @@
+// LoginPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -79,6 +80,10 @@ const LoginPage = () => {
   // פונקציה לטיפול בהתחברות עם גוגל
   const handleGoogleLogin = async () => {
     try {
+      // מציין שיש לנסות לרשום את המשתמש אם הוא לא קיים
+      localStorage.setItem('googleAuth', 'true');
+      
+      // נבצע התחברות דרך גוגל
       await createOAuth2Session(
         'google', 
         window.location.origin + '/dashboard', 

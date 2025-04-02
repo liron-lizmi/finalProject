@@ -1,3 +1,4 @@
+// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const { 
@@ -5,7 +6,10 @@ const {
   login, 
   getCurrentUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  checkUserExists,
+  registerOAuth,
+  loginOAuth
 } = require('../controllers/authController');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 const auth = require('../middleware/auth');
@@ -24,5 +28,12 @@ router.post('/forgot-password', forgotPassword);
 
 // Reset password route
 router.post('/reset-password/:token', resetPassword);
+
+// Check if user exists route
+router.post('/check-user-exists', checkUserExists);
+
+router.post('/register-oauth', registerOAuth);
+
+router.post('/login-oauth', loginOAuth);
 
 module.exports = router;

@@ -1,40 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { account } from '../../appwrite';
+import axios from 'axios';
 import '../../styles/AuthPages.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // בדיקה אם יש מידע משתמש בלוקל סטורג'
     const checkUserSession = async () => {
-      const localUser = localStorage.getItem('user');
+      const isGoogleAuth = localStorage.getItem('googleAuth') === 'true';
       
-      if (localUser) {
-        const parsedUser = JSON.parse(localUser);
-        setUser(parsedUser);
-        return; 
-      }
-      
-      // אם אין מידע בלוקל סטורג', בדוק מול Appwrite
       try {
-        const userData = await account.get();
+        // נסה לקבל מידע מהלוקל סטורג'
+        const localUser = localStorage.getItem('user');
         
-        const userInfo = {
-          id: userData.$id,
-          email: userData.email,
-          name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
-        };
+        if (localUser && !isGoogleAuth) {
+          const parsedUser = JSON.parse(localUser);
+          setUser(parsedUser);
+          setLoading(false);
+          return; 
+        }
         
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        setUser(userInfo);
+        // אם זה לא מהלוקל סטורג' או שזה התחברות גוגל, בדוק מול Appwrite
+        try {
+          const userData = await account.get();
+          
+          // אם זה התחברות עם גוגל, בדוק אם המשתמש קיים במערכת
+          if (isGoogleAuth) {
+            localStorage.removeItem('googleAuth'); // נקה את הדגל
+            
+            try {
+              // בדוק אם המשתמש קיים במערכת
+              const response = await axios.post('/api/auth/check-user-exists', { 
+                email: userData.email 
+              });
+              
+              if (!response.data.exists) {
+                // המשתמש לא רשום - נרשום אותו אוטומטית
+                console.log('Creating new user from Google login');
+                
+                const names = userData.name ? userData.name.split(' ') : ['', ''];
+                const firstName = names[0] || '';
+                const lastName = names.slice(1).join(' ') || '';
+                
+                // יצירת משתמש חדש עם נתוני גוגל
+                const registerResponse = await axios.post('/api/auth/register-oauth', {
+                  email: userData.email,
+                  firstName: firstName,
+                  lastName: lastName,
+                  provider: 'google',
+                  providerId: userData.$id
+                });
+                
+                if (registerResponse.data.token) {
+                  localStorage.setItem('token', registerResponse.data.token);
+                  localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
+                  
+                  setUser(registerResponse.data.user);
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch (error) {
+              console.error('Error creating/checking user:', error);
+              // אם נכשל ברישום, נמשיך לבדוק אם נוכל להתחבר
+              // נגיע לקוד למטה, ששם ננסה לקבל נתונים למשתמש
+            }
+          }
+          
+          // המשתמש קיים או שהצלחנו ליצור אותו - נבדוק אם יש לנו את הנתונים שלו מהשרת
+          try {
+            // נסה להתחבר עם המייל שקיבלנו מגוגל
+            const loginResponse = await axios.post('/api/auth/login-oauth', {
+              email: userData.email,
+              provider: 'google',
+              providerId: userData.$id
+            });
+            
+            if (loginResponse.data.token) {
+              localStorage.setItem('token', loginResponse.data.token);
+              localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+              
+              setUser(loginResponse.data.user);
+              setLoading(false);
+              return;
+            }
+          } catch (loginError) {
+            console.error('OAuth login error:', loginError);
+          }
+          
+          // אם הגענו לכאן, נשתמש במידע מ-Appwrite
+          const userInfo = {
+            id: userData.$id,
+            email: userData.email,
+            name: userData.name || userData.email
+          };
+          
+          localStorage.setItem('user', JSON.stringify(userInfo));
+          setUser(userInfo);
+          setLoading(false);
+        } catch (error) {
+          console.error('Session check error:', error);
+          // אם יש שגיאה, המשתמש לא מחובר - החזר לדף ההתחברות
+          navigate('/login');
+          return;
+        }
       } catch (error) {
-        console.error('Session check error:', error);
-        // אם יש שגיאה, המשתמש לא מחובר - החזר לדף ההתחברות
+        console.error('Dashboard error:', error);
         navigate('/login');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -65,10 +145,21 @@ const Dashboard = () => {
   
   // פונקציה ליצירת אירוע חדש
   const handleCreateEvent = () => {
-    navigate('/create-event');
+    // תחילה נפנה למסך בחירת מקום האירוע
+    navigate('/venues');
   };
 
-  // קוד מייל
+  // אם עדיין טוען, נציג מסך טעינה
+  if (loading) {
+    return (
+      <div className="auth-container">
+        <div className="auth-box" style={{ textAlign: 'center' }}>
+          <h2>טוען...</h2>
+          <div className="loading-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
@@ -81,14 +172,23 @@ const Dashboard = () => {
         <div className="dashboard-section">
           <h2 className="events-title">האירועים שלי</h2>
           <div className="events-container">
-            {/* קוד מייל: renderEvents() */}
-            <p>עדיין אין לך אירועים. צור את האירוע הראשון שלך!</p>
+            {events.length > 0 ? (
+              events.map(event => (
+                <div key={event.id} className="event-card">
+                  <h3>{event.title}</h3>
+                  <p>{event.date}</p>
+                  <p>{event.location}</p>
+                </div>
+              ))
+            ) : (
+              <p>עדיין אין לך אירועים. צור את האירוע הראשון שלך!</p>
+            )}
           </div>
         </div>
         
         <div className="dashboard-section">
           <h2 className="create-title">צור אירוע חדש</h2>
-          <p>צור אירוע חדש כדי לארגן ולנהל את כל פרטי האירוע שלך במקום אחד - הזמנות, אישורי הגעה, סידורי ישיבה ועוד.</p>
+          <p>צור אירוע חדש כדי לארגן ולנהל את כל פרטי האירוע שלך במקום אחד - בחירת מקום, הזמנות, אישורי הגעה, סידורי ישיבה ועוד.</p>
           <button 
             className="create-event-button"
             onClick={handleCreateEvent}
