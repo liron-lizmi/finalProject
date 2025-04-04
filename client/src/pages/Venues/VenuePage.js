@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/VenuePage.css';
 
+// A flag to ensure Google Maps API is loaded only once across the entire application
+window.googleMapsLoaded = window.googleMapsLoaded || false;
+
 const VenuePage = () => {
   const navigate = useNavigate();
   const [venues, setVenues] = useState([]);
@@ -29,42 +32,131 @@ const VenuePage = () => {
   
   const mapRef = useRef(null);
   const placesService = useRef(null);
-
-  // גישה פשוטה יותר - ייבוא חיצוני של Google Maps API
-  useEffect(() => {
-    // קבע מפתח API
-    const API_KEY = 'AIzaSyD2mR8Ifpxu6tjdDRDly5_hnNpAW4fC7bQ';
-    
-    // טען את ה-API אם הוא לא כבר טעון
-    if (!window.google) {
-      const googleMapsScript = document.createElement('script');
-      googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
-      googleMapsScript.async = true;
-      googleMapsScript.defer = true;
-      googleMapsScript.onload = initializeMap;
-      document.head.appendChild(googleMapsScript);
-      
-      return () => {
-        // ניקוי בעת ניתוק הקומפוננטה
-        document.head.removeChild(googleMapsScript);
-      };
-    } else {
-      // אם כבר טעון, אתחל מיד
-      initializeMap();
-    }
-  }, []);
+  const geocoder = useRef(null);
+  const scriptRef = useRef(null);
+  const isMapInitialized = useRef(false);
+  const isEffectRun = useRef(false);
+  const mapInstance = useRef(null); // שמירת המפה כרפרנס במקום ב-state
   
-  // פונקציית אתחול המפה
-  const initializeMap = () => {
+  // Loading the API and setting up the map
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    // Prevent multiple executions of this effect
+    if (isEffectRun.current) return;
+    isEffectRun.current = true;
+    
+    // Define a function to initialize the map
+    const setupGoogleMaps = () => {
+      console.log("Setting up Google Maps...");
+      initMap();
+    };
+    
+    // Function to load Google Maps API
+    const loadGoogleMapsAPI = () => {
+      // Check if Google Maps is already loaded and available
+      if (window.google && window.google.maps) {
+        console.log("Google Maps already loaded, skipping load");
+        setupGoogleMaps();
+        return;
+      }
+
+      // Check if there's already a script tag for Google Maps
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+      if (existingScript) {
+        console.log("Google Maps script tag already exists");
+        
+        // If the API is loading but not ready yet, set up a callback
+        if (!window.google || !window.google.maps) {
+          console.log("Google Maps script exists but API not yet initialized, waiting...");
+          window.initGoogleMapsCallback = setupGoogleMaps;
+          return;
+        } else {
+          setupGoogleMaps();
+          return;
+        }
+      }
+
+      // Mark the API as being loaded
+      window.googleMapsLoaded = true;
+      
+      const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+      if (!API_KEY) {
+        console.error("Missing Google Maps API key");
+        setLoading(false);
+        return;
+      }
+      
+      console.log("Loading Google Maps API");
+      
+      // Load the API
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async`;
+      script.async = true;
+      script.defer = true;
+      
+      // Define a global callback for when Google Maps loads
+      window.googleMapsCallback = () => {
+        console.log("Google Maps API loaded via callback");
+        setupGoogleMaps();
+        
+        // Also call any waiting callbacks
+        if (window.initGoogleMapsCallback) {
+          window.initGoogleMapsCallback();
+          window.initGoogleMapsCallback = null;
+        }
+      };
+      
+      scriptRef.current = script;
+      document.head.appendChild(script);
+    };
+    
+    // Load the API
+    loadGoogleMapsAPI();
+    
+    // Cleanup
+    return () => {
+      // Only remove script if it's one we added and Google isn't initialized
+      if (scriptRef.current && scriptRef.current.parentNode && !window.google) {
+        scriptRef.current.parentNode.removeChild(scriptRef.current);
+        window.googleMapsLoaded = false;
+      }
+      
+      // Clear markers on unmount - תמיכה בשני סוגי הסמנים
+      if (markers.length > 0) {
+        markers.forEach(marker => {
+          if (marker) {
+            try {
+              if (typeof marker.setMap === 'function') {
+                marker.setMap(null);
+              } else if (marker.map) {
+                marker.map = null;
+              }
+            } catch (error) {
+              console.error("Error clearing marker on unmount:", error);
+            }
+          }
+        });
+      }
+    };
+  }, []); // Empty dependency array to run only once on component mount
+  
+  // Initialize the map and related services
+  const initMap = () => {
     if (!mapRef.current || !window.google) {
-      console.error("Map ref or Google Maps API not available");
+      console.error("Map ref or Google API not ready");
       return;
     }
     
+    // Prevent multiple initializations
+    if (isMapInitialized.current || mapInstance.current) {
+      console.log("Map already initialized");
+      return;
+    }
+    
+    isMapInitialized.current = true;
+    
     try {
-      console.log("Initializing map");
-      
-      // יצירת המפה
+      // Create the map
       const mapOptions = {
         center: { lat: 31.7683, lng: 35.2137 }, // Default to Jerusalem
         zoom: 11,
@@ -78,13 +170,30 @@ const VenuePage = () => {
       };
       
       const newMap = new window.google.maps.Map(mapRef.current, mapOptions);
+      
+      // שמירת המפה ברפרנס, לשימוש ישיר
+      mapInstance.current = newMap;
+      // קודם מגדירים את המפה בסטייט ואז יוצרים את השירותים
       setMap(newMap);
       
-      // יצירת שירות המקומות
-      const node = document.createElement('div');
-      placesService.current = new window.google.maps.places.PlacesService(newMap);
+      // אתחול הג'יאוקודר
+      if (window.google.maps.Geocoder) {
+        geocoder.current = new window.google.maps.Geocoder();
+      }
       
-      // בדיקת מיקום המשתמש
+      // אתחול שירות המקומות עם אלמנט בדף במקום עם המפה ישירות
+      const placesDiv = document.createElement('div');
+      document.body.appendChild(placesDiv);
+      
+      if (window.google.maps.places && window.google.maps.places.PlacesService) {
+        placesService.current = new window.google.maps.places.PlacesService(placesDiv);
+      } else {
+        console.error("Google Maps Places Service is not available");
+      }
+      
+      console.log("Map is fully loaded");
+      
+      // Try to get the user's location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -92,224 +201,345 @@ const VenuePage = () => {
               lat: position.coords.latitude,
               lng: position.coords.longitude
             };
+            
             console.log("Got user location:", userLocation);
             newMap.setCenter(userLocation);
             
-            // חיפוש מקומות באזור
-            searchVenues(userLocation);
+            // עכשיו נבצע חיפוש ישירות, בלי לעבור דרך performInitialSearch
+            try {
+              if (placesService.current) {
+                console.log("Directly performing search with location:", userLocation);
+                searchVenues(userLocation, filters.venueType, newMap); // העברת המפה כפרמטר 
+              } else {
+                console.error("Places service not available for search");
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error("Error in direct search:", error);
+              setLoading(false);
+            }
           },
           (error) => {
-            console.log("Geolocation error:", error);
-            searchVenues({ lat: 31.7683, lng: 35.2137 });
+            console.error("Geolocation error:", error);
+            // אם אין גישה למיקום, השתמש במיקום ברירת המחדל
+            try {
+              if (placesService.current) {
+                console.log("Directly performing search with default location:", mapOptions.center);
+                searchVenues(mapOptions.center, filters.venueType, newMap); // העברת המפה כפרמטר
+              } else {
+                console.error("Places service not available for search");
+                setLoading(false);
+              }
+            } catch (error) {
+              console.error("Error in direct search:", error);
+              setLoading(false);
+            }
           }
         );
       } else {
         console.log("Geolocation not supported");
-        searchVenues({ lat: 31.7683, lng: 35.2137 });
+        // אם הדפדפן לא תומך בגיאולוקציה, השתמש במיקום ברירת המחדל
+        try {
+          if (placesService.current) {
+            console.log("Directly performing search with default location:", mapOptions.center);
+            searchVenues(mapOptions.center, filters.venueType, newMap); // העברת המפה כפרמטר
+          } else {
+            console.error("Places service not available for search");
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error("Error in direct search:", error);
+          setLoading(false);
+        }
       }
     } catch (error) {
-      console.error("Error initializing map:", error);
+      console.error("Error in initMap:", error);
+      isMapInitialized.current = false; // Reset if there was an error
       setLoading(false);
     }
   };
+
+  // הסרנו את פונקציית performInitialSearch שלא נמצאת בשימוש
   
-  // חיפוש מקומות
-  const searchVenues = (location) => {
-    if (!placesService.current) {
-      console.error("Places service not available");
+  // Search for places near a specific location
+  const searchVenues = (location, venueType, mapParamDirect = null) => {
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      console.error("Google Maps or Places API not available");
       setLoading(false);
       return;
     }
     
-    setLoading(true);
-    console.log("Searching venues near location:", location);
-    
-    // בניית מחרוזת חיפוש
-    let searchQuery = 'אולם אירועים גן אירועים';
-    if (search) {
-      searchQuery += ' ' + search;
-    }
-    
-    // סינון לפי סוג מקום אם נבחר
-    if (filters.venueType !== 'all') {
-      switch (filters.venueType) {
-        case 'restaurant':
-          searchQuery += ' מסעדה';
-          break;
-        case 'event_venue':
-          searchQuery += ' אולם אירועים';
-          break;
-        case 'banquet_hall':
-          searchQuery += ' אולם כנסים';
-          break;
-        case 'hotel':
-          searchQuery += ' מלון';
-          break;
-        case 'park':
-          searchQuery += ' גן אירועים';
-          break;
-        case 'museum':
-          searchQuery += ' מוזיאון';
-          break;
-        default:
-          break;
+    // בדיקה נוספת לשירות המקומות
+    if (!placesService.current) {
+      console.log("Places service not initialized, creating it now");
+      try {
+        // נסיון לאתחל את שירות המקומות אם הוא לא קיים
+        const placesDiv = document.createElement('div');
+        document.body.appendChild(placesDiv);
+        placesService.current = new window.google.maps.places.PlacesService(placesDiv);
+      } catch (error) {
+        console.error("Failed to create places service:", error);
+        setLoading(false);
+        return;
       }
     }
     
-    // הגדרת בקשת החיפוש
+    setLoading(true);
+    
+    // Build search query based on venue type
+    let query = '';
+    
+    switch (venueType) {
+      case 'restaurant':
+        query = 'מסעדה';
+        break;
+      case 'event_venue':
+        query = 'אולם אירועים';
+        break;
+      case 'banquet_hall':
+        query = 'אולם כנסים';
+        break;
+      case 'hotel':
+        query = 'מלון';
+        break;
+      case 'park':
+        query = 'גן אירועים';
+        break;
+      case 'museum':
+        query = 'מוזיאון';
+        break;
+      default:
+        query = 'אולם אירועים';
+        break;
+    }
+    
+    // Add user search if available
+    if (search) {
+      query += ' ' + search;
+    }
+    
+    console.log("Searching for:", query, "near", location);
+    
+    // וידוא שהמיקום הוא אובייקט תקין
+    let locationObj = location;
+    if (typeof location.lat === 'function') {
+      // אם זה אובייקט LatLng, נחלץ את הערכים
+      locationObj = {
+        lat: location.lat(),
+        lng: location.lng()
+      };
+    }
+    
+    // Text search - שימוש בצורה שונה של החיפוש למקרה שיש בעיה עם הקודמת
     const request = {
-      query: searchQuery,
-      location: location,
-      radius: filters.distance * 1000 // המרת ק"מ למטרים
+      query: query,
+      location: locationObj,
+      radius: parseInt(filters.distance) * 1000 // Convert km to meters
     };
     
-    console.log("Text search request:", request);
-    
     try {
-      // ביצוע החיפוש
       placesService.current.textSearch(request, (results, status) => {
-        console.log("Text search status:", status);
-        
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-          console.log("Found venues:", results.length);
+          console.log("Found", results.length, "venues");
           
-          // סינון תוצאות לפי הסינונים שנבחרו
-          const filteredResults = filterResults(results);
+          // Filter results
+          const filteredResults = filterVenues(results);
+          
+          // Set results and add markers
           setVenues(filteredResults);
           
-          // הוספת סמנים למפה
-          addMarkers(filteredResults);
+          // השתמש במפה שהועברה ישירות, אם יש, אחרת נסה להשתמש ברפרנס או ב-state
+          const currentMap = mapParamDirect || mapInstance.current || map;
+          addMarkers(filteredResults, currentMap);
         } else {
-          console.error('Places search failed. Status:', status);
+          console.error("Search failed:", status);
           setVenues([]);
+          
+          // Clear existing markers
+          clearMarkers();
         }
         
         setLoading(false);
       });
     } catch (error) {
-      console.error('Error searching for venues:', error);
+      console.error("Search execution error:", error);
       setLoading(false);
-      setVenues([]);
     }
   };
   
-  // סינון תוצאות לפי בחירות המשתמש
-  const filterResults = (results) => {
-    return results.filter(place => {
-      // סינון לפי קיבולת (הערכה, כי מידע זה לא ניתן ישירות)
-      if (filters.minCapacity && place.user_ratings_total < filters.minCapacity * 0.5) {
+  // Filter results by user preferences
+  const filterVenues = (venues) => {
+    return venues.filter(venue => {
+      // Filter by capacity (based on ratings if no direct data)
+      if (filters.minCapacity && venue.user_ratings_total && 
+          parseInt(venue.user_ratings_total) < parseInt(filters.minCapacity) * 0.5) {
         return false;
       }
       
-      if (filters.maxCapacity && place.user_ratings_total > filters.maxCapacity * 2) {
+      if (filters.maxCapacity && venue.user_ratings_total && 
+          parseInt(venue.user_ratings_total) > parseInt(filters.maxCapacity) * 2) {
         return false;
       }
       
-      // סינון לפי רמת מחירים
-      if (filters.priceRange !== 'all' && place.price_level) {
-        if (filters.priceRange === 'budget' && place.price_level > 1) return false;
-        if (filters.priceRange === 'moderate' && (place.price_level < 2 || place.price_level > 3)) return false;
-        if (filters.priceRange === 'luxury' && place.price_level < 4) return false;
+      // Filter by price level
+      if (filters.priceRange !== 'all' && venue.price_level !== undefined) {
+        if (filters.priceRange === 'budget' && venue.price_level > 1) return false;
+        if (filters.priceRange === 'moderate' && (venue.price_level < 2 || venue.price_level > 3)) return false;
+        if (filters.priceRange === 'luxury' && venue.price_level < 4) return false;
       }
       
       return true;
     });
   };
   
-  // הוספת סמנים למפה
-  const addMarkers = (venues) => {
-    // נקה סמנים קיימים
-    markers.forEach(marker => marker.setMap(null));
-    const newMarkers = [];
+  // Add markers to the map
+  const addMarkers = (venues, mapParamDirect = null) => {
+    // Clear existing markers first
+    clearMarkers();
     
-    // צור סמנים חדשים
-    venues.forEach(venue => {
+    // השתמש במפה שהועברה כפרמטר, או ברפרנס, או בסטייט
+    const currentMap = mapParamDirect || mapInstance.current || map;
+    
+    // Make sure map is available
+    if (!currentMap || !window.google) {
+      console.error("Map not available for adding markers");
+      return;
+    }
+    
+    console.log("Adding markers using map:", currentMap ? "available" : "not available");
+    
+    // Create new markers
+    const newMarkers = venues.map(venue => {
+      if (!venue.geometry || !venue.geometry.location) return null;
+      
       try {
-        const marker = new window.google.maps.Marker({
-          position: venue.geometry.location,
-          map: map,
-          title: venue.name
-        });
+        // בדיקה אם AdvancedMarkerElement קיים, ואם לא שימוש בסמן רגיל
+        let marker;
         
-        marker.addListener('click', () => {
-          getVenueDetails(venue.place_id);
-        });
+        if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
+          console.log("Using AdvancedMarkerElement");
+          marker = new window.google.maps.marker.AdvancedMarkerElement({
+            position: venue.geometry.location,
+            map: currentMap,
+            title: venue.name
+          });
+          
+          // AdvancedMarkerElement משתמש ב-gm_click
+          marker.addListener('gm_click', () => {
+            getVenueDetails(venue.place_id);
+          });
+        } else {
+          console.log("Using regular Marker (deprecated)");
+          // שימוש בסמן רגיל כגיבוי
+          marker = new window.google.maps.Marker({
+            position: venue.geometry.location,
+            map: currentMap,
+            title: venue.name
+          });
+          
+          // הסמן הרגיל משתמש ב-click
+          marker.addListener('click', () => {
+            getVenueDetails(venue.place_id);
+          });
+        }
         
-        newMarkers.push(marker);
+        return marker;
       } catch (error) {
-        console.error("Error creating marker for venue:", venue.name, error);
+        console.error("Error creating marker:", error);
+        return null;
       }
-    });
+    }).filter(Boolean); // Filter out nulls
     
     setMarkers(newMarkers);
   };
   
-  // קבלת מידע מפורט על מקום
-  const getVenueDetails = (placeId) => {
-    if (!placesService.current || !placeId) {
-      console.error("Places service not available or place ID is empty");
-      return;
-    }
-    
-    console.log("Getting details for venue:", placeId);
-    
-    const request = {
-      placeId: placeId,
-      fields: ['name', 'formatted_address', 'formatted_phone_number', 'website', 'photos', 'rating', 'reviews', 'opening_hours', 'price_level', 'user_ratings_total']
-    };
-    
-    try {
-      placesService.current.getDetails(request, (place, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-          console.log("Venue details received");
-          setSelectedVenue(place);
-        } else {
-          console.error('Place details request failed. Status:', status);
+  // Clear existing markers
+  const clearMarkers = () => {
+    markers.forEach(marker => {
+      // נסיון לנקות סמנים - תומך גם בסמנים רגילים וגם בסמנים מתקדמים
+      if (marker) {
+        try {
+          if (typeof marker.setMap === 'function') {
+            marker.setMap(null);
+          } else if (marker.map) {
+            marker.map = null;
+          }
+        } catch (error) {
+          console.error("Error clearing marker:", error);
         }
-      });
-    } catch (error) {
-      console.error('Error getting venue details:', error);
-    }
+      }
+    });
+    setMarkers([]);
   };
   
-  // טיפול בשינוי קלט החיפוש
+  // Get details for a specific place
+  const getVenueDetails = (placeId) => {
+    if (!placesService.current || !placeId) return;
+    
+          // עדכון השדות לתמיכה באפשרות שה-API דורש שדות ספציפיים
+      const request = {
+        placeId: placeId,
+        fields: [
+          'name', 'formatted_address', 'formatted_phone_number', 
+          'website', 'photos', 'rating', 'reviews', 
+          'opening_hours', 'price_level', 'user_ratings_total',
+          'geometry', 'vicinity'
+        ]
+      };
+    
+    placesService.current.getDetails(request, (place, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+        console.log("Venue details loaded:", place.name);
+        setSelectedVenue(place);
+      } else {
+        console.error("Failed to get venue details:", status);
+      }
+    });
+  };
+  
+  // Handle search input change
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
   };
   
-  // טיפול בשליחת טופס החיפוש
+  // Handle search form submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     
-    if (!map) {
-      console.error("Map not initialized");
-      return;
+    if (!geocoder.current) {
+      console.error("Geocoder not initialized");
+      // נסיון לאתחל את הג'יאוקודר אם הוא לא קיים
+      if (window.google && window.google.maps && window.google.maps.Geocoder) {
+        geocoder.current = new window.google.maps.Geocoder();
+      } else {
+        console.error("Google Maps Geocoder API not available");
+        return;
+      }
     }
     
-    console.log("Submitting search for:", search);
-    
-    try {
-      // השתמש בשירות הגיאוקודינג למציאת המיקום
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ address: search }, (results, status) => {
-        if (status === 'OK' && results && results.length > 0) {
-          console.log("Geocoded location:", results[0]);
-          const location = results[0].geometry.location;
-          map.setCenter(location);
-          searchVenues(location);
-        } else {
-          console.log("Geocoding failed, using map center");
-          // אם הגיאוקודינג נכשל, חפש עם מרכז המפה הנוכחי
-          searchVenues(map.getCenter());
+    // אם מעבירים את ה-map כפרמטר
+    geocoder.current.geocode({ address: search }, (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        const location = results[0].geometry.location;
+        const currentMap = mapInstance.current || map;
+        if (currentMap) {
+          currentMap.setCenter(location);
         }
-      });
-    } catch (error) {
-      console.error("Error in search submission:", error);
-      searchVenues(map.getCenter());
-    }
+        searchVenues(location, filters.venueType, currentMap);
+      } else {
+        // If geocoding fails, use current map center if available
+        const currentMap = mapInstance.current || map;
+        if (currentMap && currentMap.getCenter) {
+          searchVenues(currentMap.getCenter(), filters.venueType, currentMap);
+        } else {
+          // אם אין מרכז מפה, השתמש במיקום ברירת מחדל
+          searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
+        }
+      }
+    });
   };
   
-  // טיפול בשינויי מסנן
+  // Handle filter changes
   const handleFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -329,22 +559,70 @@ const VenuePage = () => {
     }
   };
   
-  // יישום מסננים
+  // Apply filters
   const applyFilters = () => {
-    if (map) {
-      console.log("Applying filters:", filters);
-      searchVenues(map.getCenter());
+    // השתמש במפה מהרפרנס או מהסטייט
+    const currentMap = mapInstance.current || map;
+    
+    // שימוש במיקום ברירת מחדל אם המפה לא זמינה
+    if (currentMap && currentMap.getCenter) {
+      searchVenues(currentMap.getCenter(), filters.venueType, currentMap);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          searchVenues(userLocation, filters.venueType, currentMap);
+        },
+        () => {
+          // אם אין גישה למיקום, השתמש במיקום ברירת מחדל
+          searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
+        }
+      );
+    } else {
+      // אם הדפדפן לא תומך בגיאולוקציה, השתמש במיקום ברירת מחדל
+      searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
     }
   };
   
-  // בחירת מקום והמשך לשלב הבא
+  // Select a venue and proceed to next step
   const selectVenue = (venue) => {
-    // שמור את המקום הנבחר ב-localStorage
-    localStorage.setItem('selectedVenue', JSON.stringify(venue));
-    console.log("Selected venue:", venue);
+    try {
+      // Save selected venue in localStorage
+      const venueData = {
+        place_id: venue.place_id,
+        id: venue.place_id,
+        name: venue.name,
+        address: venue.formatted_address || venue.vicinity,
+        phone: venue.formatted_phone_number || '',
+        website: venue.website || '',
+        rating: venue.rating || 0,
+        price_level: venue.price_level || 0
+      };
+      
+      localStorage.setItem('selectedVenue', JSON.stringify(venueData));
+      
+      // Navigate to next page
+      navigate('/create-event', { state: { venue } });
+    } catch (error) {
+      console.error("Error selecting venue:", error);
+    }
+  };
+  
+  // Helper function to get photo URL
+  const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200) => {
+    try {
+      if (photo && typeof photo.getUrl === 'function') {
+        return photo.getUrl({ maxWidth, maxHeight });
+      }
+    } catch (error) {
+      console.error("Error getting photo URL:", error);
+    }
     
-    // נווט לשלב הבא ביצירת האירוע
-    navigate('/create-event', { state: { venue } });
+    // אם לא הצלחנו להשיג תמונה, נחזיר תמונה ריקה שתפעיל את onError
+    return '';
   };
   
   return (
@@ -519,14 +797,38 @@ const VenuePage = () => {
                     className={`venue-card ${selectedVenue && selectedVenue.place_id === venue.place_id ? 'selected' : ''}`}
                     onClick={() => getVenueDetails(venue.place_id)}
                   >
-                    {venue.photos && venue.photos[0] && (
-                      <div className="venue-image">
-                        <img 
-                          src={venue.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })} 
-                          alt={venue.name} 
-                        />
-                      </div>
-                    )}
+                    <div className="venue-image">
+                {venue.photos && venue.photos.length > 0 ? (
+                  <img 
+                    src={getPhotoUrl(venue.photos[0])}
+                    alt={venue.name}
+                    onError={(e) => {
+                      // נסיון למצוא תמונה אחרת זמינה במקום
+                      if (venue.photos && venue.photos.length > 1) {
+                        // נסיון לטעון את התמונה הבאה ברשימה
+                        const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
+                        const nextIndex = (currentIndex + 1) % venue.photos.length;
+                        
+                        if (nextIndex !== currentIndex) {
+                          e.target.dataset.photoIndex = nextIndex.toString();
+                          e.target.src = getPhotoUrl(venue.photos[nextIndex]);
+                          return;
+                        }
+                      }
+                      
+                      // אם אין תמונות אחרות זמינות, השתמש בתמונת ברירת מחדל
+                      e.target.onerror = null;
+                      e.target.src = `https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(venue.name || 'מקום אירוע')}`;
+                    }}
+                    data-photo-index="0"
+                  />
+                ) : (
+                  <img 
+                    src={`https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(venue.name || 'מקום אירוע')}`}
+                    alt={venue.name || 'מקום האירוע'}
+                  />
+                )}
+              </div>
                     
                     <div className="venue-info">
                       <h4>{venue.name}</h4>
@@ -566,28 +868,58 @@ const VenuePage = () => {
             </div>
             
             <div className="venue-details-content">
-              {selectedVenue.photos && selectedVenue.photos.length > 0 && (
-                <div className="venue-photos">
-                  <div className="main-photo">
+              <div className="venue-photos">
+                <div className="main-photo">
+                {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
+                  <img 
+                    src={getPhotoUrl(selectedVenue.photos[0], 600, 400)}
+                    alt={selectedVenue.name}
+                    onError={(e) => {
+                      // נסיון למצוא תמונה אחרת זמינה במקום
+                      if (selectedVenue.photos && selectedVenue.photos.length > 1) {
+                        // נסיון לטעון את התמונה הבאה ברשימה
+                        const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
+                        const nextIndex = (currentIndex + 1) % selectedVenue.photos.length;
+                        
+                        if (nextIndex !== currentIndex) {
+                          e.target.dataset.photoIndex = nextIndex.toString();
+                          e.target.src = getPhotoUrl(selectedVenue.photos[nextIndex], 600, 400);
+                          return;
+                        }
+                      }
+                      
+                      // אם אין תמונות אחרות זמינות, השתמש בתמונת ברירת מחדל
+                      e.target.onerror = null;
+                      e.target.src = `https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`;
+                    }}
+                    data-photo-index="0"
+                  />
+                ) : (
+                  <img 
+                    src={`https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`}
+                    alt={selectedVenue.name || 'מקום האירוע'}
+                  />
+                )}
+              </div>
+                
+                {selectedVenue.photos && selectedVenue.photos.length > 1 && (
+                  <div className="additional-photos">
+                {selectedVenue.photos.slice(1, 5).map((photo, index) => {
+                  // הראה רק תמונות זמינות
+                  return (
                     <img 
-                      src={selectedVenue.photos[0].getUrl({ maxWidth: 600, maxHeight: 400 })} 
-                      alt={selectedVenue.name} 
+                      key={index} 
+                      src={getPhotoUrl(photo, 150, 100)} 
+                      alt={`${selectedVenue.name} - ${index + 1}`}
+                      onError={(e) => {
+                        e.target.style.display = 'none'; // הסתר תמונות שלא נטענות
+                      }}
                     />
-                  </div>
-                  
-                  {selectedVenue.photos.length > 1 && (
-                    <div className="additional-photos">
-                      {selectedVenue.photos.slice(1, 5).map((photo, index) => (
-                        <img 
-                          key={index} 
-                          src={photo.getUrl({ maxWidth: 150, maxHeight: 100 })} 
-                          alt={`${selectedVenue.name} - ${index + 1}`} 
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                  );
+                })}
+              </div>
+                )}
+              </div>
               
               <div className="venue-info-detailed">
                 <p className="address">

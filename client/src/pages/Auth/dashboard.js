@@ -68,8 +68,6 @@ const Dashboard = () => {
               }
             } catch (error) {
               console.error('Error creating/checking user:', error);
-              // אם נכשל ברישום, נמשיך לבדוק אם נוכל להתחבר
-              // נגיע לקוד למטה, ששם ננסה לקבל נתונים למשתמש
             }
           }
           
@@ -120,33 +118,32 @@ const Dashboard = () => {
 
     checkUserSession();
     
-    // Check if there's any event data in localStorage
-    // This is temporary until we implement backend storage
-    const checkForEvents = () => {
-      const eventData = localStorage.getItem('eventData');
-      if (eventData) {
+    // טען את האירועים מהלוקל סטורג' עם מניעת כפילויות
+    const loadEvents = () => {
+      const eventsData = localStorage.getItem('events');
+      if (eventsData) {
         try {
-          const parsedEvent = JSON.parse(eventData);
-          // Add a unique ID and format date/time for display
-          const formattedEvent = {
-            id: 'event-' + Date.now(),
-            title: parsedEvent.eventName,
-            date: new Date(parsedEvent.eventDate).toLocaleDateString('he-IL'),
-            location: parsedEvent.venue.name,
-            address: parsedEvent.venue.address,
-            guestCount: parsedEvent.guestCount,
-            type: parsedEvent.eventType,
-            // Keep the full data for later use
-            fullData: parsedEvent
-          };
-          setEvents([formattedEvent]);
+          const parsedEvents = JSON.parse(eventsData);
+          
+          // מניעת כפילויות על ידי שימוש ב-Map עם מזהי אירועים כמפתחות
+          const uniqueEvents = Array.from(
+            new Map(parsedEvents.map(event => [event.id, event])).values()
+          );
+          
+          setEvents(uniqueEvents);
+          
+          // שמירת המערך ללא כפילויות חזרה ל-localStorage
+          if (uniqueEvents.length !== parsedEvents.length) {
+            localStorage.setItem('events', JSON.stringify(uniqueEvents));
+            console.log(`תוקן: הוסרו ${parsedEvents.length - uniqueEvents.length} אירועים כפולים`);
+          }
         } catch (error) {
-          console.error('Error parsing event data:', error);
+          console.error('שגיאה בניתוח נתוני האירועים:', error);
         }
       }
     };
     
-    checkForEvents();
+    loadEvents();
     
   }, [navigate]);
 
@@ -172,15 +169,45 @@ const Dashboard = () => {
   
   // פונקציה ליצירת אירוע חדש
   const handleCreateEvent = () => {
-    // תחילה נפנה למסך בחירת מקום האירוע
-    navigate('/venues');
+    // ניווט ישיר לדף יצירת אירוע
+    navigate('/create-event');
   };
   
-  // Function to handle clicking on an event
-  const handleEventClick = (eventId) => {
-    // In the future, this would navigate to event details
-    console.log('Clicked on event:', eventId);
+  // פונקציה לטיפול בלחיצה על כפתור פרטי אירוע
+  const handleEventDetails = (eventId) => {
+    // בעתיד, זה ינווט לפרטי האירוע
+    console.log('Viewing details for event:', eventId);
     // navigate(`/event/${eventId}`);
+    
+    // כרגע, נציג התראה פשוטה
+    alert(`פרטי האירוע עם מזהה: ${eventId} יוצגו בקרוב`);
+  };
+  
+  // פונקציה למחיקת אירוע
+  const handleDeleteEvent = (eventId, eventTitle) => {
+    // אישור לפני מחיקה
+    if (window.confirm(`האם אתה בטוח שברצונך למחוק את האירוע "${eventTitle}"?`)) {
+      try {
+        // קבל את הרשימה הנוכחית מהלוקל סטורג'
+        const eventsData = localStorage.getItem('events');
+        if (eventsData) {
+          const parsedEvents = JSON.parse(eventsData);
+          
+          // סנן את האירוע שרוצים למחוק
+          const updatedEvents = parsedEvents.filter(event => event.id !== eventId);
+          
+          // שמור את הרשימה המעודכנת
+          localStorage.setItem('events', JSON.stringify(updatedEvents));
+          
+          // עדכן את המצב
+          setEvents(updatedEvents);
+          
+          console.log(`אירוע נמחק בהצלחה: ${eventTitle}`);
+        }
+      } catch (error) {
+        console.error('שגיאה במחיקת האירוע:', error);
+      }
+    }
   };
 
   // אם עדיין טוען, נציג מסך טעינה
@@ -198,8 +225,10 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        <h1>ברוך הבא, {user?.name}</h1>
-        <button className="logout-button" onClick={handleLogout}>התנתק</button>
+        <h1>ברוך הבא, {user?.name || user?.firstName || user?.email}</h1>
+        <div className="header-actions">
+          <button className="logout-button" onClick={handleLogout}>התנתק</button>
+        </div>
       </div>
       
       <div className="dashboard-content">
@@ -210,21 +239,24 @@ const Dashboard = () => {
               events.map(event => (
                 <div 
                   key={event.id} 
-                  className="event-card" 
-                  onClick={() => handleEventClick(event.id)}
+                  className="event-card"
                 >
                   <h3>{event.title}</h3>
-                  <p className="event-date">{event.date}</p>
-                  <p className="event-location">{event.location}</p>
-                  <div className="event-details">
-                    <span className="event-guests">{event.guestCount} אורחים</span>
-                    <span className="event-type">{
-                      event.type === 'wedding' ? 'חתונה' :
-                      event.type === 'bar_mitzvah' ? 'בר/בת מצווה' :
-                      event.type === 'birthday' ? 'יום הולדת' :
-                      event.type === 'corporate' ? 'אירוע חברה' :
-                      event.type === 'conference' ? 'כנס' : 'אירוע'
-                    }</span>
+                  <p className="event-date">{new Date(event.date).toLocaleDateString('he-IL')}</p>
+                  
+                  <div className="event-actions">
+                    <button 
+                      className="event-details-button"
+                      onClick={() => handleEventDetails(event.id)}
+                    >
+                      פרטי האירוע
+                    </button>
+                    <button 
+                      className="event-delete-button"
+                      onClick={() => handleDeleteEvent(event.id, event.title)}
+                    >
+                      מחק
+                    </button>
                   </div>
                 </div>
               ))
