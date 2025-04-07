@@ -6,8 +6,7 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-
-
+const eventRoutes = require('./routes/eventRoutes'); 
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -35,8 +34,8 @@ mongoose.connect(MONGO_URI)
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');
 });
-

@@ -9,14 +9,13 @@ const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // בדיקה אם יש מידע משתמש בלוקל סטורג'
     const checkUserSession = async () => {
       const isGoogleAuth = localStorage.getItem('googleAuth') === 'true';
       
       try {
-        // נסה לקבל מידע מהלוקל סטורג'
         const localUser = localStorage.getItem('user');
         
         if (localUser && !isGoogleAuth) {
@@ -26,29 +25,24 @@ const Dashboard = () => {
           return; 
         }
         
-        // אם זה לא מהלוקל סטורג' או שזה התחברות גוגל, בדוק מול Appwrite
         try {
           const userData = await account.get();
           
-          // אם זה התחברות עם גוגל, בדוק אם המשתמש קיים במערכת
           if (isGoogleAuth) {
-            localStorage.removeItem('googleAuth'); // נקה את הדגל
+            localStorage.removeItem('googleAuth'); 
             
             try {
-              // בדוק אם המשתמש קיים במערכת
               const response = await axios.post('/api/auth/check-user-exists', { 
                 email: userData.email 
               });
               
               if (!response.data.exists) {
-                // המשתמש לא רשום - נרשום אותו אוטומטית
                 console.log('Creating new user from Google login');
                 
                 const names = userData.name ? userData.name.split(' ') : ['', ''];
                 const firstName = names[0] || '';
                 const lastName = names.slice(1).join(' ') || '';
                 
-                // יצירת משתמש חדש עם נתוני גוגל
                 const registerResponse = await axios.post('/api/auth/register-oauth', {
                   email: userData.email,
                   firstName: firstName,
@@ -71,9 +65,7 @@ const Dashboard = () => {
             }
           }
           
-          // המשתמש קיים או שהצלחנו ליצור אותו - נבדוק אם יש לנו את הנתונים שלו מהשרת
           try {
-            // נסה להתחבר עם המייל שקיבלנו מגוגל
             const loginResponse = await axios.post('/api/auth/login-oauth', {
               email: userData.email,
               provider: 'google',
@@ -92,7 +84,6 @@ const Dashboard = () => {
             console.error('OAuth login error:', loginError);
           }
           
-          // אם הגענו לכאן, נשתמש במידע מ-Appwrite
           const userInfo = {
             id: userData.$id,
             email: userData.email,
@@ -104,7 +95,6 @@ const Dashboard = () => {
           setLoading(false);
         } catch (error) {
           console.error('Session check error:', error);
-          // אם יש שגיאה, המשתמש לא מחובר - החזר לדף ההתחברות
           navigate('/login');
           return;
         }
@@ -118,47 +108,40 @@ const Dashboard = () => {
 
     checkUserSession();
     
-    // טען את האירועים מהלוקל סטורג' עם מניעת כפילויות
-    const loadEvents = () => {
-      const eventsData = localStorage.getItem('events');
-      if (eventsData) {
-        try {
-          const parsedEvents = JSON.parse(eventsData);
-          
-          // מניעת כפילויות על ידי שימוש ב-Map עם מזהי אירועים כמפתחות
-          const uniqueEvents = Array.from(
-            new Map(parsedEvents.map(event => [event.id, event])).values()
-          );
-          
-          setEvents(uniqueEvents);
-          
-          // שמירת המערך ללא כפילויות חזרה ל-localStorage
-          if (uniqueEvents.length !== parsedEvents.length) {
-            localStorage.setItem('events', JSON.stringify(uniqueEvents));
-            console.log(`תוקן: הוסרו ${parsedEvents.length - uniqueEvents.length} אירועים כפולים`);
-          }
-        } catch (error) {
-          console.error('שגיאה בניתוח נתוני האירועים:', error);
+    const fetchEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No token found');
+          navigate('/login');
+          return;
         }
+        
+        const response = await axios.get('/api/events', {
+          headers: {
+            'x-auth-token': token
+          }
+        });
+        
+        setEvents(response.data);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+        setError('אירעה שגיאה בטעינת האירועים');
       }
     };
     
-    loadEvents();
+    fetchEvents();
     
   }, [navigate]);
 
-  // פונקציה להתנתקות
   const handleLogout = async () => {
     try {
       try {
-        // נסה להתנתק מול Appwrite, אבל אל תפסיק אם יש שגיאה
         await account.deleteSession('current');
       } catch (error) {
         console.error('Appwrite logout error:', error);
-        // התעלם משגיאות התנתקות מול Appwrite
       }
       
-      // בכל מקרה, נקה את הלוקל סטורג'
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       navigate('/login');
@@ -167,50 +150,43 @@ const Dashboard = () => {
     }
   };
   
-  // פונקציה ליצירת אירוע חדש
   const handleCreateEvent = () => {
-    // ניווט ישיר לדף יצירת אירוע
     navigate('/create-event');
   };
   
-  // פונקציה לטיפול בלחיצה על כפתור פרטי אירוע
   const handleEventDetails = (eventId) => {
     // בעתיד, זה ינווט לפרטי האירוע
     console.log('Viewing details for event:', eventId);
     // navigate(`/event/${eventId}`);
     
-    // כרגע, נציג התראה פשוטה
     alert(`פרטי האירוע עם מזהה: ${eventId} יוצגו בקרוב`);
   };
   
-  // פונקציה למחיקת אירוע
-  const handleDeleteEvent = (eventId, eventTitle) => {
-    // אישור לפני מחיקה
+  const handleDeleteEvent = async (eventId, eventTitle) => {
     if (window.confirm(`האם אתה בטוח שברצונך למחוק את האירוע "${eventTitle}"?`)) {
       try {
-        // קבל את הרשימה הנוכחית מהלוקל סטורג'
-        const eventsData = localStorage.getItem('events');
-        if (eventsData) {
-          const parsedEvents = JSON.parse(eventsData);
-          
-          // סנן את האירוע שרוצים למחוק
-          const updatedEvents = parsedEvents.filter(event => event.id !== eventId);
-          
-          // שמור את הרשימה המעודכנת
-          localStorage.setItem('events', JSON.stringify(updatedEvents));
-          
-          // עדכן את המצב
-          setEvents(updatedEvents);
-          
-          console.log(`אירוע נמחק בהצלחה: ${eventTitle}`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('לא מחובר. נא להתחבר מחדש.');
+          navigate('/login');
+          return;
         }
-      } catch (error) {
-        console.error('שגיאה במחיקת האירוע:', error);
+        
+        await axios.delete(`/api/events/${eventId}`, {
+          headers: {
+            'x-auth-token': token
+          }
+        });
+        
+        setEvents(events.filter(event => event._id !== eventId));
+        
+      } catch (err) {
+        console.error('Error deleting event:', err);
+        setError('אירעה שגיאה במחיקת האירוע');
       }
     }
   };
 
-  // אם עדיין טוען, נציג מסך טעינה
   if (loading) {
     return (
       <div className="auth-container">
@@ -231,6 +207,12 @@ const Dashboard = () => {
         </div>
       </div>
       
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
+      
       <div className="dashboard-content">
         <div className="dashboard-section">
           <h2 className="events-title">האירועים שלי</h2>
@@ -238,7 +220,7 @@ const Dashboard = () => {
             {events.length > 0 ? (
               events.map(event => (
                 <div 
-                  key={event.id} 
+                  key={event._id} 
                   className="event-card"
                 >
                   <h3>{event.title}</h3>
@@ -247,13 +229,13 @@ const Dashboard = () => {
                   <div className="event-actions">
                     <button 
                       className="event-details-button"
-                      onClick={() => handleEventDetails(event.id)}
+                      onClick={() => handleEventDetails(event._id)}
                     >
                       פרטי האירוע
                     </button>
                     <button 
                       className="event-delete-button"
-                      onClick={() => handleDeleteEvent(event.id, event.title)}
+                      onClick={() => handleDeleteEvent(event._id, event.title)}
                     >
                       מחק
                     </button>

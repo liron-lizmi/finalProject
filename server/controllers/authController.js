@@ -1,10 +1,8 @@
-// controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// פונקציה חדשה לבדיקה אם המשתמש כבר קיים
 const checkUserExists = async (req, res) => {
   try {
     const { email } = req.body;
@@ -32,7 +30,6 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
     }
 
-    // Create a new user
     const user = new User({
       firstName,
       lastName,
@@ -42,21 +39,18 @@ const register = async (req, res) => {
 
     await user.save();
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // שליחת אימייל אישור רישום
     try {
-      // נשלח מידע על האימייל לצורך שליחה בצד הקליינט
       const emailData = {
         recipientEmail: email,
         recipientName: `${firstName} ${lastName}`,
         userToken: token,
-        emailType: 'registration' // מזהה לצורך טיפול בלוגיקת האימייל בצד הקליינט
+        emailType: 'registration'
       };
 
       res.status(201).json({
@@ -128,7 +122,6 @@ const login = async (req, res) => {
   }
 };
 
-// Get current user
 const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');

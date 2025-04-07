@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/CreateEventPage.css';
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [eventData, setEventData] = useState({
     eventName: '',
     eventDate: ''
   });
 
-  // Get today's date in YYYY-MM-DD format for the date input min attribute
   const today = new Date().toISOString().split('T')[0];
 
   const handleInputChange = (e) => {
@@ -20,35 +22,47 @@ const CreateEventPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
     
-    // Create a complete event object
-    const newEvent = {
-      id: 'event-' + Date.now(),
-      title: eventData.eventName,
-      date: eventData.eventDate,
-      type: 'other', // Default type
-      guestCount: 0, // Default guest count
-      fullData: eventData
-    };
-    
-    // Get existing events from localStorage or initialize empty array
-    const existingEventsJSON = localStorage.getItem('events');
-    const existingEvents = existingEventsJSON ? JSON.parse(existingEventsJSON) : [];
-    
-    // Add new event to the array
-    const updatedEvents = [...existingEvents, newEvent];
-    
-    // Save updated events list to localStorage
-    localStorage.setItem('events', JSON.stringify(updatedEvents));
-    
-    // Redirect back to dashboard
-    navigate('/dashboard');
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('לא מחובר. נא להתחבר מחדש.');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.post(
+        '/api/events',
+        {
+          title: eventData.eventName,
+          date: eventData.eventDate,
+          type: 'other',
+          guestCount: 0
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+          }
+        }
+      );
+
+      navigate('/dashboard');
+      
+    } catch (err) {
+      console.error('Error creating event:', err);
+      setError(err.response?.data?.message || 'אירעה שגיאה ביצירת האירוע');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    // Go back to dashboard on cancel
     navigate('/dashboard');
   };
 
@@ -58,6 +72,12 @@ const CreateEventPage = () => {
         <h1>יצירת אירוע חדש</h1>
         <p>מלא את הפרטים הבאים ליצירת האירוע שלך</p>
       </div>
+      
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
       
       <div className="event-form-container">
         <form onSubmit={handleSubmit} className="event-form">
@@ -69,7 +89,6 @@ const CreateEventPage = () => {
               name="eventName"
               value={eventData.eventName}
               onChange={handleInputChange}
-              placeholder="לדוגמה: החתונה של דני ודנה"
               required
             />
           </div>
@@ -82,17 +101,26 @@ const CreateEventPage = () => {
               name="eventDate"
               value={eventData.eventDate}
               onChange={handleInputChange}
-              min={today} // Set minimum date to today
+              min={today}
               required
             />
           </div>
           
           <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={handleCancel}>
+            <button 
+              type="button" 
+              className="cancel-button" 
+              onClick={handleCancel}
+              disabled={loading}
+            >
               ביטול
             </button>
-            <button type="submit" className="submit-button">
-              יצירת אירוע
+            <button 
+              type="submit" 
+              className="submit-button"
+              disabled={loading}
+            >
+              {loading ? 'יוצר אירוע...' : 'יצירת אירוע'}
             </button>
           </div>
         </form>

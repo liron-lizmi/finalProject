@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/VenuePage.css';
 
-// A flag to ensure Google Maps API is loaded only once across the entire application
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
 const VenuePage = () => {
@@ -36,12 +35,9 @@ const VenuePage = () => {
   const scriptRef = useRef(null);
   const isMapInitialized = useRef(false);
   const isEffectRun = useRef(false);
-  const mapInstance = useRef(null); // שמירת המפה כרפרנס במקום ב-state
+  const mapInstance = useRef(null);
   
-  // Loading the API and setting up the map
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // Prevent multiple executions of this effect
     if (isEffectRun.current) return;
     isEffectRun.current = true;
     
@@ -99,7 +95,6 @@ const VenuePage = () => {
         console.log("Google Maps API loaded via callback");
         setupGoogleMaps();
         
-        // Also call any waiting callbacks
         if (window.initGoogleMapsCallback) {
           window.initGoogleMapsCallback();
           window.initGoogleMapsCallback = null;
@@ -110,18 +105,14 @@ const VenuePage = () => {
       document.head.appendChild(script);
     };
     
-    // Load the API
     loadGoogleMapsAPI();
     
-    // Cleanup
     return () => {
-      // Only remove script if it's one we added and Google isn't initialized
       if (scriptRef.current && scriptRef.current.parentNode && !window.google) {
         scriptRef.current.parentNode.removeChild(scriptRef.current);
         window.googleMapsLoaded = false;
       }
       
-      // Clear markers on unmount - תמיכה בשני סוגי הסמנים
       if (markers.length > 0) {
         markers.forEach(marker => {
           if (marker) {
@@ -171,17 +162,14 @@ const VenuePage = () => {
       
       const newMap = new window.google.maps.Map(mapRef.current, mapOptions);
       
-      // שמירת המפה ברפרנס, לשימוש ישיר
       mapInstance.current = newMap;
-      // קודם מגדירים את המפה בסטייט ואז יוצרים את השירותים
+      
       setMap(newMap);
       
-      // אתחול הג'יאוקודר
       if (window.google.maps.Geocoder) {
         geocoder.current = new window.google.maps.Geocoder();
       }
       
-      // אתחול שירות המקומות עם אלמנט בדף במקום עם המפה ישירות
       const placesDiv = document.createElement('div');
       document.body.appendChild(placesDiv);
       
@@ -193,7 +181,6 @@ const VenuePage = () => {
       
       console.log("Map is fully loaded");
       
-      // Try to get the user's location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -205,11 +192,10 @@ const VenuePage = () => {
             console.log("Got user location:", userLocation);
             newMap.setCenter(userLocation);
             
-            // עכשיו נבצע חיפוש ישירות, בלי לעבור דרך performInitialSearch
             try {
               if (placesService.current) {
                 console.log("Directly performing search with location:", userLocation);
-                searchVenues(userLocation, filters.venueType, newMap); // העברת המפה כפרמטר 
+                searchVenues(userLocation, filters.venueType, newMap);
               } else {
                 console.error("Places service not available for search");
                 setLoading(false);
@@ -221,11 +207,10 @@ const VenuePage = () => {
           },
           (error) => {
             console.error("Geolocation error:", error);
-            // אם אין גישה למיקום, השתמש במיקום ברירת המחדל
             try {
               if (placesService.current) {
                 console.log("Directly performing search with default location:", mapOptions.center);
-                searchVenues(mapOptions.center, filters.venueType, newMap); // העברת המפה כפרמטר
+                searchVenues(mapOptions.center, filters.venueType, newMap);
               } else {
                 console.error("Places service not available for search");
                 setLoading(false);
@@ -238,11 +223,10 @@ const VenuePage = () => {
         );
       } else {
         console.log("Geolocation not supported");
-        // אם הדפדפן לא תומך בגיאולוקציה, השתמש במיקום ברירת המחדל
         try {
           if (placesService.current) {
             console.log("Directly performing search with default location:", mapOptions.center);
-            searchVenues(mapOptions.center, filters.venueType, newMap); // העברת המפה כפרמטר
+            searchVenues(mapOptions.center, filters.venueType, newMap); 
           } else {
             console.error("Places service not available for search");
             setLoading(false);
@@ -254,14 +238,11 @@ const VenuePage = () => {
       }
     } catch (error) {
       console.error("Error in initMap:", error);
-      isMapInitialized.current = false; // Reset if there was an error
+      isMapInitialized.current = false; 
       setLoading(false);
     }
   };
 
-  // הסרנו את פונקציית performInitialSearch שלא נמצאת בשימוש
-  
-  // Search for places near a specific location
   const searchVenues = (location, venueType, mapParamDirect = null) => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
       console.error("Google Maps or Places API not available");
@@ -269,11 +250,9 @@ const VenuePage = () => {
       return;
     }
     
-    // בדיקה נוספת לשירות המקומות
     if (!placesService.current) {
       console.log("Places service not initialized, creating it now");
       try {
-        // נסיון לאתחל את שירות המקומות אם הוא לא קיים
         const placesDiv = document.createElement('div');
         document.body.appendChild(placesDiv);
         placesService.current = new window.google.maps.places.PlacesService(placesDiv);
@@ -286,7 +265,6 @@ const VenuePage = () => {
     
     setLoading(true);
     
-    // Build search query based on venue type
     let query = '';
     
     switch (venueType) {
@@ -313,28 +291,24 @@ const VenuePage = () => {
         break;
     }
     
-    // Add user search if available
     if (search) {
       query += ' ' + search;
     }
     
     console.log("Searching for:", query, "near", location);
     
-    // וידוא שהמיקום הוא אובייקט תקין
     let locationObj = location;
     if (typeof location.lat === 'function') {
-      // אם זה אובייקט LatLng, נחלץ את הערכים
       locationObj = {
         lat: location.lat(),
         lng: location.lng()
       };
     }
     
-    // Text search - שימוש בצורה שונה של החיפוש למקרה שיש בעיה עם הקודמת
     const request = {
       query: query,
       location: locationObj,
-      radius: parseInt(filters.distance) * 1000 // Convert km to meters
+      radius: parseInt(filters.distance) * 1000 
     };
     
     try {
@@ -342,20 +316,16 @@ const VenuePage = () => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
           console.log("Found", results.length, "venues");
           
-          // Filter results
           const filteredResults = filterVenues(results);
           
-          // Set results and add markers
           setVenues(filteredResults);
           
-          // השתמש במפה שהועברה ישירות, אם יש, אחרת נסה להשתמש ברפרנס או ב-state
           const currentMap = mapParamDirect || mapInstance.current || map;
           addMarkers(filteredResults, currentMap);
         } else {
           console.error("Search failed:", status);
           setVenues([]);
           
-          // Clear existing markers
           clearMarkers();
         }
         
@@ -380,8 +350,7 @@ const VenuePage = () => {
           parseInt(venue.user_ratings_total) > parseInt(filters.maxCapacity) * 2) {
         return false;
       }
-      
-      // Filter by price level
+    
       if (filters.priceRange !== 'all' && venue.price_level !== undefined) {
         if (filters.priceRange === 'budget' && venue.price_level > 1) return false;
         if (filters.priceRange === 'moderate' && (venue.price_level < 2 || venue.price_level > 3)) return false;
@@ -392,15 +361,11 @@ const VenuePage = () => {
     });
   };
   
-  // Add markers to the map
   const addMarkers = (venues, mapParamDirect = null) => {
-    // Clear existing markers first
     clearMarkers();
     
-    // השתמש במפה שהועברה כפרמטר, או ברפרנס, או בסטייט
     const currentMap = mapParamDirect || mapInstance.current || map;
     
-    // Make sure map is available
     if (!currentMap || !window.google) {
       console.error("Map not available for adding markers");
       return;
@@ -408,12 +373,10 @@ const VenuePage = () => {
     
     console.log("Adding markers using map:", currentMap ? "available" : "not available");
     
-    // Create new markers
     const newMarkers = venues.map(venue => {
       if (!venue.geometry || !venue.geometry.location) return null;
       
       try {
-        // בדיקה אם AdvancedMarkerElement קיים, ואם לא שימוש בסמן רגיל
         let marker;
         
         if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
@@ -424,20 +387,17 @@ const VenuePage = () => {
             title: venue.name
           });
           
-          // AdvancedMarkerElement משתמש ב-gm_click
           marker.addListener('gm_click', () => {
             getVenueDetails(venue.place_id);
           });
         } else {
           console.log("Using regular Marker (deprecated)");
-          // שימוש בסמן רגיל כגיבוי
           marker = new window.google.maps.Marker({
             position: venue.geometry.location,
             map: currentMap,
             title: venue.name
           });
           
-          // הסמן הרגיל משתמש ב-click
           marker.addListener('click', () => {
             getVenueDetails(venue.place_id);
           });
@@ -448,15 +408,13 @@ const VenuePage = () => {
         console.error("Error creating marker:", error);
         return null;
       }
-    }).filter(Boolean); // Filter out nulls
+    }).filter(Boolean);
     
     setMarkers(newMarkers);
   };
   
-  // Clear existing markers
   const clearMarkers = () => {
     markers.forEach(marker => {
-      // נסיון לנקות סמנים - תומך גם בסמנים רגילים וגם בסמנים מתקדמים
       if (marker) {
         try {
           if (typeof marker.setMap === 'function') {
@@ -476,7 +434,6 @@ const VenuePage = () => {
   const getVenueDetails = (placeId) => {
     if (!placesService.current || !placeId) return;
     
-          // עדכון השדות לתמיכה באפשרות שה-API דורש שדות ספציפיים
       const request = {
         placeId: placeId,
         fields: [
@@ -497,18 +454,15 @@ const VenuePage = () => {
     });
   };
   
-  // Handle search input change
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
   };
   
-  // Handle search form submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     
     if (!geocoder.current) {
       console.error("Geocoder not initialized");
-      // נסיון לאתחל את הג'יאוקודר אם הוא לא קיים
       if (window.google && window.google.maps && window.google.maps.Geocoder) {
         geocoder.current = new window.google.maps.Geocoder();
       } else {
@@ -517,7 +471,6 @@ const VenuePage = () => {
       }
     }
     
-    // אם מעבירים את ה-map כפרמטר
     geocoder.current.geocode({ address: search }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         const location = results[0].geometry.location;
@@ -532,7 +485,6 @@ const VenuePage = () => {
         if (currentMap && currentMap.getCenter) {
           searchVenues(currentMap.getCenter(), filters.venueType, currentMap);
         } else {
-          // אם אין מרכז מפה, השתמש במיקום ברירת מחדל
           searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
         }
       }
@@ -561,10 +513,8 @@ const VenuePage = () => {
   
   // Apply filters
   const applyFilters = () => {
-    // השתמש במפה מהרפרנס או מהסטייט
     const currentMap = mapInstance.current || map;
-    
-    // שימוש במיקום ברירת מחדל אם המפה לא זמינה
+  
     if (currentMap && currentMap.getCenter) {
       searchVenues(currentMap.getCenter(), filters.venueType, currentMap);
     } else if (navigator.geolocation) {
@@ -577,20 +527,16 @@ const VenuePage = () => {
           searchVenues(userLocation, filters.venueType, currentMap);
         },
         () => {
-          // אם אין גישה למיקום, השתמש במיקום ברירת מחדל
           searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
         }
       );
     } else {
-      // אם הדפדפן לא תומך בגיאולוקציה, השתמש במיקום ברירת מחדל
       searchVenues({ lat: 31.7683, lng: 35.2137 }, filters.venueType, currentMap);
     }
   };
   
-  // Select a venue and proceed to next step
   const selectVenue = (venue) => {
     try {
-      // Save selected venue in localStorage
       const venueData = {
         place_id: venue.place_id,
         id: venue.place_id,
@@ -604,14 +550,12 @@ const VenuePage = () => {
       
       localStorage.setItem('selectedVenue', JSON.stringify(venueData));
       
-      // Navigate to next page
       navigate('/create-event', { state: { venue } });
     } catch (error) {
       console.error("Error selecting venue:", error);
     }
   };
   
-  // Helper function to get photo URL
   const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200) => {
     try {
       if (photo && typeof photo.getUrl === 'function') {
@@ -621,7 +565,6 @@ const VenuePage = () => {
       console.error("Error getting photo URL:", error);
     }
     
-    // אם לא הצלחנו להשיג תמונה, נחזיר תמונה ריקה שתפעיל את onError
     return '';
   };
   
@@ -803,9 +746,7 @@ const VenuePage = () => {
                     src={getPhotoUrl(venue.photos[0])}
                     alt={venue.name}
                     onError={(e) => {
-                      // נסיון למצוא תמונה אחרת זמינה במקום
                       if (venue.photos && venue.photos.length > 1) {
-                        // נסיון לטעון את התמונה הבאה ברשימה
                         const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
                         const nextIndex = (currentIndex + 1) % venue.photos.length;
                         
@@ -816,7 +757,6 @@ const VenuePage = () => {
                         }
                       }
                       
-                      // אם אין תמונות אחרות זמינות, השתמש בתמונת ברירת מחדל
                       e.target.onerror = null;
                       e.target.src = `https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(venue.name || 'מקום אירוע')}`;
                     }}
@@ -875,9 +815,7 @@ const VenuePage = () => {
                     src={getPhotoUrl(selectedVenue.photos[0], 600, 400)}
                     alt={selectedVenue.name}
                     onError={(e) => {
-                      // נסיון למצוא תמונה אחרת זמינה במקום
                       if (selectedVenue.photos && selectedVenue.photos.length > 1) {
-                        // נסיון לטעון את התמונה הבאה ברשימה
                         const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
                         const nextIndex = (currentIndex + 1) % selectedVenue.photos.length;
                         
@@ -888,7 +826,6 @@ const VenuePage = () => {
                         }
                       }
                       
-                      // אם אין תמונות אחרות זמינות, השתמש בתמונת ברירת מחדל
                       e.target.onerror = null;
                       e.target.src = `https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`;
                     }}
@@ -905,14 +842,13 @@ const VenuePage = () => {
                 {selectedVenue.photos && selectedVenue.photos.length > 1 && (
                   <div className="additional-photos">
                 {selectedVenue.photos.slice(1, 5).map((photo, index) => {
-                  // הראה רק תמונות זמינות
                   return (
                     <img 
                       key={index} 
                       src={getPhotoUrl(photo, 150, 100)} 
                       alt={`${selectedVenue.name} - ${index + 1}`}
                       onError={(e) => {
-                        e.target.style.display = 'none'; // הסתר תמונות שלא נטענות
+                        e.target.style.display = 'none';
                       }}
                     />
                   );

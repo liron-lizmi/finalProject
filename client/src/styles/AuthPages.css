@@ -511,9 +511,10 @@
 .events-container {
   min-height: 200px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  gap: 15px;
   padding: 10px 0;
+  width: 100%;
 }
 
 .events-container p {
@@ -567,7 +568,7 @@
 }
 
 .event-card {
-  background-color: #ffffff;
+  background-color: #ffffff !important;
   border-radius: 12px;
   padding: 20px;
   width: calc(50% - 10px);
@@ -584,6 +585,23 @@
 .event-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff !important;
+}
+
+.event-card::before,
+.event-card::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-color: transparent !important;
+}
+
+.event-card > *,
+.event-card div,
+.event-card p,
+.event-card h3 {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
 }
 
 .event-card h3 {
@@ -591,6 +609,7 @@
   font-size: 20px;
   font-weight: 600;
   color: #000000;
+  background-color: #ffffff !important;
 }
 
 .event-card .event-date {
@@ -599,18 +618,34 @@
   color: #555555;
   margin-bottom: 15px;
   font-size: 15px;
+  border: none !important;
+  outline: none !important;
+  background-color: #ffffff !important;
+}
+
+.event-card p,
+.event-card div,
+.event-card .event-date {
+  border: none !important;
+  outline: none !important;
+  text-decoration: none !important;
 }
 
 .event-card .event-date::before {
   content: "📅";
   margin-left: 8px;
   font-size: 16px;
+  border: none !important;
+  background: none !important;
+  background-color: transparent !important;
 }
 
 .event-card .event-actions {
   display: flex;
   gap: 10px;
-  margin-top: 15px;
+  margin-top: auto;
+  padding-top: 15px;
+  background-color: #ffffff !important;
 }
 
 .event-details-button, .event-delete-button {
@@ -621,7 +656,6 @@
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
-  border: none;
 }
 
 .event-details-button {
@@ -655,6 +689,20 @@
   content: "🗑️";
   font-size: 16px;
   margin-left: 5px;
+  background: none !important;
+}
+
+.event-card [style*="background"],
+.event-card [class*="bg-"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  background: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+  .event-card {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {

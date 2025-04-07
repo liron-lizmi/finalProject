@@ -7,8 +7,8 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import AuthFailed from './pages/Auth/AuthFailed'; 
 import Dashboard from './pages/Auth/dashboard';
-import VenuePage from './pages/Venues/VenuePage'; // Import the new VenuePage
-import CreateEventPage from './pages/Venues/CreateEventPage'; // This will be created later
+import VenuePage from './pages/Events/VenuePage';
+import CreateEventPage from './pages/Events/CreateEventPage';
 
 const App = () => {
   return (
@@ -21,8 +21,8 @@ const App = () => {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/auth-failed" element={<AuthFailed />} />
-          <Route path="/venues" element={<VenuePage />} /> {/* Add this new route */}
-          <Route path="/create-event" element={<CreateEventPage />} /> {/* Add this new route for after venue selection */}
+          <Route path="/venues" element={<VenuePage />} />
+          <Route path="/create-event" element={<CreateEventPage />} /> 
         </Routes>
       </Router>
   );
