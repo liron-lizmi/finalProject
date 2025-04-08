@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/VenuePage.css';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
-const VenuePage = () => {
+const VenuePage = ({ onSelectVenue }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [map, setMap] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const [successMessage, setSuccessMessage] = useState(null);
+  
+  // צולב אם עברנו לדף הזה מדף אירוע ספציפי
+  const eventId = location.state?.eventId;
   
   // Filters
   const [filters, setFilters] = useState({
@@ -548,9 +553,20 @@ const VenuePage = () => {
         price_level: venue.price_level || 0
       };
       
-      localStorage.setItem('selectedVenue', JSON.stringify(venueData));
-      
-      navigate('/create-event', { state: { venue } });
+      // אם אנחנו בדף אירוע, נשמור את המקום באירוע
+      if (onSelectVenue && typeof onSelectVenue === 'function') {
+        onSelectVenue(venueData);
+        setSuccessMessage("המקום נוסף בהצלחה לאירוע שלך");
+        
+        // סוגר את הווינדו של פרטי המקום אחרי 2 שניות
+        setTimeout(() => {
+          setSelectedVenue(null);
+        }, 2000);
+      } else {
+        // התנהגות מקורית אם אנחנו לא בדף אירוע
+        localStorage.setItem('selectedVenue', JSON.stringify(venueData));
+        navigate('/create-event', { state: { venue: venueData } });
+      }
     } catch (error) {
       console.error("Error selecting venue:", error);
     }
@@ -802,127 +818,138 @@ const VenuePage = () => {
         
         {selectedVenue && (
           <div className="venue-details">
-            <div className="venue-details-header">
-              <h2>{selectedVenue.name}</h2>
-              <button className="close-details" onClick={() => setSelectedVenue(null)}>×</button>
-            </div>
-            
             <div className="venue-details-content">
-              <div className="venue-photos">
-                <div className="main-photo">
-                {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
-                  <img 
-                    src={getPhotoUrl(selectedVenue.photos[0], 600, 400)}
-                    alt={selectedVenue.name}
-                    onError={(e) => {
-                      if (selectedVenue.photos && selectedVenue.photos.length > 1) {
-                        const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
-                        const nextIndex = (currentIndex + 1) % selectedVenue.photos.length;
-                        
-                        if (nextIndex !== currentIndex) {
-                          e.target.dataset.photoIndex = nextIndex.toString();
-                          e.target.src = getPhotoUrl(selectedVenue.photos[nextIndex], 600, 400);
-                          return;
-                        }
-                      }
-                      
-                      e.target.onerror = null;
-                      e.target.src = `https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`;
-                    }}
-                    data-photo-index="0"
-                  />
-                ) : (
-                  <img 
-                    src={`https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`}
-                    alt={selectedVenue.name || 'מקום האירוע'}
-                  />
-                )}
-              </div>
-                
-                {selectedVenue.photos && selectedVenue.photos.length > 1 && (
-                  <div className="additional-photos">
-                {selectedVenue.photos.slice(1, 5).map((photo, index) => {
-                  return (
-                    <img 
-                      key={index} 
-                      src={getPhotoUrl(photo, 150, 100)} 
-                      alt={`${selectedVenue.name} - ${index + 1}`}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  );
-                })}
-              </div>
-                )}
+              <div className="venue-details-header">
+                <h2>{selectedVenue.name}</h2>
+                <button className="close-details" onClick={() => setSelectedVenue(null)}>×</button>
               </div>
               
-              <div className="venue-info-detailed">
-                <p className="address">
-                  <strong>כתובת:</strong> {selectedVenue.formatted_address}
-                </p>
-                
-                {selectedVenue.formatted_phone_number && (
-                  <p className="phone">
-                    <strong>טלפון:</strong> {selectedVenue.formatted_phone_number}
-                  </p>
-                )}
-                
-                {selectedVenue.website && (
-                  <p className="website">
-                    <strong>אתר:</strong> <a href={selectedVenue.website} target="_blank" rel="noopener noreferrer">{selectedVenue.website}</a>
-                  </p>
-                )}
-                
-                {selectedVenue.rating && (
-                  <p className="rating-details">
-                    <strong>דירוג:</strong> {selectedVenue.rating} מתוך 5 ({selectedVenue.user_ratings_total} ביקורות)
-                  </p>
-                )}
-                
-                {selectedVenue.price_level && (
-                  <p className="price-details">
-                    <strong>רמת מחיר:</strong> {'$'.repeat(selectedVenue.price_level)}
-                  </p>
-                )}
-                
-                {selectedVenue.opening_hours && selectedVenue.opening_hours.weekday_text && (
-                  <div className="opening-hours">
-                    <strong>שעות פתיחה:</strong>
-                    <ul>
-                      {selectedVenue.opening_hours.weekday_text.map((day, index) => (
-                        <li key={index}>{day}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-              
-              {selectedVenue.reviews && selectedVenue.reviews.length > 0 && (
-                <div className="venue-reviews">
-                  <h3>ביקורות</h3>
-                  <div className="reviews-list">
-                    {selectedVenue.reviews.slice(0, 3).map((review, index) => (
-                      <div key={index} className="review">
-                        <div className="review-header">
-                          <span className="reviewer">{review.author_name}</span>
-                          <span className="review-rating">
-                            {'★'.repeat(review.rating)}
-                            {'☆'.repeat(5 - review.rating)}
-                          </span>
-                          <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
-                        </div>
-                        <p className="review-text">{review.text}</p>
-                      </div>
-                    ))}
-                  </div>
+              {/* הודעת הצלחה */}
+              {successMessage && (
+                <div className="success-message">
+                  {successMessage}
                 </div>
               )}
               
-              <div className="venue-actions">
-                <button className="select-venue-button" onClick={() => selectVenue(selectedVenue)}>
-                  בחר מקום זה לאירוע
-                </button>
+              <div className="venue-details-content">
+                <div className="venue-photos">
+                  <div className="main-photo">
+                  {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
+                    <img 
+                      src={getPhotoUrl(selectedVenue.photos[0], 600, 400)}
+                      alt={selectedVenue.name}
+                      onError={(e) => {
+                        if (selectedVenue.photos && selectedVenue.photos.length > 1) {
+                          const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
+                          const nextIndex = (currentIndex + 1) % selectedVenue.photos.length;
+                          
+                          if (nextIndex !== currentIndex) {
+                            e.target.dataset.photoIndex = nextIndex.toString();
+                            e.target.src = getPhotoUrl(selectedVenue.photos[nextIndex], 600, 400);
+                            return;
+                          }
+                        }
+                        
+                        e.target.onerror = null;
+                        e.target.src = `https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`;
+                      }}
+                      data-photo-index="0"
+                    />
+                  ) : (
+                    <img 
+                      src={`https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`}
+                      alt={selectedVenue.name || 'מקום האירוע'}
+                    />
+                  )}
+                </div>
+                  
+                  {selectedVenue.photos && selectedVenue.photos.length > 1 && (
+                    <div className="additional-photos">
+                  {selectedVenue.photos.slice(1, 5).map((photo, index) => {
+                    return (
+                      <img 
+                        key={index} 
+                        src={getPhotoUrl(photo, 150, 100)} 
+                        alt={`${selectedVenue.name} - ${index + 1}`}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                  )}
+                </div>
+                
+                <div className="venue-info-detailed">
+                  <p className="address">
+                    <strong>כתובת:</strong> {selectedVenue.formatted_address}
+                  </p>
+                  
+                  {selectedVenue.formatted_phone_number && (
+                    <p className="phone">
+                      <strong>טלפון:</strong> {selectedVenue.formatted_phone_number}
+                    </p>
+                  )}
+                  
+                  {selectedVenue.website && (
+                    <p className="website">
+                      <strong>אתר:</strong> <a href={selectedVenue.website} target="_blank" rel="noopener noreferrer">{selectedVenue.website}</a>
+                    </p>
+                  )}
+                  
+                  {selectedVenue.rating && (
+                    <p className="rating-details">
+                      <strong>דירוג:</strong> {selectedVenue.rating} מתוך 5 ({selectedVenue.user_ratings_total} ביקורות)
+                    </p>
+                  )}
+                  
+                  {selectedVenue.price_level && (
+                    <p className="price-details">
+                      <strong>רמת מחיר:</strong> {'$'.repeat(selectedVenue.price_level)}
+                    </p>
+                  )}
+                  
+                  {selectedVenue.opening_hours && selectedVenue.opening_hours.weekday_text && (
+                    <div className="opening-hours">
+                      <strong>שעות פתיחה:</strong>
+                      <ul>
+                        {selectedVenue.opening_hours.weekday_text.map((day, index) => (
+                          <li key={index}>{day}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                
+                {selectedVenue.reviews && selectedVenue.reviews.length > 0 && (
+                  <div className="venue-reviews">
+                    <h3>ביקורות</h3>
+                    <div className="reviews-list">
+                      {selectedVenue.reviews.slice(0, 3).map((review, index) => (
+                        <div key={index} className="review">
+                          <div className="review-header">
+                            <span className="reviewer">{review.author_name}</span>
+                            <span className="review-rating">
+                              {'★'.repeat(review.rating)}
+                              {'☆'.repeat(5 - review.rating)}
+                            </span>
+                            <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
+                          </div>
+                          <p className="review-text">{review.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="venue-actions">
+                  {!successMessage && (
+                    <button className="select-venue-button" onClick={() => selectVenue(selectedVenue)}>
+                      בחר מקום זה לאירוע
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

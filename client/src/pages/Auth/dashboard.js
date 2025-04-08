@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { account } from '../../appwrite';
 import axios from 'axios';
@@ -155,11 +155,7 @@ const Dashboard = () => {
   };
   
   const handleEventDetails = (eventId) => {
-    // בעתיד, זה ינווט לפרטי האירוע
-    console.log('Viewing details for event:', eventId);
-    // navigate(`/event/${eventId}`);
-    
-    alert(`פרטי האירוע עם מזהה: ${eventId} יוצגו בקרוב`);
+    navigate(`/event/${eventId}`);
   };
   
   const handleDeleteEvent = async (eventId, eventTitle) => {
@@ -185,6 +181,16 @@ const Dashboard = () => {
         setError('אירעה שגיאה במחיקת האירוע');
       }
     }
+  };
+
+  // פונקציה להמרת פורמט התאריך ל- DD/MM/YYYY
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   if (loading) {
@@ -224,7 +230,9 @@ const Dashboard = () => {
                   className="event-card"
                 >
                   <h3>{event.title}</h3>
-                  <p className="event-date">{new Date(event.date).toLocaleDateString('he-IL')}</p>
+                  <div className="event-date-container">
+                    <span className="event-date">{formatDate(event.date)}</span>
+                  </div>
                   
                   <div className="event-actions">
                     <button 
