@@ -25,7 +25,8 @@
   "dependencies": {
     "appwrite": "^17.0.1",
     "concurrently": "^8.2.2",
-    "emailjs-com": "^3.2.0"
+    "emailjs-com": "^3.2.0",
+    "react-router": "^7.5.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
