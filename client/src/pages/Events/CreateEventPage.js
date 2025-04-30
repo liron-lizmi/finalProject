@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../../styles/CreateEventPage.css';
@@ -9,13 +9,41 @@ const CreateEventPage = () => {
   const [error, setError] = useState(null);
   const [eventData, setEventData] = useState({
     eventName: '',
-    eventDate: ''
+    eventDate: '',
+    eventTime: ''
   });
   const [displayDate, setDisplayDate] = useState('');
+  const [dateError, setDateError] = useState('');
+  const [timeError, setTimeError] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const datePickerRef = useRef(null);
+  const timePickerRef = useRef(null);
+  const timePickerContainerRef = useRef(null);
 
   // חישוב התאריך הנוכחי בפורמט ISO
   const today = new Date().toISOString().split('T')[0];
+
+  // יצירת שעות לבורר השעות
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
+
+  // סגירת בורר השעות בלחיצה מחוץ לבורר
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        timePickerContainerRef.current && 
+        !timePickerContainerRef.current.contains(event.target) &&
+        !event.target.classList.contains('time-icon')
+      ) {
+        setShowTimePicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // המרת תאריך מפורמט DD/MM/YYYY לפורמט YYYY-MM-DD
   const convertToISODate = (dateString) => {
@@ -67,6 +95,15 @@ const CreateEventPage = () => {
     return inputDate >= currentDate;
   };
 
+  // בדיקת תקינות של השעה
+  const isValidTime = (timeString) => {
+    if (!timeString) return false;
+    
+    // בדיקת פורמט (HH:MM)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    return timeRegex.test(timeString);
+  };
+
   const handleDateChange = (e) => {
     const isoDate = e.target.value;
     if (isoDate) {
@@ -76,7 +113,60 @@ const CreateEventPage = () => {
       }));
       
       setDisplayDate(convertToDisplayDate(isoDate));
+      setDateError(''); // ניקוי שגיאה אם התאריך תקין
     }
+  };
+
+  const handleTimeChange = (e) => {
+    let value = e.target.value;
+    
+    // סינון ערכים לא תקינים
+    if (value && !isValidTime(value)) {
+      // אם לא תקין, נסה לנקות את הפורמט
+      value = value.replace(/[^0-9:]/g, '');
+      
+      // אם אין נקודותיים אבל יש 4 מספרים בדיוק, מפורמטים אוטומטית לפורמט שעה
+      if (!value.includes(':') && value.length === 4) {
+        const hours = value.substring(0, 2);
+        const minutes = value.substring(2, 4);
+        value = `${hours}:${minutes}`;
+      }
+      
+      // הסר כל אזכור ל-AM/PM
+      value = value.replace(/\s*(am|pm)\s*/i, '');
+      
+      // אם עדיין לא תקין אבל יש : כבר, נשאיר את מה שיש
+      if (value.includes(':') && !isValidTime(value)) {
+        // בדיקה אם יש שגיאה
+        if (value !== '') {
+          setTimeError('יש להזין שעה תקינה בפורמט 24 שעות ');
+        }
+        return;
+      }
+    }
+    
+    setEventData(prev => ({
+      ...prev,
+      eventTime: value
+    }));
+    
+    // בדיקה אם השעה חוקית לאחר העדכון
+    if (value === '' || isValidTime(value)) {
+      setTimeError('');
+    } else {
+      setTimeError('יש להזין שעה תקינה בפורמט 24 שעות (לדוגמה: 14:30)');
+    }
+  };
+
+  // בחירת שעה מבורר השעות
+  const handleTimeSelection = (hour, minute) => {
+    const formattedTime = `${hour}:${minute}`;
+    setEventData(prev => ({
+      ...prev,
+      eventTime: formattedTime
+    }));
+    setTimeError(''); // ניקוי שגיאה אם השעה תקינה
+    setShowTimePicker(false);
   };
 
   const handleDisplayDateChange = (e) => {
@@ -113,6 +203,7 @@ const CreateEventPage = () => {
         ...prev,
         eventDate: isoDate
       }));
+      setDateError(''); // ניקוי שגיאה אם התאריך תקין
     } else {
       // אם התאריך לא תקין, נשמור רק את התצוגה אבל לא נעדכן את ערך ה-ISO
       if (value === '') {
@@ -120,6 +211,9 @@ const CreateEventPage = () => {
           ...prev,
           eventDate: ''
         }));
+        setDateError(''); // אם השדה ריק, לא נציג שגיאה
+      } else {
+        setDateError('התאריך לא חוקי או שהוא עבר. יש להזין תאריך בפורמט DD/MM/YYYY');
       }
     }
   };
@@ -140,12 +234,47 @@ const CreateEventPage = () => {
     }
   };
 
+  // פתיחה/סגירה של בורר השעות
+  const toggleTimePicker = () => {
+    setShowTimePicker(prev => !prev);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // בדיקה אם התאריך תקין ובעתיד לפני שליחת הטופס
+    // בדיקת תקינות התאריך והשעה לפני שליחת הטופס
+    let hasError = false;
+    
+    // בדיקת תאריך
     if (!eventData.eventDate || !isValidFutureDate(displayDate)) {
-      alert("התאריך לא חוקי או שהוא עבר. יש להזין תאריך בפורמט DD/MM/YYYY");
+      setDateError('התאריך לא חוקי או שהוא עבר. יש להזין תאריך בפורמט DD/MM/YYYY');
+      hasError = true;
+    }
+    
+    // פורמוט השעה לפורמט תקין אם צריך
+    let timeToSubmit = eventData.eventTime;
+    
+    // אם המשתמש הזין רק מספרים ללא פורמט (לדוגמא: 1630)
+    if (/^\d{1,4}$/.test(eventData.eventTime) && !eventData.eventTime.includes(':')) {
+      if (eventData.eventTime.length <= 2) {
+        // רק שעה (לדוגמא: 16)
+        timeToSubmit = `${eventData.eventTime.padStart(2, '0')}:00`;
+      } else {
+        // שעה ודקות (לדוגמא: 1630)
+        const hours = eventData.eventTime.slice(0, 2).padStart(2, '0');
+        const minutes = eventData.eventTime.slice(2).padStart(2, '0');
+        timeToSubmit = `${hours}:${minutes}`;
+      }
+    }
+    
+    // בדיקת תקינות השעה המפורמטת
+    if (!timeToSubmit || !isValidTime(timeToSubmit)) {
+      setTimeError('יש להזין שעה תקינה בפורמט 24 שעות (לדוגמה: 14:30)');
+      hasError = true;
+    }
+    
+    // אם יש שגיאה, עוצרים את השליחה
+    if (hasError) {
       return;
     }
     
@@ -166,6 +295,7 @@ const CreateEventPage = () => {
         {
           title: eventData.eventName,
           date: eventData.eventDate,
+          time: timeToSubmit,
           type: 'other',
           guestCount: 0
         },
@@ -241,13 +371,77 @@ const CreateEventPage = () => {
                   placeholder="DD/MM/YYYY"
                   value={displayDate}
                   onChange={handleDisplayDateChange}
-                  className="date-display-input"
+                  className={`date-display-input ${dateError ? 'input-error' : ''}`}
                 />
                 <div className="calendar-icon" onClick={toggleDatePicker}>
                   <span role="img" aria-label="calendar">📅</span>
                 </div>
               </div>
             </div>
+            {dateError && <div className="field-error">{dateError}</div>}
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="eventTime">שעת האירוע</label>
+            
+            <div className="time-input-container">
+              <input
+                type="text"
+                id="eventTime"
+                name="eventTime"
+                value={eventData.eventTime}
+                onChange={handleTimeChange}
+                ref={timePickerRef}
+                placeholder="HH:MM"
+                required
+                className={`time-input ${timeError ? 'input-error' : ''}`}
+              />
+              <div className="time-icon" onClick={toggleTimePicker}>
+                <span role="img" aria-label="clock">🕒</span>
+              </div>
+              
+              {/* בורר שעות בפורמט 24 שעות */}
+              {showTimePicker && (
+                <div className="time-picker-dropdown" ref={timePickerContainerRef}>
+                  <div className="time-picker-header">
+                    <div className="time-picker-close" onClick={() => setShowTimePicker(false)}>✕</div>
+                  </div>
+                  <div className="time-picker-content">
+                    <div className="time-picker-hours">
+                      {hours.map(hour => (
+                        <div 
+                          key={hour} 
+                          className="time-picker-hour"
+                          onClick={() => {
+                            // בחירת שעה ודקות ברירת מחדל (00)
+                            const minute = eventData.eventTime?.split(':')?.[1] || '00';
+                            handleTimeSelection(hour, minute);
+                          }}
+                        >
+                          {hour}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="time-picker-minutes">
+                      {minutes.map(minute => (
+                        <div 
+                          key={minute} 
+                          className="time-picker-minute"
+                          onClick={() => {
+                            // בחירת דקות עם השעה הנוכחית
+                            const hour = eventData.eventTime?.split(':')?.[0] || '18';
+                            handleTimeSelection(hour, minute);
+                          }}
+                        >
+                          {minute}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {timeError && <div className="field-error">{timeError}</div>}
           </div>
           
           <div className="form-actions">

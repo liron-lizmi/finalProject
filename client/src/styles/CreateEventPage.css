@@ -67,6 +67,19 @@
   outline: none;
 }
 
+/* הודעות שגיאה לשדות */
+.field-error {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 5px;
+  text-align: right;
+}
+
+.input-error {
+  border-color: #d32f2f !important;
+  background-color: rgba(211, 47, 47, 0.03);
+}
+
 /* Date Input Styles */
 .date-input-container {
   position: relative;
@@ -113,11 +126,154 @@
   border-radius: 50%;
 }
 
-/* Helper text for date format */
-.date-format-helper {
-  font-size: 0.8rem;
+/* Time Input Styles */
+.time-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.time-input {
+  padding: 10px 40px 10px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: monospace;
+  text-align: right;
+  letter-spacing: 1px;
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  direction: ltr;
+}
+
+.time-input:focus {
+  border-color: #000;
+  outline: none;
+}
+
+.time-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.time-icon:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+}
+
+/* Time Picker Dropdown - עיצוב משופר */
+.time-picker-dropdown {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  width: 210px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  border: none;
+  direction: rtl;
+  overflow: hidden;
+}
+
+.time-picker-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.time-picker-close {
+  cursor: pointer;
+  font-size: 14px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #f0f0f0;
   color: #666;
-  margin-top: 5px;
+  transition: all 0.2s ease;
+}
+
+.time-picker-close:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.time-picker-content {
+  display: flex;
+  max-height: 240px;
+  flex-direction: row-reverse;
+  background: linear-gradient(to bottom, #ffffff, #fcfcfc);
+}
+
+.time-picker-hours,
+.time-picker-minutes {
+  flex: 1;
+  padding: 6px 0;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.time-picker-hours::-webkit-scrollbar,
+.time-picker-minutes::-webkit-scrollbar {
+  display: none;
+}
+
+.time-picker-hours {
+  border-left: 1px solid #eaeaea;
+}
+
+.time-picker-hour,
+.time-picker-minute {
+  padding: 8px 0;
+  margin: 2px 6px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #555;
+  transition: all 0.15s ease;
+}
+
+.time-picker-hour:hover,
+.time-picker-minute:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #000;
+}
+
+/* Styling active selections */
+.time-picker-hour.active,
+.time-picker-minute.active {
+  background-color: #f0f0f0;
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effect for the items */
+.time-picker-hour:hover,
+.time-picker-minute:hover {
+  background-color: #f5f5f5;
+  transform: translateY(-1px);
 }
 
 /* Action Buttons */
@@ -189,6 +345,10 @@
     flex-direction: column;
     gap: 20px;
   }
+  
+  .time-picker-dropdown {
+    width: 180px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -202,5 +362,9 @@
   
   .create-event-header h1 {
     font-size: 1.8rem;
+  }
+  
+  .time-picker-dropdown {
+    width: 160px;
   }
 }
