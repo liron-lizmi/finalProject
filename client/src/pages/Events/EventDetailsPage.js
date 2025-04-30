@@ -78,26 +78,69 @@ const EventDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="event-details-container">
-        <div className="loading-spinner"></div>
+      <div className="event-page-wrapper">
+        <div className="event-details-container">
+          <div className="event-loader">
+            <div className="loading-spinner"></div>
+            <p>טוען פרטי אירוע...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="event-details-container">
-        <div className="error-message">{error}</div>
-        <button className="back-button" onClick={handleBack}>חזרה לדשבורד</button>
+      <div className="event-page-wrapper">
+        <div className="event-details-container">
+          <div className="error-container">
+            <div className="error-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div className="error-message">{error}</div>
+            <button className="back-button" onClick={handleBack}>
+              <span className="back-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </span>
+              חזרה לדשבורד
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="event-details-container">
-        <div className="error-message">האירוע לא נמצא</div>
-        <button className="back-button" onClick={handleBack}>חזרה לדשבורד</button>
+      <div className="event-page-wrapper">
+        <div className="event-details-container">
+          <div className="error-container">
+            <div className="error-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div className="error-message">האירוע לא נמצא</div>
+            <button className="back-button" onClick={handleBack}>
+              <span className="back-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </span>
+              חזרה לדשבורד
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -110,86 +153,198 @@ const EventDetailsPage = () => {
     day: 'numeric'
   });
   
+  // Get the event time in 24-hour format
+  const eventTime = event.time || '18:00';
+  
   // Calculate days remaining
   const today = new Date();
   const daysRemaining = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
 
+  // Calculate progress for the progress bar
+  const progress = calculateProgress(event);
+
   return (
-    <div className="event-details-container">
-      <div className="event-details-header">
+    <div className="event-page-wrapper">
+      <div className="event-details-container">
         <button className="back-button" onClick={handleBack}>
+          <span className="back-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </span>
           חזרה לאירועים שלי
         </button>
-        <div className="event-title-section">
-          <h1>{event.title}</h1>
-          <div className="event-meta">
-            <p className="event-date">{formattedDate}</p>
-            <p className="days-remaining">{daysRemaining > 0 ? `נותרו ${daysRemaining} ימים` : 'האירוע התקיים'}</p>
+        
+        <header className="event-header">
+          <div className="event-info-container">
+            <h1 className="event-title">{event.title}</h1>
+            
+            <div className="event-meta">
+              <div className="event-datetime">
+                <span className="date-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+                <span>{formattedDate} בשעה {eventTime}</span>
+              </div>
+              <div className={`days-counter ${daysRemaining <= 30 ? 'urgent' : ''}`}>
+                <span className="counter-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </span>
+                <span>
+                  {daysRemaining > 0 
+                    ? `נותרו ${daysRemaining} ימים לאירוע` 
+                    : daysRemaining === 0 
+                      ? 'האירוע מתקיים היום!' 
+                      : 'האירוע התקיים'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="progress-container">
+              <div className="progress-info">
+                <h3>התקדמות תכנון האירוע</h3>
+                <span className="progress-percentage">{progress}%</span>
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${progress}%` }}
+                  data-progress={`${progress}%`}>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="event-progress">
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${calculateProgress(event)}%` }}></div>
-        </div>
-        <p className="progress-text">{calculateProgress(event)}% הושלם</p>
-      </div>
+        <section className="event-features-section">
+          <div className="features-grid">
+            <div className="feature-card" onClick={() => handleFeatureClick('venue')}>
+              <div className="feature-emoji">🏢</div>
+              <div className="feature-content">
+                <h3>בחירת מקום</h3>
+                <p>בחר את המקום המושלם לאירוע שלך</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-      <div className="event-features">
-        <div className="feature-card" onClick={() => handleFeatureClick('venue')}>
-          <div className="feature-icon venue-icon">🏢</div>
-          <h3>בחירת מקום</h3>
-          <p>בחר את המקום המושלם לאירוע שלך</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('vendors')}>
+              <div className="feature-emoji">👨‍🍳</div>
+              <div className="feature-content">
+                <h3>בחירת ספקים</h3>
+                <p>צלם, תקליטן, קייטרינג ועוד</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('vendors')}>
-          <div className="feature-icon vendors-icon">👨‍🍳</div>
-          <h3>בחירת ספקים</h3>
-          <p>צלם, תקליטן, קייטרינג ועוד</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('guests')}>
+              <div className="feature-emoji">👥</div>
+              <div className="feature-content">
+                <h3>רשימת מוזמנים</h3>
+                <p>{event.guestCount > 0 ? `${event.guestCount} מוזמנים` : 'הוסף מוזמנים'}</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('guests')}>
-          <div className="feature-icon guests-icon">👥</div>
-          <h3>רשימת מוזמנים</h3>
-          <p>{event.guestCount > 0 ? `${event.guestCount} מוזמנים` : 'הוסף מוזמנים'}</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('seating')}>
+              <div className="feature-emoji">🪑</div>
+              <div className="feature-content">
+                <h3>סידורי הושבה</h3>
+                <p>ארגון שולחנות ומקומות ישיבה</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('seating')}>
-          <div className="feature-icon seating-icon">🪑</div>
-          <h3>סידורי הושבה</h3>
-          <p>ארגון שולחנות ומקומות ישיבה</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('timeline')}>
+              <div className="feature-emoji">📅</div>
+              <div className="feature-content">
+                <h3>ניהול לו"ז ומשימות</h3>
+                <p>תכנון זמנים ומשימות לביצוע</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('timeline')}>
-          <div className="feature-icon timeline-icon">📅</div>
-          <h3>ניהול לו"ז ומשימות</h3>
-          <p>תכנון זמנים ומשימות לביצוע</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
+              <div className="feature-emoji">📝</div>
+              <div className="feature-content">
+                <h3>טמפלייטים</h3>
+                <p>הזמנות, ברכות ועוד</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
-          <div className="feature-icon templates-icon">📝</div>
-          <h3>טמפלייטים</h3>
-          <p>הזמנות, ברכות ועוד</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('weather')}>
+              <div className="feature-emoji">☀️</div>
+              <div className="feature-content">
+                <h3>תחזית מזג אוויר</h3>
+                <p>צפייה בתחזית ליום האירוע</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('weather')}>
-          <div className="feature-icon weather-icon">☀️</div>
-          <h3>תחזית מזג אוויר</h3>
-          <p>צפייה בתחזית ליום האירוע</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('budget')}>
+              <div className="feature-emoji">💰</div>
+              <div className="feature-content">
+                <h3>ניהול תקציב</h3>
+                <p>מעקב אחר הוצאות והכנסות</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
 
-        <div className="feature-card" onClick={() => handleFeatureClick('budget')}>
-          <div className="feature-icon budget-icon">💰</div>
-          <h3>ניהול תקציב</h3>
-          <p>מעקב אחר הוצאות והכנסות</p>
-        </div>
-
-        <div className="feature-card" onClick={() => handleFeatureClick('share')}>
-          <div className="feature-icon share-icon">🔗</div>
-          <h3>שיתוף אירוע</h3>
-          <p>שתף פרטים עם אורחים ומשתתפים</p>
-        </div>
+            <div className="feature-card" onClick={() => handleFeatureClick('share')}>
+              <div className="feature-emoji">🔗</div>
+              <div className="feature-content">
+                <h3>שיתוף אירוע</h3>
+                <p>שתף פרטים עם אורחים ומשתתפים</p>
+              </div>
+              <div className="feature-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
@@ -209,8 +364,6 @@ const calculateProgress = (event) => {
   if (event.guestCount > 0) {
     completedSteps += 1;
   }
-
-  // You can add more checks for other features as they are implemented
   
   return Math.round((completedSteps / totalSteps) * 100);
 };
