@@ -12,11 +12,16 @@ const getUserEvents = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-    const { title, date, type, guestCount, notes, venue } = req.body;
+    const { title, date, time, type, guestCount, notes, venue } = req.body;
+
+    // בדיקת תקינות השעה בפורמט 24 שעות
+    const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    const validTime = time && timeRegex.test(time) ? time : '18:00';
 
     const newEvent = new Event({
       title,
       date,
+      time: validTime,  // ברירת מחדל לשעה 18:00 אם לא סופקה שעה או שהפורמט לא תקין
       type: type || 'other',
       guestCount: guestCount || 0,
       notes,
@@ -35,15 +40,24 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, date, type, guestCount, notes, venue } = req.body;
+    const { title, date, time, type, guestCount, notes, venue } = req.body;
 
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: 'אירוע לא נמצא' });
     }
 
+    // בדיקת תקינות השעה בפורמט 24 שעות
+    const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    let validTime = event.time;  // ברירת מחדל לשעה הקיימת
+    
+    if (time) {
+      validTime = timeRegex.test(time) ? time : event.time;
+    }
+
     event.title = title || event.title;
     event.date = date || event.date;
+    event.time = validTime;  // שימוש בשעה מאומתת בפורמט 24 שעות
     event.type = type || event.type;
     event.guestCount = guestCount !== undefined ? guestCount : event.guestCount;
     event.notes = notes !== undefined ? notes : event.notes;
