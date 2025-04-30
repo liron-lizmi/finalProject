@@ -144,7 +144,7 @@ const Dashboard = () => {
       
       localStorage.removeItem('user');
       localStorage.removeItem('token');
-      navigate('/login');
+      navigate('/'); 
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -183,7 +183,7 @@ const Dashboard = () => {
     }
   };
 
-  // פונקציה להמרת פורמט התאריך ל- DD/MM/YYYY
+  // Function to convert the date format to DD/MM/YYYY
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -191,6 +191,10 @@ const Dashboard = () => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  const navigateToHome = () => {
+    navigate('/');
   };
 
   if (loading) {
@@ -205,68 +209,162 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>ברוך הבא, {user?.name || user?.firstName || user?.email}</h1>
-        <div className="header-actions">
-          <button className="logout-button" onClick={handleLogout}>התנתק</button>
-        </div>
-      </div>
-      
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-      
-      <div className="dashboard-content">
-        <div className="dashboard-section">
-          <h2 className="events-title">האירועים שלי</h2>
-          <div className="events-container">
-            {events.length > 0 ? (
-              events.map(event => (
-                <div 
-                  key={event._id} 
-                  className="event-card"
-                >
-                  <h3>{event.title}</h3>
-                  <div className="event-date-container">
-                    <span className="event-date">{formatDate(event.date)}</span>
-                  </div>
-                  
-                  <div className="event-actions">
-                    <button 
-                      className="event-details-button"
-                      onClick={() => handleEventDetails(event._id)}
-                    >
-                      פרטי האירוע
-                    </button>
-                    <button 
-                      className="event-delete-button"
-                      onClick={() => handleDeleteEvent(event._id, event.title)}
-                    >
-                      מחק
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p>עדיין אין לך אירועים. צור את האירוע הראשון שלך!</p>
-            )}
+    <div className="dashboard-wrapper">
+      {/* Header */}
+      <header className="dashboard-header">
+      <div className="header-container">
+        <div className="header-left">
+          <div className="logo" onClick={navigateToHome}>
+            <img src="/images/logo.png" alt="Logo" />
           </div>
         </div>
-        
-        <div className="dashboard-section">
-          <h2 className="create-title">צור אירוע חדש</h2>
-          <p>צור אירוע חדש כדי לארגן ולנהל את כל פרטי האירוע שלך במקום אחד - בחירת מקום, הזמנות, אישורי הגעה, סידורי ישיבה ועוד.</p>
-          <button 
-            className="create-event-button"
-            onClick={handleCreateEvent}
-          >
-            יצירת אירוע חדש
-          </button>
+
+        <div className="header-center">
+          <div className="user-greeting">
+            <span className="greeting-icon">👋</span>
+            <span>ברוך הבא,</span>
+            <h2>{user?.name || user?.firstName || user?.email}</h2>
+          </div>
         </div>
-      </div>
+
+        <div className="header-right">
+            <button className="logout-btn" onClick={handleLogout}>
+              <span className="logout-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </span>
+              התנתק
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="dashboard-main">
+        <div className="container">
+          {error && (
+            <div className="error-alert">
+              <div className="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              {error}
+            </div>
+          )}
+
+          {/* Create Event Card */}
+          <div className="create-event-card">
+            <div className="create-event-content">
+            <div className="sparkle-icon">
+              ✨
+            </div>
+              <div className="create-event-text">
+                <h2>צור אירוע חדש</h2>
+                <p>צור אירוע חדש כדי לארגן ולנהל את כל פרטי האירוע שלך במקום אחד - בחירת מקום, הזמנות, אישורי הגעה, סידורי ישיבה ועוד.</p>
+              </div>
+            </div>
+            <button 
+              className="create-event-btn"
+              onClick={handleCreateEvent}
+            >
+              יצירת אירוע חדש
+            </button>
+          </div>
+
+          {/* Events Section */}
+          <div className="events-section">
+            <div className="section-header">
+              <h2>
+                <span className="section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+                האירועים שלי
+              </h2>
+            </div>
+            
+            <div className="events-grid">
+              {events.length > 0 ? (
+                events.map(event => (
+                  <div 
+                    key={event._id} 
+                    className="event-card"
+                  >
+                    <div className="event-body">
+                      <h3>{event.title}</h3>
+                      <div className="event-meta">
+                        <div className="event-date">
+                          <span className="meta-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                              <line x1="16" y1="2" x2="16" y2="6"></line>
+                              <line x1="8" y1="2" x2="8" y2="6"></line>
+                              <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                          </span>
+                          <span>{formatDate(event.date)}</span>
+                        </div>
+                        {event.time && (
+                          <div className="event-time">
+                            <span className="meta-icon">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
+                            </span>
+                            <span>{event.time}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="event-footer">
+                      <button 
+                        className="event-details-btn"
+                        onClick={() => handleEventDetails(event._id)}
+                      >
+                        פרטי האירוע
+                      </button>
+                      <button 
+                        className="event-delete-btn"
+                        onClick={() => handleDeleteEvent(event._id, event.title)}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-events">
+                  <div className="no-events-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                      <circle cx="12" cy="15" r="2"></circle>
+                    </svg>
+                  </div>
+                  <h3>אין אירועים</h3>
+                  <p>עדיין אין לך אירועים. צור את האירוע הראשון שלך!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
