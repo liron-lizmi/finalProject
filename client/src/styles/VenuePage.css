@@ -98,27 +98,38 @@
   margin-bottom: 5px;
 }
 
-.filter-group select,
-.filter-group input[type="number"] {
+/* עיצוב תיבת הבחירה כך שתראה אחיד בכל הדפדפנים */
+.filter-group select {
   width: 100%;
   padding: 8px 12px;
   font-size: 0.9rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: #fff;
+  height: 38px;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: left 0.7rem top 50%;
+  background-size: 0.65rem auto;
+  padding-left: 2rem;
 }
 
-.filter-group input[type="range"] {
+/* עיצוב ספציפי לשדה התכולה כדי להתאים לגודל של שאר השדות */
+.filter-group input.no-spinners {
   width: 100%;
-  margin-top: 5px;
-}
-
-.filter-group span {
-  display: block;
-  text-align: center;
-  margin-top: 5px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  box-sizing: border-box;
+  height: 38px;
   font-size: 0.9rem;
-  color: #666;
+  padding: 8px 12px;
+  direction: rtl;
+  text-align: right;
 }
 
 .amenities-group .checkbox-group {
@@ -373,24 +384,31 @@
   object-fit: cover;
 }
 
-.additional-photos {
+/* עיצוב חדש לתצוגת כל התמונות */
+.all-photos {
   display: flex;
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 10px;
 }
 
-.additional-photos img {
+.all-photos img.thumbnail-photo {
   width: 100px;
   height: 70px;
   object-fit: cover;
   border-radius: 4px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  margin-bottom: 10px;
 }
 
-.additional-photos img:hover {
-  opacity: 0.8;
+.all-photos img.thumbnail-photo:hover {
+  border-color: #000;
+  transform: scale(1.05);
 }
 
 .venue-info-detailed {
@@ -487,6 +505,17 @@
 
 .select-venue-button:hover {
   background-color: #333;
+}
+
+/* Success message */
+.success-message {
+  background-color: #dff2bf;
+  color: #4f8a10;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: bold;
 }
 
 /* Responsive adjustments */
