@@ -1,0 +1,55 @@
+.language-switcher {
+    position: fixed;
+    top: 20px;
+    z-index: 2000;
+  }
+  
+  /* For homepage with fixed header */
+  .homepage-container .language-switcher {
+    position: fixed;
+    top: 20px;
+    z-index: 2000;
+  }
+  
+  /* Left alignment in LTR mode */
+  [dir="ltr"] .language-switcher,
+  [dir="ltr"] .homepage-container .language-switcher {
+    right: 180px; /* Move it to the left of the login/signup buttons */
+    left: auto;
+  }
+  
+  /* Right alignment in RTL mode */
+  [dir="rtl"] .language-switcher,
+  [dir="rtl"] .homepage-container .language-switcher {
+    left: 180px; /* Move it to the right of the login/signup buttons */
+    right: auto;
+  }
+  
+  .language-options {
+    display: flex;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+  }
+  
+  .language-option {
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    color: #555;
+    font-weight: 500;
+  }
+  
+  .language-option.active {
+    background-color: #000;
+    color: white;
+  }
+  
+  .language-option:hover:not(.active) {
+    background-color: #f5f5f5;
+  }

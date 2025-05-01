@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../../styles/AuthPages.css';
 import { createOAuth2Session } from '../../appwrite'; 
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -123,7 +125,7 @@ const LoginPage = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>התחברות</h2>
+        <h2>{t('auth.loginTitle')}</h2>
         {serverError && <div className="error-message">{serverError}</div>}
         
         <button 
@@ -132,17 +134,17 @@ const LoginPage = () => {
           className="google-auth-button"
         >
           <GoogleIcon />
-          <span>התחבר עם Google</span>
+          <span>{t('auth.connectWithGoogle')}</span>
         </button>
         
-        <div className="social-auth-divider">או</div>
+        <div className="social-auth-divider">{t('auth.or')}</div>
         
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <input
               type="email"
               name="email"
-              placeholder="אימייל"
+              placeholder={t('auth.email')}
               value={formData.email}
               onChange={handleChange}
               className={errors.email ? 'error' : ''}
@@ -153,7 +155,7 @@ const LoginPage = () => {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="סיסמה"
+              placeholder={t('auth.password')}
               value={formData.password}
               onChange={handleChange}
               className={errors.password ? 'error' : ''}
@@ -171,15 +173,15 @@ const LoginPage = () => {
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'מתחבר...' : 'התחבר'}
+            {isSubmitting ? t('auth.connecting') : t('auth.loginButton')}
           </button>
         </form>
         
         <p className="auth-link">
-          אין לך חשבון? <span onClick={() => navigate('/register')}>הירשם</span>
+          {t('auth.noAccount')} <span onClick={() => navigate('/register')}>{t('auth.signupButton')}</span>
         </p>
         <p className="auth-link">
-          <span onClick={() => navigate('/forgot-password')}>שכחתי סיסמה</span>
+          <span onClick={() => navigate('/forgot-password')}>{t('auth.forgotPassword')}</span>
         </p>
       </div>
     </div>

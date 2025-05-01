@@ -5,8 +5,16 @@
   background-color: #f8f9fa;
   min-height: 100vh;
   font-family: 'Heebo', 'Arial', sans-serif;
-  direction: rtl;
   color: #333;
+}
+
+/* תמיכה לכיוון על פי שפה */
+[dir="rtl"] .event-page-wrapper {
+  direction: rtl;
+}
+
+[dir="ltr"] .event-page-wrapper {
+  direction: ltr;
 }
 
 .event-details-container {
@@ -30,8 +38,22 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-bottom: 20px;
-  margin-right: auto; 
+}
+
+/* התאמת מיקום כפתור החזרה לפי כיוון השפה */
+[dir="rtl"] .back-button {
+  margin-right: auto;
   margin-left: 0;
+}
+
+[dir="ltr"] .back-button {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* התאמת אייקון החזרה לפי כיוון השפה */
+[dir="ltr"] .back-icon svg {
+  transform: scaleX(-1);
 }
 
 .back-button:hover {
@@ -168,20 +190,38 @@
   position: relative;
 }
 
+/* התאמת כיוון מילוי פס ההתקדמות */
+[dir="rtl"] .progress-fill {
+  background: linear-gradient(to right, #d4b99e, #c4a98e);
+}
+
+[dir="ltr"] .progress-fill {
+  background: linear-gradient(to left, #d4b99e, #c4a98e);
+}
+
 .progress-fill {
   height: 100%;
-  background: linear-gradient(to right, #d4b99e, #c4a98e);
   border-radius: 30px;
   transition: width 0.5s ease;
   position: relative;
 }
 
 /* Progress labels */
+/* התאמת מיקום אחוזי ההתקדמות */
+[dir="rtl"] .progress-fill::after {
+  right: 0;
+  left: auto;
+}
+
+[dir="ltr"] .progress-fill::after {
+  left: 0;
+  right: auto;
+}
+
 .progress-fill::after {
   content: attr(data-progress);
   position: absolute;
   top: -30px;
-  right: 0;
   background-color: #333;
   color: #fff;
   padding: 4px 8px;
@@ -229,11 +269,21 @@
   border-color: #e6d5c4;
 }
 
+/* התאמת מיקום הסרגל הצדדי בכרטיסיות לפי כיוון השפה */
+[dir="rtl"] .feature-card::before {
+  right: 0;
+  left: auto;
+}
+
+[dir="ltr"] .feature-card::before {
+  left: 0;
+  right: auto;
+}
+
 .feature-card::before {
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
   width: 4px;
   height: 100%;
   background: linear-gradient(to bottom, #d4b99e, #e6d5c4);
@@ -246,13 +296,22 @@
 }
 
 /* Updated emoji style */
+/* התאמת מיקום האייקון בכרטיסיות לפי כיוון השפה */
+[dir="rtl"] .feature-emoji {
+  margin-left: 18px;
+  margin-right: 0;
+}
+
+[dir="ltr"] .feature-emoji {
+  margin-right: 18px;
+  margin-left: 0;
+}
+
 .feature-emoji {
   width: 40px;
   height: 40px;
   font-size: 1.7rem;
   color: #d4b99e;
-  margin-left: 18px;
-  margin-right: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -267,14 +326,16 @@
 
 .feature-content {
   flex: 1;
+  text-align: center;
 }
 
 .feature-content h3 {
-  margin: 0 0 10px 0;
+  margin: 0 auto 10px auto;
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
 .feature-card:hover .feature-content h3 {
@@ -288,6 +349,19 @@
   transition: all 0.3s ease;
 }
 
+/* התאמת מיקום כפתור פעולה בכרטיסיות לפי כיוון השפה */
+[dir="rtl"] .feature-action {
+  margin-right: 10px;
+  margin-left: 0;
+  transform: translateX(10px);
+}
+
+[dir="ltr"] .feature-action {
+  margin-left: 10px;
+  margin-right: 0;
+  transform: translateX(-10px);
+}
+
 .feature-action {
   display: flex;
   align-items: center;
@@ -296,10 +370,13 @@
   height: 28px;
   border-radius: 50%;
   background-color: #f8f9fa;
-  margin-right: 10px;
   opacity: 0;
-  transform: translateX(10px);
   transition: all 0.3s ease;
+}
+
+/* התאמת כיוון אייקון חץ בכרטיסיות לפי כיוון השפה */
+[dir="ltr"] .feature-action svg {
+  transform: scaleX(-1);
 }
 
 .feature-card:hover .feature-action {
@@ -404,7 +481,15 @@
   
   .feature-emoji {
     font-size: 1.5rem;
-    margin-left: 15px;
+    
+    /* התאמת רספונסיביות */
+    [dir="rtl"] & {
+      margin-left: 15px;
+    }
+    
+    [dir="ltr"] & {
+      margin-right: 15px;
+    }
   }
 }
 
@@ -435,11 +520,21 @@
   position: relative;
 }
 
+/* התאמת מיקום סימון השלמה בכרטיסיות לפי כיוון השפה */
+[dir="rtl"] .feature-card.completed::after {
+  left: 12px;
+  right: auto;
+}
+
+[dir="ltr"] .feature-card.completed::after {
+  right: 12px;
+  left: auto;
+}
+
 .feature-card.completed::after {
   content: '✓';
   position: absolute;
   top: 12px;
-  left: 12px;
   width: 22px;
   height: 22px;
   background-color: #4CAF50;
@@ -450,4 +545,53 @@
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
+}
+
+/* סגנון למיקום הלוגו וכפתור החזרה */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* עיצוב הלוגו */
+.app-logo {
+  max-width: 210px;
+  height: auto;
+}
+
+.app-logo img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  max-height: 70px;
+}
+
+@media (max-width: 576px) {
+  .header-top {
+    gap: 5px;
+  }
+
+  .app-logo {
+    max-width: 120px; 
+  }
+
+  .app-logo img {
+    max-height: 40px; 
+  }
+
+  .welcome-message {
+    font-size: 0.85rem;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .logout-button {
+    font-size: 0.85rem;
+    padding: 4px 6px;
+  }
 }

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../../styles/VenuePage.css';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
 const VenuePage = ({ onSelectVenue }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [venues, setVenues] = useState([]);
@@ -15,16 +17,16 @@ const VenuePage = ({ onSelectVenue }) => {
   const [markers, setMarkers] = useState([]);
   const [successMessage, setSuccessMessage] = useState(null);
  
-  // צולב אם עברנו לדף הזה מדף אירוע ספציפי
+  // Check if we came to this page from a specific event page
   const eventId = location.state?.eventId;
  
-  // Filters - מעודכן לפי הדרישה החדשה
+  // Filters - updated according to new requirements
   const [filters, setFilters] = useState({
-    area: 'all', // אזור
-    venueType: 'all', // סוג המקום
-    venueStyle: 'all', // סגנון אולם
-    capacity: '', // תכולה
-    amenities: { // שירותים נלווים
+    area: 'all',
+    venueType: 'all',
+    venueStyle: 'all',
+    capacity: '',
+    amenities: {
       parking: false,
       accessibility: false,
       outdoorSpace: false,
@@ -33,6 +35,8 @@ const VenuePage = ({ onSelectVenue }) => {
     },
     distance: '50', // km
   });
+
+  const [selectedPhoto, setSelectedPhoto] = useState(0);
  
   const mapRef = useRef(null);
   const placesService = useRef(null);
@@ -41,6 +45,7 @@ const VenuePage = ({ onSelectVenue }) => {
   const isMapInitialized = useRef(false);
   const isEffectRun = useRef(false);
   const mapInstance = useRef(null);
+  
  
   useEffect(() => {
     if (isEffectRun.current) return;
@@ -274,29 +279,29 @@ const VenuePage = ({ onSelectVenue }) => {
    
     switch (venueType) {
       case 'restaurant':
-        query = 'מסעדה';
+        query = t('venues.searchQueries.restaurant');
         break;
       case 'event_venue':
-        query = 'אולם אירועים';
+        query = t('venues.searchQueries.eventVenue');
         break;
       case 'banquet_hall':
-        query = 'אולם כנסים';
+        query = t('venues.searchQueries.banquetHall');
         break;
       case 'hotel':
-        query = 'מלון';
+        query = t('venues.searchQueries.hotel');
         break;
       case 'park':
-        query = 'גן אירועים';
+        query = t('venues.searchQueries.park');
         break;
       case 'museum':
-        query = 'מוזיאון';
+        query = t('venues.searchQueries.museum');
         break;
       default:
-        query = 'אולם אירועים';
+        query = t('venues.searchQueries.default');
         break;
     }
    
-    // הוספת אזור לחיפוש אם נבחר
+    // Add area to search if selected
     if (filters.area !== 'all') {
       query += ' ' + filters.area;
     }
@@ -350,23 +355,23 @@ const VenuePage = ({ onSelectVenue }) => {
   // Filter results by user preferences
   const filterVenues = (venues) => {
     return venues.filter(venue => {
-      // סינון לפי תכולה (אם יש נתונים זמינים)
+      // Filter by capacity (if data available)
       if (filters.capacity && venue.user_ratings_total) {
-        // המרה גסה מכמות דירוגים לקיבולת משוערת
+        // Rough conversion from rating count to estimated capacity
         const estimatedCapacity = venue.user_ratings_total * 2;
         if (estimatedCapacity < parseInt(filters.capacity)) {
           return false;
         }
       }
      
-      // סינון לפי סגנון אולם (אפשר להרחיב בהתאם לצורך)
+      // Filter by venue style (can be expanded as needed)
       if (filters.venueStyle !== 'all') {
-        // נניח שבתיאור או בשם המקום יש מידע על הסגנון
+        // Assume style info is in the description or venue name
         const venueText = venue.name + ' ' + (venue.vicinity || '');
        
-        if (filters.venueStyle === 'modern' && !venueText.includes('מודרני')) return false;
-        if (filters.venueStyle === 'classic' && !venueText.includes('קלאסי')) return false;
-        if (filters.venueStyle === 'outdoor' && !venueText.includes('חוץ') && !venueText.includes('גן')) return false;
+        if (filters.venueStyle === 'modern' && !venueText.includes(t('venues.styles.modern'))) return false;
+        if (filters.venueStyle === 'classic' && !venueText.includes(t('venues.styles.classic'))) return false;
+        if (filters.venueStyle === 'outdoor' && !venueText.includes(t('venues.styles.outdoor')) && !venueText.includes(t('venues.styles.garden'))) return false;
       }
      
       return true;
@@ -446,15 +451,15 @@ const VenuePage = ({ onSelectVenue }) => {
   const getVenueDetails = (placeId) => {
     if (!placesService.current || !placeId) return;
    
-      const request = {
-        placeId: placeId,
-        fields: [
-          'name', 'formatted_address', 'formatted_phone_number',
-          'website', 'photos', 'rating', 'reviews',
-          'opening_hours', 'price_level', 'user_ratings_total',
-          'geometry', 'vicinity'
-        ]
-      };
+    const request = {
+      placeId: placeId,
+      fields: [
+        'name', 'formatted_address', 'formatted_phone_number',
+        'website', 'photos', 'rating', 'reviews',
+        'opening_hours', 'price_level', 'user_ratings_total',
+        'geometry', 'vicinity', 'url', 'photo'
+      ]
+    };
    
     placesService.current.getDetails(request, (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
@@ -560,17 +565,17 @@ const VenuePage = ({ onSelectVenue }) => {
         price_level: venue.price_level || 0
       };
      
-      // אם אנחנו בדף אירוע, נשמור את המקום באירוע
+      // If we're on an event page, save the venue to the event
       if (onSelectVenue && typeof onSelectVenue === 'function') {
         onSelectVenue(venueData);
-        setSuccessMessage("המקום נוסף בהצלחה לאירוע שלך");
+        setSuccessMessage(t('venues.venueAddedSuccess'));
        
-        // סוגר את הווינדו של פרטי המקום אחרי 2 שניות
+        // Close venue details window after 2 seconds
         setTimeout(() => {
           setSelectedVenue(null);
         }, 2000);
       } else {
-        // התנהגות מקורית אם אנחנו לא בדף אירוע
+        // Original behavior if not on event page
         localStorage.setItem('selectedVenue', JSON.stringify(venueData));
         navigate('/create-event', { state: { venue: venueData } });
       }
@@ -579,118 +584,121 @@ const VenuePage = ({ onSelectVenue }) => {
     }
   };
  
-  const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200) => {
+  const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
     try {
       if (photo && typeof photo.getUrl === 'function') {
+        if (useHighQuality) {
+          return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
+        }
         return photo.getUrl({ maxWidth, maxHeight });
       }
     } catch (error) {
       console.error("Error getting photo URL:", error);
     }
-   
+    
     return '';
   };
  
   return (
     <div className="venue-page">
       <div className="venue-header">
-        <h1>חיפוש מקום לאירוע</h1>
-        <p>מצא את המקום המושלם לאירוע שלך</p>
+        <h1>{t('venues.searchTitle')}</h1>
+        <p>{t('venues.searchSubtitle')}</p>
       </div>
      
       <div className="venue-search-container">
         <form onSubmit={handleSearchSubmit} className="venue-search-form">
           <input
             type="text"
-            placeholder="חפש לפי עיר, שכונה או שם המקום"
+            placeholder={t('venues.searchPlaceholder')}
             value={search}
             onChange={handleSearchChange}
             className="venue-search-input"
           />
-          <button type="submit" className="venue-search-button">חפש</button>
+          <button type="submit" className="venue-search-button">{t('venues.searchButton')}</button>
         </form>
       </div>
      
       <div className="venue-content">
         <div className="venue-filters">
-          <h3>סינון תוצאות</h3>
+          <h3>{t('venues.filtersTitle')}</h3>
          
-          {/* אזור */}
+          {/* Area */}
           <div className="filter-group">
-            <label htmlFor="area">אזור</label>
+            <label htmlFor="area">{t('venues.filters.areaLabel')}</label>
             <select
               id="area"
               name="area"
               value={filters.area}
               onChange={handleFilterChange}
             >
-              <option value="all">כל האזורים</option>
-              <option value="ירושלים">ירושלים והסביבה</option>
-              <option value="מרכז">מרכז</option>
-              <option value="דרום">דרום</option>
-              <option value="צפון">צפון</option>
+              <option value="all">{t('venues.filters.allAreas')}</option>
+              <option value="ירושלים">{t('venues.filters.jerusalem')}</option>
+              <option value="מרכז">{t('venues.filters.center')}</option>
+              <option value="דרום">{t('venues.filters.south')}</option>
+              <option value="צפון">{t('venues.filters.north')}</option>
             </select>
           </div>
          
-          {/* סוג המקום */}
+          {/* Venue Type */}
           <div className="filter-group">
-            <label htmlFor="venueType">סוג המקום</label>
+            <label htmlFor="venueType">{t('venues.filters.typeLabel')}</label>
             <select
               id="venueType"
               name="venueType"
               value={filters.venueType}
               onChange={handleFilterChange}
             >
-              <option value="all">הכל</option>
-              <option value="restaurant">מסעדה</option>
-              <option value="event_venue">אולם אירועים</option>
-              <option value="banquet_hall">אולם כנסים</option>
-              <option value="hotel">מלון</option>
-              <option value="park">גן אירועים</option>
-              <option value="museum">מוזיאון</option>
+              <option value="all">{t('venues.filters.allTypes')}</option>
+              <option value="restaurant">{t('venues.filters.restaurant')}</option>
+              <option value="event_venue">{t('venues.filters.eventVenue')}</option>
+              <option value="banquet_hall">{t('venues.filters.banquetHall')}</option>
+              <option value="hotel">{t('venues.filters.hotel')}</option>
+              <option value="park">{t('venues.filters.park')}</option>
+              <option value="museum">{t('venues.filters.museum')}</option>
             </select>
           </div>
          
-          {/* סגנון אולם */}
+          {/* Venue Style */}
           <div className="filter-group">
-            <label htmlFor="venueStyle">סגנון אולם</label>
+            <label htmlFor="venueStyle">{t('venues.filters.styleLabel')}</label>
             <select
               id="venueStyle"
               name="venueStyle"
               value={filters.venueStyle}
               onChange={handleFilterChange}
             >
-              <option value="all">הכל</option>
-              <option value="modern">מודרני</option>
-              <option value="classic">קלאסי</option>
-              <option value="outdoor">חוץ/גן</option>
-              <option value="urban">אורבני</option>
-              <option value="luxury">יוקרה</option>
+              <option value="all">{t('venues.filters.allStyles')}</option>
+              <option value="modern">{t('venues.filters.modern')}</option>
+              <option value="classic">{t('venues.filters.classic')}</option>
+              <option value="outdoor">{t('venues.filters.outdoor')}</option>
+              <option value="urban">{t('venues.filters.urban')}</option>
+              <option value="luxury">{t('venues.filters.luxury')}</option>
             </select>
           </div>
          
-          {/* תכולה */}
+          {/* Capacity */}
           <div className="filter-group">
-            <label htmlFor="capacity">תכולה (מספר אורחים)</label>
+            <label htmlFor="capacity">{t('venues.filters.capacityLabel')}</label>
             <select
               id="capacity"
               name="capacity"
               value={filters.capacity}
               onChange={handleFilterChange}
             >
-              <option value="">בחר תכולה</option>
-              <option value="50">עד 50 אורחים</option>
-              <option value="100">עד 100 אורחים</option>
-              <option value="200">עד 200 אורחים</option>
-              <option value="300">עד 300 אורחים</option>
-              <option value="500">עד 500 אורחים</option>
-              <option value="1000">מעל 500 אורחים</option>
+              <option value="">{t('venues.filters.selectCapacity')}</option>
+              <option value="50">{t('venues.filters.upTo50')}</option>
+              <option value="100">{t('venues.filters.upTo100')}</option>
+              <option value="200">{t('venues.filters.upTo200')}</option>
+              <option value="300">{t('venues.filters.upTo300')}</option>
+              <option value="500">{t('venues.filters.upTo500')}</option>
+              <option value="1000">{t('venues.filters.above500')}</option>
             </select>
           </div>
          
-          {/* שירותים נלווים */}
+          {/* Amenities */}
           <div className="filter-group amenities-group">
-            <label>שירותים נלווים</label>
+            <label>{t('venues.filters.amenitiesLabel')}</label>
             <div className="checkbox-group">
               <label>
                 <input
@@ -699,7 +707,7 @@ const VenuePage = ({ onSelectVenue }) => {
                   checked={filters.amenities.parking}
                   onChange={handleFilterChange}
                 />
-                חניה
+                {t('venues.filters.parking')}
               </label>
              
               <label>
@@ -709,7 +717,7 @@ const VenuePage = ({ onSelectVenue }) => {
                   checked={filters.amenities.accessibility}
                   onChange={handleFilterChange}
                 />
-                נגישות
+                {t('venues.filters.accessibility')}
               </label>
              
               <label>
@@ -719,7 +727,7 @@ const VenuePage = ({ onSelectVenue }) => {
                   checked={filters.amenities.outdoorSpace}
                   onChange={handleFilterChange}
                 />
-                שטח חוץ
+                {t('venues.filters.outdoorSpace')}
               </label>
              
               <label>
@@ -729,7 +737,7 @@ const VenuePage = ({ onSelectVenue }) => {
                   checked={filters.amenities.catering}
                   onChange={handleFilterChange}
                 />
-                קייטרינג במקום
+                {t('venues.filters.catering')}
               </label>
              
               <label>
@@ -739,24 +747,24 @@ const VenuePage = ({ onSelectVenue }) => {
                   checked={filters.amenities.accommodation}
                   onChange={handleFilterChange}
                 />
-                אפשרויות לינה
+                {t('venues.filters.accommodation')}
               </label>
             </div>
           </div>
          
-          <button className="filter-apply-button" onClick={applyFilters}>החל סינון</button>
+          <button className="filter-apply-button" onClick={applyFilters}>{t('venues.filters.applyButton')}</button>
         </div>
        
         <div className="venue-results-container">
           <div className="venue-map" ref={mapRef}></div>
          
           <div className="venue-list">
-            <h3>תוצאות חיפוש</h3>
+            <h3>{t('venues.searchResults')}</h3>
            
             {loading ? (
-              <div className="loading-indicator">טוען מקומות...</div>
+              <div className="loading-indicator">{t('venues.loading')}</div>
             ) : venues.length === 0 ? (
-              <div className="no-results">לא נמצאו מקומות. נסה לשנות את החיפוש או הסינון.</div>
+              <div className="no-results">{t('venues.noResults')}</div>
             ) : (
               <div className="venues-grid">
                 {venues.map(venue => (
@@ -765,32 +773,36 @@ const VenuePage = ({ onSelectVenue }) => {
                     className={`venue-card ${selectedVenue && selectedVenue.place_id === venue.place_id ? 'selected' : ''}`}
                     onClick={() => getVenueDetails(venue.place_id)}
                   >
-                    <div className="venue-image">
+              <div className="venue-image">
                 {venue.photos && venue.photos.length > 0 ? (
                   <img
-                    src={getPhotoUrl(venue.photos[0])}
+                    src={getPhotoUrl(venue.photos[0], 300, 200, true)} // Use higher quality for main image
                     alt={venue.name}
                     onError={(e) => {
+                      // If main image fails, try other images
                       if (venue.photos && venue.photos.length > 1) {
+                        // Try other images sequentially
                         const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
                         const nextIndex = (currentIndex + 1) % venue.photos.length;
-                       
+                        
                         if (nextIndex !== currentIndex) {
                           e.target.dataset.photoIndex = nextIndex.toString();
-                          e.target.src = getPhotoUrl(venue.photos[nextIndex]);
+                          e.target.src = getPhotoUrl(venue.photos[nextIndex], 300, 200, true);
                           return;
                         }
                       }
-                     
+                      
+                      // If no other images or all failed, use generated image
                       e.target.onerror = null;
-                      e.target.src = `https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(venue.name || 'מקום אירוע')}`;
+                      e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`;
                     }}
                     data-photo-index="0"
                   />
                 ) : (
+                  // If no images at all, use generated image
                   <img
-                    src={`https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(venue.name || 'מקום אירוע')}`}
-                    alt={venue.name || 'מקום האירוע'}
+                    src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`}
+                    alt={venue.name || t('venues.defaultVenueName')}
                   />
                 )}
               </div>
@@ -833,7 +845,7 @@ const VenuePage = ({ onSelectVenue }) => {
                 <button className="close-details" onClick={() => setSelectedVenue(null)}>×</button>
               </div>
              
-              {/* הודעת הצלחה */}
+              {/* Success message */}
               {successMessage && (
                 <div className="success-message">
                   {successMessage}
@@ -843,85 +855,80 @@ const VenuePage = ({ onSelectVenue }) => {
               <div className="venue-details-content">
                 <div className="venue-photos">
                   <div className="main-photo">
-                  {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
-                    <img
-                      src={getPhotoUrl(selectedVenue.photos[0], 600, 400)}
-                      alt={selectedVenue.name}
-                      onError={(e) => {
-                        if (selectedVenue.photos && selectedVenue.photos.length > 1) {
-                          const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
-                          const nextIndex = (currentIndex + 1) % selectedVenue.photos.length;
-                         
-                          if (nextIndex !== currentIndex) {
-                            e.target.dataset.photoIndex = nextIndex.toString();
-                            e.target.src = getPhotoUrl(selectedVenue.photos[nextIndex], 600, 400);
-                            return;
-                          }
-                        }
-                       
-                        e.target.onerror = null;
-                        e.target.src = `https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`;
-                      }}
-                      data-photo-index="0"
-                    />
-                  ) : (
-                    <img
-                      src={`https://dummyimage.com/600x400/cccccc/666666&text=${encodeURIComponent(selectedVenue.name || 'מקום אירוע')}`}
-                      alt={selectedVenue.name || 'מקום האירוע'}
-                    />
-                  )}
-                </div>
-                 
-                  {selectedVenue.photos && selectedVenue.photos.length > 1 && (
-                    <div className="additional-photos">
-                  {selectedVenue.photos.slice(1, 5).map((photo, index) => {
-                    return (
+                    {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
                       <img
-                        key={index}
-                        src={getPhotoUrl(photo, 150, 100)}
-                        alt={`${selectedVenue.name} - ${index + 1}`}
+                        src={getPhotoUrl(selectedVenue.photos[selectedPhoto], 600, 400, true)} // Use higher quality
+                        alt={selectedVenue.name}
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          if (selectedVenue.photos && selectedVenue.photos.length > 1) {
+                            // If current image failed, try next image
+                            const nextIndex = (selectedPhoto + 1) % selectedVenue.photos.length;
+                            setSelectedPhoto(nextIndex);
+                          } else {
+                            // If no other images or all failed, use generated image
+                            e.target.onerror = null;
+                            e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`;
+                          }
                         }}
                       />
-                    );
-                  })}
-                </div>
+                    ) : (
+                      <img
+                        src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`}
+                        alt={selectedVenue.name || t('venues.defaultVenueName')}
+                      />
+                    )}
+                  </div>
+                  
+                  {selectedVenue.photos && selectedVenue.photos.length > 1 && (
+                    <div className="all-photos">
+                      {selectedVenue.photos.map((photo, index) => (
+                        <img
+                          key={index}
+                          src={getPhotoUrl(photo, 100, 70)}
+                          alt={`${selectedVenue.name} - ${index + 1}`}
+                          className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
+                          onClick={() => setSelectedPhoto(index)}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
-               
+                            
                 <div className="venue-info-detailed">
                   <p className="address">
-                    <strong>כתובת:</strong> {selectedVenue.formatted_address}
+                    <strong>{t('venues.details.address')}:</strong> {selectedVenue.formatted_address}
                   </p>
                  
                   {selectedVenue.formatted_phone_number && (
                     <p className="phone">
-                      <strong>טלפון:</strong> {selectedVenue.formatted_phone_number}
+                      <strong>{t('venues.details.phone')}:</strong> {selectedVenue.formatted_phone_number}
                     </p>
                   )}
                  
                   {selectedVenue.website && (
                     <p className="website">
-                      <strong>אתר:</strong> <a href={selectedVenue.website} target="_blank" rel="noopener noreferrer">{selectedVenue.website}</a>
+                      <strong>{t('venues.details.website')}:</strong> <a href={selectedVenue.website} target="_blank" rel="noopener noreferrer">{selectedVenue.website}</a>
                     </p>
                   )}
                  
                   {selectedVenue.rating && (
                     <p className="rating-details">
-                      <strong>דירוג:</strong> {selectedVenue.rating} מתוך 5 ({selectedVenue.user_ratings_total} ביקורות)
+                      <strong>{t('venues.details.rating')}:</strong> {selectedVenue.rating} {t('venues.details.outOf5')} ({selectedVenue.user_ratings_total} {t('venues.details.reviews')})
                     </p>
                   )}
                  
                   {selectedVenue.price_level && (
                     <p className="price-details">
-                      <strong>רמת מחיר:</strong> {'$'.repeat(selectedVenue.price_level)}
+                      <strong>{t('venues.details.priceLevel')}:</strong> {'$'.repeat(selectedVenue.price_level)}
                     </p>
                   )}
                  
                   {selectedVenue.opening_hours && selectedVenue.opening_hours.weekday_text && (
                     <div className="opening-hours">
-                      <strong>שעות פתיחה:</strong>
+                      <strong>{t('venues.details.openingHours')}:</strong>
                       <ul>
                         {selectedVenue.opening_hours.weekday_text.map((day, index) => (
                           <li key={index}>{day}</li>
@@ -933,7 +940,7 @@ const VenuePage = ({ onSelectVenue }) => {
                
                 {selectedVenue.reviews && selectedVenue.reviews.length > 0 && (
                   <div className="venue-reviews">
-                    <h3>ביקורות</h3>
+                    <h3>{t('venues.details.reviewsTitle')}</h3>
                     <div className="reviews-list">
                       {selectedVenue.reviews.slice(0, 3).map((review, index) => (
                         <div key={index} className="review">
@@ -955,7 +962,7 @@ const VenuePage = ({ onSelectVenue }) => {
                 <div className="venue-actions">
                   {!successMessage && (
                     <button className="select-venue-button" onClick={() => selectVenue(selectedVenue)}>
-                      בחר מקום זה לאירוע
+                      {t('venues.selectButton')}
                     </button>
                   )}
                 </div>

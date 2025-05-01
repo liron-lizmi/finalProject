@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import emailjs from 'emailjs-com';
 import '../../styles/AuthPages.css';
 
 const ForgotPassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -19,13 +21,13 @@ const ForgotPassword = () => {
     e.preventDefault();
     
     if (!email) {
-      setError('אנא הכנס כתובת אימייל');
+      setError(t('errors.emailRequired', 'אנא הכנס כתובת אימייל'));
       return;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('כתובת האימייל אינה תקינה');
+      setError(t('errors.invalidEmail', 'כתובת האימייל אינה תקינה'));
       return;
     }
     
@@ -45,7 +47,7 @@ const ForgotPassword = () => {
         to_email: email,
         to_name: email.split('@')[0],
         reset_link: resetURL,
-        site_name: "PlanIt",
+        site_name: t('general.appName', "PlanIt"),
         current_year: new Date().getFullYear()
       };
       
@@ -62,7 +64,7 @@ const ForgotPassword = () => {
         console.error('Email sending error:', emailError);
       }
       
-      setMessage('קישור לאיפוס סיסמה נשלח לאימייל שלך');
+      setMessage(t('auth.resetLinkSent', 'קישור לאיפוס סיסמה נשלח לאימייל שלך'));
       
       setEmail('');
       
@@ -70,11 +72,11 @@ const ForgotPassword = () => {
       console.error('Error details:', err);
       
       if (err.response?.status === 404) {
-        setError('אימייל לא קיים במערכת');
+        setError(t('errors.emailNotFound', 'אימייל לא קיים במערכת'));
       } else if (err.message?.includes('emailjs')) {
-        setError('אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר');
+        setError(t('errors.emailSendFailed', 'אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר'));
       } else {
-        setError(err.response?.data?.message || 'אירעה שגיאה. אנא נסה שוב מאוחר יותר');
+        setError(err.response?.data?.message || t('errors.generalError', 'אירעה שגיאה. אנא נסה שוב מאוחר יותר'));
       }
     } finally {
       setIsSubmitting(false);
@@ -84,7 +86,7 @@ const ForgotPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>שחזור סיסמה</h2>
+        <h2>{t('auth.resetPasswordTitle', 'שחזור סיסמה')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
@@ -92,7 +94,7 @@ const ForgotPassword = () => {
           <div className="form-group">
             <input
               type="email"
-              placeholder="הזן את כתובת האימייל שלך"
+              placeholder={t('auth.enterEmailPlaceholder', 'הזן את כתובת האימייל שלך')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -104,12 +106,12 @@ const ForgotPassword = () => {
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'שולח...' : 'שלח קישור לאיפוס סיסמה'}
+            {isSubmitting ? t('auth.sending', 'שולח...') : t('auth.sendResetLink', 'שלח קישור לאיפוס סיסמה')}
           </button>
         </form>
         
         <p className="auth-link">
-          <span onClick={() => navigate('/login')}>חזרה להתחברות</span>
+          <span onClick={() => navigate('/login')}>{t('auth.backToLogin', 'חזרה להתחברות')}</span>
         </p>
       </div>
     </div>

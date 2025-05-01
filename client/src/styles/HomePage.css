@@ -5,8 +5,16 @@ body {
   padding: 0;
   background-color: #faf9f8;
   color: #333;
-  direction: rtl;
   line-height: 1.6;
+}
+
+/* התאמת כיוון דף הבית לפי שפה */
+[dir="rtl"] body {
+  direction: rtl;
+}
+
+[dir="ltr"] body {
+  direction: ltr;
 }
 
 .homepage-container {
@@ -141,7 +149,6 @@ nav {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
   width: 100%;
   height: 100%;
   background: linear-gradient(to right, #a68b76, #d4b99e);
@@ -149,13 +156,26 @@ nav {
   z-index: -1;
 }
 
+/* התאמת אנימציית כפתור CTA לפי כיוון שפה */
+[dir="rtl"] .cta::before {
+  left: -100%;
+}
+
+[dir="ltr"] .cta::before {
+  right: -100%;
+}
+
+[dir="rtl"] .cta:hover::before {
+  left: 0;
+}
+
+[dir="ltr"] .cta:hover::before {
+  right: 0;
+}
+
 .cta:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 25px rgba(212, 185, 158, 0.35);
-}
-
-.cta:hover::before {
-  left: 0;
 }
 
 /* Elegant scroll down indicator */
@@ -279,16 +299,6 @@ nav {
   text-align: center;
 }
 
-.feature {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 120px;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.6s ease;
-}
-
 .feature.visible {
   opacity: 1;
   transform: translateY(0);
@@ -298,18 +308,43 @@ nav {
   margin-bottom: 0;
 }
 
+/* סדר פריטים בחלק התכונות - ללא תלות בשפה */
+.feature {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 120px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease;
+}
+
 .feature-odd {
+  display: flex;
   flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 120px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease;
+}
+
+/* התאמת יישור טקסט בחלק התכונות לפי כיוון השפה */
+[dir="rtl"] .feature-text,
+[dir="rtl"] .feature-odd .feature-text {
+  text-align: right;
+}
+
+[dir="ltr"] .feature-text,
+[dir="ltr"] .feature-odd .feature-text {
+  text-align: left;
 }
 
 .feature-text {
   flex: 1;
   padding: 0 50px;
-  text-align: right;
-}
-
-.feature-odd .feature-text {
-  text-align: left;
 }
 
 .feature-image {
@@ -389,6 +424,17 @@ nav {
   margin-bottom: 0;
 }
 
+/* התאמת מיקום הקו בשלבי תכנון לפי כיוון השפה */
+[dir="rtl"] .step::after {
+  left: 40px;
+  right: auto;
+}
+
+[dir="ltr"] .step::after {
+  right: 40px;
+  left: auto;
+}
+
 .step::after {
   content: '';
   position: absolute;
@@ -396,7 +442,6 @@ nav {
   height: calc(100% + 80px);
   background: linear-gradient(to bottom, #d4b99e 0%, rgba(212, 185, 158, 0.2) 100%);
   top: 20px;
-  left: 40px;
   z-index: 0;
 }
 
@@ -417,9 +462,17 @@ nav {
   flex-shrink: 0;
 }
 
+/* התאמת ריפוד תוכן שלבים לפי כיוון השפה */
+[dir="rtl"] .step-content {
+  padding: 0 40px 0 0;
+}
+
+[dir="ltr"] .step-content {
+  padding: 0 0 0 40px;
+}
+
 .step-content {
   flex: 1;
-  padding: 0 40px;
 }
 
 .step h3 {
@@ -457,11 +510,21 @@ nav {
   position: relative;
 }
 
+/* התאמת מיקום המרכאות בעדויות לפי כיוון השפה */
+[dir="rtl"] .testimonial:before {
+  left: 30px;
+  right: auto;
+}
+
+[dir="ltr"] .testimonial:before {
+  right: 30px;
+  left: auto;
+}
+
 .testimonial:before {
   content: '"';
   position: absolute;
   top: 20px;
-  left: 30px;
   font-size: 120px;
   color: rgba(212, 185, 158, 0.1);
   font-family: Georgia, serif;
@@ -525,8 +588,6 @@ nav {
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
   background-color: #f8f5f2;
 }
-
-
 
 /* Footer */
 .footer {
@@ -601,23 +662,16 @@ nav {
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .feature {
+  .feature, 
+  .feature-odd {
     flex-direction: column;
     margin-bottom: 80px;
   }
   
-  .feature-odd {
-    flex-direction: column;
-  }
-  
   .feature-text {
-    text-align: center;
+    text-align: center !important;
     padding: 0;
     margin-bottom: 40px;
-  }
-  
-  .feature-odd .feature-text {
-    text-align: center;
   }
   
   .feature-image {

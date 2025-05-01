@@ -8,8 +8,10 @@ import {
   FaBirthdayCake,
   FaBuilding
 } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const HomePage = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const featuresRef = useRef([]);
@@ -17,6 +19,10 @@ const HomePage = () => {
 
   // Handle scroll effect for header
   useEffect(() => {
+    // Set document direction based on current language
+    document.documentElement.dir = i18n.dir();
+    document.documentElement.lang = i18n.language;
+    
     const handleScroll = () => {
       if (window.scrollY > 50) {
         setScrolled(true);
@@ -48,7 +54,7 @@ const HomePage = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [i18n.language, i18n.dir]);
 
   // Check if element is in viewport
   const isElementInViewport = (el) => {
@@ -77,10 +83,10 @@ const HomePage = () => {
     <div className="homepage-container">
       {/* Header */}
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-        <img src="/images/logo.png" alt="PlanIt Logo" className="logo" />
+        <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" />
         <nav>
-          <button className="btn" onClick={() => navigate('/register')}>הירשם</button>
-          <button className="btn" onClick={() => navigate('/login')}>התחבר</button>
+          <button className="btn" onClick={() => navigate('/register')}>{t('general.signup')}</button>
+          <button className="btn" onClick={() => navigate('/login')}>{t('general.login')}</button>
         </nav>
       </header>
 
@@ -88,8 +94,8 @@ const HomePage = () => {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="text-gradient">PlanIt</h1>
-          <p className="subheader">הפכו את האירוע שלכם לחוויה בלתי נשכחת עם הכלים המתקדמים ביותר לתכנון וניהול אירועים</p>
-          <button className="btn cta" onClick={() => navigate('/login')}>התחל לתכנן את האירוע שלך</button>
+          <p className="subheader">{t('home.hero.subtitle')}</p>
+          <button className="btn cta" onClick={() => navigate('/login')}>{t('home.hero.cta')}</button>
         </div>
         <div className="scroll-indicator" onClick={() => scrollToSection('event-types')}>
           <FaChevronDown />
@@ -98,10 +104,9 @@ const HomePage = () => {
 
       {/* Event Types Section */}
       <section id="event-types" className="section section-light event-definition">
-        <h2 className="section-title">האירוע שלך, בדרך שלך</h2>
+        <h2 className="section-title">{t('home.eventTypes.title')}</h2>
         <p className="section-description">
-          בין אם אתם מתכננים חתונה מפוארת, אירוע עסקי, או מסיבת יום הולדת אינטימית,
-          הפלטפורמה שלנו מותאמת לכל סוגי האירועים ולכל גודל תקציב.
+          {t('home.eventTypes.description')}
         </p>
         
         <div className="event-types">
@@ -109,146 +114,133 @@ const HomePage = () => {
             <div className="event-icon">
               <FaRing />
             </div>
-            <h3>חתונות</h3>
-            <p>תכנון מושלם ליום המיוחד שלכם</p>
+            <h3>{t('home.eventTypes.wedding.title')}</h3>
+            <p>{t('home.eventTypes.wedding.description')}</p>
           </div>
           <div className="event-type">
             <div className="event-icon">
               <FaBuilding />
             </div>
-            <h3>אירועים עסקיים</h3>
-            <p>כנסים, אירועי חברה והשקות מוצרים</p>
+            <h3>{t('home.eventTypes.business.title')}</h3>
+            <p>{t('home.eventTypes.business.description')}</p>
           </div>
           <div className="event-type">
             <div className="event-icon">
               <FaBirthdayCake />
             </div>
-            <h3>יום הולדת</h3>
-            <p>חגיגות בלתי נשכחות לכל גיל</p>
+            <h3>{t('home.eventTypes.birthday.title')}</h3>
+            <p>{t('home.eventTypes.birthday.description')}</p>
           </div>
           <div className="event-type">
             <div className="event-icon">
               <FaGlassCheers />
             </div>
-            <h3>אירועים פרטיים</h3>
-            <p>בר/בת מצווה, אירוסין ומסיבות</p>
+            <h3>{t('home.eventTypes.private.title')}</h3>
+            <p>{t('home.eventTypes.private.description')}</p>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
       <section id="features" className="section section-dark features-section">
-        <h2 className="section-title">כלים מתקדמים לתכנון אירועים</h2>
+        <h2 className="section-title">{t('home.features.title')}</h2>
         <p className="section-description">
-          הפלטפורמה שלנו מציעה מגוון כלים חכמים שיסייעו לך בכל שלב מתכנון האירוע ועד לניהולו בזמן אמת.
+          {t('home.features.description')}
         </p>
         
         <div className="feature" ref={el => featuresRef.current[0] = el}>
           <div className="feature-text">
-            <h3>בחירת מקום מושלם</h3>
+            <h3>{t('home.features.venue.title')}</h3>
             <p>
-              מצא את המקום האידיאלי לאירוע שלך עם סינון חכם לפי מיקום, תקציב, קיבולת אורחים ואווירה. 
-              גלה אולמות, גני אירועים ומקומות ייחודיים שמתאימים בדיוק לדרישות שלך, קבל המלצות מותאמות אישית,
-              והשווה אפשרויות שונות במקום אחד.
+              {t('home.features.venue.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>גלה מקומות</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.venue.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image1.png" alt="בחירת מקום מושלם" />
+            <img src="/images/image1.png" alt={t('home.features.venue.title')} />
           </div>
         </div>
         
         <div className="feature feature-odd" ref={el => featuresRef.current[1] = el}>
           <div className="feature-text">
-            <h3>ניהול ספקים חכם</h3>
+            <h3>{t('home.features.vendors.title')}</h3>
             <p>
-              נהל את כל הספקים שלך במקום אחד - מוזיקה, קייטרינג, צילום, עיצוב ועוד. 
-              השווה הצעות מחיר, שמור מסמכים חשובים ונהל תקשורת יעילה מול כל הגורמים המעורבים.
-              המערכת מתריעה על תאריכי יעד חשובים ומסייעת לך לעקוב אחר התקדמות התכנון.
+              {t('home.features.vendors.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>נהל ספקים</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.vendors.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image2.png" alt="ניהול ספקים חכם" />
+            <img src="/images/image2.png" alt={t('home.features.vendors.title')} />
           </div>
         </div>
         
         <div className="feature" ref={el => featuresRef.current[2] = el}>
           <div className="feature-text">
-            <h3>רשימת מוזמנים חכמה</h3>
+            <h3>{t('home.features.guests.title')}</h3>
             <p>
-              נהל רשימות מוזמנים בקלות, שלח הזמנות דיגיטליות מותאמות אישית ועקוב אחר אישורי הגעה בזמן אמת. 
-              הכלי החכם שלנו מסייע לך לשמור על קשר עם האורחים לפני ואחרי האירוע, לאסוף העדפות תפריט, 
-              ולנהל אירועים נלווים כמו מסיבת רווקות או חינה.
+              {t('home.features.guests.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>נהל מוזמנים</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.guests.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image3.png" alt="רשימת מוזמנים חכמה" />
+            <img src="/images/image3.png" alt={t('home.features.guests.title')} />
           </div>
         </div>
         
         <div className="feature feature-odd" ref={el => featuresRef.current[3] = el}>
           <div className="feature-text">
-            <h3>סידורי הושבה אינטואיטיביים</h3>
+            <h3>{t('home.features.seating.title')}</h3>
             <p>
-              אלגוריתם AI לסידור מושבים אופטימלי לאורחים שלך, המתחשב בדינמיקות משפחתיות, העדפות אישיות וצרכים מיוחדים. 
-              הממשק האינטראקטיבי מאפשר לך לתכנן ולשנות סידורי ישיבה בקלות, לשתף עם בני משפחה לקבלת משוב,
-              ולייצא תרשימים מפורטים לספקים.
+              {t('home.features.seating.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>תכנן סידורי ישיבה</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.seating.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image4.png" alt="סידורי הושבה אינטואיטיביים" />
+            <img src="/images/image4.png" alt={t('home.features.seating.title')} />
           </div>
         </div>
         
         <div className="feature" ref={el => featuresRef.current[4] = el}>
           <div className="feature-text">
-            <h3>ניהול לו"ז מדויק</h3>
+            <h3>{t('home.features.timeline.title')}</h3>
             <p>
-              תכנן את האירוע שלך עם לו"ז חכם לכל שלב. קבל התראות על מועדי תשלום, פגישות עם ספקים ומשימות חשובות. 
-              הכלי שלנו מוודא שלא תפספס אף פרט חשוב בדרך לאירוע המושלם, מציע תבניות מוכנות מראש להתנהלות יעילה,
-              ומאפשר שיתוף לו"ז עם המשפחה או מתכנן אירועים מקצועי.
+              {t('home.features.timeline.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>נהל לו"ז</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.timeline.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image5.png" alt="ניהול לו״ז מדויק" />
+            <img src="/images/image5.png" alt={t('home.features.timeline.title')} />
           </div>
         </div>
         
         <div className="feature feature-odd" ref={el => featuresRef.current[5] = el}>
           <div className="feature-text">
-            <h3>ניהול תקציב חכם</h3>
+            <h3>{t('home.features.budget.title')}</h3>
             <p>
-              עקוב אחר התקציב שלך והוצאות האירוע בזמן אמת. הכלי החכם שלנו עוזר לך להתמקד במה שחשוב באמת, 
-              לזהות מקומות לחסוך ולוודא שתישאר במסגרת התקציב שהגדרת. קבל תובנות לגבי דפוסי הוצאה, השווה בין הצעות מחיר,
-              וקבל התראות כשמתקרבים למגבלות תקציב.
+              {t('home.features.budget.description')}
             </p>
-            <a href="#" className="feature-btn" onClick={redirectToLogin}>נהל תקציב</a>
+            <a href="#" className="feature-btn" onClick={redirectToLogin}>{t('home.features.budget.cta')}</a>
           </div>
           <div className="feature-image">
-            <img src="/images/image6.png" alt="ניהול תקציב חכם" />
+            <img src="/images/image6.png" alt={t('home.features.budget.title')} />
           </div>
         </div>
       </section>
 
       {/* Planning Steps Section */}
       <section id="process" className="section section-light">
-        <h2 className="section-title">תהליך תכנון פשוט ואפקטיבי</h2>
+        <h2 className="section-title">{t('home.process.title')}</h2>
         <p className="section-description">
-          מהרעיון הראשוני ועד ליום האירוע, מערכת PlanIt מלווה אותך בכל צעד בדרך
+          {t('home.process.description')}
         </p>
         
         <div className="planning-steps">
           <div className="step" ref={el => stepsRef.current[0] = el}>
             <div className="step-number">1</div>
             <div className="step-content">
-              <h3>הגדרת האירוע</h3>
+              <h3>{t('home.process.step1.title')}</h3>
               <p>
-                צור חשבון ב-PlanIt והגדר את סוג האירוע, התאריך, מספר המוזמנים והתקציב.
-                המערכת תתאים את עצמה לצרכים הספציפיים שלך ותיצור תוכנית עבודה אישית.
+                {t('home.process.step1.description')}
               </p>
             </div>
           </div>
@@ -256,10 +248,9 @@ const HomePage = () => {
           <div className="step" ref={el => stepsRef.current[1] = el}>
             <div className="step-number">2</div>
             <div className="step-content">
-              <h3>בחירת מקום וספקים</h3>
+              <h3>{t('home.process.step2.title')}</h3>
               <p>
-                המערכת תציע לך אפשרויות מותאמות אישית למקומות וספקים המתאימים לדרישות ולתקציב שלך.
-                תוכל להשוות מחירים, לקרוא חוות דעת, ולקבל החלטות מושכלות במקום אחד.
+                {t('home.process.step2.description')}
               </p>
             </div>
           </div>
@@ -267,10 +258,9 @@ const HomePage = () => {
           <div className="step" ref={el => stepsRef.current[2] = el}>
             <div className="step-number">3</div>
             <div className="step-content">
-              <h3>ניהול הזמנות ואורחים</h3>
+              <h3>{t('home.process.step3.title')}</h3>
               <p>
-                שליחת הזמנות דיגיטליות מעוצבות, מעקב אחר אישורי הגעה, וניהול הערות מיוחדות כמו העדפות תפריט או צרכים מיוחדים.
-                המערכת מרכזת את כל המידע במקום אחד ומאפשרת תקשורת קלה עם האורחים.
+                {t('home.process.step3.description')}
               </p>
             </div>
           </div>
@@ -278,10 +268,9 @@ const HomePage = () => {
           <div className="step" ref={el => stepsRef.current[3] = el}>
             <div className="step-number">4</div>
             <div className="step-content">
-              <h3>תכנון סופי ולוגיסטיקה</h3>
+              <h3>{t('home.process.step4.title')}</h3>
               <p>
-                עיצוב סידורי הישיבה, תיאום סופי עם ספקים ובניית לוח זמנים מפורט ליום האירוע. המערכת מוודאת שכל הפרטים הקטנים
-                מטופלים ושהכל מוכן ליום הגדול.
+                {t('home.process.step4.description')}
               </p>
             </div>
           </div>
@@ -289,10 +278,9 @@ const HomePage = () => {
           <div className="step" ref={el => stepsRef.current[4] = el}>
             <div className="step-number">5</div>
             <div className="step-content">
-              <h3>ניהול האירוע בזמן אמת</h3>
+              <h3>{t('home.process.step5.title')}</h3>
               <p>
-                קבל גישה לכל הנתונים החשובים ביום האירוע, שתף משימות עם אנשי צוות, ותעד רגעים מיוחדים ביומן האירוע הדיגיטלי.
-                גם אחרי האירוע, תוכל לשלוח תודות לאורחים ולספקים ולסכם את האירוע המוצלח שלך.
+                {t('home.process.step5.description')}
               </p>
             </div>
           </div>
@@ -301,42 +289,42 @@ const HomePage = () => {
 
       {/* Testimonials Section */}
       <section id="testimonials" className="section testimonials-section">
-        <h2 className="section-title">לקוחות מספרים</h2>
+        <h2 className="section-title">{t('home.testimonials.title')}</h2>
         <div className="testimonial-container">
           <div className="testimonial">
             <p className="testimonial-text">
-              "PlanIt פשוט שינה את כל חווית תכנון החתונה שלנו. במקום לחץ ודאגות, יכולנו באמת ליהנות מהתהליך. הכלים לניהול תקציב ורשימת מוזמנים חסכו לנו המון זמן וכסף, וביום האירוע הכל התנהל בצורה מושלמת!"
+              {t('home.testimonials.quote')}
             </p>
-            <p className="testimonial-author">רונית ודן</p>
-            <p className="testimonial-role">חתונה בגן אירועים, יוני 2024</p>
+            <p className="testimonial-author">{t('home.testimonials.author')}</p>
+            <p className="testimonial-role">{t('home.testimonials.event')}</p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="cta-section">
-        <h2 className="cta-title">מוכנים להתחיל?</h2>
+        <h2 className="cta-title">{t('home.cta.title')}</h2>
         <p className="cta-description">
-          פתחו חשבון חינמי והתחילו לתכנן את האירוע המושלם שלכם כבר היום!
+          {t('home.cta.description')}
         </p>
-        <button className="cta-button" onClick={() => navigate('/register')}>צור חשבון חדש</button>
+        <button className="cta-button" onClick={() => navigate('/register')}>{t('home.cta.button')}</button>
       </section>
 
       {/* Footer */}
       <footer className="footer">
-        <img src="/images/logo.png" alt="PlanIt Logo" className="footer-logo" />
+        <img src="/images/logo.png" alt={t('general.appLogo')} className="footer-logo" />
         <p className="footer-description">
-          PlanIt הוא הפתרון המושלם לתכנון וניהול אירועים מוצלחים. אנו מחויבים לעזור לך להפוך את החזון שלך למציאות.
+          {t('home.footer.description')}
         </p>
         <div className="footer-links">
-          <a href="#" className="footer-link">אודות</a>
-          <a href="#" className="footer-link">שירותים</a>
-          <a href="#" className="footer-link">בלוג</a>
-          <a href="#" className="footer-link">צור קשר</a>
-          <a href="#" className="footer-link">תנאי שימוש</a>
-          <a href="#" className="footer-link">מדיניות פרטיות</a>
+          <a href="#" className="footer-link">{t('home.footer.about')}</a>
+          <a href="#" className="footer-link">{t('home.footer.services')}</a>
+          <a href="#" className="footer-link">{t('home.footer.blog')}</a>
+          <a href="#" className="footer-link">{t('home.footer.contact')}</a>
+          <a href="#" className="footer-link">{t('home.footer.terms')}</a>
+          <a href="#" className="footer-link">{t('home.footer.privacy')}</a>
         </div>
-        <p className="copyright">כל הזכויות שמורות © 2025 PlanIt</p>
+        <p className="copyright">{t('home.footer.copyright')}</p>
       </footer>
     </div>
   );

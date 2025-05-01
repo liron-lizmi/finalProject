@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import '../../styles/AuthPages.css';
 
 const ResetPassword = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { token } = useParams();
   const [formData, setFormData] = useState({
@@ -15,69 +17,66 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
-  
+
   const validatePassword = () => {
     if (!formData.password) {
-      setError('אנא הזן סיסמה חדשה');
+      setError(t('errors.newPasswordRequired', 'אנא הזן סיסמה חדשה'));
       return false;
     }
-    
     if (formData.password.length < 6) {
-      setError('הסיסמה צריכה להכיל לפחות 6 תווים');
+      setError(t('errors.shortPassword', 'הסיסמה צריכה להכיל לפחות 6 תווים'));
       return false;
     }
-    
+
     const hasUpperCase = /[A-Z]/.test(formData.password);
     const hasLowerCase = /[a-z]/.test(formData.password);
     const hasNumbers = /\d/.test(formData.password);
-    
+
     if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
-      setError('הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר');
+      setError(t('errors.passwordRequirements', 'הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר'));
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
-      setError('הסיסמאות אינן תואמות');
+      setError(t('errors.passwordMismatch', 'הסיסמאות אינן תואמות'));
       return false;
     }
-    
+
     return true;
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validatePassword()) {
       return;
     }
-    
+
     setIsSubmitting(true);
     setError('');
     setMessage('');
-    
+
     try {
       const response = await axios.post(`/api/auth/reset-password/${token}`, {
         password: formData.password
       });
-      
-      setMessage(response.data.message || 'הסיסמה עודכנה בהצלחה');
+
+      setMessage(response.data.message || t('auth.passwordUpdated', 'הסיסמה עודכנה בהצלחה'));
       
       setTimeout(() => {
         navigate('/login');
       }, 3000);
-      
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'אירעה שגיאה. אנא נסה שוב מאוחר יותר';
+      const errorMessage = err.response?.data?.message || t('errors.generalError', 'אירעה שגיאה. אנא נסה שוב מאוחר יותר');
       
       if (err.response?.data?.code === 'SAME_PASSWORD') {
-        setError('השתמשת בסיסמה זו בעבר, אנא בחר סיסמה חדשה');
+        setError(t('errors.samePassword', 'השתמשת בסיסמה זו בעבר, אנא בחר סיסמה חדשה'));
       } else {
         setError(errorMessage);
       }
@@ -85,25 +84,25 @@ const ResetPassword = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   const renderPasswordStrength = () => {
     if (!formData.password) return null;
-    
+
     return (
       <div className="password-strength">
-        <h4>דרישות הסיסמה:</h4>
+        <h4>{t('auth.passwordRequirements', 'דרישות הסיסמה:')}</h4>
         <ul>
           <li className={/[A-Z]/.test(formData.password) ? 'valid' : 'invalid'}>
-            אות גדולה אחת לפחות
+            {t('auth.requireUppercase', 'אות גדולה אחת לפחות')}
           </li>
           <li className={/[a-z]/.test(formData.password) ? 'valid' : 'invalid'}>
-            אות קטנה אחת לפחות
+            {t('auth.requireLowercase', 'אות קטנה אחת לפחות')}
           </li>
           <li className={/\d/.test(formData.password) ? 'valid' : 'invalid'}>
-            מספר אחד לפחות
+            {t('auth.requireNumber', 'מספר אחד לפחות')}
           </li>
           <li className={formData.password.length >= 6 ? 'valid' : 'invalid'}>
-            אורך מינימלי של 6 תווים
+            {t('auth.requireLength', 'אורך מינימלי של 6 תווים')}
           </li>
         </ul>
       </div>
@@ -123,11 +122,11 @@ const ResetPassword = () => {
       </svg>
     );
   };
-  
+
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>איפוס סיסמה</h2>
+        <h2>{t('auth.resetPasswordTitle', 'איפוס סיסמה')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
@@ -136,30 +135,29 @@ const ResetPassword = () => {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="סיסמה חדשה"
+              placeholder={t('auth.newPassword', 'סיסמה חדשה')}
               value={formData.password}
               onChange={handleChange}
               required
             />
-            <span 
-              className="password-toggle" 
+            <span
+              className="password-toggle"
               onClick={() => setShowPassword(!showPassword)}
             >
               {renderEyeIcon(showPassword)}
             </span>
           </div>
-          
           <div className="form-group password-field">
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
-              placeholder="אימות סיסמה"
+              placeholder={t('auth.confirmPassword', 'אימות סיסמה')}
               value={formData.confirmPassword}
               onChange={handleChange}
               required
             />
-            <span 
-              className="password-toggle" 
+            <span
+              className="password-toggle"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
               {renderEyeIcon(showConfirmPassword)}
@@ -168,17 +166,17 @@ const ResetPassword = () => {
           
           {renderPasswordStrength()}
           
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'מעדכן סיסמה...' : 'עדכן סיסמה'}
+            {isSubmitting ? t('auth.updatingPassword', 'מעדכן סיסמה...') : t('auth.updatePassword', 'עדכן סיסמה')}
           </button>
         </form>
         
         <p className="auth-link">
-          <span onClick={() => navigate('/login')}>חזרה להתחברות</span>
+          <span onClick={() => navigate('/login')}>{t('auth.backToLogin', 'חזרה להתחברות')}</span>
         </p>
       </div>
     </div>

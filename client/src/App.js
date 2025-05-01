@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
@@ -19,9 +20,28 @@ import EventTemplatesPage from './pages/Events/Features/EventTemplatesPage';
 import EventWeatherPage from './pages/Events/Features/EventWeatherPage';
 import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
 import EventSharePage from './pages/Events/Features/EventSharePage';
+import LanguageSwitcher from './pages/components/LanguageSwitcher';
 
 const App = () => {
+  // const { i18n } = useTranslation();
+  const { t, i18n, ready } = useTranslation();
+  
+  // Set document direction whenever language changes
+  // useEffect(() => {
+  //   document.documentElement.dir = i18n.dir();
+  //   document.documentElement.lang = i18n.language;
+  // }, [i18n.language, i18n.dir]);
+
+  useEffect(() => {
+    console.log('Translation ready:', ready);
+    console.log('Current language:', i18n.language);
+    console.log('Available languages:', i18n.languages);
+    console.log('Translation for test key:', t('home.features.vendors.title'));
+  }, [ready, i18n.language, t]);
+
   return (
+    <>
+      <LanguageSwitcher />
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -49,6 +69,7 @@ const App = () => {
           <Route path="/event/:id/share" element={<EventSharePage />} />
         </Routes>
       </Router>
+    </>
   );
 };
 

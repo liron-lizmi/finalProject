@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import '../../styles/EventDetailsPage.css';
+import { useTranslation } from 'react-i18next';
 
 const EventDetailsPage = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const [event, setEvent] = useState(null);
@@ -15,7 +17,7 @@ const EventDetailsPage = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setError('לא מחובר. נא להתחבר מחדש.');
+          setError(t('errors.notLoggedIn'));
           navigate('/login');
           return;
         }
@@ -30,13 +32,13 @@ const EventDetailsPage = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
-        setError('אירעה שגיאה בטעינת פרטי האירוע');
+        setError(t('errors.eventLoadFailed'));
         setLoading(false);
       }
     };
 
     fetchEventDetails();
-  }, [id, navigate]);
+  }, [id, navigate, t]);
 
   const handleFeatureClick = (feature) => {
     switch (feature) {
@@ -82,7 +84,7 @@ const EventDetailsPage = () => {
         <div className="event-details-container">
           <div className="event-loader">
             <div className="loading-spinner"></div>
-            <p>טוען פרטי אירוע...</p>
+            <p>{t('general.loading')}</p>
           </div>
         </div>
       </div>
@@ -109,7 +111,7 @@ const EventDetailsPage = () => {
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </span>
-              חזרה לדשבורד
+              {t('dashboard.backToDashboard')}
             </button>
           </div>
         </div>
@@ -129,7 +131,7 @@ const EventDetailsPage = () => {
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
             </div>
-            <div className="error-message">האירוע לא נמצא</div>
+            <div className="error-message">{t('events.eventNotFound')}</div>
             <button className="back-button" onClick={handleBack}>
               <span className="back-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -137,7 +139,7 @@ const EventDetailsPage = () => {
                   <polyline points="12 19 5 12 12 5"></polyline>
                 </svg>
               </span>
-              חזרה לדשבורד
+              {t('dashboard.backToDashboard')}
             </button>
           </div>
         </div>
@@ -147,7 +149,8 @@ const EventDetailsPage = () => {
 
   // Format the date
   const eventDate = new Date(event.date);
-  const formattedDate = eventDate.toLocaleDateString('he-IL', {
+  // Format according to selected language
+  const formattedDate = eventDate.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'he-IL', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -166,15 +169,20 @@ const EventDetailsPage = () => {
   return (
     <div className="event-page-wrapper">
       <div className="event-details-container">
-        <button className="back-button" onClick={handleBack}>
-          <span className="back-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-          </span>
-          חזרה לאירועים שלי
-        </button>
+        <div className="header-top">
+          <div className="app-logo">
+            <img src="/images/logo.png" alt={t('general.appLogo')} />
+          </div>
+          <button className="back-button" onClick={handleBack}>
+            <span className="back-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </span>
+            {t('events.backToMyEvents')}
+          </button>
+        </div>
         
         <header className="event-header">
           <div className="event-info-container">
@@ -190,7 +198,7 @@ const EventDetailsPage = () => {
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
                 </span>
-                <span>{formattedDate} בשעה {eventTime}</span>
+                <span>{formattedDate} {t('events.atTime')} {eventTime}</span>
               </div>
               <div className={`days-counter ${daysRemaining <= 30 ? 'urgent' : ''}`}>
                 <span className="counter-icon">
@@ -201,17 +209,17 @@ const EventDetailsPage = () => {
                 </span>
                 <span>
                   {daysRemaining > 0 
-                    ? `נותרו ${daysRemaining} ימים לאירוע` 
+                    ? t('events.daysRemaining', { days: daysRemaining }) 
                     : daysRemaining === 0 
-                      ? 'האירוע מתקיים היום!' 
-                      : 'האירוע התקיים'}
+                      ? t('events.eventToday') 
+                      : t('events.eventPassed')}
                 </span>
               </div>
             </div>
             
             <div className="progress-container">
               <div className="progress-info">
-                <h3>התקדמות תכנון האירוע</h3>
+                <h3>{t('events.planningProgress')}</h3>
                 <span className="progress-percentage">{progress}%</span>
               </div>
               <div className="progress-bar">
@@ -230,8 +238,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('venue')}>
               <div className="feature-emoji">🏢</div>
               <div className="feature-content">
-                <h3>בחירת מקום</h3>
-                <p>בחר את המקום המושלם לאירוע שלך</p>
+                <h3>{t('events.features.venue.title')}</h3>
+                <p>{t('events.features.venue.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -243,8 +251,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('vendors')}>
               <div className="feature-emoji">👨‍🍳</div>
               <div className="feature-content">
-                <h3>בחירת ספקים</h3>
-                <p>צלם, תקליטן, קייטרינג ועוד</p>
+                <h3>{t('events.features.vendors.title')}</h3>
+                <p>{t('events.features.vendors.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -256,8 +264,12 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('guests')}>
               <div className="feature-emoji">👥</div>
               <div className="feature-content">
-                <h3>רשימת מוזמנים</h3>
-                <p>{event.guestCount > 0 ? `${event.guestCount} מוזמנים` : 'הוסף מוזמנים'}</p>
+                <h3>{t('events.features.guests.title')}</h3>
+                <p>
+                  {event.guestCount > 0 
+                    ? t('events.features.guests.count', { count: event.guestCount }) 
+                    : t('events.features.guests.add')}
+                </p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -269,8 +281,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('seating')}>
               <div className="feature-emoji">🪑</div>
               <div className="feature-content">
-                <h3>סידורי הושבה</h3>
-                <p>ארגון שולחנות ומקומות ישיבה</p>
+                <h3>{t('events.features.seating.title')}</h3>
+                <p>{t('events.features.seating.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -282,8 +294,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('timeline')}>
               <div className="feature-emoji">📅</div>
               <div className="feature-content">
-                <h3>ניהול לו"ז ומשימות</h3>
-                <p>תכנון זמנים ומשימות לביצוע</p>
+                <h3>{t('events.features.timeline.title')}</h3>
+                <p>{t('events.features.timeline.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -292,11 +304,11 @@ const EventDetailsPage = () => {
               </div>
             </div>
 
-            <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
+                <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
               <div className="feature-emoji">📝</div>
               <div className="feature-content">
-                <h3>טמפלייטים</h3>
-                <p>הזמנות, ברכות ועוד</p>
+                <h3>{t('events.features.templates.title', 'טמפלייטים')}</h3>
+                <p>{t('events.features.templates.description', 'הזמנות, ברכות ועוד')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -308,8 +320,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('weather')}>
               <div className="feature-emoji">☀️</div>
               <div className="feature-content">
-                <h3>תחזית מזג אוויר</h3>
-                <p>צפייה בתחזית ליום האירוע</p>
+                <h3>{t('events.features.weather.title')}</h3>
+                <p>{t('events.features.weather.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -321,8 +333,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('budget')}>
               <div className="feature-emoji">💰</div>
               <div className="feature-content">
-                <h3>ניהול תקציב</h3>
-                <p>מעקב אחר הוצאות והכנסות</p>
+                <h3>{t('events.features.budget.title')}</h3>
+                <p>{t('events.features.budget.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -334,8 +346,8 @@ const EventDetailsPage = () => {
             <div className="feature-card" onClick={() => handleFeatureClick('share')}>
               <div className="feature-emoji">🔗</div>
               <div className="feature-content">
-                <h3>שיתוף אירוע</h3>
-                <p>שתף פרטים עם אורחים ומשתתפים</p>
+                <h3>{t('events.features.share.title')}</h3>
+                <p>{t('events.features.share.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

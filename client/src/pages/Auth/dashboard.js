@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { account } from '../../appwrite';
 import axios from 'axios';
 import '../../styles/AuthPages.css';
 
 const Dashboard = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
@@ -14,35 +16,26 @@ const Dashboard = () => {
   useEffect(() => {
     const checkUserSession = async () => {
       const isGoogleAuth = localStorage.getItem('googleAuth') === 'true';
-      
       try {
         const localUser = localStorage.getItem('user');
-        
         if (localUser && !isGoogleAuth) {
           const parsedUser = JSON.parse(localUser);
           setUser(parsedUser);
           setLoading(false);
-          return; 
+          return;
         }
-        
+
         try {
           const userData = await account.get();
-          
           if (isGoogleAuth) {
-            localStorage.removeItem('googleAuth'); 
-            
+            localStorage.removeItem('googleAuth');
             try {
-              const response = await axios.post('/api/auth/check-user-exists', { 
-                email: userData.email 
-              });
-              
+              const response = await axios.post('/api/auth/check-user-exists', { email: userData.email });
               if (!response.data.exists) {
                 console.log('Creating new user from Google login');
-                
                 const names = userData.name ? userData.name.split(' ') : ['', ''];
                 const firstName = names[0] || '';
                 const lastName = names.slice(1).join(' ') || '';
-                
                 const registerResponse = await axios.post('/api/auth/register-oauth', {
                   email: userData.email,
                   firstName: firstName,
@@ -54,7 +47,6 @@ const Dashboard = () => {
                 if (registerResponse.data.token) {
                   localStorage.setItem('token', registerResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
-                  
                   setUser(registerResponse.data.user);
                   setLoading(false);
                   return;
@@ -64,7 +56,7 @@ const Dashboard = () => {
               console.error('Error creating/checking user:', error);
             }
           }
-          
+
           try {
             const loginResponse = await axios.post('/api/auth/login-oauth', {
               email: userData.email,
@@ -75,7 +67,6 @@ const Dashboard = () => {
             if (loginResponse.data.token) {
               localStorage.setItem('token', loginResponse.data.token);
               localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
-              
               setUser(loginResponse.data.user);
               setLoading(false);
               return;
@@ -83,7 +74,7 @@ const Dashboard = () => {
           } catch (loginError) {
             console.error('OAuth login error:', loginError);
           }
-          
+
           const userInfo = {
             id: userData.$id,
             email: userData.email,
@@ -107,7 +98,7 @@ const Dashboard = () => {
     };
 
     checkUserSession();
-    
+
     const fetchEvents = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -116,7 +107,7 @@ const Dashboard = () => {
           navigate('/login');
           return;
         }
-        
+
         const response = await axios.get('/api/events', {
           headers: {
             'x-auth-token': token
@@ -126,13 +117,12 @@ const Dashboard = () => {
         setEvents(response.data);
       } catch (err) {
         console.error('Error fetching events:', err);
-        setError('אירעה שגיאה בטעינת האירועים');
+        setError(t('errors.loadEventsFailed', 'Error loading events'));
       }
     };
-    
+
     fetchEvents();
-    
-  }, [navigate]);
+  }, [navigate, t]);
 
   const handleLogout = async () => {
     try {
@@ -144,26 +134,26 @@ const Dashboard = () => {
       
       localStorage.removeItem('user');
       localStorage.removeItem('token');
-      navigate('/'); 
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
-  
+
   const handleCreateEvent = () => {
     navigate('/create-event');
   };
-  
+
   const handleEventDetails = (eventId) => {
     navigate(`/event/${eventId}`);
   };
-  
+
   const handleDeleteEvent = async (eventId, eventTitle) => {
-    if (window.confirm(`האם אתה בטוח שברצונך למחוק את האירוע "${eventTitle}"?`)) {
+    if (window.confirm(t('dashboard.deleteConfirm', 'Are you sure you want to delete the event "{{title}}"?', { title: eventTitle }))) {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setError('לא מחובר. נא להתחבר מחדש.');
+          setError(t('errors.notLoggedIn', 'Not logged in. Please login again.'));
           navigate('/login');
           return;
         }
@@ -175,10 +165,9 @@ const Dashboard = () => {
         });
         
         setEvents(events.filter(event => event._id !== eventId));
-        
       } catch (err) {
         console.error('Error deleting event:', err);
-        setError('אירעה שגיאה במחיקת האירוע');
+        setError(t('errors.deleteEventFailed', 'Error deleting the event'));
       }
     }
   };
@@ -186,11 +175,20 @@ const Dashboard = () => {
   // Function to convert the date format to DD/MM/YYYY
   const formatDate = (dateString) => {
     if (!dateString) return '';
+    
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    // Format date according to language
+    if (i18n.language === 'en') {
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    } else {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
   };
 
   const navigateToHome = () => {
@@ -201,7 +199,7 @@ const Dashboard = () => {
     return (
       <div className="auth-container">
         <div className="auth-box" style={{ textAlign: 'center' }}>
-          <h2>טוען...</h2>
+          <h2>{t('general.loading')}</h2>
           <div className="loading-spinner"></div>
         </div>
       </div>
@@ -212,22 +210,22 @@ const Dashboard = () => {
     <div className="dashboard-wrapper">
       {/* Header */}
       <header className="dashboard-header">
-      <div className="header-container">
-        <div className="header-left">
-          <div className="logo" onClick={navigateToHome}>
-            <img src="/images/logo.png" alt="Logo" />
+        <div className="header-container">
+          <div className="header-left">
+            <div className="logo" onClick={navigateToHome}>
+              <img src="/images/logo.png" alt={t('general.appLogo')} />
+            </div>
           </div>
-        </div>
-
-        <div className="header-center">
-          <div className="user-greeting">
-            <span className="greeting-icon">👋</span>
-            <span>ברוך הבא,</span>
-            <h2>{user?.name || user?.firstName || user?.email}</h2>
+          <div className="header-center">
+            <div className="user-greeting">
+              <span className="greeting-icon">
+              👋
+              </span>
+              <span>{t('dashboard.welcome')}</span>
+              <h2>{user?.name || user?.firstName || user?.email}</h2>
+            </div>
           </div>
-        </div>
-
-        <div className="header-right">
+          <div className="header-right">
             <button className="logout-btn" onClick={handleLogout}>
               <span className="logout-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -236,7 +234,7 @@ const Dashboard = () => {
                   <line x1="21" y1="12" x2="9" y2="12"></line>
                 </svg>
               </span>
-              התנתק
+              {t('general.logout')}
             </button>
           </div>
         </div>
@@ -260,19 +258,15 @@ const Dashboard = () => {
           {/* Create Event Card */}
           <div className="create-event-card">
             <div className="create-event-content">
-            <div className="sparkle-icon">
-              ✨
-            </div>
+              <div className="sparkle-icon">
+              </div>
               <div className="create-event-text">
-                <h2>צור אירוע חדש</h2>
-                <p>צור אירוע חדש כדי לארגן ולנהל את כל פרטי האירוע שלך במקום אחד - בחירת מקום, הזמנות, אישורי הגעה, סידורי ישיבה ועוד.</p>
+                <h2>{t('dashboard.createEventTitle')}</h2>
+                <p>{t('dashboard.createEventDescription')}</p>
               </div>
             </div>
-            <button 
-              className="create-event-btn"
-              onClick={handleCreateEvent}
-            >
-              יצירת אירוע חדש
+            <button className="create-event-btn" onClick={handleCreateEvent}>
+              {t('dashboard.createEventButton')}
             </button>
           </div>
 
@@ -288,17 +282,13 @@ const Dashboard = () => {
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
                 </span>
-                האירועים שלי
+                {t('dashboard.eventsTitle')}
               </h2>
             </div>
-            
             <div className="events-grid">
               {events.length > 0 ? (
                 events.map(event => (
-                  <div 
-                    key={event._id} 
-                    className="event-card"
-                  >
+                  <div key={event._id} className="event-card">
                     <div className="event-body">
                       <h3>{event.title}</h3>
                       <div className="event-meta">
@@ -326,18 +316,11 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    
                     <div className="event-footer">
-                      <button 
-                        className="event-details-btn"
-                        onClick={() => handleEventDetails(event._id)}
-                      >
-                        פרטי האירוע
+                      <button className="event-details-btn" onClick={() => handleEventDetails(event._id)}>
+                        {t('dashboard.viewDetails')}
                       </button>
-                      <button 
-                        className="event-delete-btn"
-                        onClick={() => handleDeleteEvent(event._id, event.title)}
-                      >
+                      <button className="event-delete-btn" onClick={() => handleDeleteEvent(event._id, event.title)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="3 6 5 6 21 6"></polyline>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -357,12 +340,12 @@ const Dashboard = () => {
                       <circle cx="12" cy="15" r="2"></circle>
                     </svg>
                   </div>
-                  <h3>אין אירועים</h3>
-                  <p>עדיין אין לך אירועים. צור את האירוע הראשון שלך!</p>
+                  <h3>{t('dashboard.noEvents')}</h3>
+                  <p>{t('dashboard.noEventsDescription')}</p>
                 </div>
               )}
             </div>
-          </div>
+            </div>
         </div>
       </main>
     </div>
