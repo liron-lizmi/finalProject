@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -207,11 +208,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-wrapper">
+    <div className={`dashboard-wrapper ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-container">
-          <div className="header-left">
+          <div className={`header-${isRTL ? 'right' : 'left'}`}>
             <div className="logo" onClick={navigateToHome}>
               <img src="/images/logo.png" alt={t('general.appLogo')} />
             </div>
@@ -225,7 +226,7 @@ const Dashboard = () => {
               <h2>{user?.name || user?.firstName || user?.email}</h2>
             </div>
           </div>
-          <div className="header-right">
+          <div className={`header-${isRTL ? 'left' : 'right'}`}>
             <button className="logout-btn" onClick={handleLogout}>
               <span className="logout-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -259,6 +260,7 @@ const Dashboard = () => {
           <div className="create-event-card">
             <div className="create-event-content">
               <div className="sparkle-icon">
+                ✨
               </div>
               <div className="create-event-text">
                 <h2>{t('dashboard.createEventTitle')}</h2>
@@ -345,7 +347,7 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
-            </div>
+          </div>
         </div>
       </main>
     </div>

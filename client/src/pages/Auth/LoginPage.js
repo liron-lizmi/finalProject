@@ -7,7 +7,8 @@ import { createOAuth2Session } from '../../appwrite';
 import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -123,7 +124,7 @@ const LoginPage = () => {
   );
   
   return (
-    <div className="auth-container">
+    <div className={`auth-container ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="auth-box">
         <h2>{t('auth.loginTitle')}</h2>
         {serverError && <div className="error-message">{serverError}</div>}
@@ -151,7 +152,7 @@ const LoginPage = () => {
             />
             {errors.email && <div className="input-error">{errors.email}</div>}
           </div>
-          <div className="form-group password-field">
+          <div className={`form-group password-field ${isRTL ? 'rtl' : 'ltr'}`}>
             <input
               type={showPassword ? "text" : "password"}
               name="password"

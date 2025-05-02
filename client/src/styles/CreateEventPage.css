@@ -6,13 +6,15 @@
   color: #333;
 }
 
-/* תמיכה לכיוון על פי שפה */
-[dir="rtl"] .create-event-container {
+/* Language direction classes */
+.rtl {
   direction: rtl;
+  text-align: right;
 }
 
-[dir="ltr"] .create-event-container {
+.ltr {
   direction: ltr;
+  text-align: left;
 }
 
 /* Header Styles */
@@ -52,20 +54,20 @@
   flex-direction: column;
 }
 
-/* יישור תוויות לפי כיוון השפה */
-[dir="rtl"] .form-group {
+/* Language-specific text alignment */
+.rtl .form-group {
   text-align: right;
 }
 
-[dir="ltr"] .form-group {
+.ltr .form-group {
   text-align: left;
 }
 
-[dir="rtl"] .form-group label {
+.rtl .form-group label {
   text-align: right;
 }
 
-[dir="ltr"] .form-group label {
+.ltr .form-group label {
   text-align: left;
 }
 
@@ -85,14 +87,12 @@
   width: 100%;
 }
 
-/* יישור תיבות הטקסט לפי כיוון השפה */
-[dir="rtl"] .form-input, 
-[dir="rtl"] .date-display-input {
+/* Text direction in inputs */
+.rtl .form-input {
   text-align: right;
 }
 
-[dir="ltr"] .form-input, 
-[dir="ltr"] .date-display-input {
+.ltr .form-input {
   text-align: left;
 }
 
@@ -101,19 +101,18 @@
   outline: none;
 }
 
-/* הודעות שגיאה לשדות */
+/* Error messages */
 .field-error {
   color: #d32f2f;
   font-size: 0.85rem;
   margin-top: 5px;
 }
 
-/* יישור הודעות שגיאה לפי כיוון השפה */
-[dir="rtl"] .field-error {
+.rtl .field-error {
   text-align: right;
 }
 
-[dir="ltr"] .field-error {
+.ltr .field-error {
   text-align: left;
 }
 
@@ -128,45 +127,30 @@
   width: 100%;
 }
 
-.hidden-date-input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  clip: rect(0, 0, 0, 0);
-}
-
 .date-display-wrapper {
   position: relative;
   width: 100%;
 }
 
-/* התאמת כיוון שדה התאריך לפי השפה */
-[dir="rtl"] .date-display-input {
+/* Date input direction adjustments */
+.rtl .date-display-input {
   padding-left: 35px;
   padding-right: 12px;
   text-align: right;
-  direction: ltr;
 }
 
-[dir="ltr"] .date-display-input {
+.ltr .date-display-input {
   padding-right: 35px;
   padding-left: 12px;
   text-align: left;
-  direction: ltr;
 }
 
-/* התאמת מיקום אייקון התאריך לפי כיוון השפה */
-[dir="rtl"] .calendar-icon {
-  left: 10px;
-  right: auto;
+.date-display-input {
+  cursor: pointer;
+  background-color: #f9f9f9;
 }
 
-[dir="ltr"] .calendar-icon {
-  right: 10px;
-  left: auto;
-}
-
+/* Calendar icon positioning */
 .calendar-icon {
   position: absolute;
   top: 50%;
@@ -179,6 +163,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.rtl.calendar-icon {
+  left: 10px;
+  right: auto;
+}
+
+.ltr.calendar-icon {
+  right: 10px;
+  left: auto;
 }
 
 .calendar-icon:hover {
@@ -194,13 +188,13 @@
   align-items: center;
 }
 
-/* התאמת כיוון שדה השעה לפי השפה */
-[dir="rtl"] .time-input {
+/* Time input direction adjustments */
+.rtl .time-input {
   padding: 10px 10px 10px 40px;
   text-align: right;
 }
 
-[dir="ltr"] .time-input {
+.ltr .time-input {
   padding: 10px 40px 10px 10px;
   text-align: left;
 }
@@ -214,7 +208,7 @@
   width: 100%;
   height: 42px;
   box-sizing: border-box;
-  direction: ltr;
+  direction: ltr; /* Keep time input as LTR for better time formatting */
 }
 
 .time-input:focus {
@@ -222,17 +216,7 @@
   outline: none;
 }
 
-/* התאמת מיקום אייקון השעה לפי כיוון השפה */
-[dir="rtl"] .time-icon {
-  left: 10px;
-  right: auto;
-}
-
-[dir="ltr"] .time-icon {
-  right: 10px;
-  left: auto;
-}
-
+/* Time icon positioning */
 .time-icon {
   position: absolute;
   top: 50%;
@@ -247,25 +231,188 @@
   justify-content: center;
 }
 
+.rtl.time-icon {
+  left: 10px;
+  right: auto;
+}
+
+.ltr.time-icon {
+  right: 10px;
+  left: auto;
+}
+
 .time-icon:hover {
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 50%;
 }
 
-/* Time Picker Dropdown - עיצוב משופר */
-/* התאמת כיוון בורר השעות לפי השפה */
-[dir="rtl"] .time-picker-dropdown {
+/* Custom Calendar Styles */
+.calendar-dropdown {
+  position: absolute;
+  top: 45px;
+  width: 280px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  font-family: 'Heebo', 'Arial', sans-serif;
+  overflow: hidden;
+}
+
+.rtl.calendar-dropdown {
+  right: 0;
+}
+
+.ltr.calendar-dropdown {
+  left: 0;
+}
+
+/* Calendar header */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.current-month {
+  font-weight: 500;
+  font-size: 16px;
+  color: #333;
+}
+
+.month-nav {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.month-nav:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Days header */
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #eaeaea;
+  padding: 8px 0;
+}
+
+.day-name {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Days grid */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  padding: 8px;
+}
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.calendar-day.empty {
+  background: none;
+}
+
+.calendar-day.selectable {
+  cursor: pointer;
+  color: #333;
+}
+
+.calendar-day.selectable:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-day.disabled {
+  color: #ccc;
+}
+
+.calendar-day.selected {
+  background-color: #007bff;
+  color: white;
+  font-weight: 500;
+}
+
+/* Calendar footer */
+.calendar-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: #f8f8f8;
+  border-top: 1px solid #eaeaea;
+}
+
+.calendar-btn {
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.calendar-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.calendar-btn.clear {
+  color: #666;
+}
+
+.calendar-btn.today {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.rtl.calendar-dropdown {
   left: 0;
   right: auto;
+}
+
+.ltr.calendar-dropdown {
+  right: 0;
+  left: auto;
+}
+
+/* RTL specific calendar overrides */
+.rtl.calendar-dropdown .calendar-days {
   direction: rtl;
 }
 
-[dir="ltr"] .time-picker-dropdown {
-  right: 0;
-  left: auto;
+.ltr.calendar-dropdown .calendar-days {
   direction: ltr;
 }
 
+/* Time Picker Dropdown */
 .time-picker-dropdown {
   position: absolute;
   top: 45px;
@@ -278,21 +425,31 @@
   overflow: hidden;
 }
 
-/* התאמת כיוון כפתור הסגירה בבורר השעות */
-[dir="rtl"] .time-picker-header {
-  justify-content: flex-end;
+.rtl.time-picker-dropdown {
+  left: 0;
+  right: auto;
 }
 
-[dir="ltr"] .time-picker-header {
-  justify-content: flex-start;
+.ltr.time-picker-dropdown {
+  right: 0;
+  left: auto;
 }
 
+/* Time picker header */
 .time-picker-header {
   display: flex;
   align-items: center;
   padding: 8px 12px;
   background-color: #f8f8f8;
   border-bottom: 1px solid #eaeaea;
+}
+
+.rtl.time-picker-header {
+  justify-content: flex-end;
+}
+
+.ltr.time-picker-header {
+  justify-content: flex-start;
 }
 
 .time-picker-close {
@@ -314,19 +471,19 @@
   color: #333;
 }
 
-/* התאמת כיוון תוכן בורר השעות */
-[dir="rtl"] .time-picker-content {
-  flex-direction: row-reverse;
-}
-
-[dir="ltr"] .time-picker-content {
-  flex-direction: row;
-}
-
+/* Time picker content direction */
 .time-picker-content {
   display: flex;
   max-height: 240px;
   background: linear-gradient(to bottom, #ffffff, #fcfcfc);
+}
+
+.rtl.time-picker-content {
+  flex-direction: row-reverse;
+}
+
+.ltr.time-picker-content {
+  flex-direction: row;
 }
 
 .time-picker-hours,
@@ -344,12 +501,12 @@
   display: none;
 }
 
-/* התאמת מיקום הגבול בין השעות לדקות */
-[dir="rtl"] .time-picker-hours {
+/* Hours/minutes divider */
+.rtl .time-picker-hours {
   border-left: 1px solid #eaeaea;
 }
 
-[dir="ltr"] .time-picker-hours {
+.ltr .time-picker-hours {
   border-right: 1px solid #eaeaea;
 }
 
@@ -387,20 +544,59 @@
   transform: translateY(-1px);
 }
 
+/* Time picker footer */
+.time-picker-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #f8f8f8;
+  border-top: 1px solid #eaeaea;
+}
+
+.time-picker-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.time-picker-action:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.time-picker-action.primary {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.time-picker-action.primary:hover {
+  background-color: rgba(0, 102, 204, 0.1);
+}
+
 /* Action Buttons */
-/* התאמת יישור כפתורי פעולה */
-[dir="rtl"] .form-actions {
-  justify-content: flex-end;
-}
-
-[dir="ltr"] .form-actions {
-  justify-content: flex-start;
-}
-
 .form-actions {
   display: flex;
   gap: 15px;
   margin-top: 10px;
+}
+
+/* Action buttons alignment - always align to right side regardless of language */
+.rtl.form-actions, .ltr.form-actions {
+  justify-content: flex-end;
+}
+
+/* Button order changes based on language */
+.rtl.form-actions {
+  flex-direction: row-reverse;
+}
+
+.ltr.form-actions {
+  flex-direction: row;
 }
 
 .cancel-button,
@@ -465,8 +661,9 @@
     gap: 20px;
   }
   
-  .time-picker-dropdown {
-    width: 180px;
+  .time-picker-dropdown, .calendar-dropdown {
+    width: 95%;
+    max-width: 280px;
   }
 }
 
@@ -483,7 +680,8 @@
     font-size: 1.8rem;
   }
   
-  .time-picker-dropdown {
-    width: 160px;
+  .time-picker-dropdown, .calendar-dropdown {
+    width: 95%;
+    max-width: 260px;
   }
 }

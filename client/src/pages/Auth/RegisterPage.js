@@ -6,7 +6,8 @@ import emailjs from 'emailjs-com';
 import '../../styles/AuthPages.css';
 
 const RegisterPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -183,7 +184,7 @@ const RegisterPage = () => {
   };
   
   return (
-    <div className="auth-container">
+    <div className={`auth-container ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="auth-box">
         <h2>{t('auth.registerTitle')}</h2>
         {serverError && <div className="error-message">{serverError}</div>}
@@ -223,7 +224,7 @@ const RegisterPage = () => {
             />
             {errors.email && <div className="input-error">{errors.email}</div>}
           </div>
-          <div className="form-group password-field">
+          <div className={`form-group password-field ${isRTL ? 'rtl' : 'ltr'}`}>
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -240,7 +241,7 @@ const RegisterPage = () => {
             </span>
             {errors.password && <div className="input-error">{errors.password}</div>}
           </div>
-          <div className="form-group password-field">
+          <div className={`form-group password-field ${isRTL ? 'rtl' : 'ltr'}`}>
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"

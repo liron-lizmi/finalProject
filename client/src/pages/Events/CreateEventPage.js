@@ -5,7 +5,8 @@ import '../../styles/CreateEventPage.css';
 import { useTranslation } from 'react-i18next';
 
 const CreateEventPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,9 +19,12 @@ const CreateEventPage = () => {
   const [dateError, setDateError] = useState('');
   const [timeError, setTimeError] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const datePickerRef = useRef(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  
   const timePickerRef = useRef(null);
   const timePickerContainerRef = useRef(null);
+  const calendarRef = useRef(null);
 
   // Calculate current date in ISO format
   const today = new Date().toISOString().split('T')[0];
@@ -29,15 +33,38 @@ const CreateEventPage = () => {
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
 
-  // Close time picker when clicking outside
+  // Month names in both languages
+  const monthNames = {
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+  };
+  
+  // Day names in both languages
+  const dayNames = {
+    en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+    he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
+  };
+
+  // Close calendar and time picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close time picker if clicked outside
       if (
         timePickerContainerRef.current && 
         !timePickerContainerRef.current.contains(event.target) &&
         !event.target.classList.contains('time-icon')
       ) {
         setShowTimePicker(false);
+      }
+      
+      // Close calendar if clicked outside
+      if (
+        calendarRef.current &&
+        !calendarRef.current.contains(event.target) &&
+        !event.target.classList.contains('calendar-icon') &&
+        !event.target.classList.contains('date-display-input')
+      ) {
+        setShowCalendar(false);
       }
     };
 
@@ -47,55 +74,25 @@ const CreateEventPage = () => {
     };
   }, []);
 
-  // Convert date from DD/MM/YYYY format to YYYY-MM-DD
-  const convertToISODate = (dateString) => {
-    if (!dateString) return '';
-    
-    const parts = dateString.split('/');
-    if (parts.length !== 3) return '';
-    
-    const day = parts[0].padStart(2, '0');
-    const month = parts[1].padStart(2, '0');
-    const year = parts[2];
-    
-    return `${year}-${month}-${day}`;
-  };
-
-  // Convert date from YYYY-MM-DD format to DD/MM/YYYY
-  const convertToDisplayDate = (isoDate) => {
-    if (!isoDate) return '';
-    
-    const [year, month, day] = isoDate.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
-  // Check if date is valid and in the future
-  const isValidFutureDate = (dateString) => {
-    if (!dateString) return false;
-    
-    // Check format
-    const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    const match = dateString.match(dateRegex);
-    if (!match) return false;
-    
-    const day = parseInt(match[1], 10);
-    const month = parseInt(match[2], 10);
-    const year = parseInt(match[3], 10);
-    
-    // Basic validity check
-    if (month < 1 || month > 12) return false;
-    
-    // Days in month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day < 1 || day > daysInMonth) return false;
-    
-    // Check if date is in the future
-    const inputDate = new Date(year, month - 1, day);
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    
-    return inputDate >= currentDate;
-  };
+  // Update display date when eventDate changes
+  useEffect(() => {
+    if (eventData.eventDate) {
+      if (isRTL) {
+        // Format as DD/MM/YYYY for Hebrew
+        const [year, month, day] = eventData.eventDate.split('-');
+        setDisplayDate(`${day}/${month}/${year}`);
+      } else {
+        // Format as MM/DD/YYYY for English
+        const [year, month, day] = eventData.eventDate.split('-');
+        setDisplayDate(`${month}/${day}/${year}`);
+      }
+      
+      // Set current month in calendar
+      setCurrentMonth(new Date(eventData.eventDate));
+    } else {
+      setDisplayDate('');
+    }
+  }, [eventData.eventDate, i18n.language]);
 
   // Check if time is valid
   const isValidTime = (timeString) => {
@@ -104,19 +101,6 @@ const CreateEventPage = () => {
     // Check format (HH:MM)
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     return timeRegex.test(timeString);
-  };
-
-  const handleDateChange = (e) => {
-    const isoDate = e.target.value;
-    if (isoDate) {
-      setEventData(prev => ({
-        ...prev,
-        eventDate: isoDate
-      }));
-      
-      setDisplayDate(convertToDisplayDate(isoDate));
-      setDateError(''); // Clear error if date is valid
-    }
   };
 
   const handleTimeChange = (e) => {
@@ -171,53 +155,23 @@ const CreateEventPage = () => {
     setShowTimePicker(false);
   };
 
-  const handleDisplayDateChange = (e) => {
-    // Maintain date format during typing
-    let value = e.target.value;
+  // Select date from calendar
+  const handleDateSelect = (day) => {
+    const selected = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
     
-    // Remove any characters that are not numbers or /
-    value = value.replace(/[^\d\/]/g, '');
+    // Format as YYYY-MM-DD for the internal state
+    const formattedDate = selected.toISOString().split('T')[0];
+    setEventData(prev => ({
+      ...prev,
+      eventDate: formattedDate
+    }));
     
-    // Replace multiple consecutive slashes with a single one
-    value = value.replace(/\/+/g, '/');
-    
-    // Limit length to 10 characters (DD/MM/YYYY)
-    if (value.length > 10) {
-      value = value.slice(0, 10);
-    }
-    
-    // If user typed 2 digits (day), add a slash
-    if (value.length === 2 && !value.includes('/') && displayDate.length < 2) {
-      value += '/';
-    }
-    
-    // If user typed 5 characters (DD/MM), add a slash
-    if (value.length === 5 && value.split('/').length === 2 && displayDate.length < 5) {
-      value += '/';
-    }
-    
-    setDisplayDate(value);
-    
-    // Update date in ISO format only if date is valid
-    if (isValidFutureDate(value)) {
-      const isoDate = convertToISODate(value);
-      setEventData(prev => ({
-        ...prev,
-        eventDate: isoDate
-      }));
-      setDateError(''); // Clear error if date is valid
-    } else {
-      // If date is invalid, just store the display but don't update ISO value
-      if (value === '') {
-        setEventData(prev => ({
-          ...prev,
-          eventDate: ''
-        }));
-        setDateError(''); // If field is empty, don't show error
-      } else {
-        setDateError(t('errors.invalidDateFormat'));
-      }
-    }
+    setDateError('');
+    setShowCalendar(false);
   };
 
   const handleInputChange = (e) => {
@@ -230,25 +184,98 @@ const CreateEventPage = () => {
     }
   };
 
-  const toggleDatePicker = () => {
-    if (datePickerRef.current) {
-      datePickerRef.current.showPicker();
-    }
+  // Toggle calendar visibility
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar);
   };
 
-  // Open/close time picker
+  // Toggle time picker visibility
   const toggleTimePicker = () => {
     setShowTimePicker(prev => !prev);
+  };
+
+  // Handle previous month in calendar
+  const handlePrevMonth = () => {
+    setCurrentMonth(prev => {
+      const newMonth = new Date(prev);
+      newMonth.setMonth(newMonth.getMonth() - 1);
+      return newMonth;
+    });
+  };
+
+  // Handle next month in calendar
+  const handleNextMonth = () => {
+    setCurrentMonth(prev => {
+      const newMonth = new Date(prev);
+      newMonth.setMonth(newMonth.getMonth() + 1);
+      return newMonth;
+    });
+  };
+
+  // Check if date is selectable (not before minDate)
+  const isDateSelectable = (day) => {
+    if (!today) return true;
+    
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    const min = new Date(today);
+    min.setHours(0, 0, 0, 0);
+    
+    return date >= min;
+  };
+
+  // Check if date is selected
+  const isDateSelected = (day) => {
+    if (!eventData.eventDate) return false;
+    
+    const selected = new Date(eventData.eventDate);
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    
+    return (
+      selected.getDate() === date.getDate() &&
+      selected.getMonth() === date.getMonth() &&
+      selected.getFullYear() === date.getFullYear()
+    );
+  };
+
+  // Handle today selection
+  const handleToday = () => {
+    const todayDate = new Date();
+    // Format as YYYY-MM-DD
+    const formattedDate = todayDate.toISOString().split('T')[0];
+    setEventData(prev => ({
+      ...prev,
+      eventDate: formattedDate
+    }));
+    setCurrentMonth(todayDate);
+    setShowCalendar(false);
+  };
+
+  // Handle clear date
+  const handleClearDate = () => {
+    setEventData(prev => ({
+      ...prev,
+      eventDate: ''
+    }));
+    setDisplayDate('');
+    setShowCalendar(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate date and time before submitting the form
+    // Validate form
     let hasError = false;
     
     // Date validation
-    if (!eventData.eventDate || !isValidFutureDate(displayDate)) {
+    if (!eventData.eventDate) {
       setDateError(t('errors.invalidDateFormat'));
       hasError = true;
     }
@@ -323,8 +350,166 @@ const CreateEventPage = () => {
     navigate('/dashboard');
   };
 
+  // Render calendar days
+  const renderCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    
+    const days = [];
+    
+    // Add empty cells for days before the first day of month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const selectable = isDateSelectable(day);
+      const selected = isDateSelected(day);
+      
+      days.push(
+        <div
+          key={day}
+          className={`calendar-day ${selectable ? 'selectable' : 'disabled'} ${selected ? 'selected' : ''}`}
+          onClick={() => selectable && handleDateSelect(day)}
+        >
+          {day}
+        </div>
+      );
+    }
+    
+    return days;
+  };
+
+  // Render calendar
+  const renderCalendar = () => {
+    if (!showCalendar) return null;
+    
+    const lang = isRTL ? 'he' : 'en';
+    
+    return (
+      <div className={`calendar-dropdown ${isRTL ? 'rtl' : 'ltr'}`} ref={calendarRef}>
+        <div className="calendar-header">
+          <button 
+            type="button" 
+            className="month-nav prev" 
+            onClick={handlePrevMonth}
+          >
+            &#9650;
+          </button>
+          <div className="current-month">
+            {monthNames[lang][currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </div>
+          <button 
+            type="button" 
+            className="month-nav next" 
+            onClick={handleNextMonth}
+          >
+            &#9660;
+          </button>
+        </div>
+        <div className="calendar-days-header">
+          {dayNames[lang].map((day, index) => (
+            <div key={index} className="day-name">{day}</div>
+          ))}
+        </div>
+        <div className="calendar-days">
+          {renderCalendarDays()}
+        </div>
+        <div className="calendar-footer">
+          <button 
+            type="button" 
+            className="calendar-btn clear"
+            onClick={handleClearDate}
+          >
+            {isRTL ? 'ניקוי' : 'Clear'}
+          </button>
+          <button 
+            type="button" 
+            className="calendar-btn today"
+            onClick={handleToday}
+          >
+            {isRTL ? 'היום' : 'Today'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render time picker
+  const renderTimePicker = () => {
+    if (!showTimePicker) return null;
+    
+    return (
+      <div className={`time-picker-dropdown ${isRTL ? 'rtl' : 'ltr'}`} ref={timePickerContainerRef}>
+        <div className={`time-picker-header ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="time-picker-close" onClick={() => setShowTimePicker(false)}>✕</div>
+        </div>
+        <div className={`time-picker-content ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="time-picker-hours">
+            {hours.map(hour => (
+              <div 
+                key={hour} 
+                className="time-picker-hour"
+                onClick={() => {
+                  // Select hour with default minutes (00)
+                  const minute = eventData.eventTime?.split(':')?.[1] || '00';
+                  handleTimeSelection(hour, minute);
+                }}
+              >
+                {hour}
+              </div>
+            ))}
+          </div>
+          <div className="time-picker-minutes">
+            {minutes.map(minute => (
+              <div 
+                key={minute} 
+                className="time-picker-minute"
+                onClick={() => {
+                  // Select minutes with current hour
+                  const hour = eventData.eventTime?.split(':')?.[0] || '18';
+                  handleTimeSelection(hour, minute);
+                }}
+              >
+                {minute}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="time-picker-footer">
+          <button 
+            type="button" 
+            className="time-picker-action" 
+            onClick={() => {
+              setEventData(prev => ({ ...prev, eventTime: '' }));
+              setShowTimePicker(false);
+            }}
+          >
+            {isRTL ? 'ניקוי' : 'Clear'}
+          </button>
+          <button 
+            type="button" 
+            className="time-picker-action primary" 
+            onClick={() => {
+              const now = new Date();
+              const hours = now.getHours().toString().padStart(2, '0');
+              const minutes = Math.floor(now.getMinutes() / 5) * 5;
+              const minutesStr = minutes.toString().padStart(2, '0');
+              handleTimeSelection(hours, minutesStr);
+            }}
+          >
+            {isRTL ? 'עכשיו' : 'Now'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="create-event-container">
+    <div className={`create-event-container ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
       <div className="create-event-header">
         <h1>{t('events.createEvent')}</h1>
         <p>{t('events.fillDetails')}</p>
@@ -356,30 +541,21 @@ const CreateEventPage = () => {
             <label htmlFor="eventDate">{t('events.eventDate')}</label>
             
             <div className="date-input-container">
-              <input
-                type="date"
-                id="eventDateISO"
-                name="eventDate"
-                value={eventData.eventDate}
-                onChange={handleDateChange}
-                min={today}
-                ref={datePickerRef}
-                className="hidden-date-input"
-              />
-              
               <div className="date-display-wrapper">
                 <input
                   type="text"
                   id="eventDateDisplay"
-                  placeholder="DD/MM/YYYY"
+                  placeholder={isRTL ? "DD/MM/YYYY" : "MM/DD/YYYY"}
                   value={displayDate}
-                  onChange={handleDisplayDateChange}
+                  readOnly
                   className={`date-display-input ${dateError ? 'input-error' : ''}`}
+                  onClick={toggleCalendar}
                 />
-                <div className="calendar-icon" onClick={toggleDatePicker}>
+                <div className={`calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={toggleCalendar}>
                   <span role="img" aria-label="calendar">📅</span>
                 </div>
               </div>
+              {renderCalendar()}
             </div>
             {dateError && <div className="field-error">{dateError}</div>}
           </div>
@@ -399,55 +575,16 @@ const CreateEventPage = () => {
                 required
                 className={`time-input ${timeError ? 'input-error' : ''}`}
               />
-              <div className="time-icon" onClick={toggleTimePicker}>
+              <div className={`time-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={toggleTimePicker}>
                 <span role="img" aria-label="clock">🕒</span>
               </div>
               
-              {/* Time picker in 24-hour format */}
-              {showTimePicker && (
-                <div className="time-picker-dropdown" ref={timePickerContainerRef}>
-                  <div className="time-picker-header">
-                    <div className="time-picker-close" onClick={() => setShowTimePicker(false)}>✕</div>
-                  </div>
-                  <div className="time-picker-content">
-                    <div className="time-picker-hours">
-                      {hours.map(hour => (
-                        <div 
-                          key={hour} 
-                          className="time-picker-hour"
-                          onClick={() => {
-                            // Select hour with default minutes (00)
-                            const minute = eventData.eventTime?.split(':')?.[1] || '00';
-                            handleTimeSelection(hour, minute);
-                          }}
-                        >
-                          {hour}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="time-picker-minutes">
-                      {minutes.map(minute => (
-                        <div 
-                          key={minute} 
-                          className="time-picker-minute"
-                          onClick={() => {
-                            // Select minutes with current hour
-                            const hour = eventData.eventTime?.split(':')?.[0] || '18';
-                            handleTimeSelection(hour, minute);
-                          }}
-                        >
-                          {minute}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {renderTimePicker()}
             </div>
             {timeError && <div className="field-error">{timeError}</div>}
           </div>
           
-          <div className="form-actions">
+          <div className={`form-actions ${isRTL ? 'rtl' : 'ltr'}`}>
             <button 
               type="button" 
               className="cancel-button" 
