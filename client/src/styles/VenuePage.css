@@ -45,20 +45,12 @@
   margin: 0 auto;
 }
 
-/* התאמת שדה חיפוש לפי כיוון השפה */
-[dir="rtl"] .venue-search-input {
-  border-radius: 0 4px 4px 0;
-}
-
-[dir="ltr"] .venue-search-input {
-  border-radius: 4px 0 0 4px;
-}
-
 .venue-search-input {
   flex: 1;
   padding: 12px 15px;
   font-size: 1rem;
   border: 2px solid #ddd;
+  border-radius: 4px 0 0 4px;
   outline: none;
   transition: border-color 0.3s;
 }
@@ -67,20 +59,12 @@
   border-color: #000;
 }
 
-/* התאמת כפתור חיפוש לפי כיוון השפה */
-[dir="rtl"] .venue-search-button {
-  border-radius: 4px 0 0 4px;
-}
-
-[dir="ltr"] .venue-search-button {
-  border-radius: 0 4px 4px 0;
-}
-
 .venue-search-button {
   padding: 12px 20px;
   background-color: #000;
   color: #fff;
   border: none;
+  border-radius: 0 4px 4px 0;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -135,23 +119,11 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
-  background-size: 0.65rem auto;
-}
-
-/* התאמת אייקון החץ בתיבת בחירה לפי כיוון השפה */
-[dir="rtl"] .filter-group select {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-position: left 0.7rem top 50%;
+  background-size: 0.65rem auto;
   padding-left: 2rem;
-  padding-right: 0.7rem;
-}
-
-[dir="ltr"] .filter-group select {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-position: right 0.7rem top 50%;
-  padding-right: 2rem;
-  padding-left: 0.7rem;
 }
 
 /* עיצוב ספציפי לשדה התכולה כדי להתאים לגודל של שאר השדות */
@@ -164,17 +136,8 @@
   height: 38px;
   font-size: 0.9rem;
   padding: 8px 12px;
-}
-
-/* התאמת כיוון וישור שדה התכולה */
-[dir="rtl"] .filter-group input.no-spinners {
   direction: rtl;
   text-align: right;
-}
-
-[dir="ltr"] .filter-group input.no-spinners {
-  direction: ltr;
-  text-align: left;
 }
 
 .amenities-group .checkbox-group {
@@ -190,15 +153,8 @@
   font-weight: normal;
 }
 
-/* התאמת מיקום תיבות סימון לפי כיוון השפה */
-[dir="rtl"] .checkbox-group input[type="checkbox"] {
+.checkbox-group input[type="checkbox"] {
   margin-left: 8px;
-  margin-right: 0;
-}
-
-[dir="ltr"] .checkbox-group input[type="checkbox"] {
-  margin-right: 8px;
-  margin-left: 0;
 }
 
 .filter-apply-button {
@@ -329,15 +285,6 @@
   padding: 15px;
 }
 
-/* התאמת יישור מידע כרטיס מקום לפי כיוון השפה */
-[dir="rtl"] .venue-info {
-  text-align: right;
-}
-
-[dir="ltr"] .venue-info {
-  text-align: left;
-}
-
 .venue-info h4 {
   margin: 0 0 10px;
   font-size: 1.1rem;
@@ -356,34 +303,14 @@
   margin-bottom: 10px;
 }
 
-/* התאמת מרווחים בדירוג לפי כיוון השפה */
-[dir="rtl"] .stars {
-  margin-left: 5px;
-  margin-right: 0;
-}
-
-[dir="ltr"] .stars {
-  margin-right: 5px;
-  margin-left: 0;
-}
-
 .stars {
   color: #ffc107;
-}
-
-/* התאמת מרווחים בערך דירוג לפי כיוון השפה */
-[dir="rtl"] .rating-value {
   margin-left: 5px;
-  margin-right: 0;
-}
-
-[dir="ltr"] .rating-value {
-  margin-right: 5px;
-  margin-left: 0;
 }
 
 .rating-value {
   font-weight: bold;
+  margin-left: 5px;
 }
 
 .review-count {
@@ -421,17 +348,6 @@
   overflow-y: auto;
   padding: 20px;
   position: relative;
-}
-
-/* התאמת כיוון תוכן פרטי המקום */
-[dir="rtl"] .venue-details-content {
-  direction: rtl;
-  text-align: right;
-}
-
-[dir="ltr"] .venue-details-content {
-  direction: ltr;
-  text-align: left;
 }
 
 .venue-details-header {
@@ -487,15 +403,6 @@
   margin-top: 10px;
 }
 
-/* התאמת יישור תצוגת תמונות לפי כיוון השפה */
-[dir="rtl"] .all-photos {
-  justify-content: flex-start;
-}
-
-[dir="ltr"] .all-photos {
-  justify-content: flex-start;
-}
-
 .all-photos img.thumbnail-photo {
   width: 100px;
   height: 70px;
@@ -508,6 +415,11 @@
 }
 
 .all-photos img.thumbnail-photo:hover {
+  border-color: #000;
+  transform: scale(1.05);
+}
+
+.all-photos img.thumbnail-photo.selected {
   border-color: #000;
   transform: scale(1.05);
 }
@@ -571,17 +483,9 @@
   font-weight: bold;
 }
 
-/* התאמת מרווחים בראש ביקורת לפי כיוון השפה */
-[dir="rtl"] .review-rating {
-  margin: 0 10px;
-}
-
-[dir="ltr"] .review-rating {
-  margin: 0 10px;
-}
-
 .review-rating {
   color: #ffc107;
+  margin: 0 10px;
 }
 
 .review-date {

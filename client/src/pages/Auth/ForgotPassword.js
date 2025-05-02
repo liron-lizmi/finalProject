@@ -21,13 +21,13 @@ const ForgotPassword = () => {
     e.preventDefault();
     
     if (!email) {
-      setError(t('errors.emailRequired', 'אנא הכנס כתובת אימייל'));
+      setError(t('errors.emailRequired'));
       return;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError(t('errors.invalidEmail', 'כתובת האימייל אינה תקינה'));
+      setError(t('errors.invalidEmail'));
       return;
     }
     
@@ -47,7 +47,7 @@ const ForgotPassword = () => {
         to_email: email,
         to_name: email.split('@')[0],
         reset_link: resetURL,
-        site_name: t('general.appName', "PlanIt"),
+        site_name: t('general.appName'),
         current_year: new Date().getFullYear()
       };
       
@@ -64,7 +64,7 @@ const ForgotPassword = () => {
         console.error('Email sending error:', emailError);
       }
       
-      setMessage(t('auth.resetLinkSent', 'קישור לאיפוס סיסמה נשלח לאימייל שלך'));
+      setMessage(t('auth.resetLinkSent'));
       
       setEmail('');
       
@@ -72,11 +72,11 @@ const ForgotPassword = () => {
       console.error('Error details:', err);
       
       if (err.response?.status === 404) {
-        setError(t('errors.emailNotFound', 'אימייל לא קיים במערכת'));
+        setError(t('errors.emailNotFound'));
       } else if (err.message?.includes('emailjs')) {
-        setError(t('errors.emailSendFailed', 'אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר'));
+        setError(t('errors.emailSendFailed'));
       } else {
-        setError(err.response?.data?.message || t('errors.generalError', 'אירעה שגיאה. אנא נסה שוב מאוחר יותר'));
+        setError(err.response?.data?.message || t('errors.generalError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -86,7 +86,7 @@ const ForgotPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>{t('auth.resetPasswordTitle', 'שחזור סיסמה')}</h2>
+        <h2>{t('auth.resetPasswordTitle')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
@@ -94,7 +94,7 @@ const ForgotPassword = () => {
           <div className="form-group">
             <input
               type="email"
-              placeholder={t('auth.enterEmailPlaceholder', 'הזן את כתובת האימייל שלך')}
+              placeholder={t('auth.enterEmailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -106,12 +106,14 @@ const ForgotPassword = () => {
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? t('auth.sending', 'שולח...') : t('auth.sendResetLink', 'שלח קישור לאיפוס סיסמה')}
+            {isSubmitting ? t('auth.sending') : t('auth.sendResetLink')}
           </button>
         </form>
         
         <p className="auth-link">
-          <span onClick={() => navigate('/login')}>{t('auth.backToLogin', 'חזרה להתחברות')}</span>
+          <span onClick={() => navigate('/login')} className="back-to-login">
+            {t('auth.backToLogin')}
+          </span>
         </p>
       </div>
     </div>

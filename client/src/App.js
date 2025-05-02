@@ -20,18 +20,11 @@ import EventTemplatesPage from './pages/Events/Features/EventTemplatesPage';
 import EventWeatherPage from './pages/Events/Features/EventWeatherPage';
 import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
 import EventSharePage from './pages/Events/Features/EventSharePage';
-import LanguageSwitcher from './pages/components/LanguageSwitcher';
+// Remove the LanguageSwitcher import
 
 const App = () => {
-  // const { i18n } = useTranslation();
   const { t, i18n, ready } = useTranslation();
   
-  // Set document direction whenever language changes
-  // useEffect(() => {
-  //   document.documentElement.dir = i18n.dir();
-  //   document.documentElement.lang = i18n.language;
-  // }, [i18n.language, i18n.dir]);
-
   useEffect(() => {
     console.log('Translation ready:', ready);
     console.log('Current language:', i18n.language);
@@ -41,7 +34,7 @@ const App = () => {
 
   return (
     <>
-      <LanguageSwitcher />
+      {/* Remove the LanguageSwitcher component here */}
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />

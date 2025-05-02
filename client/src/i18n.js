@@ -102,4 +102,11 @@ export const changeLanguage = (lng) => {
   });
 };
 
+// Helper function to toggle between Hebrew and English
+export const toggleLanguage = () => {
+  const currentLang = i18n.language;
+  const newLang = currentLang === 'he' ? 'en' : 'he';
+  return changeLanguage(newLang);
+};
+
 export default i18n;

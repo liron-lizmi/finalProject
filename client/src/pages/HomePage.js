@@ -9,6 +9,7 @@ import {
   FaBuilding
 } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '../i18n';
 
 const HomePage = () => {
   const { t, i18n } = useTranslation();
@@ -79,12 +80,33 @@ const HomePage = () => {
     navigate('/login');
   };
 
+  // Handle specific language change
+  const handleLanguageChange = (lang) => {
+    changeLanguage(lang);
+  };
+
   return (
     <div className="homepage-container">
       {/* Header */}
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
         <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" />
         <nav>
+          {/* Single language selector with Hebrew first */}
+          <div className="language-selector">
+            <span 
+              className={`language-option ${i18n.language === 'he' ? 'active' : ''}`}
+              onClick={() => handleLanguageChange('he')}
+            >
+              עברית
+            </span>
+            <span className="language-separator">|</span>
+            <span 
+              className={`language-option ${i18n.language === 'en' ? 'active' : ''}`}
+              onClick={() => handleLanguageChange('en')}
+            >
+              English
+            </span>
+          </div>
           <button className="btn" onClick={() => navigate('/register')}>{t('general.signup')}</button>
           <button className="btn" onClick={() => navigate('/login')}>{t('general.login')}</button>
         </nav>

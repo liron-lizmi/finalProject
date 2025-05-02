@@ -17,6 +17,71 @@ body {
   direction: ltr;
 }
 
+/* Language Selector Styling - Add to your HomePage.css file */
+.language-selector {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+[dir="rtl"] .language-selector {
+  margin-right: 0;
+  margin-left: 15px;
+}
+
+.language-option {
+  color: #a68b76; /* Exact same color as registration/login button text */
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 5px;
+  transition: all 0.3s ease;
+}
+
+.language-option:hover {
+  opacity: 0.8;
+}
+
+.language-option.active {
+  font-weight: 700; /* Bold for the active language, same color */
+}
+
+.language-separator {
+  margin: 0 8px;
+  color: #a68b76; /* Same color as text */
+}
+
+/* Responsive styles for language selector */
+@media (max-width: 768px) {
+  .language-selector {
+    margin-right: 10px;
+  }
+  
+  [dir="rtl"] .language-selector {
+    margin-right: 0;
+    margin-left: 10px;
+  }
+  
+  .language-option {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .language-selector {
+    margin-right: 8px;
+  }
+  
+  [dir="rtl"] .language-selector {
+    margin-right: 0;
+    margin-left: 8px;
+  }
+  
+  .language-option {
+    font-size: 14px;
+  }
+}
+
 .homepage-container {
   overflow-x: hidden;
 }
@@ -216,6 +281,7 @@ nav {
   display: inline-block;
   font-weight: 300;
   letter-spacing: 1px;
+  padding-bottom: 25px; /* Add padding to create space for the line */
 }
 
 .section-title::after {
@@ -224,14 +290,14 @@ nav {
   width: 60px;
   height: 2px;
   background: linear-gradient(to right, #d4b99e, #a68b76);
-  bottom: -15px;
+  bottom: 0; /* Position at the bottom of the padding */
   left: 50%;
   transform: translateX(-50%);
 }
 
 .section-description {
   max-width: 900px;
-  margin: 0 auto 60px;
+  margin: 30px auto 60px; /* Increased top margin */
   font-size: 1.2rem;
   line-height: 1.8;
   color: #666;
@@ -404,6 +470,8 @@ nav {
   position: relative;
   max-width: 1000px;
   margin: 80px auto 0;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .step {
@@ -413,6 +481,8 @@ nav {
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.6s ease;
+  /* Add space around the step */
+  padding: 10px 0;
 }
 
 .step.visible {
@@ -424,24 +494,28 @@ nav {
   margin-bottom: 0;
 }
 
-/* התאמת מיקום הקו בשלבי תכנון לפי כיוון השפה */
+/* Fix for vertical line positions */
 [dir="rtl"] .step::after {
-  left: 40px;
-  right: auto;
-}
-
-[dir="ltr"] .step::after {
-  right: 40px;
-  left: auto;
-}
-
-.step::after {
   content: '';
   position: absolute;
   width: 2px;
   height: calc(100% + 80px);
   background: linear-gradient(to bottom, #d4b99e 0%, rgba(212, 185, 158, 0.2) 100%);
   top: 20px;
+  right: 40px; /* Move further right to avoid text */
+  left: auto;
+  z-index: 0;
+}
+
+[dir="ltr"] .step::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: calc(100% + 80px);
+  background: linear-gradient(to bottom, #d4b99e 0%, rgba(212, 185, 158, 0.2) 100%);
+  top: 20px;
+  left: 40px; /* Move further left to avoid text */
+  right: auto;
   z-index: 0;
 }
 
@@ -458,21 +532,21 @@ nav {
   font-weight: 500;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 1;
+  z-index: 2; /* Ensure it's above the line */
   flex-shrink: 0;
+  margin: 0 20px; /* Add margin on both sides */
 }
 
-/* התאמת ריפוד תוכן שלבים לפי כיוון השפה */
+/* Fix for text spacing in RTL */
 [dir="rtl"] .step-content {
-  padding: 0 40px 0 0;
+  padding: 0 100px 0 0; /* Significantly increased right padding */
+  text-align: right;
 }
 
+/* Fix for text spacing in LTR */
 [dir="ltr"] .step-content {
-  padding: 0 0 0 40px;
-}
-
-.step-content {
-  flex: 1;
+  padding: 0 0 0 100px; /* Significantly increased left padding */
+  text-align: left;
 }
 
 .step h3 {
@@ -679,6 +753,12 @@ nav {
     max-width: 600px;
     margin: 0 auto;
   }
+  
+  /* Adjust step content padding for responsive layout */
+  [dir="rtl"] .step-content,
+  [dir="ltr"] .step-content {
+    padding: 0 60px; /* More balanced padding for smaller screens */
+  }
 }
 
 @media (max-width: 960px) {
@@ -692,7 +772,25 @@ nav {
   
   .planning-steps {
     max-width: 100%;
-    padding: 0 20px;
+    padding: 0 30px; /* Increased padding for better spacing */
+  }
+  
+  /* Adjust vertical line position for medium screens */
+  [dir="rtl"] .step::after {
+    right: 30px;
+  }
+  
+  [dir="ltr"] .step::after {
+    left: 30px;
+  }
+  
+  /* Adjust step content padding for medium screens */
+  [dir="rtl"] .step-content {
+    padding: 0 80px 0 0;
+  }
+  
+  [dir="ltr"] .step-content {
+    padding: 0 0 0 80px;
   }
 }
 
@@ -715,14 +813,25 @@ nav {
   
   .step {
     flex-direction: column;
+    align-items: flex-start;
+    padding-left: 50px; /* Add left padding for the line */
+  }
+  
+  [dir="rtl"] .step {
+    align-items: flex-end;
+    padding-left: 0;
+    padding-right: 50px; /* Add right padding for RTL */
   }
   
   .step-number {
     margin-bottom: 20px;
   }
   
-  .step-content {
+  /* Reset step content padding for mobile */
+  [dir="rtl"] .step-content,
+  [dir="ltr"] .step-content {
     padding: 0;
+    width: 100%;
   }
   
   .testimonial {
@@ -769,5 +878,24 @@ nav {
   
   .event-type {
     max-width: 80%;
+  }
+  
+  /* Increase spacing for mobile */
+  .step {
+    padding-left: 40px;
+  }
+  
+  [dir="rtl"] .step {
+    padding-left: 0;
+    padding-right: 40px;
+  }
+  
+  /* Adjust vertical line position for small screens */
+  [dir="rtl"] .step::after {
+    right: 20px;
+  }
+  
+  [dir="ltr"] .step::after {
+    left: 20px;
   }
 }

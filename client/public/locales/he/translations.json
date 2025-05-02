@@ -34,7 +34,12 @@
       "requireLength": "אורך מינימלי של 6 תווים",
       "connecting": "מתחבר...",
       "connectWithGoogle": "התחבר עם Google",
-      "or": "או"
+      "or": "או",
+      "enterEmailPlaceholder": "הזן את כתובת האימייל שלך",
+      "sendResetLink": "שלח קישור לאיפוס סיסמה",
+      "sending": "שולח...",
+      "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
+      "backToLogin": "חזרה להתחברות"
     },
     "dashboard": {
       "title": "לוח בקרה",
@@ -140,7 +145,10 @@
       "eventCreationFailed": "אירעה שגיאה ביצירת האירוע",
       "loadEventsFailed": "אירעה שגיאה בטעינת האירועים",
       "deleteEventFailed": "אירעה שגיאה במחיקת האירוע",
-      "eventLoadFailed": "אירעה שגיאה בטעינת פרטי האירוע"
+      "eventLoadFailed": "אירעה שגיאה בטעינת פרטי האירוע",
+      "emailRequired": "אנא הכנס כתובת אימייל",
+      "emailNotFound": "אימייל לא קיים במערכת",
+      "emailSendFailed": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר"
     },
     "home": {
       "hero": {

@@ -1,329 +1,337 @@
 {
-    "general": {
-      "appName": "PlanIt",
-      "appLogo": "PlanIt Logo",
-      "welcome": "Welcome!",
-      "login": "Login",
-      "signup": "Sign Up",
-      "logout": "Logout",
-      "save": "Save",
-      "cancel": "Cancel",
-      "back": "Back",
-      "loading": "Loading..."
-    },
-    "auth": {
-      "email": "Email",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "forgotPassword": "Forgot Password?",
-      "loginButton": "Login",
-      "signupButton": "Sign Up",
-      "firstName": "First Name",
-      "lastName": "Last Name",
-      "registerTitle": "Registration",
-      "loginTitle": "Login",
-      "processing": "Processing...",
-      "alreadyHaveAccount": "Already have an account?",
-      "noAccount": "Don't have an account?",
-      "resetPasswordTitle": "Reset Password",
-      "successTitle": "Success!",
-      "passwordRequirements": "Password Requirements:",
-      "requireUppercase": "At least one uppercase letter",
-      "requireLowercase": "At least one lowercase letter",
-      "requireNumber": "At least one number",
-      "requireLength": "Minimum length of 6 characters",
-      "connecting": "Connecting...",
-      "connectWithGoogle": "Connect with Google",
-      "or": "or"
-    },
-    "dashboard": {
-      "title": "Dashboard",
-      "greeting": "Hello",
-      "welcome": "Welcome,",
-      "createEventTitle": "Create New Event",
-      "createEventDescription": "Create a new event and get access to all the tools needed to manage your event",
-      "createEventButton": "Create New Event",
-      "eventsTitle": "My Events",
-      "noEvents": "You don't have any events yet",
-      "noEventsDescription": "Create a new event to get started",
-      "viewDetails": "View Details",
-      "deleteEvent": "Delete Event",
-      "backToDashboard": "Back to Dashboard",
-      "deleteConfirm": "Are you sure you want to delete the event \"{{title}}\"?"
-    },
-    "events": {
-      "createEvent": "Create New Event",
-      "eventName": "Event Name",
-      "eventNamePlaceholder": "Enter event name",
-      "eventDate": "Date",
-      "eventTime": "Time",
-      "eventLocation": "Location",
-      "eventDescription": "Event Description",
-      "selectLocation": "Select Location",
-      "createEventButton": "Create Event",
-      "creating": "Creating event...",
-      "updateEvent": "Update Event",
-      "deleteEvent": "Delete Event",
-      "eventsList": "Events List",
-      "noEvents": "No events available",
-      "fillDetails": "Fill in the following details to create your event",
-      "backToMyEvents": "Back to My Events",
-      "atTime": "at",
-      "daysRemaining": "{{days}} days remaining until the event",
-      "eventToday": "The event is today!",
-      "eventPassed": "The event has already taken place",
-      "planningProgress": "Event Planning Progress",
-      "eventNotFound": "Event not found",
-      "features": {
-        "venue": {
-          "title": "Venue Selection",
-          "description": "Choose the perfect venue for your event"
-        },
-        "vendors": {
-          "title": "Vendor Selection",
-          "description": "Photographer, DJ, catering and more"
-        },
-        "guests": {
-          "title": "Guest List",
-          "count": "{{count}} guests",
-          "add": "Add guests"
-        },
-        "seating": {
-          "title": "Seating Arrangements",
-          "description": "Organize tables and seating"
-        },
-        "timeline": {
-          "title": "Schedule & Tasks",
-          "description": "Plan timelines and manage tasks"
-        },
-        "templates": {
-          "title": "Templates",
-          "description": "Invitations, greetings and more"
-        },
-        "weather": {
-          "title": "Weather Forecast",
-          "description": "Check the forecast for your event day"
-        },
-        "budget": {
-          "title": "Budget Management",
-          "description": "Track expenses and income"
-        },
-        "share": {
-          "title": "Share Event",
-          "description": "Share details with guests and participants"
-        }
-      }
-    },
-    "location": {
-      "selectCity": "Select City",
-      "enterAddress": "Enter Address",
-      "confirmLocation": "Confirm Location"
-    },
-    "errors": {
-      "required": "Required field",
-      "invalidEmail": "Please enter a valid email address",
-      "shortPassword": "Password must be at least 6 characters",
-      "longPassword": "Password cannot be more than 30 characters",
-      "passwordRequirements": "Password must contain an uppercase letter, lowercase letter, and a number",
-      "passwordMismatch": "Passwords do not match",
-      "shortFirstName": "First name must be at least 2 characters",
-      "longFirstName": "First name cannot be more than 50 characters",
-      "shortLastName": "Last name must be at least 2 characters",
-      "longLastName": "Last name cannot be more than 50 characters",
-      "loginFailed": "Invalid username or password",
-      "authFailed": "Authentication failed",
-      "generalError": "An error occurred, please try again",
-      "invalidDateFormat": "Invalid date or date is in the past. Please enter in DD/MM/YYYY format",
-      "invalidTimeFormat": "Please enter a valid time in 24-hour format",
-      "invalidTimeFormatExample": "Please enter a valid time in 24-hour format (e.g., 14:30)",
-      "notLoggedIn": "Not logged in. Please log in again.",
-      "eventCreationFailed": "An error occurred while creating the event",
-      "loadEventsFailed": "Error loading events",
-      "deleteEventFailed": "Error deleting the event",
-      "eventLoadFailed": "Error loading event details"
-    },
-    "home": {
-      "hero": {
-        "subtitle": "Turn your event into an unforgettable experience with the most advanced tools for planning and managing events",
-        "cta": "Start planning your event"
+  "general": {
+    "appName": "PlanIt",
+    "appLogo": "PlanIt Logo",
+    "welcome": "Welcome!",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "loginButton": "Login",
+    "signupButton": "Sign Up",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "registerTitle": "Registration",
+    "loginTitle": "Login",
+    "processing": "Processing...",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "resetPasswordTitle": "Reset Password",
+    "successTitle": "Success!",
+    "passwordRequirements": "Password Requirements:",
+    "requireUppercase": "At least one uppercase letter",
+    "requireLowercase": "At least one lowercase letter",
+    "requireNumber": "At least one number",
+    "requireLength": "Minimum length of 6 characters",
+    "connecting": "Connecting...",
+    "connectWithGoogle": "Connect with Google",
+    "or": "or",
+    "enterEmailPlaceholder": "Enter your email address",
+    "sendResetLink": "Send Password Reset Link",
+    "sending": "Sending...",
+    "resetLinkSent": "Password reset link has been sent to your email",
+    "backToLogin": "Back to Login"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Hello",
+    "welcome": "Welcome,",
+    "createEventTitle": "Create New Event",
+    "createEventDescription": "Create a new event and get access to all the tools needed to manage your event",
+    "createEventButton": "Create New Event",
+    "eventsTitle": "My Events",
+    "noEvents": "You don't have any events yet",
+    "noEventsDescription": "Create a new event to get started",
+    "viewDetails": "View Details",
+    "deleteEvent": "Delete Event",
+    "backToDashboard": "Back to Dashboard",
+    "deleteConfirm": "Are you sure you want to delete the event \"{{title}}\"?"
+  },
+  "events": {
+    "createEvent": "Create New Event",
+    "eventName": "Event Name",
+    "eventNamePlaceholder": "Enter event name",
+    "eventDate": "Date",
+    "eventTime": "Time",
+    "eventLocation": "Location",
+    "eventDescription": "Event Description",
+    "selectLocation": "Select Location",
+    "createEventButton": "Create Event",
+    "creating": "Creating event...",
+    "updateEvent": "Update Event",
+    "deleteEvent": "Delete Event",
+    "eventsList": "Events List",
+    "noEvents": "No events available",
+    "fillDetails": "Fill in the following details to create your event",
+    "backToMyEvents": "Back to My Events",
+    "atTime": "at",
+    "daysRemaining": "{{days}} days remaining until the event",
+    "eventToday": "The event is today!",
+    "eventPassed": "The event has already taken place",
+    "planningProgress": "Event Planning Progress",
+    "eventNotFound": "Event not found",
+    "features": {
+      "venue": {
+        "title": "Venue Selection",
+        "description": "Choose the perfect venue for your event"
       },
-      "eventTypes": {
-        "title": "Your event, your way",
-        "description": "Whether you're planning a grand wedding, a business event, or an intimate birthday party, our platform is tailored to all types of events and budgets.",
-        "wedding": {
-          "title": "Weddings",
-          "description": "Perfect planning for your special day"
-        },
-        "business": {
-          "title": "Business Events",
-          "description": "Conferences, corporate events and product launches"
-        },
-        "birthday": {
-          "title": "Birthdays",
-          "description": "Unforgettable celebrations for all ages"
-        },
-        "private": {
-          "title": "Private Events",
-          "description": "Bar/Bat Mitzvahs, engagements and parties"
-        }
+      "vendors": {
+        "title": "Vendor Selection",
+        "description": "Photographer, DJ, catering and more"
       },
-      "features": {
-        "title": "Advanced Event Planning Tools",
-        "description": "Our platform offers a variety of smart tools that will assist you at every stage from planning your event to managing it in real time.",
-        "venue": {
-          "title": "Perfect Venue Selection",
-          "description": "Find the ideal venue for your event with smart filtering by location, budget, guest capacity and atmosphere. Discover halls, event gardens and unique places that perfectly match your requirements, get personalized recommendations, and compare different options in one place.",
-          "cta": "Discover Venues"
-        },
-        "vendors": {
-          "title": "Smart Vendor Management",
-          "description": "Manage all your vendors in one place - music, catering, photography, design and more. Compare price quotes, save important documents and manage efficient communication with all parties involved. The system alerts you to important deadlines and helps you track planning progress.",
-          "cta": "Manage Vendors"
-        },
-        "guests": {
-          "title": "Smart Guest List",
-          "description": "Easily manage guest lists, send personalized digital invitations and track RSVPs in real time. Our smart tool helps you stay in touch with guests before and after the event, collect menu preferences, and manage related events such as bachelor/bachelorette parties or henna ceremonies.",
-          "cta": "Manage Guests"
-        },
-        "seating": {
-          "title": "Intuitive Seating Arrangements",
-          "description": "AI algorithm for optimal seating arrangement for your guests, taking into account family dynamics, personal preferences and special needs. The interactive interface allows you to easily plan and change seating arrangements, share with family members for feedback, and export detailed diagrams to vendors.",
-          "cta": "Plan Seating"
-        },
-        "timeline": {
-          "title": "Precise Schedule Management",
-          "description": "Plan your event with a smart schedule for each stage. Get alerts for payment deadlines, vendor meetings and important tasks. Our tool ensures you don't miss any important detail on the way to the perfect event, offers pre-made templates for efficient handling, and allows sharing the schedule with family or a professional event planner.",
-          "cta": "Manage Schedule"
-        },
-        "budget": {
-          "title": "Smart Budget Management",
-          "description": "Track your budget and event expenses in real time. Our smart tool helps you focus on what really matters, identify places to save and ensure you stay within your defined budget. Get insights into spending patterns, compare price quotes, and receive alerts when approaching budget limits.",
-          "cta": "Manage Budget"
-        }
+      "guests": {
+        "title": "Guest List",
+        "count": "{{count}} guests",
+        "add": "Add guests"
       },
-      "process": {
-        "title": "Simple and Effective Planning Process",
-        "description": "From the initial idea to the day of the event, the PlanIt system accompanies you every step of the way",
-        "step1": {
-          "title": "Define Your Event",
-          "description": "Create an account with PlanIt and define the type of event, date, number of guests and budget. The system will adapt itself to your specific needs and create a personal work plan."
-        },
-        "step2": {
-          "title": "Choose Venue and Vendors",
-          "description": "The system will suggest personalized options for venues and vendors that match your requirements and budget. You can compare prices, read reviews, and make informed decisions in one place."
-        },
-        "step3": {
-          "title": "Manage Invitations and Guests",
-          "description": "Send custom designed digital invitations, track RSVPs, and manage special notes such as menu preferences or special needs. The system centralizes all information in one place and enables easy communication with guests."
-        },
-        "step4": {
-          "title": "Final Planning and Logistics",
-          "description": "Design seating arrangements, final coordination with vendors and build a detailed schedule for the event day. The system ensures that all the small details are taken care of and that everything is ready for the big day."
-        },
-        "step5": {
-          "title": "Real-time Event Management",
-          "description": "Get access to all important data on the day of the event, share tasks with team members, and document special moments in the digital event journal. Even after the event, you'll be able to send thanks to guests and vendors and summarize your successful event."
-        }
+      "seating": {
+        "title": "Seating Arrangements",
+        "description": "Organize tables and seating"
       },
-      "testimonials": {
-        "title": "Customers Say",
-        "quote": "\"PlanIt simply changed our entire wedding planning experience. Instead of pressure and worries, we could actually enjoy the process. The budget management and guest list tools saved us a lot of time and money, and on the day of the event everything went perfectly!\"",
-        "author": "Ronit and Dan",
-        "event": "Garden Wedding, June 2024"
+      "timeline": {
+        "title": "Schedule & Tasks",
+        "description": "Plan timelines and manage tasks"
       },
-      "cta": {
-        "title": "Ready to Start?",
-        "description": "Open a free account and start planning your perfect event today!",
-        "button": "Create New Account"
+      "templates": {
+        "title": "Templates",
+        "description": "Invitations, greetings and more"
       },
-      "footer": {
-        "description": "PlanIt is the perfect solution for planning and managing successful events. We are committed to helping you turn your vision into reality.",
-        "about": "About",
-        "services": "Services",
-        "blog": "Blog",
-        "contact": "Contact",
-        "terms": "Terms of Use",
-        "privacy": "Privacy Policy",
-        "copyright": "All Rights Reserved © 2025 PlanIt"
-      }
-    },
-    "venues": {
-      "searchTitle": "Venue Search",
-      "searchSubtitle": "Find the perfect venue for your event",
-      "searchPlaceholder": "Search by city, neighborhood or venue name",
-      "searchButton": "Search",
-      "filtersTitle": "Filter Results",
-      "searchResults": "Search Results",
-      "loading": "Loading venues...",
-      "noResults": "No venues found. Try changing your search or filters.",
-      "defaultVenueName": "Event Venue",
-      "venueAddedSuccess": "Venue successfully added to your event",
-      "selectButton": "Select this venue for your event",
-      "searchQueries": {
-        "restaurant": "restaurant",
-        "eventVenue": "event venue",
-        "banquetHall": "banquet hall",
-        "hotel": "hotel",
-        "park": "event garden",
-        "museum": "museum",
-        "default": "event venue"
+      "weather": {
+        "title": "Weather Forecast",
+        "description": "Check the forecast for your event day"
       },
-      "styles": {
-        "modern": "modern",
-        "classic": "classic",
-        "outdoor": "outdoor",
-        "garden": "garden",
-        "urban": "urban",
-        "luxury": "luxury"
+      "budget": {
+        "title": "Budget Management",
+        "description": "Track expenses and income"
       },
-      "filters": {
-        "areaLabel": "Area",
-        "allAreas": "All Areas",
-        "jerusalem": "Jerusalem & Surroundings",
-        "center": "Central",
-        "south": "South",
-        "north": "North",
-        "typeLabel": "Venue Type",
-        "allTypes": "All",
-        "restaurant": "Restaurant",
-        "eventVenue": "Event Hall", 
-        "banquetHall": "Banquet Hall",
-        "hotel": "Hotel",
-        "park": "Event Garden",
-        "museum": "Museum",
-        "styleLabel": "Venue Style",
-        "allStyles": "All",
-        "modern": "Modern",
-        "classic": "Classic",
-        "outdoor": "Outdoor/Garden",
-        "urban": "Urban",
-        "luxury": "Luxury",
-        "capacityLabel": "Capacity (number of guests)",
-        "selectCapacity": "Select capacity",
-        "upTo50": "Up to 50 guests",
-        "upTo100": "Up to 100 guests",
-        "upTo200": "Up to 200 guests",
-        "upTo300": "Up to 300 guests",
-        "upTo500": "Up to 500 guests",
-        "above500": "Over 500 guests",
-        "amenitiesLabel": "Amenities",
-        "parking": "Parking",
-        "accessibility": "Accessibility",
-        "outdoorSpace": "Outdoor Space",
-        "catering": "On-site Catering",
-        "accommodation": "Accommodation Options",
-        "applyButton": "Apply Filters"
-      },
-      "details": {
-        "address": "Address",
-        "phone": "Phone",
-        "website": "Website",
-        "rating": "Rating",
-        "outOf5": "out of 5",
-        "reviews": "reviews",
-        "priceLevel": "Price Level",
-        "openingHours": "Opening Hours",
-        "reviewsTitle": "Reviews"
+      "share": {
+        "title": "Share Event",
+        "description": "Share details with guests and participants"
       }
     }
+  },
+  "location": {
+    "selectCity": "Select City",
+    "enterAddress": "Enter Address",
+    "confirmLocation": "Confirm Location"
+  },
+  "errors": {
+    "required": "Required field",
+    "invalidEmail": "Please enter a valid email address",
+    "shortPassword": "Password must be at least 6 characters",
+    "longPassword": "Password cannot be more than 30 characters",
+    "passwordRequirements": "Password must contain an uppercase letter, lowercase letter, and a number",
+    "passwordMismatch": "Passwords do not match",
+    "shortFirstName": "First name must be at least 2 characters",
+    "longFirstName": "First name cannot be more than 50 characters",
+    "shortLastName": "Last name must be at least 2 characters",
+    "longLastName": "Last name cannot be more than 50 characters",
+    "loginFailed": "Invalid username or password",
+    "authFailed": "Authentication failed",
+    "generalError": "An error occurred, please try again",
+    "invalidDateFormat": "Invalid date or date is in the past. Please enter in DD/MM/YYYY format",
+    "invalidTimeFormat": "Please enter a valid time in 24-hour format",
+    "invalidTimeFormatExample": "Please enter a valid time in 24-hour format (e.g., 14:30)",
+    "notLoggedIn": "Not logged in. Please log in again.",
+    "eventCreationFailed": "An error occurred while creating the event",
+    "loadEventsFailed": "Error loading events",
+    "deleteEventFailed": "Error deleting the event",
+    "eventLoadFailed": "Error loading event details",
+    "emailRequired": "Please enter an email address",
+    "emailNotFound": "Email not found in our system",
+    "emailSendFailed": "Failed to send email. Please try again later."
+  },
+  "home": {
+    "hero": {
+      "subtitle": "Turn your event into an unforgettable experience with the most advanced tools for planning and managing events",
+      "cta": "Start planning your event"
+    },
+    "eventTypes": {
+      "title": "Your event, your way",
+      "description": "Whether you're planning a grand wedding, a business event, or an intimate birthday party, our platform is tailored to all types of events and budgets.",
+      "wedding": {
+        "title": "Weddings",
+        "description": "Perfect planning for your special day"
+      },
+      "business": {
+        "title": "Business Events",
+        "description": "Conferences, corporate events and product launches"
+      },
+      "birthday": {
+        "title": "Birthdays",
+        "description": "Unforgettable celebrations for all ages"
+      },
+      "private": {
+        "title": "Private Events",
+        "description": "Bar/Bat Mitzvahs, engagements and parties"
+      }
+    },
+    "features": {
+      "title": "Advanced Event Planning Tools",
+      "description": "Our platform offers a variety of smart tools that will assist you at every stage from planning your event to managing it in real time.",
+      "venue": {
+        "title": "Perfect Venue Selection",
+        "description": "Find the ideal venue for your event with smart filtering by location, budget, guest capacity and atmosphere. Discover halls, event gardens and unique places that perfectly match your requirements, get personalized recommendations, and compare different options in one place.",
+        "cta": "Discover Venues"
+      },
+      "vendors": {
+        "title": "Smart Vendor Management",
+        "description": "Manage all your vendors in one place - music, catering, photography, design and more. Compare price quotes, save important documents and manage efficient communication with all parties involved. The system alerts you to important deadlines and helps you track planning progress.",
+        "cta": "Manage Vendors"
+      },
+      "guests": {
+        "title": "Smart Guest List",
+        "description": "Easily manage guest lists, send personalized digital invitations and track RSVPs in real time. Our smart tool helps you stay in touch with guests before and after the event, collect menu preferences, and manage related events such as bachelor/bachelorette parties or henna ceremonies.",
+        "cta": "Manage Guests"
+      },
+      "seating": {
+        "title": "Intuitive Seating Arrangements",
+        "description": "AI algorithm for optimal seating arrangement for your guests, taking into account family dynamics, personal preferences and special needs. The interactive interface allows you to easily plan and change seating arrangements, share with family members for feedback, and export detailed diagrams to vendors.",
+        "cta": "Plan Seating"
+      },
+      "timeline": {
+        "title": "Precise Schedule Management",
+        "description": "Plan your event with a smart schedule for each stage. Get alerts for payment deadlines, vendor meetings and important tasks. Our tool ensures you don't miss any important detail on the way to the perfect event, offers pre-made templates for efficient handling, and allows sharing the schedule with family or a professional event planner.",
+        "cta": "Manage Schedule"
+      },
+      "budget": {
+        "title": "Smart Budget Management",
+        "description": "Track your budget and event expenses in real time. Our smart tool helps you focus on what really matters, identify places to save and ensure you stay within your defined budget. Get insights into spending patterns, compare price quotes, and receive alerts when approaching budget limits.",
+        "cta": "Manage Budget"
+      }
+    },
+    "process": {
+      "title": "Simple and Effective Planning Process",
+      "description": "From the initial idea to the day of the event, the PlanIt system accompanies you every step of the way",
+      "step1": {
+        "title": "Define Your Event",
+        "description": "Create an account with PlanIt and define the type of event, date, number of guests and budget. The system will adapt itself to your specific needs and create a personal work plan."
+      },
+      "step2": {
+        "title": "Choose Venue and Vendors",
+        "description": "The system will suggest personalized options for venues and vendors that match your requirements and budget. You can compare prices, read reviews, and make informed decisions in one place."
+      },
+      "step3": {
+        "title": "Manage Invitations and Guests",
+        "description": "Send custom designed digital invitations, track RSVPs, and manage special notes such as menu preferences or special needs. The system centralizes all information in one place and enables easy communication with guests."
+      },
+      "step4": {
+        "title": "Final Planning and Logistics",
+        "description": "Design seating arrangements, final coordination with vendors and build a detailed schedule for the event day. The system ensures that all the small details are taken care of and that everything is ready for the big day."
+      },
+      "step5": {
+        "title": "Real-time Event Management",
+        "description": "Get access to all important data on the day of the event, share tasks with team members, and document special moments in the digital event journal. Even after the event, you'll be able to send thanks to guests and vendors and summarize your successful event."
+      }
+    },
+    "testimonials": {
+      "title": "Customers Say",
+      "quote": "\"PlanIt simply changed our entire wedding planning experience. Instead of pressure and worries, we could actually enjoy the process. The budget management and guest list tools saved us a lot of time and money, and on the day of the event everything went perfectly!\"",
+      "author": "Ronit and Dan",
+      "event": "Garden Wedding, June 2024"
+    },
+    "cta": {
+      "title": "Ready to Start?",
+      "description": "Open a free account and start planning your perfect event today!",
+      "button": "Create New Account"
+    },
+    "footer": {
+      "description": "PlanIt is the perfect solution for planning and managing successful events. We are committed to helping you turn your vision into reality.",
+      "about": "About",
+      "services": "Services",
+      "blog": "Blog",
+      "contact": "Contact",
+      "terms": "Terms of Use",
+      "privacy": "Privacy Policy",
+      "copyright": "All Rights Reserved © 2025 PlanIt"
+    }
+  },
+  "venues": {
+    "searchTitle": "Venue Search",
+    "searchSubtitle": "Find the perfect venue for your event",
+    "searchPlaceholder": "Search by city, neighborhood or venue name",
+    "searchButton": "Search",
+    "filtersTitle": "Filter Results",
+    "searchResults": "Search Results",
+    "loading": "Loading venues...",
+    "noResults": "No venues found. Try changing your search or filters.",
+    "defaultVenueName": "Event Venue",
+    "venueAddedSuccess": "Venue successfully added to your event",
+    "selectButton": "Select this venue for your event",
+    "searchQueries": {
+      "restaurant": "restaurant",
+      "eventVenue": "event venue",
+      "banquetHall": "banquet hall",
+      "hotel": "hotel",
+      "park": "event garden",
+      "museum": "museum",
+      "default": "event venue"
+    },
+    "styles": {
+      "modern": "modern",
+      "classic": "classic",
+      "outdoor": "outdoor",
+      "garden": "garden",
+      "urban": "urban",
+      "luxury": "luxury"
+    },
+    "filters": {
+      "areaLabel": "Area",
+      "allAreas": "All Areas",
+      "jerusalem": "Jerusalem & Surroundings",
+      "center": "Central",
+      "south": "South",
+      "north": "North",
+      "typeLabel": "Venue Type",
+      "allTypes": "All",
+      "restaurant": "Restaurant",
+      "eventVenue": "Event Hall", 
+      "banquetHall": "Banquet Hall",
+      "hotel": "Hotel",
+      "park": "Event Garden",
+      "museum": "Museum",
+      "styleLabel": "Venue Style",
+      "allStyles": "All",
+      "modern": "Modern",
+      "classic": "Classic",
+      "outdoor": "Outdoor/Garden",
+      "urban": "Urban",
+      "luxury": "Luxury",
+      "capacityLabel": "Capacity (number of guests)",
+      "selectCapacity": "Select capacity",
+      "upTo50": "Up to 50 guests",
+      "upTo100": "Up to 100 guests",
+      "upTo200": "Up to 200 guests",
+      "upTo300": "Up to 300 guests",
+      "upTo500": "Up to 500 guests",
+      "above500": "Over 500 guests",
+      "amenitiesLabel": "Amenities",
+      "parking": "Parking",
+      "accessibility": "Accessibility",
+      "outdoorSpace": "Outdoor Space",
+      "catering": "On-site Catering",
+      "accommodation": "Accommodation Options",
+      "applyButton": "Apply Filters"
+    },
+    "details": {
+      "address": "Address",
+      "phone": "Phone",
+      "website": "Website",
+      "rating": "Rating",
+      "outOf5": "out of 5",
+      "reviews": "reviews",
+      "priceLevel": "Price Level",
+      "openingHours": "Opening Hours",
+      "reviewsTitle": "Reviews"
+    }
   }
+}

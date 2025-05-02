@@ -203,6 +203,26 @@ body {
   position: relative;
 }
 
+[dir="rtl"] .password-field input {
+  padding-left: 45px;
+  padding-right: 18px;
+}
+
+[dir="ltr"] .password-field input {
+  padding-right: 45px;
+  padding-left: 18px;
+}
+
+[dir="rtl"] .password-toggle {
+  left: 15px;
+  right: auto;
+}
+
+[dir="ltr"] .password-toggle {
+  right: 15px;
+  left: auto;
+}
+
 .password-toggle {
   position: absolute;
   left: 15px;
@@ -364,6 +384,23 @@ body {
   margin: 20px auto;
 }
 
+[dir="ltr"] input::placeholder {
+  text-align: left;
+}
+
+[dir="rtl"] input::placeholder {
+  text-align: right;
+}
+
+/* For actual input text as well (to be thorough) */
+[dir="ltr"] input {
+  text-align: left;
+}
+
+[dir="rtl"] input {
+  text-align: right;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -381,9 +418,6 @@ body {
   background: #ebebeb;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
-
-/* ===== דף הדשבורד החדש ===== */
-/* הסגנון המעודכן */
 
 .dashboard-wrapper {
   min-height: 100vh;
