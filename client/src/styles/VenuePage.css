@@ -1,4 +1,4 @@
-/* VenuePage.css - Main styling for venue search page */
+/* VenuePage.css - Updated with proper RTL/LTR support */
 
 .venue-page {
   max-width: 1200px;
@@ -8,13 +8,9 @@
   color: #333;
 }
 
-/* התאמת כיוון דף חיפוש מקומות לפי שפה */
-[dir="rtl"] .venue-page {
-  direction: rtl;
-}
-
-[dir="ltr"] .venue-page {
-  direction: ltr;
+/* Direction support based on document direction */
+.venue-page {
+  direction: inherit; /* Will inherit from document or parent */
 }
 
 /* Header Styles */
@@ -55,6 +51,14 @@
   transition: border-color 0.3s;
 }
 
+html[dir="rtl"] .venue-search-input {
+  border-radius: 0 4px 4px 0;
+}
+
+html[dir="ltr"] .venue-search-input {
+  border-radius: 4px 0 0 4px;
+}
+
 .venue-search-input:focus {
   border-color: #000;
 }
@@ -70,6 +74,14 @@
   transition: background-color 0.3s;
 }
 
+html[dir="rtl"] .venue-search-button {
+  border-radius: 4px 0 0 4px;
+}
+
+html[dir="ltr"] .venue-search-button {
+  border-radius: 0 4px 4px 0;
+}
+
 .venue-search-button:hover {
   background-color: #333;
 }
@@ -79,6 +91,23 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+@media (min-width: 992px) {
+  .venue-content {
+    flex-direction: row;
+  }
+  
+  .venue-filters {
+    flex: 0 0 250px;
+    align-self: flex-start;
+    position: sticky;
+    top: 20px;
+  }
+  
+  .venue-results-container {
+    flex: 1;
+  }
 }
 
 /* Filter Styles */
@@ -106,7 +135,7 @@
   margin-bottom: 5px;
 }
 
-/* עיצוב תיבת הבחירה כך שתראה אחיד בכל הדפדפנים */
+/* Select styling with RTL/LTR support */
 .filter-group select {
   width: 100%;
   padding: 8px 12px;
@@ -119,27 +148,31 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+}
+
+/* RTL-specific select styling */
+.filter-group select.rtl-select {
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: left 0.7rem top 50%;
   background-size: 0.65rem auto;
   padding-left: 2rem;
-}
-
-/* עיצוב ספציפי לשדה התכולה כדי להתאים לגודל של שאר השדות */
-.filter-group input.no-spinners {
-  width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  box-sizing: border-box;
-  height: 38px;
-  font-size: 0.9rem;
-  padding: 8px 12px;
-  direction: rtl;
   text-align: right;
+  direction: rtl;
 }
 
+/* LTR-specific select styling */
+.filter-group select.ltr-select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem top 50%;
+  background-size: 0.65rem auto;
+  padding-right: 2rem;
+  text-align: left;
+  direction: ltr;
+}
+
+/* Checkbox group styling */
 .amenities-group .checkbox-group {
   display: flex;
   flex-direction: column;
@@ -153,8 +186,15 @@
   font-weight: normal;
 }
 
-.checkbox-group input[type="checkbox"] {
+/* Checkbox positioning based on direction */
+html[dir="rtl"] .checkbox-group input[type="checkbox"] {
   margin-left: 8px;
+  margin-right: 0;
+}
+
+html[dir="ltr"] .checkbox-group input[type="checkbox"] {
+  margin-right: 8px;
+  margin-left: 0;
 }
 
 .filter-apply-button {
@@ -178,23 +218,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-@media (min-width: 992px) {
-  .venue-content {
-    flex-direction: row;
-  }
-  
-  .venue-filters {
-    flex: 0 0 250px;
-    align-self: flex-start;
-    position: sticky;
-    top: 20px;
-  }
-  
-  .venue-results-container {
-    flex: 1;
-  }
 }
 
 /* Map Styles */
@@ -233,6 +256,21 @@
   color: #666;
 }
 
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #000;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .venues-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -259,6 +297,9 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .venue-card:hover {
@@ -283,6 +324,9 @@
 
 .venue-info {
   padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .venue-info h4 {
@@ -303,14 +347,34 @@
   margin-bottom: 10px;
 }
 
+/* Rating direction-specific alignment */
+html[dir="rtl"] .stars {
+  margin-left: 5px;
+  margin-right: 0;
+}
+
+html[dir="ltr"] .stars {
+  margin-right: 5px;
+  margin-left: 0;
+}
+
 .stars {
   color: #ffc107;
-  margin-left: 5px;
 }
 
 .rating-value {
   font-weight: bold;
+}
+
+/* Rating value margin based on direction */
+html[dir="rtl"] .rating-value {
   margin-left: 5px;
+  margin-right: 0;
+}
+
+html[dir="ltr"] .rating-value {
+  margin-right: 5px;
+  margin-left: 0;
 }
 
 .review-count {
@@ -321,9 +385,10 @@
 .venue-price {
   color: #2e7d32;
   font-weight: bold;
+  margin-top: auto;
 }
 
-/* Venue Details Styles */
+/* Venue Details Modal */
 .venue-details {
   position: fixed;
   top: 0;
@@ -392,7 +457,7 @@
   object-fit: cover;
 }
 
-/* עיצוב חדש לתצוגת כל התמונות */
+/* Thumbnails photo gallery */
 .all-photos {
   display: flex;
   gap: 10px;
@@ -448,6 +513,7 @@
   color: #555;
 }
 
+/* Venue Reviews Section */
 .venue-reviews {
   margin-top: 25px;
 }
@@ -485,7 +551,15 @@
 
 .review-rating {
   color: #ffc107;
-  margin: 0 10px;
+}
+
+/* Review rating margin based on direction */
+html[dir="rtl"] .review-rating {
+  margin: 0 10px 0 0;
+}
+
+html[dir="ltr"] .review-rating {
+  margin: 0 0 0 10px;
 }
 
 .review-date {
@@ -498,6 +572,7 @@
   color: #444;
 }
 
+/* Venue Actions */
 .venue-actions {
   margin-top: 30px;
   display: flex;
@@ -544,20 +619,4 @@
   .venue-details-header h2 {
     font-size: 1.3rem;
   }
-}
-
-/* Loading animation */
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #000;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }

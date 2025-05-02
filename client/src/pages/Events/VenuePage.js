@@ -6,7 +6,7 @@ import '../../styles/VenuePage.css';
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
 const VenuePage = ({ onSelectVenue }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [venues, setVenues] = useState([]);
@@ -19,6 +19,9 @@ const VenuePage = ({ onSelectVenue }) => {
  
   // Check if we came to this page from a specific event page
   const eventId = location.state?.eventId;
+  
+  // Add RTL/LTR detection
+  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
  
   // Filters - updated according to new requirements
   const [filters, setFilters] = useState({
@@ -46,6 +49,12 @@ const VenuePage = ({ onSelectVenue }) => {
   const isEffectRun = useRef(false);
   const mapInstance = useRef(null);
   
+  // Set document direction based on language
+  useEffect(() => {
+    // Set the document direction based on language
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.body.dir = isRTL ? 'rtl' : 'ltr';
+  }, [isRTL, i18n.language]);
  
   useEffect(() => {
     if (isEffectRun.current) return;
@@ -631,6 +640,7 @@ const VenuePage = ({ onSelectVenue }) => {
               name="area"
               value={filters.area}
               onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
             >
               <option value="all">{t('venues.filters.allAreas')}</option>
               <option value="ירושלים">{t('venues.filters.jerusalem')}</option>
@@ -648,6 +658,7 @@ const VenuePage = ({ onSelectVenue }) => {
               name="venueType"
               value={filters.venueType}
               onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
             >
               <option value="all">{t('venues.filters.allTypes')}</option>
               <option value="restaurant">{t('venues.filters.restaurant')}</option>
@@ -667,6 +678,7 @@ const VenuePage = ({ onSelectVenue }) => {
               name="venueStyle"
               value={filters.venueStyle}
               onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
             >
               <option value="all">{t('venues.filters.allStyles')}</option>
               <option value="modern">{t('venues.filters.modern')}</option>
@@ -685,6 +697,7 @@ const VenuePage = ({ onSelectVenue }) => {
               name="capacity"
               value={filters.capacity}
               onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
             >
               <option value="">{t('venues.filters.selectCapacity')}</option>
               <option value="50">{t('venues.filters.upTo50')}</option>
@@ -762,7 +775,10 @@ const VenuePage = ({ onSelectVenue }) => {
             <h3>{t('venues.searchResults')}</h3>
            
             {loading ? (
-              <div className="loading-indicator">{t('venues.loading')}</div>
+              <div className="loading-indicator">
+                <div className="loading-spinner"></div>
+                <p>{t('venues.loading')}</p>
+              </div>
             ) : venues.length === 0 ? (
               <div className="no-results">{t('venues.noResults')}</div>
             ) : (
@@ -773,39 +789,39 @@ const VenuePage = ({ onSelectVenue }) => {
                     className={`venue-card ${selectedVenue && selectedVenue.place_id === venue.place_id ? 'selected' : ''}`}
                     onClick={() => getVenueDetails(venue.place_id)}
                   >
-              <div className="venue-image">
-                {venue.photos && venue.photos.length > 0 ? (
-                  <img
-                    src={getPhotoUrl(venue.photos[0], 300, 200, true)} // Use higher quality for main image
-                    alt={venue.name}
-                    onError={(e) => {
-                      // If main image fails, try other images
-                      if (venue.photos && venue.photos.length > 1) {
-                        // Try other images sequentially
-                        const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
-                        const nextIndex = (currentIndex + 1) % venue.photos.length;
-                        
-                        if (nextIndex !== currentIndex) {
-                          e.target.dataset.photoIndex = nextIndex.toString();
-                          e.target.src = getPhotoUrl(venue.photos[nextIndex], 300, 200, true);
-                          return;
-                        }
-                      }
-                      
-                      // If no other images or all failed, use generated image
-                      e.target.onerror = null;
-                      e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`;
-                    }}
-                    data-photo-index="0"
-                  />
-                ) : (
-                  // If no images at all, use generated image
-                  <img
-                    src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`}
-                    alt={venue.name || t('venues.defaultVenueName')}
-                  />
-                )}
-              </div>
+                    <div className="venue-image">
+                      {venue.photos && venue.photos.length > 0 ? (
+                        <img
+                          src={getPhotoUrl(venue.photos[0], 300, 200, true)} // Use higher quality for main image
+                          alt={venue.name}
+                          onError={(e) => {
+                            // If main image fails, try other images
+                            if (venue.photos && venue.photos.length > 1) {
+                              // Try other images sequentially
+                              const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
+                              const nextIndex = (currentIndex + 1) % venue.photos.length;
+                              
+                              if (nextIndex !== currentIndex) {
+                                e.target.dataset.photoIndex = nextIndex.toString();
+                                e.target.src = getPhotoUrl(venue.photos[nextIndex], 300, 200, true);
+                                return;
+                              }
+                            }
+                            
+                            // If no other images or all failed, use generated image
+                            e.target.onerror = null;
+                            e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`;
+                          }}
+                          data-photo-index="0"
+                        />
+                      ) : (
+                        // If no images at all, use generated image
+                        <img
+                          src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`}
+                          alt={venue.name || t('venues.defaultVenueName')}
+                        />
+                      )}
+                    </div>
                    
                     <div className="venue-info">
                       <h4>{venue.name}</h4>

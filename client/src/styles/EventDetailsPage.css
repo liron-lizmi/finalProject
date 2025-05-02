@@ -8,13 +8,9 @@
   color: #333;
 }
 
-/* תמיכה לכיוון על פי שפה */
-[dir="rtl"] .event-page-wrapper {
-  direction: rtl;
-}
-
-[dir="ltr"] .event-page-wrapper {
-  direction: ltr;
+/* Direction support based on document direction */
+.event-page-wrapper {
+  direction: inherit; /* Will inherit from document or parent */
 }
 
 .event-details-container {
@@ -23,7 +19,29 @@
   padding: 30px 20px;
 }
 
-/* Back Button */
+/* Header top section - flex direction will automatically reverse in RTL */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+/* Logo styling */
+.app-logo {
+  max-width: 210px;
+  height: auto;
+}
+
+.app-logo img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  max-height: 70px;
+}
+
+/* Back Button - unified styling for RTL/LTR */
 .back-button {
   display: flex;
   align-items: center;
@@ -37,23 +55,6 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
-}
-
-/* התאמת מיקום כפתור החזרה לפי כיוון השפה */
-[dir="rtl"] .back-button {
-  margin-right: auto;
-  margin-left: 0;
-}
-
-[dir="ltr"] .back-button {
-  margin-left: auto;
-  margin-right: 0;
-}
-
-/* התאמת אייקון החזרה לפי כיוון השפה */
-[dir="ltr"] .back-icon svg {
-  transform: scaleX(-1);
 }
 
 .back-button:hover {
@@ -63,20 +64,25 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
 }
 
+/* Back icon handling for RTL/LTR */
+html[dir="rtl"] .back-icon svg {
+  transform: scaleX(1);
+}
+
+html[dir="ltr"] .back-icon svg {
+  transform: scaleX(-1);
+}
+
 .back-icon svg {
   stroke: #a68b76;
 }
 
-/* Header Styles - Combined Event Info and Progress */
+/* Header Styles */
 .event-header {
   padding: 10px 0;
   margin-bottom: 30px;
   position: relative;
   overflow: hidden;
-}
-
-.event-header::before {
-  content: none;
 }
 
 .event-info-container {
@@ -146,20 +152,14 @@
   stroke: #e53e3e;
 }
 
-.counter-icon svg {
-  position: relative;
-  top: 0.5px; 
-  vertical-align: middle; 
-}
-
-/* Progress Section - Now inside the header */
+/* Progress Section */
 .progress-container {
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
   padding-top: 20px;
   border-top: 1px solid #f0f0f0;
-  margin-top: 15px; 
+  margin-top: 15px;
 }
 
 .progress-info {
@@ -190,15 +190,7 @@
   position: relative;
 }
 
-/* התאמת כיוון מילוי פס ההתקדמות */
-[dir="rtl"] .progress-fill {
-  background: linear-gradient(to right, #d4b99e, #c4a98e);
-}
-
-[dir="ltr"] .progress-fill {
-  background: linear-gradient(to left, #d4b99e, #c4a98e);
-}
-
+/* Progress fill styling with gradient based on direction */
 .progress-fill {
   height: 100%;
   border-radius: 30px;
@@ -206,18 +198,15 @@
   position: relative;
 }
 
+html[dir="rtl"] .progress-fill {
+  background: linear-gradient(to right, #d4b99e, #c4a98e);
+}
+
+html[dir="ltr"] .progress-fill {
+  background: linear-gradient(to left, #d4b99e, #c4a98e);
+}
+
 /* Progress labels */
-/* התאמת מיקום אחוזי ההתקדמות */
-[dir="rtl"] .progress-fill::after {
-  right: 0;
-  left: auto;
-}
-
-[dir="ltr"] .progress-fill::after {
-  left: 0;
-  right: auto;
-}
-
 .progress-fill::after {
   content: attr(data-progress);
   position: absolute;
@@ -233,22 +222,27 @@
   pointer-events: none;
 }
 
+html[dir="rtl"] .progress-fill::after {
+  right: 0;
+}
+
+html[dir="ltr"] .progress-fill::after {
+  left: 0;
+}
+
 .progress-bar:hover .progress-fill::after {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Features Section */
-.event-features-section {
-  margin-bottom: 30px;
-}
-
+/* Features Grid - will automatically reorder in RTL */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 25px;
 }
 
+/* Feature Cards */
 .feature-card {
   background-color: #fff;
   border-radius: 16px;
@@ -269,17 +263,7 @@
   border-color: #e6d5c4;
 }
 
-/* התאמת מיקום הסרגל הצדדי בכרטיסיות לפי כיוון השפה */
-[dir="rtl"] .feature-card::before {
-  right: 0;
-  left: auto;
-}
-
-[dir="ltr"] .feature-card::before {
-  left: 0;
-  right: auto;
-}
-
+/* Side bar accent for feature cards */
 .feature-card::before {
   content: '';
   position: absolute;
@@ -291,22 +275,19 @@
   transition: opacity 0.3s ease;
 }
 
+html[dir="rtl"] .feature-card::before {
+  right: 0;
+}
+
+html[dir="ltr"] .feature-card::before {
+  left: 0;
+}
+
 .feature-card:hover::before {
   opacity: 1;
 }
 
-/* Updated emoji style */
-/* התאמת מיקום האייקון בכרטיסיות לפי כיוון השפה */
-[dir="rtl"] .feature-emoji {
-  margin-left: 18px;
-  margin-right: 0;
-}
-
-[dir="ltr"] .feature-emoji {
-  margin-right: 18px;
-  margin-left: 0;
-}
-
+/* Feature emoji styling */
 .feature-emoji {
   width: 40px;
   height: 40px;
@@ -320,10 +301,21 @@
   align-self: center;
 }
 
+html[dir="rtl"] .feature-emoji {
+  margin-left: 18px;
+  margin-right: 0;
+}
+
+html[dir="ltr"] .feature-emoji {
+  margin-right: 18px;
+  margin-left: 0;
+}
+
 .feature-card:hover .feature-emoji {
   transform: scale(1.1);
 }
 
+/* Feature content */
 .feature-content {
   flex: 1;
   text-align: center;
@@ -349,19 +341,7 @@
   transition: all 0.3s ease;
 }
 
-/* התאמת מיקום כפתור פעולה בכרטיסיות לפי כיוון השפה */
-[dir="rtl"] .feature-action {
-  margin-right: 10px;
-  margin-left: 0;
-  transform: translateX(10px);
-}
-
-[dir="ltr"] .feature-action {
-  margin-left: 10px;
-  margin-right: 0;
-  transform: translateX(-10px);
-}
-
+/* Feature action button with direction-specific styling */
 .feature-action {
   display: flex;
   align-items: center;
@@ -374,8 +354,20 @@
   transition: all 0.3s ease;
 }
 
-/* התאמת כיוון אייקון חץ בכרטיסיות לפי כיוון השפה */
-[dir="ltr"] .feature-action svg {
+html[dir="rtl"] .feature-action {
+  margin-right: 10px;
+  margin-left: 0;
+  transform: translateX(10px);
+}
+
+html[dir="ltr"] .feature-action {
+  margin-left: 10px;
+  margin-right: 0;
+  transform: translateX(-10px);
+}
+
+/* Direction-specific arrow orientation */
+html[dir="ltr"] .feature-action svg {
   transform: scaleX(-1);
 }
 
@@ -445,6 +437,37 @@
   line-height: 1.6;
 }
 
+/* Completed features styling */
+.feature-card.completed {
+  position: relative;
+}
+
+.feature-card.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 12px;
+  width: 22px;
+  height: 22px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+html[dir="rtl"] .feature-card.completed::after {
+  left: 12px;
+  right: auto;
+}
+
+html[dir="ltr"] .feature-card.completed::after {
+  right: 12px;
+  left: auto;
+}
+
 /* Responsive design */
 @media (max-width: 1100px) {
   .features-grid {
@@ -481,95 +504,16 @@
   
   .feature-emoji {
     font-size: 1.5rem;
-    
-    /* התאמת רספונסיביות */
-    [dir="rtl"] & {
-      margin-left: 15px;
-    }
-    
-    [dir="ltr"] & {
-      margin-right: 15px;
-    }
   }
-}
-
-/* Animation for feature cards */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
+  
+  html[dir="rtl"] .feature-emoji {
+    margin-left: 15px;
   }
-  50% {
-    transform: scale(1.05);
+  
+  html[dir="ltr"] .feature-emoji {
+    margin-right: 15px;
   }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.feature-card.active {
-  animation: pulse 2s infinite;
-  border-color: #d4b99e;
-}
-
-.feature-card.active::before {
-  opacity: 1;
-}
-
-/* Additional styles for completed features */
-.feature-card.completed {
-  position: relative;
-}
-
-/* התאמת מיקום סימון השלמה בכרטיסיות לפי כיוון השפה */
-[dir="rtl"] .feature-card.completed::after {
-  left: 12px;
-  right: auto;
-}
-
-[dir="ltr"] .feature-card.completed::after {
-  right: 12px;
-  left: auto;
-}
-
-.feature-card.completed::after {
-  content: '✓';
-  position: absolute;
-  top: 12px;
-  width: 22px;
-  height: 22px;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-/* סגנון למיקום הלוגו וכפתור החזרה */
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-/* עיצוב הלוגו */
-.app-logo {
-  max-width: 210px;
-  height: auto;
-}
-
-.app-logo img {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  max-height: 70px;
-}
-
-@media (max-width: 576px) {
+  
   .header-top {
     gap: 5px;
   }
@@ -580,18 +524,5 @@
 
   .app-logo img {
     max-height: 40px; 
-  }
-
-  .welcome-message {
-    font-size: 0.85rem;
-    max-width: 100px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .logout-button {
-    font-size: 0.85rem;
-    padding: 4px 6px;
   }
 }

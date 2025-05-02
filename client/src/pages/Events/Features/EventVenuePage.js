@@ -1,6 +1,7 @@
 // pages/Events/Features/EventVenuePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import VenuePage from '../VenuePage';
@@ -8,18 +9,26 @@ import VenuePage from '../VenuePage';
 const EventVenuePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t, i18n } = useTranslation();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showVenuePage, setShowVenuePage] = useState(false);
   const [venueUpdateSuccess, setVenueUpdateSuccess] = useState(false);
+  
+  // זיהוי כיוון השפה
+  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
   useEffect(() => {
+    // קביעת כיוון המסמך לפי השפה
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.body.dir = isRTL ? 'rtl' : 'ltr';
+    
     const fetchEventDetails = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          setError('לא מחובר. נא להתחבר מחדש.');
+          setError(t('errors.notLoggedIn'));
           navigate('/login');
           return;
         }
@@ -34,19 +43,19 @@ const EventVenuePage = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
-        setError('אירעה שגיאה בטעינת פרטי האירוע');
+        setError(t('errors.eventLoadFailed'));
         setLoading(false);
       }
     };
 
     fetchEventDetails();
-  }, [id, navigate]);
+  }, [id, navigate, t, i18n.language, isRTL]);
 
   const handleVenueSelect = async (venue) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('לא מחובר. נא להתחבר מחדש.');
+        setError(t('errors.notLoggedIn'));
         navigate('/login');
         return;
       }
@@ -68,7 +77,7 @@ const EventVenuePage = () => {
         }
       );
 
-      // After saving the venue, fetch updated event data
+      // העתקת הנתונים המעודכנים אחרי השמירה
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
           'x-auth-token': token
@@ -76,16 +85,16 @@ const EventVenuePage = () => {
       });
 
       setEvent(response.data);
-      setVenueUpdateSuccess(true); // הגדרת הצלחת העדכון
+      setVenueUpdateSuccess(true);
       setShowVenuePage(false);
 
-      // אחרי 3 שניות, מסתירים את הודעת ההצלחה
+      // הסתרת הודעת ההצלחה אחרי 3 שניות
       setTimeout(() => {
         setVenueUpdateSuccess(false);
       }, 3000);
     } catch (err) {
       console.error('Error updating venue:', err);
-      setError('אירעה שגיאה בשמירת המקום');
+      setError(t('errors.generalError'));
     }
   };
 
@@ -102,7 +111,7 @@ const EventVenuePage = () => {
       <div className="feature-page-container">
         <div className="error-message">{error}</div>
         <button className="back-button" onClick={() => navigate(`/event/${id}`)}>
-          חזרה לפרטי האירוע
+          {t('general.back')}
         </button>
       </div>
     );
@@ -115,26 +124,30 @@ const EventVenuePage = () => {
 
   return (
     <FeaturePageTemplate
-      title="בחירת מקום לאירוע"
+      title={t('events.features.venue.title')}
       icon="🏢"
-      description="בחר את המקום המושלם לאירוע שלך"
+      description={t('events.features.venue.description')}
     >
       {venueUpdateSuccess && (
         <div className="success-message">
-          המקום נוסף בהצלחה לאירוע שלך
+          {t('venues.venueAddedSuccess')}
         </div>
       )}
       
       {event.venue && event.venue.name ? (
         <div className="selected-venue">
-          <h3>המקום שנבחר</h3>
+          <h3>{t('venues.selectedVenue')}</h3>
           <div className="venue-details-card">
             <h4>{event.venue.name}</h4>
-            {event.venue.address && <p><strong>כתובת:</strong> {event.venue.address}</p>}
-            {event.venue.phone && <p><strong>טלפון:</strong> {event.venue.phone}</p>}
+            {event.venue.address && (
+              <p><strong>{t('venues.details.address')}:</strong> {event.venue.address}</p>
+            )}
+            {event.venue.phone && (
+              <p><strong>{t('venues.details.phone')}:</strong> {event.venue.phone}</p>
+            )}
             {event.venue.website && (
               <p>
-                <strong>אתר:</strong>{' '}
+                <strong>{t('venues.details.website')}:</strong>{' '}
                 <a href={event.venue.website} target="_blank" rel="noopener noreferrer">
                   {event.venue.website}
                 </a>
@@ -142,14 +155,14 @@ const EventVenuePage = () => {
             )}
           </div>
           <button className="change-venue-button" onClick={() => setShowVenuePage(true)}>
-            שנה מקום
+            {t('venues.changeVenue')}
           </button>
         </div>
       ) : (
         <div className="no-venue-selected">
-          <p>לא נבחר מקום לאירוע שלך עדיין.</p>
+          <p>{t('venues.noVenueSelected')}</p>
           <button className="select-venue-button" onClick={() => setShowVenuePage(true)}>
-            חפש וסנן מקומות לאירוע
+            {t('venues.searchAndFilterButton')}
           </button>
         </div>
       )}

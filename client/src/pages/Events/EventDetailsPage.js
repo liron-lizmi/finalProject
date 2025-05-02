@@ -11,8 +11,15 @@ const EventDetailsPage = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
+  // Determine if the current language is RTL
+  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+  
   useEffect(() => {
+    // Set the document direction based on language
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.body.dir = isRTL ? 'rtl' : 'ltr';
+    
     const fetchEventDetails = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -38,7 +45,7 @@ const EventDetailsPage = () => {
     };
 
     fetchEventDetails();
-  }, [id, navigate, t]);
+  }, [id, navigate, t, i18n.language, isRTL]);
 
   const handleFeatureClick = (feature) => {
     switch (feature) {
@@ -235,6 +242,7 @@ const EventDetailsPage = () => {
 
         <section className="event-features-section">
           <div className="features-grid">
+            {/* Feature cards - each card will render in the correct order based on the language direction */}
             <div className="feature-card" onClick={() => handleFeatureClick('venue')}>
               <div className="feature-emoji">🏢</div>
               <div className="feature-content">
@@ -304,11 +312,11 @@ const EventDetailsPage = () => {
               </div>
             </div>
 
-                <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
+            <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
               <div className="feature-emoji">📝</div>
               <div className="feature-content">
-                <h3>{t('events.features.templates.title', 'טמפלייטים')}</h3>
-                <p>{t('events.features.templates.description', 'הזמנות, ברכות ועוד')}</p>
+                <h3>{t('events.features.templates.title')}</h3>
+                <p>{t('events.features.templates.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
