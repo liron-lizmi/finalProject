@@ -6,7 +6,7 @@ module.exports = (req, res, next) => {
 
   // Check if no token
   if (!token) {
-    return res.status(401).json({ message: 'אין הרשאה, נדרשת התחברות' });
+    return res.status(401).json({ message: req.t('auth.noToken') });
   }
 
   // Verify token
@@ -15,6 +15,6 @@ module.exports = (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'טוקן לא תקין' });
+    res.status(401).json({ message: req.t('auth.invalidToken') });
   }
 };

@@ -8,14 +8,14 @@ const checkUserExists = async (req, res) => {
     const { email } = req.body;
     
     if (!email) {
-      return res.status(400).json({ message: 'נדרש אימייל', exists: false });
+      return res.status(400).json({ message: req.t('errors.emailRequired'), exists: false });
     }
     
     const user = await User.findOne({ email });
     return res.json({ exists: !!user });
   } catch (err) {
     console.error('Check user exists error:', err);
-    res.status(500).json({ message: 'שגיאת שרת', exists: false });
+    res.status(500).json({ message: req.t('errors.serverError'), exists: false });
   }
 };
 
@@ -27,7 +27,7 @@ const register = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
+      return res.status(400).json({ message: req.t('errors.userExists') });
     }
 
     const user = new User({
@@ -74,12 +74,12 @@ const register = async (req, res) => {
           lastName: user.lastName,
           email: user.email
         },
-        emailError: 'אירעה שגיאה בשליחת אימייל אישור, אך הרישום הושלם בהצלחה'
+        emailError: req.t('email.sendError')
       });
     }
   } catch (err) {
     console.error('Register error:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -91,13 +91,13 @@ const login = async (req, res) => {
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'שם משתמש או סיסמה שגויים' });
+      return res.status(400).json({ message: req.t('errors.invalidCredentials') });
     }
 
     // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'שם משתמש או סיסמה שגויים' });
+      return res.status(400).json({ message: req.t('errors.invalidCredentials') });
     }
 
     // Generate JWT token
@@ -118,7 +118,7 @@ const login = async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -126,12 +126,12 @@ const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
     if (!user) {
-      return res.status(404).json({ message: 'משתמש לא נמצא' });
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
     res.json(user);
   } catch (err) {
     console.error('Get user error:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -143,7 +143,7 @@ const forgotPassword = async (req, res) => {
 
     user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'לא נמצא משתמש עם אימייל זה' });
+      return res.status(404).json({ message: req.t('errors.emailNotFound') });
     }
 
     const resetToken = crypto.randomBytes(20).toString('hex');
@@ -170,7 +170,7 @@ const forgotPassword = async (req, res) => {
     };
     
     res.status(200).json({
-      message: 'קישור לאיפוס סיסמה נשלח לאימייל שלך',
+      message: req.t('success.resetLinkSent'),
       resetToken: resetToken,
       emailData
     });
@@ -184,7 +184,7 @@ const forgotPassword = async (req, res) => {
       await user.save();
     }
     
-    res.status(500).json({ message: 'אירעה שגיאה בתהליך איפוס הסיסמה' });
+    res.status(500).json({ message: req.t('errors.resetError') });
   }
 };
 
@@ -205,7 +205,7 @@ const resetPassword = async (req, res) => {
     
     if (!user) {
       return res.status(400).json({ 
-        message: 'הטוקן אינו תקף או שפג תוקפו',
+        message: req.t('errors.resetTokenInvalid'),
         code: 'INVALID_TOKEN' 
       });
     }
@@ -214,7 +214,7 @@ const resetPassword = async (req, res) => {
     const isSamePassword = await user.comparePassword(password);
     if (isSamePassword) {
       return res.status(400).json({ 
-        message: 'לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה',
+        message: req.t('errors.samePassword'),
         code: 'SAME_PASSWORD'
       });
     }
@@ -233,20 +233,19 @@ const resetPassword = async (req, res) => {
     );
     
     res.status(200).json({
-      message: 'הסיסמה עודכנה בהצלחה',
+      message: req.t('success.passwordReset'),
       token
     });
     
   } catch (err) {
     console.error('Reset password error:', err);
     res.status(500).json({ 
-      message: 'אירעה שגיאה בתהליך איפוס הסיסמה',
+      message: req.t('errors.resetError'),
       code: 'SERVER_ERROR'
     });
   }
 };
 
-// רישום משתמש מ-OAuth (גוגל)
 // רישום משתמש מ-OAuth (גוגל)
 const registerOAuth = async (req, res) => {
   try {
@@ -341,7 +340,7 @@ const registerOAuth = async (req, res) => {
       }
     }
     
-    res.status(500).json({ message: 'שגיאת שרת בתהליך ההרשמה' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -353,7 +352,7 @@ const loginOAuth = async (req, res) => {
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'משתמש לא קיים במערכת' });
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
 
     // Generate JWT token
@@ -375,7 +374,7 @@ const loginOAuth = async (req, res) => {
     });
   } catch (err) {
     console.error('OAuth Login error:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 

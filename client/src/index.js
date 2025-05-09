@@ -27,6 +27,11 @@ axios.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // הוסף את השפה הנוכחית לכל בקשה
+    const currentLang = localStorage.getItem('language') || 'he';
+    config.headers['Accept-Language'] = currentLang;
+
     return config;
   },
   error => {

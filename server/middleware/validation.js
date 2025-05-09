@@ -3,40 +3,40 @@ const validateRegistration = (req, res, next) => {
   const errors = [];
 
   if (!firstName) {
-    errors.push('שם פרטי הוא שדה חובה');
+    errors.push(req.t('validation.firstNameRequired'));
   } else if (firstName.length < 2) {
-    errors.push('שם פרטי חייב להכיל לפחות 2 תווים');
+    errors.push(req.t('validation.firstNameMin'));
   } else if (firstName.length > 50) {
-    errors.push('שם פרטי לא יכול להכיל יותר מ-50 תווים');
+    errors.push(req.t('validation.firstNameMax'));
   }
 
   if (!lastName) {
-    errors.push('שם משפחה הוא שדה חובה');
+    errors.push(req.t('validation.lastNameRequired'));
   } else if (lastName.length < 2) {
-    errors.push('שם משפחה חייב להכיל לפחות 2 תווים');
+    errors.push(req.t('validation.lastNameMin'));
   } else if (lastName.length > 50) {
-    errors.push('שם משפחה לא יכול להכיל יותר מ-50 תווים');
+    errors.push(req.t('validation.lastNameMax'));
   }
 
   if (!email) {
-    errors.push('אימייל הוא שדה חובה');
+    errors.push(req.t('validation.emailRequired'));
   } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      errors.push('נא להזין כתובת אימייל תקינה');
+      errors.push(req.t('validation.emailInvalid'));
     }
   }
 
   if (!password) {
-    errors.push('סיסמה היא שדה חובה');
+    errors.push(req.t('validation.passwordRequired'));
   } else if (password.length < 6) {
-    errors.push('הסיסמה צריכה להכיל לפחות 6 תווים');
+    errors.push(req.t('validation.passwordMin'));
   } else if (password.length > 30) {
-    errors.push('הסיסמה לא יכולה להכיל יותר מ-30 תווים');
+    errors.push(req.t('validation.passwordMax'));
   } else {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]/;
     if (!passwordRegex.test(password)) {
-      errors.push('הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות');
+      errors.push(req.t('validation.passwordComplexity'));
     }
   }
 
@@ -52,11 +52,11 @@ const validateLogin = (req, res, next) => {
   const errors = [];
 
   if (!email) {
-    errors.push('אימייל הוא שדה חובה');
+    errors.push(req.t('validation.emailRequired'));
   }
 
   if (!password) {
-    errors.push('סיסמה היא שדה חובה');
+    errors.push(req.t('validation.passwordRequired'));
   }
 
   if (errors.length > 0) {

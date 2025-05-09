@@ -1,25 +1,34 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const i18next = require('i18next');
 
 const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: true
+    required: function() {
+      return i18next.t('validation.firstNameRequired');
+    }
   },
   lastName: {
     type: String,
-    required: true
+    required: function() {
+      return i18next.t('validation.lastNameRequired');
+    }
   },
   email: {
     type: String,
-    required: true,
+    required: function() {
+      return i18next.t('validation.emailRequired');
+    },
     unique: true,
     trim: true,
     lowercase: true
   },
   password: {
     type: String,
-    required: true
+    required: function() {
+      return i18next.t('validation.passwordRequired');
+    }
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,

@@ -1,0 +1,51 @@
+{
+    "errors": {
+      "serverError": "Server error",
+      "userExists": "User with this email already exists",
+      "invalidCredentials": "Invalid username or password",
+      "userNotFound": "User not found",
+      "emailNotFound": "No user found with this email",
+      "resetTokenInvalid": "Token is invalid or has expired",
+      "samePassword": "Cannot reset password to current password. Please choose a new password",
+      "resetError": "An error occurred during password reset",
+      "emailRequired": "Email is required",
+      "authenticationFailed": "Authentication failed, please log in again"
+    },
+    "success": {
+      "passwordReset": "Password updated successfully",
+      "resetLinkSent": "Password reset link sent to your email",
+      "registrationComplete": "Registration completed successfully"
+    },
+    "email": {
+      "sendError": "There was an error sending confirmation email, but registration was completed successfully"
+    },
+    "events": {
+    "notFound": "Event not found",
+    "deleteSuccess": "Event deleted successfully",
+    "createSuccess": "Event created successfully",
+    "updateSuccess": "Event updated successfully"
+    },
+    "auth": {
+    "noToken": "No authorization, login required",
+    "invalidToken": "Invalid token"
+    },
+    "validation": {
+    "firstNameRequired": "First name is required",
+    "firstNameMin": "First name must contain at least 2 characters",
+    "firstNameMax": "First name cannot contain more than 50 characters",
+    "lastNameRequired": "Last name is required",
+    "lastNameMin": "Last name must contain at least 2 characters",
+    "lastNameMax": "Last name cannot contain more than 50 characters",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email address",
+    "passwordRequired": "Password is required",
+    "passwordMin": "Password must contain at least 6 characters",
+    "passwordMax": "Password cannot contain more than 30 characters",
+    "passwordComplexity": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+    "eventTitleRequired": "Event title is required",
+    "eventDateRequired": "Event date is required",
+    "eventTimeRequired": "Event time is required",
+    "eventUserRequired": "User is required for the event",
+    "invalidTimeFormat": "Invalid time format. Please use 24-hour format (e.g. 18:00)"
+    }
+}

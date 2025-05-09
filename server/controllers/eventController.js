@@ -6,7 +6,7 @@ const getUserEvents = async (req, res) => {
     res.json(events);
   } catch (err) {
     console.error('Error fetching events:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -33,7 +33,7 @@ const createEvent = async (req, res) => {
     res.status(201).json(savedEvent);
   } catch (err) {
     console.error('Error creating event:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -44,7 +44,7 @@ const updateEvent = async (req, res) => {
 
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
-      return res.status(404).json({ message: 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
 
     // בדיקת תקינות השעה בפורמט 24 שעות
@@ -75,7 +75,7 @@ const updateEvent = async (req, res) => {
     res.json(updatedEvent);
   } catch (err) {
     console.error('Error updating event:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -85,14 +85,14 @@ const deleteEvent = async (req, res) => {
 
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
-      return res.status(404).json({ message: 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
 
     await Event.findByIdAndDelete(id);
-    res.json({ message: 'אירוע נמחק בהצלחה' });
+    res.json({ message: req.t('events.deleteSuccess') });
   } catch (err) {
     console.error('Error deleting event:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -102,13 +102,13 @@ const getEventById = async (req, res) => {
 
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
-      return res.status(404).json({ message: 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
 
     res.json(event);
   } catch (err) {
     console.error('Error fetching event:', err);
-    res.status(500).json({ message: 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 

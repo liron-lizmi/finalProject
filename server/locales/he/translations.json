@@ -1,0 +1,52 @@
+{
+    "errors": {
+      "serverError": "שגיאת שרת",
+      "userExists": "משתמש עם אימייל זה כבר קיים במערכת",
+      "invalidCredentials": "שם משתמש או סיסמה שגויים",
+      "userNotFound": "משתמש לא נמצא",
+      "emailNotFound": "לא נמצא משתמש עם אימייל זה",
+      "resetTokenInvalid": "הטוקן אינו תקף או שפג תוקפו",
+      "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
+      "resetError": "אירעה שגיאה בתהליך איפוס הסיסמה",
+      "emailRequired": "נדרש אימייל",
+      "authenticationFailed": "אימות נכשל, אנא התחבר מחדש"
+    },
+    "success": {
+      "passwordReset": "הסיסמה עודכנה בהצלחה",
+      "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
+      "registrationComplete": "הרישום הושלם בהצלחה"
+    },
+    "email": {
+      "sendError": "אירעה שגיאה בשליחת אימייל אישור, אך הרישום הושלם בהצלחה"
+    },
+    "events": {
+    "notFound": "אירוע לא נמצא",
+    "deleteSuccess": "אירוע נמחק בהצלחה",
+    "createSuccess": "אירוע נוצר בהצלחה",
+    "updateSuccess": "אירוע עודכן בהצלחה"
+    },
+    "auth": {
+    "noToken": "אין הרשאה, נדרשת התחברות",
+    "invalidToken": "טוקן לא תקין"
+    },
+    "validation": {
+    "firstNameRequired": "שם פרטי הוא שדה חובה",
+    "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
+    "firstNameMax": "שם פרטי לא יכול להכיל יותר מ-50 תווים",
+    "lastNameRequired": "שם משפחה הוא שדה חובה",
+    "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
+    "lastNameMax": "שם משפחה לא יכול להכיל יותר מ-50 תווים",
+    "emailRequired": "אימייל הוא שדה חובה",
+    "emailInvalid": "נא להזין כתובת אימייל תקינה",
+    "passwordRequired": "סיסמה היא שדה חובה",
+    "passwordMin": "הסיסמה צריכה להכיל לפחות 6 תווים",
+    "passwordMax": "הסיסמה לא יכולה להכיל יותר מ-30 תווים",
+    "passwordComplexity": "הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות",
+    "eventTitleRequired": "כותרת האירוע היא שדה חובה",
+    "eventDateRequired": "תאריך האירוע הוא שדה חובה",
+    "eventTimeRequired": "שעת האירוע היא שדה חובה",
+    "eventUserRequired": "יש צורך במשתמש עבור האירוע",
+    "invalidTimeFormat": "פורמט שעה לא תקין. יש להשתמש בפורמט 24 שעות (למשל: 18:00)"
+  }
+  
+}
