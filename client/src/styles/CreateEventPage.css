@@ -767,8 +767,17 @@ html, body {
   }
   
   .create-event-container {
-    margin-top: 40px;
+    margin-top: 10px;
   }
+
+  .back-button {
+    margin-right: 15px; 
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    position: relative;
+    right: 10px; 
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -804,10 +813,20 @@ html, body {
   }
   
   .create-event-container {
-    margin-top: 80px;
+    margin-top: 30px;
   }
   
   .auth-logo-container {
     padding: 0 15px;
   }
+
+  .back-button {
+    margin-right: 20px;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    position: relative;
+    right: 15px; 
+    max-width: calc(100% - 20px); 
+  }
+
 }

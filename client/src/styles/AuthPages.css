@@ -1193,8 +1193,17 @@ body {
 
   .auth-box {
     margin-top: 90px;
+    width: 90%; 
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px; 
+    box-sizing: border-box; 
   }
 
+  .auth-container {
+    padding: 0 15px; 
+  }
 }
 
 @media (max-width: 480px) {
@@ -1224,23 +1233,38 @@ body {
     padding: 1.2rem;
   }
 
-  auth-logo-container .logo {
+  .auth-logo-container .logo {
     height: 32px;
   }
   
   .auth-container {
-    padding: 20px;
+    padding: 15px;
   }
   
   .auth-box {
-    margin-top: 80px;
+    margin-top: 60px; 
+    width: 95%; 
+    padding: 15px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+  }
+
+  .auth-box input {
+    padding: 12px;
+    font-size: 16px; 
+    margin-bottom: 12px;
+  }
+
+  .auth-box button[type="submit"] {
+    margin-top: 15px;
+    width: 100%;
   }
   
   .auth-logo-container {
     padding: 0 15px;
   }
 
-  modal-content {
+  .modal-content {
     max-width: 95%;
   }
   
