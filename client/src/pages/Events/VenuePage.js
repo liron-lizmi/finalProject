@@ -14,16 +14,15 @@ const VenuePage = ({ onSelectVenue }) => {
   const [search, setSearch] = useState('');
   const [map, setMap] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedVenuePhotoIndex, setSelectedVenuePhotoIndex] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [successMessage, setSuccessMessage] = useState(null);
  
-  // Check if we came to this page from a specific event page
   const eventId = location.state?.eventId;
   
-  // Add RTL/LTR detection
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+  const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
  
-  // Filters - updated according to new requirements
   const [filters, setFilters] = useState({
     area: 'all',
     venueType: 'all',
@@ -36,7 +35,7 @@ const VenuePage = ({ onSelectVenue }) => {
       catering: false,
       accommodation: false
     },
-    distance: '50', // km
+    distance: '50',
   });
 
   const [selectedPhoto, setSelectedPhoto] = useState(0);
@@ -49,9 +48,38 @@ const VenuePage = ({ onSelectVenue }) => {
   const isEffectRun = useRef(false);
   const mapInstance = useRef(null);
   
-  // Set document direction based on language
+  const translateText = async (text, targetLang = 'en') => {
+    if (!text || targetLang === 'he') return text;
+    
+    try {
+      if ('translator' in window && 'createTranslator' in window.translator) {
+        const translator = await window.translator.createTranslator({
+          sourceLanguage: 'he',
+          targetLanguage: targetLang
+        });
+        const translation = await translator.translate(text);
+        return translation;
+      }
+      
+      const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=he&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`);
+      const data = await response.json();
+      
+      if (data && data[0] && data[0][0]) {
+        return data[0][0][0];
+      }
+      
+    } catch (error) {
+      console.error('Translation failed:', error);
+    }
+    
+    return text;
+  };
+  
+  const containsHebrew = (text) => {
+    return /[\u0590-\u05FF]/.test(text);
+  };
+  
   useEffect(() => {
-    // Set the document direction based on language
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
   }, [isRTL, i18n.language]);
@@ -60,27 +88,22 @@ const VenuePage = ({ onSelectVenue }) => {
     if (isEffectRun.current) return;
     isEffectRun.current = true;
    
-    // Define a function to initialize the map
     const setupGoogleMaps = () => {
       console.log("Setting up Google Maps...");
       initMap();
     };
    
-    // Function to load Google Maps API
     const loadGoogleMapsAPI = () => {
-      // Check if Google Maps is already loaded and available
       if (window.google && window.google.maps) {
         console.log("Google Maps already loaded, skipping load");
         setupGoogleMaps();
         return;
       }
 
-      // Check if there's already a script tag for Google Maps
       const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
       if (existingScript) {
         console.log("Google Maps script tag already exists");
        
-        // If the API is loading but not ready yet, set up a callback
         if (!window.google || !window.google.maps) {
           console.log("Google Maps script exists but API not yet initialized, waiting...");
           window.initGoogleMapsCallback = setupGoogleMaps;
@@ -91,7 +114,6 @@ const VenuePage = ({ onSelectVenue }) => {
         }
       }
 
-      // Mark the API as being loaded
       window.googleMapsLoaded = true;
      
       const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -103,13 +125,11 @@ const VenuePage = ({ onSelectVenue }) => {
      
       console.log("Loading Google Maps API");
      
-      // Load the API
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async&language=${isRTL ? 'he' : 'en'}&region=IL`;
       script.async = true;
       script.defer = true;
-     
-      // Define a global callback for when Google Maps loads
+
       window.googleMapsCallback = () => {
         console.log("Google Maps API loaded via callback");
         setupGoogleMaps();
@@ -148,16 +168,14 @@ const VenuePage = ({ onSelectVenue }) => {
         });
       }
     };
-  }, []); // Empty dependency array to run only once on component mount
+  }, []);
  
-  // Initialize the map and related services
   const initMap = () => {
     if (!mapRef.current || !window.google) {
       console.error("Map ref or Google API not ready");
       return;
     }
    
-    // Prevent multiple initializations
     if (isMapInitialized.current || mapInstance.current) {
       console.log("Map already initialized");
       return;
@@ -166,7 +184,6 @@ const VenuePage = ({ onSelectVenue }) => {
     isMapInitialized.current = true;
    
     try {
-      // Create the map
       const mapOptions = {
         center: { lat: 31.7683, lng: 35.2137 }, // Default to Jerusalem
         zoom: 11,
@@ -262,7 +279,7 @@ const VenuePage = ({ onSelectVenue }) => {
     }
   };
 
-  const searchVenues = (location, venueType, mapParamDirect = null) => {
+  const searchVenues = async (location, venueType, mapParamDirect = null) => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
       console.error("Google Maps or Places API not available");
       setLoading(false);
@@ -285,39 +302,55 @@ const VenuePage = ({ onSelectVenue }) => {
     setLoading(true);
    
     let query = '';
-   
     switch (venueType) {
       case 'restaurant':
-        query = t('venues.searchQueries.restaurant');
+        query = 'restaurant';
         break;
       case 'event_venue':
-        query = t('venues.searchQueries.eventVenue');
+        query = 'event venue';
         break;
       case 'banquet_hall':
-        query = t('venues.searchQueries.banquetHall');
+        query = 'banquet hall';
         break;
       case 'hotel':
-        query = t('venues.searchQueries.hotel');
+        query = 'hotel';
         break;
       case 'park':
-        query = t('venues.searchQueries.park');
+        query = 'park';
         break;
       case 'museum':
-        query = t('venues.searchQueries.museum');
+        query = 'museum';
         break;
       default:
-        query = t('venues.searchQueries.default');
+        query = 'venue';
         break;
     }
    
-    // Add area to search if selected
     if (filters.area !== 'all') {
-      query += ' ' + filters.area;
+      switch (filters.area) {
+        case 'ירושלים':
+          query += ' Jerusalem';
+          break;
+        case 'מרכז':
+          query += ' Center';
+          break;
+        case 'דרום':
+          query += ' South';
+          break;
+        case 'צפון':
+          query += ' North';
+          break;
+        default:
+          query += ' ' + filters.area;
+          break;
+      }
     }
    
     if (search) {
       query += ' ' + search;
     }
+   
+    query += ' Israel';
    
     console.log("Searching for:", query, "near", location);
    
@@ -332,15 +365,46 @@ const VenuePage = ({ onSelectVenue }) => {
     const request = {
       query: query,
       location: locationObj,
-      radius: parseInt(filters.distance) * 1000
+      radius: parseInt(filters.distance) * 1000,
+      language: isRTL ? 'he' : 'en' 
     };
-   
+
     try {
-      placesService.current.textSearch(request, (results, status) => {
+      placesService.current.textSearch(request, async (results, status) => {
         if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
           console.log("Found", results.length, "venues");
          
-          const filteredResults = filterVenues(results);
+          const processedResults = await Promise.all(results.map(async venue => {
+            let processedVenue = { ...venue };
+            
+            if (containsHebrew(venue.name)) {
+              processedVenue.originalName = venue.name;
+            }
+            
+            if (venue.vicinity && containsHebrew(venue.vicinity)) {
+              processedVenue.originalVicinity = venue.vicinity;
+            }
+            
+            if (venue.formatted_address && containsHebrew(venue.formatted_address)) {
+              processedVenue.originalFormattedAddress = venue.formatted_address;
+            }
+            
+            if (isEnglish && containsHebrew(venue.name)) {
+              processedVenue.name = await translateText(venue.name, 'en');
+            }
+            
+            if (isEnglish && venue.vicinity && containsHebrew(venue.vicinity)) {
+              processedVenue.vicinity = await translateText(venue.vicinity, 'en');
+            }
+            
+            if (isEnglish && venue.formatted_address && containsHebrew(venue.formatted_address)) {
+              processedVenue.formatted_address = await translateText(venue.formatted_address, 'en');
+            }
+            
+            return processedVenue;
+          }));
+         
+          const filteredResults = filterVenues(processedResults);
          
           setVenues(filteredResults);
          
@@ -361,26 +425,23 @@ const VenuePage = ({ onSelectVenue }) => {
     }
   };
  
-  // Filter results by user preferences
   const filterVenues = (venues) => {
     return venues.filter(venue => {
-      // Filter by capacity (if data available)
       if (filters.capacity && venue.user_ratings_total) {
-        // Rough conversion from rating count to estimated capacity
         const estimatedCapacity = venue.user_ratings_total * 2;
         if (estimatedCapacity < parseInt(filters.capacity)) {
           return false;
         }
       }
      
-      // Filter by venue style (can be expanded as needed)
       if (filters.venueStyle !== 'all') {
-        // Assume style info is in the description or venue name
         const venueText = venue.name + ' ' + (venue.vicinity || '');
        
-        if (filters.venueStyle === 'modern' && !venueText.includes(t('venues.styles.modern'))) return false;
-        if (filters.venueStyle === 'classic' && !venueText.includes(t('venues.styles.classic'))) return false;
-        if (filters.venueStyle === 'outdoor' && !venueText.includes(t('venues.styles.outdoor')) && !venueText.includes(t('venues.styles.garden'))) return false;
+        if (filters.venueStyle === 'modern' && !venueText.toLowerCase().includes('modern')) return false;
+        if (filters.venueStyle === 'classic' && !venueText.toLowerCase().includes('classic')) return false;
+        if (filters.venueStyle === 'outdoor' && !venueText.toLowerCase().includes('outdoor') && !venueText.toLowerCase().includes('garden')) return false;
+        if (filters.venueStyle === 'urban' && !venueText.toLowerCase().includes('urban')) return false;
+        if (filters.venueStyle === 'luxury' && !venueText.toLowerCase().includes('luxury')) return false;
       }
      
       return true;
@@ -456,10 +517,9 @@ const VenuePage = ({ onSelectVenue }) => {
     setMarkers([]);
   };
  
-  // Get details for a specific place
-  const getVenueDetails = (placeId) => {
+  const getVenueDetails = async (placeId) => {
     if (!placesService.current || !placeId) return;
-   
+  
     const request = {
       placeId: placeId,
       fields: [
@@ -467,13 +527,63 @@ const VenuePage = ({ onSelectVenue }) => {
         'website', 'photos', 'rating', 'reviews',
         'opening_hours', 'price_level', 'user_ratings_total',
         'geometry', 'vicinity', 'url', 'photo'
-      ]
+      ],
+      language: isRTL ? 'he' : 'en' 
     };
-   
-    placesService.current.getDetails(request, (place, status) => {
+  
+    placesService.current.getDetails(request, async (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
         console.log("Venue details loaded:", place.name);
-        setSelectedVenue(place);
+        
+        let processedPlace = { ...place };
+        
+        if (containsHebrew(place.name)) {
+          processedPlace.originalName = place.name;
+        }
+        
+        if (place.formatted_address && containsHebrew(place.formatted_address)) {
+          processedPlace.originalFormattedAddress = place.formatted_address;
+        }
+        
+        if (place.vicinity && containsHebrew(place.vicinity)) {
+          processedPlace.originalVicinity = place.vicinity;
+        }
+        
+        if (isEnglish) {
+          if (containsHebrew(place.name)) {
+            processedPlace.name = await translateText(place.name, 'en');
+          }
+          
+          if (place.formatted_address && containsHebrew(place.formatted_address)) {
+            processedPlace.formatted_address = await translateText(place.formatted_address, 'en');
+          }
+          
+          if (place.vicinity && containsHebrew(place.vicinity)) {
+            processedPlace.vicinity = await translateText(place.vicinity, 'en');
+          }
+          
+          if (place.opening_hours && place.opening_hours.weekday_text) {
+            processedPlace.opening_hours = {
+              ...place.opening_hours,
+              weekday_text: await Promise.all(
+                place.opening_hours.weekday_text.map(async (day) => {
+                  if (containsHebrew(day)) {
+                    return await translateText(day, 'en');
+                  }
+                  return day;
+                })
+              )
+            };
+          }
+        }
+        
+        setSelectedVenue(processedPlace);
+        
+        if (selectedVenuePhotoIndex !== null) {
+          setSelectedPhoto(selectedVenuePhotoIndex);
+        } else {
+          setSelectedPhoto(0);
+        }
       } else {
         console.error("Failed to get venue details:", status);
       }
@@ -497,7 +607,13 @@ const VenuePage = ({ onSelectVenue }) => {
       }
     }
    
-    geocoder.current.geocode({ address: search }, (results, status) => {
+    const geocodeRequest = {
+      address: search,
+      language: 'en',
+      region: 'IL'
+    };
+   
+    geocoder.current.geocode(geocodeRequest, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         const location = results[0].geometry.location;
         const currentMap = mapInstance.current || map;
@@ -506,7 +622,6 @@ const VenuePage = ({ onSelectVenue }) => {
         }
         searchVenues(location, filters.venueType, currentMap);
       } else {
-        // If geocoding fails, use current map center if available
         const currentMap = mapInstance.current || map;
         if (currentMap && currentMap.getCenter) {
           searchVenues(currentMap.getCenter(), filters.venueType, currentMap);
@@ -517,7 +632,6 @@ const VenuePage = ({ onSelectVenue }) => {
     });
   };
  
-  // Handle filter changes
   const handleFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
    
@@ -537,7 +651,6 @@ const VenuePage = ({ onSelectVenue }) => {
     }
   };
  
-  // Apply filters
   const applyFilters = () => {
     const currentMap = mapInstance.current || map;
  
@@ -574,17 +687,14 @@ const VenuePage = ({ onSelectVenue }) => {
         price_level: venue.price_level || 0
       };
      
-      // If we're on an event page, save the venue to the event
       if (onSelectVenue && typeof onSelectVenue === 'function') {
         onSelectVenue(venueData);
         setSuccessMessage(t('venues.venueAddedSuccess'));
        
-        // Close venue details window after 2 seconds
         setTimeout(() => {
           setSelectedVenue(null);
         }, 2000);
       } else {
-        // Original behavior if not on event page
         localStorage.setItem('selectedVenue', JSON.stringify(venueData));
         navigate('/create-event', { state: { venue: venueData } });
       }
@@ -605,7 +715,46 @@ const VenuePage = ({ onSelectVenue }) => {
       console.error("Error getting photo URL:", error);
     }
     
-    return '';
+    return null;
+  };
+
+  const getMainVenueImage = (venue) => {
+    if (!venue.photos || venue.photos.length === 0) {
+      return null;
+    }
+
+    try {
+      for (let i = 0; i < venue.photos.length; i++) {
+        const imageUrl = getPhotoUrl(venue.photos[i], 300, 200, true);
+        if (imageUrl) {
+          return { url: imageUrl, index: i };
+        }
+      }
+    } catch (error) {
+      console.error("Error getting main venue image:", error);
+    }
+
+    return null;
+  };
+
+  const getValidPhotos = (venue) => {
+    if (!venue.photos || venue.photos.length === 0) {
+      return [];
+    }
+
+    const validPhotos = [];
+    for (let i = 0; i < venue.photos.length; i++) {
+      try {
+        const photoUrl = getPhotoUrl(venue.photos[i], 100, 70);
+        if (photoUrl) {
+          validPhotos.push({ photo: venue.photos[i], url: photoUrl, index: i });
+        }
+      } catch (error) {
+        console.error("Error getting photo at index", i, error);
+      }
+    }
+
+    return validPhotos;
   };
  
   return (
@@ -783,71 +932,64 @@ const VenuePage = ({ onSelectVenue }) => {
               <div className="no-results">{t('venues.noResults')}</div>
             ) : (
               <div className="venues-grid">
-                {venues.map(venue => (
-                  <div
-                    key={venue.place_id}
-                    className={`venue-card ${selectedVenue && selectedVenue.place_id === venue.place_id ? 'selected' : ''}`}
-                    onClick={() => getVenueDetails(venue.place_id)}
-                  >
-                    <div className="venue-image">
-                      {venue.photos && venue.photos.length > 0 ? (
-                        <img
-                          src={getPhotoUrl(venue.photos[0], 300, 200, true)} // Use higher quality for main image
-                          alt={venue.name}
-                          onError={(e) => {
-                            // If main image fails, try other images
-                            if (venue.photos && venue.photos.length > 1) {
-                              // Try other images sequentially
-                              const currentIndex = parseInt(e.target.dataset.photoIndex || "0");
-                              const nextIndex = (currentIndex + 1) % venue.photos.length;
-                              
-                              if (nextIndex !== currentIndex) {
-                                e.target.dataset.photoIndex = nextIndex.toString();
-                                e.target.src = getPhotoUrl(venue.photos[nextIndex], 300, 200, true);
-                                return;
-                              }
-                            }
-                            
-                            // If no other images or all failed, use generated image
-                            e.target.onerror = null;
-                            e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`;
-                          }}
-                          data-photo-index="0"
-                        />
-                      ) : (
-                        // If no images at all, use generated image
-                        <img
-                          src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`}
-                          alt={venue.name || t('venues.defaultVenueName')}
-                        />
-                      )}
-                    </div>
-                   
-                    <div className="venue-info">
-                      <h4>{venue.name}</h4>
-                      <p className="venue-address">{venue.vicinity || venue.formatted_address}</p>
+                {venues.map(venue => {
+                  const mainImageData = getMainVenueImage(venue);
+                  
+                  return (
+                    <div
+                      key={venue.place_id}
+                      className={`venue-card ${selectedVenue && selectedVenue.place_id === venue.place_id ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedVenuePhotoIndex(mainImageData ? mainImageData.index : null);
+                        getVenueDetails(venue.place_id);
+                      }}
+                    >
+                      <div className="venue-image">
+                        {mainImageData && mainImageData.url ? (
+                          <img
+                            src={mainImageData.url}
+                            alt={venue.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`;
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(venue.name || t('venues.defaultVenueName'))}`}
+                            alt={venue.name || t('venues.defaultVenueName')}
+                          />
+                        )}
+                      </div>
                      
-                      {venue.rating && (
-                        <div className="venue-rating">
-                          <span className="stars">
-                            {Array(Math.floor(venue.rating)).fill().map((_, i) => (
-                              <span key={i} className="star">★</span>
-                            ))}
-                            {venue.rating % 1 > 0 && <span className="star half">★</span>}
-                          </span>
-                          <span className="rating-value">{venue.rating}</span>
-                          <span className="review-count">({venue.user_ratings_total || 0})</span>
-                        </div>
-                      )}
-                     
-                      {venue.price_level && (
-                        <div className="venue-price">
-                          {'$'.repeat(venue.price_level)}
-                        </div>
-                      )}
+                      <div className="venue-info">
+                        <h4>{venue.name}</h4>
+                        <p className="venue-address">
+                          {venue.formatted_address || venue.vicinity || t('venues.noAddress')}
+                        </p>
+                       
+                        {venue.rating && (
+                          <div className="venue-rating">
+                            <span className="stars">
+                              {Array(Math.floor(venue.rating)).fill().map((_, i) => (
+                                <span key={i} className="star">★</span>
+                              ))}
+                              {venue.rating % 1 > 0 && <span className="star half">★</span>}
+                            </span>
+                            <span className="rating-value">{venue.rating}</span>
+                            <span className="review-count">({venue.user_ratings_total || 0})</span>
+                          </div>
+                        )}
+                       
+                        {venue.price_level && (
+                          <div className="venue-price">
+                            {'$'.repeat(venue.price_level)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -858,7 +1000,10 @@ const VenuePage = ({ onSelectVenue }) => {
             <div className="venue-details-content">
               <div className="venue-details-header">
                 <h2>{selectedVenue.name}</h2>
-                <button className="close-details" onClick={() => setSelectedVenue(null)}>×</button>
+                <button className="close-details" onClick={() => {
+                  setSelectedVenue(null);
+                  setSelectedVenuePhotoIndex(null);
+                }}>×</button>
               </div>
              
               {/* Success message */}
@@ -872,21 +1017,31 @@ const VenuePage = ({ onSelectVenue }) => {
                 <div className="venue-photos">
                   <div className="main-photo">
                     {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
-                      <img
-                        src={getPhotoUrl(selectedVenue.photos[selectedPhoto], 600, 400, true)} // Use higher quality
-                        alt={selectedVenue.name}
-                        onError={(e) => {
-                          if (selectedVenue.photos && selectedVenue.photos.length > 1) {
-                            // If current image failed, try next image
-                            const nextIndex = (selectedPhoto + 1) % selectedVenue.photos.length;
-                            setSelectedPhoto(nextIndex);
-                          } else {
-                            // If no other images or all failed, use generated image
-                            e.target.onerror = null;
-                            e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`;
-                          }
-                        }}
-                      />
+                      (() => {
+                        const validPhotos = getValidPhotos(selectedVenue);
+                        if (validPhotos.length > 0) {
+                          const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
+                          const photoToShow = validPhotos[photoIndex];
+                          
+                          return (
+                            <img
+                              src={getPhotoUrl(photoToShow.photo, 600, 400, true)}
+                              alt={selectedVenue.name}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`;
+                              }}
+                            />
+                          );
+                        } else {
+                          return (
+                            <img
+                              src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`}
+                              alt={selectedVenue.name || t('venues.defaultVenueName')}
+                            />
+                          );
+                        }
+                      })()
                     ) : (
                       <img
                         src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVenue.name || t('venues.defaultVenueName'))}`}
@@ -895,12 +1050,12 @@ const VenuePage = ({ onSelectVenue }) => {
                     )}
                   </div>
                   
-                  {selectedVenue.photos && selectedVenue.photos.length > 1 && (
+                  {selectedVenue.photos && selectedVenue.photos.length > 0 && getValidPhotos(selectedVenue).length > 0 && (
                     <div className="all-photos">
-                      {selectedVenue.photos.map((photo, index) => (
+                      {getValidPhotos(selectedVenue).map(({ photo, url, index }) => (
                         <img
                           key={index}
-                          src={getPhotoUrl(photo, 100, 70)}
+                          src={url}
                           alt={`${selectedVenue.name} - ${index + 1}`}
                           className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
                           onClick={() => setSelectedPhoto(index)}
@@ -915,7 +1070,11 @@ const VenuePage = ({ onSelectVenue }) => {
                             
                 <div className="venue-info-detailed">
                   <p className="address">
-                    <strong>{t('venues.details.address')}:</strong> {selectedVenue.formatted_address}
+                    <strong>{t('venues.details.address')}:</strong> {
+                      isRTL && selectedVenue.originalFormattedAddress ? 
+                      selectedVenue.originalFormattedAddress : 
+                      selectedVenue.formatted_address || selectedVenue.vicinity
+                    }
                   </p>
                  
                   {selectedVenue.formatted_phone_number && (
