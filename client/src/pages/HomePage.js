@@ -18,9 +18,7 @@ const HomePage = () => {
   const featuresRef = useRef([]);
   const stepsRef = useRef([]);
 
-  // Handle scroll effect for header
   useEffect(() => {
-    // Set document direction based on current language
     document.documentElement.dir = i18n.dir();
     document.documentElement.lang = i18n.language;
     
@@ -31,14 +29,12 @@ const HomePage = () => {
         setScrolled(false);
       }
       
-      // Add visible class to features when scrolled into view
       featuresRef.current.forEach(el => {
         if (el && isElementInViewport(el)) {
           el.classList.add('visible');
         }
       });
       
-      // Add visible class to steps when scrolled into view
       stepsRef.current.forEach(el => {
         if (el && isElementInViewport(el)) {
           el.classList.add('visible');
@@ -47,7 +43,6 @@ const HomePage = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Initial check for elements in viewport
     setTimeout(() => {
       handleScroll();
     }, 300);
@@ -57,7 +52,6 @@ const HomePage = () => {
     };
   }, [i18n.language, i18n.dir]);
 
-  // Check if element is in viewport
   const isElementInViewport = (el) => {
     const rect = el.getBoundingClientRect();
     return (
@@ -66,7 +60,6 @@ const HomePage = () => {
     );
   };
 
-  // Smooth scroll to section
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -74,13 +67,11 @@ const HomePage = () => {
     }
   };
 
-  // Redirect to login page (for all feature buttons)
   const redirectToLogin = (e) => {
-    e.preventDefault(); // Prevent default anchor behavior
+    e.preventDefault(); 
     navigate('/login');
   };
 
-  // Handle specific language change
   const handleLanguageChange = (lang) => {
     changeLanguage(lang);
   };
@@ -91,7 +82,6 @@ const HomePage = () => {
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
         <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" />
         <nav>
-          {/* Single language selector with Hebrew first */}
           <div className="language-selector">
             <span 
               className={`language-option ${i18n.language === 'he' ? 'active' : ''}`}

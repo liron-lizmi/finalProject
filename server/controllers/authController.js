@@ -19,12 +19,10 @@ const checkUserExists = async (req, res) => {
   }
 };
 
-// Register a new user
 const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: req.t('errors.userExists') });
@@ -61,11 +59,10 @@ const register = async (req, res) => {
           lastName: user.lastName,
           email: user.email
         },
-        emailData // שליחת המידע הדרוש לשליחת אימייל
+        emailData 
       });
     } catch (emailError) {
       console.error('Email sending error:', emailError);
-      // ממשיכים למרות שגיאה בשליחת האימייל - הרישום הושלם בהצלחה
       res.status(201).json({
         token,
         user: {
@@ -83,24 +80,20 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: req.t('errors.invalidCredentials') });
     }
 
-    // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: req.t('errors.invalidCredentials') });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
@@ -160,7 +153,6 @@ const forgotPassword = async (req, res) => {
     const resetURL = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
     console.log('Reset URL (Dev Only):', resetURL);
     
-    // מידע לשליחת אימייל
     const emailData = {
       recipientEmail: email,
       recipientName: user.firstName ? `${user.firstName} ${user.lastName}` : email,
@@ -210,7 +202,6 @@ const resetPassword = async (req, res) => {
       });
     }
     
-    // בדיקה שהסיסמה החדשה שונה מהסיסמה הנוכחית
     const isSamePassword = await user.comparePassword(password);
     if (isSamePassword) {
       return res.status(400).json({ 
@@ -246,15 +237,12 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// רישום משתמש מ-OAuth (גוגל)
 const registerOAuth = async (req, res) => {
   try {
     const { email, firstName, lastName, provider, providerId } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // המשתמש כבר קיים, נחזיר נתונים עליו
       const token = jwt.sign(
         { userId: existingUser._id },
         JWT_SECRET,
@@ -273,10 +261,8 @@ const registerOAuth = async (req, res) => {
       });
     }
 
-    // יוצר סיסמה רנדומלית ארוכה לחשבון מגוגל (לא ישתמשו בה בפועל)
     const randomPassword = crypto.randomBytes(32).toString('hex');
 
-    // Create a new user
     const user = new User({
       firstName,
       lastName,
@@ -290,7 +276,6 @@ const registerOAuth = async (req, res) => {
 
     await user.save();
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
@@ -310,9 +295,7 @@ const registerOAuth = async (req, res) => {
   } catch (err) {
     console.error('OAuth Register error:', err);
     
-    // Check if this is a duplicate key error
     if (err.code === 11000 && err.keyPattern && err.keyPattern.email) {
-      // Try to get the existing user and return their info instead
       try {
         const email = err.keyValue.email;
         const user = await User.findOne({ email });
@@ -344,18 +327,15 @@ const registerOAuth = async (req, res) => {
   }
 };
 
-// התחברות משתמש מ-OAuth (גוגל)
 const loginOAuth = async (req, res) => {
   try {
     const { email, provider, providerId } = req.body;
 
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,

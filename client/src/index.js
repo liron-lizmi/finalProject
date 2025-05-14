@@ -3,9 +3,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
-import './i18n'; // ייבוא קובץ האתחול של i18n
+import './i18n'; 
 
-// רכיב טעינה להצגה בזמן טעינת קבצי השפה
 const Loading = () => (
   <div className="loading-container" style={{ 
     display: 'flex', 
@@ -17,18 +16,15 @@ const Loading = () => (
   </div>
 );
 
-// Set base URL from environment variable
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Interceptor to add token to every request
 axios.interceptors.request.use(
   config => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // הוסף את השפה הנוכחית לכל בקשה
+
     const currentLang = localStorage.getItem('language') || 'he';
     config.headers['Accept-Language'] = currentLang;
 

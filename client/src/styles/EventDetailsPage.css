@@ -1,6 +1,3 @@
-/* styles/EventDetailsPage.css */
-
-/* Base Styles */
 .event-page-wrapper {
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -8,9 +5,8 @@
   color: #333;
 }
 
-/* Direction support based on document direction */
 .event-page-wrapper {
-  direction: inherit; /* Will inherit from document or parent */
+  direction: inherit; 
 }
 
 .event-details-container {
@@ -19,7 +15,6 @@
   padding: 30px 20px;
 }
 
-/* Header top section - flex direction will automatically reverse in RTL */
 .header-top {
   display: flex;
   justify-content: space-between;
@@ -28,7 +23,6 @@
   width: 100%;
 }
 
-/* Logo styling */
 .app-logo {
   max-width: 210px;
   height: auto;
@@ -41,7 +35,6 @@
   max-height: 70px;
 }
 
-/* Back Button - unified styling for RTL/LTR */
 .back-button {
   display: flex;
   align-items: center;
@@ -64,7 +57,6 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* Back icon handling for RTL/LTR */
 html[dir="rtl"] .back-icon svg {
   transform: scaleX(1);
 }
@@ -77,12 +69,27 @@ html[dir="ltr"] .back-icon svg {
   stroke: #a68b76;
 }
 
-/* Header Styles */
 .event-header {
   padding: 10px 0;
   margin-bottom: 30px;
   position: relative;
   overflow: hidden;
+}
+
+.page-header {
+  background-color: white;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .event-info-container {
@@ -152,7 +159,6 @@ html[dir="ltr"] .back-icon svg {
   stroke: #e53e3e;
 }
 
-/* Progress Section */
 .progress-container {
   width: 100%;
   max-width: 700px;
@@ -190,7 +196,6 @@ html[dir="ltr"] .back-icon svg {
   position: relative;
 }
 
-/* Progress fill styling with gradient based on direction */
 .progress-fill {
   height: 100%;
   border-radius: 30px;
@@ -206,7 +211,6 @@ html[dir="ltr"] .progress-fill {
   background: linear-gradient(to left, #d4b99e, #c4a98e);
 }
 
-/* Progress labels */
 .progress-fill::after {
   content: attr(data-progress);
   position: absolute;
@@ -235,14 +239,12 @@ html[dir="ltr"] .progress-fill::after {
   transform: translateY(0);
 }
 
-/* Features Grid - will automatically reorder in RTL */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 25px;
 }
 
-/* Feature Cards */
 .feature-card {
   background-color: #fff;
   border-radius: 16px;
@@ -263,7 +265,6 @@ html[dir="ltr"] .progress-fill::after {
   border-color: #e6d5c4;
 }
 
-/* Side bar accent for feature cards */
 .feature-card::before {
   content: '';
   position: absolute;
@@ -287,7 +288,6 @@ html[dir="ltr"] .feature-card::before {
   opacity: 1;
 }
 
-/* Feature emoji styling */
 .feature-emoji {
   width: 40px;
   height: 40px;
@@ -315,7 +315,6 @@ html[dir="ltr"] .feature-emoji {
   transform: scale(1.1);
 }
 
-/* Feature content */
 .feature-content {
   flex: 1;
   text-align: center;
@@ -341,7 +340,6 @@ html[dir="ltr"] .feature-emoji {
   transition: all 0.3s ease;
 }
 
-/* Feature action button with direction-specific styling */
 .feature-action {
   display: flex;
   align-items: center;
@@ -366,7 +364,6 @@ html[dir="ltr"] .feature-action {
   transform: translateX(-10px);
 }
 
-/* Direction-specific arrow orientation */
 html[dir="ltr"] .feature-action svg {
   transform: scaleX(-1);
 }
@@ -380,7 +377,6 @@ html[dir="ltr"] .feature-action svg {
   stroke: #a68b76;
 }
 
-/* Loading & Error States */
 .event-loader {
   display: flex;
   flex-direction: column;
@@ -437,7 +433,6 @@ html[dir="ltr"] .feature-action svg {
   line-height: 1.6;
 }
 
-/* Completed features styling */
 .feature-card.completed {
   position: relative;
 }
@@ -468,7 +463,6 @@ html[dir="ltr"] .feature-card.completed::after {
   left: auto;
 }
 
-/* Responsive design */
 @media (max-width: 1100px) {
   .features-grid {
     grid-template-columns: repeat(2, 1fr);

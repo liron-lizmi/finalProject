@@ -20,7 +20,6 @@ import EventTemplatesPage from './pages/Events/Features/EventTemplatesPage';
 import EventWeatherPage from './pages/Events/Features/EventWeatherPage';
 import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
 import EventSharePage from './pages/Events/Features/EventSharePage';
-// Remove the LanguageSwitcher import
 
 const App = () => {
   const { t, i18n, ready } = useTranslation();
@@ -34,7 +33,6 @@ const App = () => {
 
   return (
     <>
-      {/* Remove the LanguageSwitcher component here */}
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -47,10 +45,8 @@ const App = () => {
           <Route path="/venues" element={<VenuePage />} />
           <Route path="/create-event" element={<CreateEventPage />} />
           
-          {/* Event routes */}
           <Route path="/event/:id" element={<EventDetailsPage />} />
           
-          {/* Feature routes */}
           <Route path="/event/:id/venue" element={<EventVenuePage />} />
           <Route path="/event/:id/vendors" element={<EventVendorsPage />} />
           <Route path="/event/:id/guests" element={<EventGuestsPage />} />

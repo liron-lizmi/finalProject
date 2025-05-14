@@ -1,4 +1,3 @@
-/* עיצוב אלגנטי ומינימליסטי לאתר תכנון אירועים */
 body {
   font-family: 'Heebo', 'Arial', sans-serif;
   margin: 0;
@@ -8,7 +7,6 @@ body {
   line-height: 1.6;
 }
 
-/* התאמת כיוון דף הבית לפי שפה */
 [dir="rtl"] body {
   direction: rtl;
 }
@@ -17,7 +15,6 @@ body {
   direction: ltr;
 }
 
-/* Language Selector Styling - Add to your HomePage.css file */
 .language-selector {
   display: flex;
   align-items: center;
@@ -30,7 +27,7 @@ body {
 }
 
 .language-option {
-  color: #a68b76; /* Exact same color as registration/login button text */
+  color: #a68b76; 
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -43,19 +40,18 @@ body {
 }
 
 .language-option.active {
-  font-weight: 700; /* Bold for the active language, same color */
+  font-weight: 700; 
 }
 
 .language-separator {
   margin: 0 8px;
-  color: #a68b76; /* Same color as text */
+  color: #a68b76; 
 }
 
 .homepage-container {
   overflow-x: hidden;
 }
 
-/* Header */
 .header {
   display: flex;
   justify-content: space-between;
@@ -109,7 +105,6 @@ nav {
   color: #fff;
 }
 
-/* Hero Section */
 .hero-section {
   height: 100vh;
   display: flex;
@@ -190,7 +185,6 @@ nav {
   z-index: -1;
 }
 
-/* התאמת אנימציית כפתור CTA לפי כיוון שפה */
 [dir="rtl"] .cta::before {
   left: -100%;
 }
@@ -212,7 +206,6 @@ nav {
   box-shadow: 0 12px 25px rgba(212, 185, 158, 0.35);
 }
 
-/* Elegant scroll down indicator */
 .scroll-indicator {
   position: absolute;
   bottom: 40px;
@@ -228,7 +221,6 @@ nav {
   fill: #d4b99e;
 }
 
-/* Section Styling */
 .section {
   padding: 120px 8%;
   position: relative;
@@ -250,7 +242,7 @@ nav {
   display: inline-block;
   font-weight: 300;
   letter-spacing: 1px;
-  padding-bottom: 25px; /* Add padding to create space for the line */
+  padding-bottom: 25px; 
 }
 
 .section-title::after {
@@ -259,21 +251,20 @@ nav {
   width: 60px;
   height: 2px;
   background: linear-gradient(to right, #d4b99e, #a68b76);
-  bottom: 0; /* Position at the bottom of the padding */
+  bottom: 0; 
   left: 50%;
   transform: translateX(-50%);
 }
 
 .section-description {
   max-width: 900px;
-  margin: 30px auto 60px; /* Increased top margin */
+  margin: 30px auto 60px; 
   font-size: 1.2rem;
   line-height: 1.8;
   color: #666;
   text-align: center;
 }
 
-/* Event Definition Section */
 .event-definition {
   display: flex;
   flex-direction: column;
@@ -329,7 +320,6 @@ nav {
   font-size: 1rem;
 }
 
-/* Features Section */
 .features-section {
   text-align: center;
 }
@@ -343,7 +333,6 @@ nav {
   margin-bottom: 0;
 }
 
-/* סדר פריטים בחלק התכונות - ללא תלות בשפה */
 .feature {
   display: flex;
   flex-direction: row;
@@ -366,7 +355,6 @@ nav {
   transition: all 0.6s ease;
 }
 
-/* התאמת יישור טקסט בחלק התכונות לפי כיוון השפה */
 [dir="rtl"] .feature-text,
 [dir="rtl"] .feature-odd .feature-text {
   text-align: right;
@@ -434,7 +422,6 @@ nav {
   box-shadow: 0 5px 15px rgba(212, 185, 158, 0.2);
 }
 
-/* Planning Steps Section - המשך */
 .planning-steps {
   position: relative;
   max-width: 1000px;
@@ -450,7 +437,6 @@ nav {
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.6s ease;
-  /* Add space around the step */
   padding: 10px 0;
 }
 
@@ -463,7 +449,6 @@ nav {
   margin-bottom: 0;
 }
 
-/* Fix for vertical line positions */
 [dir="rtl"] .step::after {
   content: '';
   position: absolute;
@@ -471,7 +456,7 @@ nav {
   height: calc(100% + 80px);
   background: linear-gradient(to bottom, #d4b99e 0%, rgba(212, 185, 158, 0.2) 100%);
   top: 20px;
-  right: 40px; /* Move further right to avoid text */
+  right: 40px; 
   left: auto;
   z-index: 0;
 }
@@ -483,7 +468,7 @@ nav {
   height: calc(100% + 80px);
   background: linear-gradient(to bottom, #d4b99e 0%, rgba(212, 185, 158, 0.2) 100%);
   top: 20px;
-  left: 40px; /* Move further left to avoid text */
+  left: 40px; 
   right: auto;
   z-index: 0;
 }
@@ -501,20 +486,18 @@ nav {
   font-weight: 500;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   position: relative;
-  z-index: 2; /* Ensure it's above the line */
+  z-index: 2;
   flex-shrink: 0;
-  margin: 0 20px; /* Add margin on both sides */
+  margin: 0 20px; 
 }
 
-/* Fix for text spacing in RTL */
 [dir="rtl"] .step-content {
-  padding: 0 100px 0 0; /* Significantly increased right padding */
+  padding: 0 100px 0 0; 
   text-align: right;
 }
 
-/* Fix for text spacing in LTR */
 [dir="ltr"] .step-content {
-  padding: 0 0 0 100px; /* Significantly increased left padding */
+  padding: 0 0 0 100px; 
   text-align: left;
 }
 
@@ -531,7 +514,6 @@ nav {
   color: #666;
 }
 
-/* Testimonials Section */
 .testimonials-section {
   text-align: center;
   background-color: #f8f6f4;
@@ -553,7 +535,6 @@ nav {
   position: relative;
 }
 
-/* התאמת מיקום המרכאות בעדויות לפי כיוון השפה */
 [dir="rtl"] .testimonial:before {
   left: 30px;
   right: auto;
@@ -593,7 +574,6 @@ nav {
   margin-top: 5px;
 }
 
-/* CTA Section */
 .cta-section {
   padding: 100px 5%;
   background: linear-gradient(to right, rgba(212, 185, 158, 0.85), rgba(166, 139, 118, 0.85));
@@ -632,7 +612,6 @@ nav {
   background-color: #f8f5f2;
 }
 
-/* Footer */
 .footer {
   background-color: #333;
   color: #fff;
@@ -679,7 +658,6 @@ nav {
   margin-top: 20px;
 }
 
-/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -703,8 +681,6 @@ nav {
   }
 }
 
-/* ===== IMPROVED RESPONSIVE STYLES ===== */
-/* Medium screens (tablets) */
 @media (max-width: 1200px) {
   .feature, 
   .feature-odd {
@@ -724,10 +700,9 @@ nav {
     margin: 0 auto;
   }
   
-  /* Adjust step content padding for responsive layout */
   [dir="rtl"] .step-content,
   [dir="ltr"] .step-content {
-    padding: 0 60px; /* More balanced padding for smaller screens */
+    padding: 0 60px; 
   }
 }
 
@@ -742,10 +717,9 @@ nav {
   
   .planning-steps {
     max-width: 100%;
-    padding: 0 30px; /* Increased padding for better spacing */
+    padding: 0 30px;
   }
   
-  /* Adjust vertical line position for medium screens */
   [dir="rtl"] .step::after {
     right: 30px;
   }
@@ -754,7 +728,6 @@ nav {
     left: 30px;
   }
   
-  /* Adjust step content padding for medium screens */
   [dir="rtl"] .step-content {
     padding: 0 80px 0 0;
   }
@@ -764,15 +737,13 @@ nav {
   }
 }
 
-/* ===== ENHANCED MOBILE RESPONSIVENESS ===== */
 @media (max-width: 768px) {
-  /* Header improvements */
   .header {
     padding: 12px 4%;
   }
   
   .logo {
-    height: 40px; /* Smaller logo on tablets */
+    height: 40px; 
   }
   
   .header.scrolled .logo {
@@ -780,7 +751,7 @@ nav {
   }
   
   nav {
-    gap: 8px; /* Reduce spacing */
+    gap: 8px; 
   }
   
   .btn {
@@ -788,7 +759,6 @@ nav {
     font-size: 14px;
   }
   
-  /* Section improvements */
   .section {
     padding: 80px 5%;
   }
@@ -808,20 +778,19 @@ nav {
   .step {
     flex-direction: column;
     align-items: flex-start;
-    padding-left: 50px; /* Add left padding for the line */
+    padding-left: 50px; 
   }
   
   [dir="rtl"] .step {
     align-items: flex-end;
     padding-left: 0;
-    padding-right: 50px; /* Add right padding for RTL */
+    padding-right: 50px; 
   }
   
   .step-number {
     margin-bottom: 20px;
   }
   
-  /* Reset step content padding for mobile */
   [dir="rtl"] .step-content,
   [dir="ltr"] .step-content {
     padding: 0;
@@ -838,15 +807,13 @@ nav {
   }
 }
 
-/* Small mobile devices */
 @media (max-width: 480px) {
-  /* Header mobile improvements */
   .header {
     padding: 10px 3%;
   }
   
   .logo {
-    height: 32px; /* Even smaller logo on phones */
+    height: 32px; 
   }
   
   .header.scrolled .logo {
@@ -854,7 +821,7 @@ nav {
   }
   
   nav {
-    gap: 5px; /* Minimal spacing */
+    gap: 5px; 
   }
   
   .btn {
@@ -879,7 +846,6 @@ nav {
     margin: 0 4px;
   }
   
-  /* Text size adjustments */
   .text-gradient {
     font-size: 2.8rem;
   }
@@ -902,7 +868,6 @@ nav {
     max-width: 80%;
   }
   
-  /* Increase spacing for mobile */
   .step {
     padding-left: 40px;
   }
@@ -912,7 +877,6 @@ nav {
     padding-right: 40px;
   }
   
-  /* Adjust vertical line position for small screens */
   [dir="rtl"] .step::after {
     right: 20px;
   }
@@ -922,7 +886,6 @@ nav {
   }
 }
 
-/* Very small screens */
 @media (max-width: 360px) {
   .header {
     padding: 8px 2%; 
@@ -941,7 +904,6 @@ nav {
     font-size: 11px;
   }
   
-  /* For extremely small screens, consider stacking the header elements */
   @media (max-width: 320px) {
     .header {
       flex-direction: column;

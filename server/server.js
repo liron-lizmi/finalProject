@@ -6,7 +6,6 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// התחל את i18next לפני הטעינה של המודלים
 const i18next = require('i18next');
 const Backend = require('i18next-fs-backend');
 const middleware = require('i18next-http-middleware');
@@ -31,7 +30,6 @@ i18next
     defaultNS: 'translations',
   });
 
-// רק עכשיו טען את המודלים והנתיבים
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes'); 
 
@@ -48,7 +46,6 @@ if (!MONGO_URI) {
 app.use(cors());
 app.use(express.json());
 
-// הוסף את middleware של i18n
 app.use(middleware.handle(i18next));
 
 mongoose.connect(MONGO_URI)

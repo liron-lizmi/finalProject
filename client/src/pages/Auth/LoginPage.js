@@ -125,6 +125,9 @@ const LoginPage = () => {
   
   return (
     <div className={`auth-container ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="auth-logo-container">
+        <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" onClick={() => navigate('/')} />
+      </div>
       <div className="auth-box">
         <h2>{t('auth.loginTitle')}</h2>
         {serverError && <div className="error-message">{serverError}</div>}

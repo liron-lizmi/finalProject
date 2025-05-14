@@ -4,24 +4,21 @@
     z-index: 2000;
   }
   
-  /* For homepage with fixed header */
   .homepage-container .language-switcher {
     position: fixed;
     top: 20px;
     z-index: 2000;
   }
   
-  /* Left alignment in LTR mode */
   [dir="ltr"] .language-switcher,
   [dir="ltr"] .homepage-container .language-switcher {
-    right: 180px; /* Move it to the left of the login/signup buttons */
+    right: 180px; 
     left: auto;
   }
   
-  /* Right alignment in RTL mode */
   [dir="rtl"] .language-switcher,
   [dir="rtl"] .homepage-container .language-switcher {
-    left: 180px; /* Move it to the right of the login/signup buttons */
+    left: 180px;
     right: auto;
   }
   

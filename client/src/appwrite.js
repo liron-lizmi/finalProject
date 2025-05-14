@@ -2,15 +2,12 @@ import { Client, Account } from 'appwrite';
 
 const client = new Client();
 
-// הגדרת הקליינט
 client
-    .setEndpoint('https://cloud.appwrite.io/v1') // API Endpoint
+    .setEndpoint('https://cloud.appwrite.io/v1')
     .setProject('67e96550002c983cae42'); 
 
-// יצירת אובייקט Account
 const account = new Account(client);
 
-// פונקציה ליצירת התחברות עם OAuth
 const createOAuth2Session = async (provider, successUrl, failureUrl) => {
     try {
         return account.createOAuth2Session(provider, successUrl, failureUrl);
@@ -20,5 +17,4 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
     }
 };
 
-// יצא את האובייקטים והפונקציות
 export { client, account, createOAuth2Session };

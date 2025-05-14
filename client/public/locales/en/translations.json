@@ -8,6 +8,7 @@
     "logout": "Logout",
     "save": "Save",
     "cancel": "Cancel",
+    "delete": "Delete",
     "back": "Back",
     "loading": "Loading..."
   },
@@ -53,8 +54,9 @@
     "noEventsDescription": "Create a new event to get started",
     "viewDetails": "View Details",
     "deleteEvent": "Delete Event",
+    "confirmDelete": "confirmDelete",
     "backToDashboard": "Back to Dashboard",
-    "deleteConfirm": "Are you sure you want to delete the event \"{{title}}\"?"
+    "deleteConfirm": "Are you sure you want to delete this event?"
   },
   "events": {
     "createEvent": "Create New Event",

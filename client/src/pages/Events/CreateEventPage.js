@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 const CreateEventPage = () => {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
+  const isRTL = i18n.language === 'he'; 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -26,29 +26,23 @@ const CreateEventPage = () => {
   const timePickerContainerRef = useRef(null);
   const calendarRef = useRef(null);
 
-  // Calculate current date in ISO format
   const today = new Date().toISOString().split('T')[0];
 
-  // Create hours for time picker
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
 
-  // Month names in both languages
   const monthNames = {
     en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
     he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
   };
   
-  // Day names in both languages
   const dayNames = {
     en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
   };
 
-  // Close calendar and time picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close time picker if clicked outside
       if (
         timePickerContainerRef.current && 
         !timePickerContainerRef.current.contains(event.target) &&
@@ -57,7 +51,6 @@ const CreateEventPage = () => {
         setShowTimePicker(false);
       }
       
-      // Close calendar if clicked outside
       if (
         calendarRef.current &&
         !calendarRef.current.contains(event.target) &&
@@ -74,31 +67,25 @@ const CreateEventPage = () => {
     };
   }, []);
 
-  // Update display date when eventDate changes
   useEffect(() => {
     if (eventData.eventDate) {
       if (isRTL) {
-        // Format as DD/MM/YYYY for Hebrew
         const [year, month, day] = eventData.eventDate.split('-');
         setDisplayDate(`${day}/${month}/${year}`);
       } else {
-        // Format as MM/DD/YYYY for English
         const [year, month, day] = eventData.eventDate.split('-');
         setDisplayDate(`${month}/${day}/${year}`);
       }
       
-      // Set current month in calendar
       setCurrentMonth(new Date(eventData.eventDate));
     } else {
       setDisplayDate('');
     }
   }, [eventData.eventDate, i18n.language]);
 
-  // Check if time is valid
   const isValidTime = (timeString) => {
     if (!timeString) return false;
     
-    // Check format (HH:MM)
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     return timeRegex.test(timeString);
   };
@@ -106,24 +93,18 @@ const CreateEventPage = () => {
   const handleTimeChange = (e) => {
     let value = e.target.value;
     
-    // Filter invalid values
     if (value && !isValidTime(value)) {
-      // If invalid, try to clean the format
       value = value.replace(/[^0-9:]/g, '');
       
-      // If no colon but exactly 4 numbers, format automatically to time format
       if (!value.includes(':') && value.length === 4) {
         const hours = value.substring(0, 2);
         const minutes = value.substring(2, 4);
         value = `${hours}:${minutes}`;
       }
       
-      // Remove any AM/PM reference
       value = value.replace(/\s*(am|pm)\s*/i, '');
       
-      // If still invalid but already has :, keep as is
       if (value.includes(':') && !isValidTime(value)) {
-        // Check if there's an error
         if (value !== '') {
           setTimeError(t('errors.invalidTimeFormat'));
         }
@@ -136,7 +117,6 @@ const CreateEventPage = () => {
       eventTime: value
     }));
     
-    // Check if time is valid after update
     if (value === '' || isValidTime(value)) {
       setTimeError('');
     } else {
@@ -144,18 +124,16 @@ const CreateEventPage = () => {
     }
   };
 
-  // Select time from time picker
   const handleTimeSelection = (hour, minute) => {
     const formattedTime = `${hour}:${minute}`;
     setEventData(prev => ({
       ...prev,
       eventTime: formattedTime
     }));
-    setTimeError(''); // Clear error if time is valid
+    setTimeError(''); 
     setShowTimePicker(false);
   };
 
-  // Select date from calendar
   const handleDateSelect = (day) => {
     const selected = new Date(
       currentMonth.getFullYear(),
@@ -163,7 +141,6 @@ const CreateEventPage = () => {
       day
     );
     
-    // Format as YYYY-MM-DD for the internal state
     const formattedDate = selected.toISOString().split('T')[0];
     setEventData(prev => ({
       ...prev,
@@ -184,17 +161,14 @@ const CreateEventPage = () => {
     }
   };
 
-  // Toggle calendar visibility
   const toggleCalendar = () => {
     setShowCalendar(!showCalendar);
   };
 
-  // Toggle time picker visibility
   const toggleTimePicker = () => {
     setShowTimePicker(prev => !prev);
   };
 
-  // Handle previous month in calendar
   const handlePrevMonth = () => {
     setCurrentMonth(prev => {
       const newMonth = new Date(prev);
@@ -203,7 +177,6 @@ const CreateEventPage = () => {
     });
   };
 
-  // Handle next month in calendar
   const handleNextMonth = () => {
     setCurrentMonth(prev => {
       const newMonth = new Date(prev);
@@ -212,7 +185,6 @@ const CreateEventPage = () => {
     });
   };
 
-  // Check if date is selectable (not before minDate)
   const isDateSelectable = (day) => {
     if (!today) return true;
     
@@ -227,7 +199,6 @@ const CreateEventPage = () => {
     return date >= min;
   };
 
-  // Check if date is selected
   const isDateSelected = (day) => {
     if (!eventData.eventDate) return false;
     
@@ -245,10 +216,8 @@ const CreateEventPage = () => {
     );
   };
 
-  // Handle today selection
   const handleToday = () => {
     const todayDate = new Date();
-    // Format as YYYY-MM-DD
     const formattedDate = todayDate.toISOString().split('T')[0];
     setEventData(prev => ({
       ...prev,
@@ -258,7 +227,6 @@ const CreateEventPage = () => {
     setShowCalendar(false);
   };
 
-  // Handle clear date
   const handleClearDate = () => {
     setEventData(prev => ({
       ...prev,
@@ -271,38 +239,30 @@ const CreateEventPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
     let hasError = false;
     
-    // Date validation
     if (!eventData.eventDate) {
       setDateError(t('errors.invalidDateFormat'));
       hasError = true;
     }
     
-    // Format time to valid format if needed
     let timeToSubmit = eventData.eventTime;
     
-    // If user entered just numbers without format (e.g.: 1630)
     if (/^\d{1,4}$/.test(eventData.eventTime) && !eventData.eventTime.includes(':')) {
       if (eventData.eventTime.length <= 2) {
-        // Just hour (e.g.: 16)
         timeToSubmit = `${eventData.eventTime.padStart(2, '0')}:00`;
       } else {
-        // Hour and minutes (e.g.: 1630)
         const hours = eventData.eventTime.slice(0, 2).padStart(2, '0');
         const minutes = eventData.eventTime.slice(2).padStart(2, '0');
         timeToSubmit = `${hours}:${minutes}`;
       }
     }
     
-    // Validate formatted time
     if (!timeToSubmit || !isValidTime(timeToSubmit)) {
       setTimeError(t('errors.invalidTimeFormatExample'));
       hasError = true;
     }
     
-    // If there's an error, stop submission
     if (hasError) {
       return;
     }
@@ -350,7 +310,6 @@ const CreateEventPage = () => {
     navigate('/dashboard');
   };
 
-  // Render calendar days
   const renderCalendarDays = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -359,12 +318,10 @@ const CreateEventPage = () => {
     
     const days = [];
     
-    // Add empty cells for days before the first day of month
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
     }
     
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const selectable = isDateSelectable(day);
       const selected = isDateSelected(day);
@@ -383,7 +340,6 @@ const CreateEventPage = () => {
     return days;
   };
 
-  // Render calendar
   const renderCalendar = () => {
     if (!showCalendar) return null;
     
@@ -438,7 +394,6 @@ const CreateEventPage = () => {
     );
   };
 
-  // Render time picker
   const renderTimePicker = () => {
     if (!showTimePicker) return null;
     
@@ -454,7 +409,6 @@ const CreateEventPage = () => {
                 key={hour} 
                 className="time-picker-hour"
                 onClick={() => {
-                  // Select hour with default minutes (00)
                   const minute = eventData.eventTime?.split(':')?.[1] || '00';
                   handleTimeSelection(hour, minute);
                 }}
@@ -469,7 +423,6 @@ const CreateEventPage = () => {
                 key={minute} 
                 className="time-picker-minute"
                 onClick={() => {
-                  // Select minutes with current hour
                   const hour = eventData.eventTime?.split(':')?.[0] || '18';
                   handleTimeSelection(hour, minute);
                 }}
@@ -509,7 +462,12 @@ const CreateEventPage = () => {
   };
 
   return (
+    <>
+    <div className={`auth-logo-container ${isRTL ? 'rtl' : 'ltr'}`}>
+      <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" />
+    </div>
     <div className={`create-event-container ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+
       <div className="create-event-header">
         <h1>{t('events.createEvent')}</h1>
         <p>{t('events.fillDetails')}</p>
@@ -603,7 +561,8 @@ const CreateEventPage = () => {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+  </>
   );
 };
 

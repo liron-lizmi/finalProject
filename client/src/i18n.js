@@ -24,9 +24,8 @@ i18n
     },
     react: {
       useSuspense: true,
-      wait: true  // חשוב: משתמש ב-Suspense להמתנה לטעינת התרגומים
+      wait: true  
     },
-    // הוספת דיבוג כדי לראות בעיות טעינה
     debug: true
   });
 
@@ -37,12 +36,10 @@ export const changeLanguage = (lng) => {
     localStorage.setItem('language', lng);
     console.log(`Language changed to ${lng}, direction: ${i18n.dir()}`);
     
-    // מטריג רינדור מחדש של הקומפוננטות
     window.dispatchEvent(new Event('languageChanged'));
   });
 };
 
-// Helper function to toggle between Hebrew and English
 export const toggleLanguage = () => {
   const currentLang = i18n.language;
   const newLang = currentLang === 'he' ? 'en' : 'he';

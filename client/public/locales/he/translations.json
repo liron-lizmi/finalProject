@@ -8,6 +8,7 @@
       "logout": "התנתקות",
       "save": "שמור",
       "cancel": "ביטול",
+      "delete": "מחק",
       "back": "חזרה",
       "loading": "טוען..."
     },
@@ -54,7 +55,8 @@
       "viewDetails": "פרטי האירוע",
       "deleteEvent": "מחק אירוע",
       "backToDashboard": "חזרה לדשבורד",
-      "deleteConfirm": "האם אתה בטוח שברצונך למחוק את האירוע \"{{title}}\"?"
+      "confirmDelete": "אישור מחיקה",
+      "deleteConfirm": "האם אתה בטוח שברצונך למחוק את אירוע זה?"
     },
     "events": {
       "createEvent": "צור אירוע חדש",

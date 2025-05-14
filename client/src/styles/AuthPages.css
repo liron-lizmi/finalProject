@@ -1,4 +1,12 @@
-/* Base styles */
+html, body {
+  overflow-x: hidden; 
+  overflow-y: auto; 
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+}
+
 body {
   font-family: 'Heebo', 'Arial', sans-serif;
   margin: 0;
@@ -8,7 +16,6 @@ body {
   line-height: 1.6;
 }
 
-/* Language direction specific styles */
 .rtl {
   direction: rtl;
   text-align: right;
@@ -17,17 +24,6 @@ body {
 .ltr {
   direction: ltr;
   text-align: left;
-}
-
-/* Auth container */
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background-color: #faf9f8;
-  padding: 30px;
-  background: linear-gradient(45deg, rgba(212, 185, 158, 0.03) 0%, rgba(212, 185, 158, 0.05) 100%);
 }
 
 .auth-box {
@@ -89,7 +85,6 @@ body {
   opacity: 0.5;
 }
 
-/* Form elements */
 .form-group {
   margin-bottom: 25px;
   position: relative;
@@ -162,7 +157,6 @@ body {
   box-shadow: none;
 }
 
-/* Message styles */
 .error-message {
   background-color: #fff5f5;
   color: #e74c3c;
@@ -224,7 +218,6 @@ body {
   margin-right: 0;
 }
 
-/* Auth links */
 .auth-link {
   text-align: center;
   margin-top: 25px;
@@ -264,12 +257,10 @@ body {
   transform-origin: left;
 }
 
-/* Password field */
 .password-field {
   position: relative;
 }
 
-/* Set padding based on language direction */
 .rtl.password-field input {
   padding-left: 45px !important;
   padding-right: 18px !important;
@@ -280,7 +271,6 @@ body {
   padding-left: 18px !important;
 }
 
-/* Position the eye icon based on language direction */
 .password-toggle {
   position: absolute;
   top: 50%;
@@ -313,7 +303,6 @@ body {
   height: 22px;
 }
 
-/* Social auth */
 .google-auth-button {
   display: flex;
   align-items: center;
@@ -384,7 +373,6 @@ body {
   left: 0;
 }
 
-/* Password strength */
 .password-strength {
   margin-top: 25px;
   background-color: #f9f9f9;
@@ -455,7 +443,6 @@ body {
   content: "✗";
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -496,7 +483,6 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Dashboard specific styles */
 .dashboard-wrapper {
   min-height: 100vh;
   background-color: #f8f9fa;
@@ -504,7 +490,6 @@ body {
   font-family: 'Heebo', 'Arial', sans-serif;
 }
 
-/* Header */
 .dashboard-header {
   background-color: #fff;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
@@ -630,7 +615,6 @@ body {
   stroke: #666;
 }
 
-/* Main Content */
 .dashboard-main {
   padding: 2rem 0;
 }
@@ -641,7 +625,6 @@ body {
   padding: 0 1rem;
 }
 
-/* Error Alert */
 .error-alert {
   display: flex;
   align-items: center;
@@ -671,7 +654,6 @@ body {
   stroke: #e53e3e;
 }
 
-/* Create Event Card */
 .create-event-card {
   background-color: #fff;
   border-radius: 12px;
@@ -777,7 +759,6 @@ body {
   box-shadow: 0 8px 15px rgba(212, 185, 158, 0.4);
 }
 
-/* Events Section */
 .events-section {
   background-color: #fff;
   border-radius: 12px;
@@ -820,7 +801,6 @@ body {
   gap: 1.5rem;
 }
 
-/* Event Card */
 .event-card {
   background-color: #fff;
   border-radius: 12px;
@@ -937,7 +917,6 @@ body {
   stroke: #e53e3e;
 }
 
-/* No Events */
 .no-events {
   text-align: center;
   padding: 4rem 2rem;
@@ -971,7 +950,185 @@ body {
   font-size: 0.95rem;
 }
 
-/* Responsive styles - FIXED for mobile view */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #faf9f8;
+  padding: 30px;
+  background: linear-gradient(45deg, rgba(212, 185, 158, 0.03) 0%, rgba(212, 185, 158, 0.05) 100%);
+  flex-direction: column;
+  gap: 30px;
+  overflow: hidden; 
+  margin: 0;
+  max-width: 100vw;
+}
+
+.auth-logo-container {
+  position: absolute;
+  top: 20px;
+  margin: 0;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.rtl .auth-logo-container {
+  text-align: right;
+}
+
+.ltr .auth-logo-container {
+  text-align: left;
+}
+
+.auth-box {
+  margin-top: 100px; 
+}
+
+.auth-logo-container .logo {
+  height: 60px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.auth-logo-container .logo:hover {
+  transform: translateY(-5px);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  padding: 24px;
+  text-align: center;
+}
+
+.modal-body p {
+  margin: 0 0 15px 0;
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.event-to-delete {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+  margin-top: 10px;
+}
+
+.modal-footer {
+  padding: 24px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.rtl .modal-footer {
+  justify-content: flex-start;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modal-btn.cancel {
+  background: #f3f4f6;
+  color: #333;
+}
+
+.modal-btn.cancel:hover {
+  background: #e5e7eb;
+}
+
+.modal-btn.delete {
+  background: #e53e3e;
+  color: white;
+}
+
+.modal-btn.delete:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 768px) {
   .header-container {
     grid-template-columns: 1fr 1fr;
@@ -980,7 +1137,6 @@ body {
     gap: 1rem;
   }
   
-  /* For LTR (English) */
   .ltr .header-left {
     grid-column: 1;
     grid-row: 1;
@@ -993,7 +1149,6 @@ body {
     justify-self: end;
   }
   
-  /* For RTL (Hebrew) */
   .rtl .header-left {
     grid-column: 2;
     grid-row: 1;
@@ -1006,7 +1161,6 @@ body {
     justify-self: start;
   }
   
-  /* Header center always spans full width in second row */
   .header-center {
     grid-column: 1 / span 2;
     grid-row: 2;
@@ -1032,9 +1186,19 @@ body {
   .ltr .create-event-content {
     text-align: center;
   }
+
+  .auth-logo-container .logo {
+    height: 40px;
+  }
+
+  .auth-box {
+    margin-top: 90px;
+  }
+
 }
 
 @media (max-width: 480px) {
+
   .user-greeting h2 {
     font-size: 1rem;
   }
@@ -1059,4 +1223,38 @@ body {
   .event-body {
     padding: 1.2rem;
   }
+
+  auth-logo-container .logo {
+    height: 32px;
+  }
+  
+  .auth-container {
+    padding: 20px;
+  }
+  
+  .auth-box {
+    margin-top: 80px;
+  }
+  
+  .auth-logo-container {
+    padding: 0 15px;
+  }
+
+  modal-content {
+    max-width: 95%;
+  }
+  
+  .modal-header, .modal-body, .modal-footer {
+    padding: 16px;
+  }
+  
+  .modal-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .modal-btn {
+    padding: 8px 20px;
+    font-size: 0.9rem;
+  }
+  
 }

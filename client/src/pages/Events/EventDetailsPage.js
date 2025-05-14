@@ -12,11 +12,9 @@ const EventDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Determine if the current language is RTL
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   
   useEffect(() => {
-    // Set the document direction based on language
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
     
@@ -154,95 +152,90 @@ const EventDetailsPage = () => {
     );
   }
 
-  // Format the date
   const eventDate = new Date(event.date);
-  // Format according to selected language
   const formattedDate = eventDate.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'he-IL', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
   
-  // Get the event time in 24-hour format
   const eventTime = event.time || '18:00';
   
-  // Calculate days remaining
   const today = new Date();
   const daysRemaining = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
 
-  // Calculate progress for the progress bar
   const progress = calculateProgress(event);
 
   return (
     <div className="event-page-wrapper">
-      <div className="event-details-container">
+      <div className="page-header">
         <div className="header-top">
-          <div className="app-logo">
-            <img src="/images/logo.png" alt={t('general.appLogo')} />
-          </div>
-          <button className="back-button" onClick={handleBack}>
-            <span className="back-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-            </span>
-            {t('events.backToMyEvents')}
-          </button>
+        <div className="app-logo">
+          <img src="/images/logo.png" alt={t('general.appLogo')} />
         </div>
-        
-        <header className="event-header">
-          <div className="event-info-container">
-            <h1 className="event-title">{event.title}</h1>
-            
-            <div className="event-meta">
-              <div className="event-datetime">
-                <span className="date-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </span>
-                <span>{formattedDate} {t('events.atTime')} {eventTime}</span>
-              </div>
-              <div className={`days-counter ${daysRemaining <= 30 ? 'urgent' : ''}`}>
-                <span className="counter-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </span>
-                <span>
-                  {daysRemaining > 0 
-                    ? t('events.daysRemaining', { days: daysRemaining }) 
-                    : daysRemaining === 0 
-                      ? t('events.eventToday') 
-                      : t('events.eventPassed')}
-                </span>
-              </div>
+        <button className="back-button" onClick={handleBack}>
+          <span className="back-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </span>
+          {t('events.backToMyEvents')}
+        </button>
+      </div>
+    </div>
+    <div className="event-details-container">
+      <header className="event-header">
+        <div className="event-info-container">
+          <h1 className="event-title">{event.title}</h1>
+          
+          <div className="event-meta">
+            <div className="event-datetime">
+              <span className="date-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </span>
+              <span>{formattedDate} {t('events.atTime')} {eventTime}</span>
             </div>
-            
-            <div className="progress-container">
-              <div className="progress-info">
-                <h3>{t('events.planningProgress')}</h3>
-                <span className="progress-percentage">{progress}%</span>
-              </div>
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${progress}%` }}
-                  data-progress={`${progress}%`}>
-                </div>
+            <div className={`days-counter ${daysRemaining <= 30 ? 'urgent' : ''}`}>
+              <span className="counter-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </span>
+              <span>
+                {daysRemaining > 0 
+                  ? t('events.daysRemaining', { days: daysRemaining }) 
+                  : daysRemaining === 0 
+                    ? t('events.eventToday') 
+                    : t('events.eventPassed')}
+              </span>
+            </div>
+          </div>
+          
+          <div className="progress-container">
+            <div className="progress-info">
+              <h3>{t('events.planningProgress')}</h3>
+              <span className="progress-percentage">{progress}%</span>
+            </div>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${progress}%` }}
+                data-progress={`${progress}%`}>
               </div>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
         <section className="event-features-section">
           <div className="features-grid">
-            {/* Feature cards - each card will render in the correct order based on the language direction */}
             <div className="feature-card" onClick={() => handleFeatureClick('venue')}>
               <div className="feature-emoji">🏢</div>
               <div className="feature-content">
@@ -370,17 +363,14 @@ const EventDetailsPage = () => {
   );
 };
 
-// Helper function to calculate progress percentage based on completed features
 const calculateProgress = (event) => {
   let completedSteps = 0;
-  let totalSteps = 9; // Total number of features
+  let totalSteps = 9; 
 
-  // Check if venue is selected
   if (event.venue && event.venue.name) {
     completedSteps += 1;
   }
 
-  // Check if guests are added
   if (event.guestCount > 0) {
     completedSteps += 1;
   }

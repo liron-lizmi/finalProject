@@ -13,6 +13,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
+  
+  // הוספת הסטייטים החדשים לחלון הקופץ
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
 
   useEffect(() => {
     const checkUserSession = async () => {
@@ -149,28 +153,43 @@ const Dashboard = () => {
     navigate(`/event/${eventId}`);
   };
 
-  const handleDeleteEvent = async (eventId, eventTitle) => {
-    if (window.confirm(t('dashboard.deleteConfirm', 'Are you sure you want to delete the event "{{title}}"?', { title: eventTitle }))) {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError(t('errors.notLoggedIn', 'Not logged in. Please login again.'));
-          navigate('/login');
-          return;
-        }
-        
-        await axios.delete(`/api/events/${eventId}`, {
-          headers: {
-            'x-auth-token': token
-          }
-        });
-        
-        setEvents(events.filter(event => event._id !== eventId));
-      } catch (err) {
-        console.error('Error deleting event:', err);
-        setError(t('errors.deleteEventFailed', 'Error deleting the event'));
+  // פתיחת חלון קופץ למחיקה
+  const handleDeleteEventClick = (eventId, eventTitle) => {
+    setEventToDelete({ id: eventId, title: eventTitle });
+    setShowDeleteModal(true);
+  };
+
+  // מחיקת האירוע לאחר אישור
+  const confirmDeleteEvent = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError(t('errors.notLoggedIn', 'Not logged in. Please login again.'));
+        navigate('/login');
+        return;
       }
+      
+      await axios.delete(`/api/events/${eventToDelete.id}`, {
+        headers: {
+          'x-auth-token': token
+        }
+      });
+      
+      setEvents(events.filter(event => event._id !== eventToDelete.id));
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      setError(t('errors.deleteEventFailed', 'Error deleting the event'));
+      setShowDeleteModal(false);
+      setEventToDelete(null);
     }
+  };
+
+  // ביטול מחיקה
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setEventToDelete(null);
   };
 
   // Function to convert the date format to DD/MM/YYYY
@@ -322,7 +341,7 @@ const Dashboard = () => {
                       <button className="event-details-btn" onClick={() => handleEventDetails(event._id)}>
                         {t('dashboard.viewDetails')}
                       </button>
-                      <button className="event-delete-btn" onClick={() => handleDeleteEvent(event._id, event.title)}>
+                      <button className="event-delete-btn" onClick={() => handleDeleteEventClick(event._id, event.title)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="3 6 5 6 21 6"></polyline>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -350,6 +369,35 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* חלון קופץ למחיקת אירוע */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`}>
+            <div className="modal-header">
+              <h3>{t('dashboard.confirmDelete', 'אישור מחיקה')}</h3>
+              <button className="modal-close" onClick={cancelDelete}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>{t('dashboard.deleteConfirm', 'האם אתה בטוח שברצונך למחוק את האירוע', { title: eventToDelete?.title })}</p>
+              {/* <div className="event-to-delete">"{eventToDelete?.title}"?</div> */}
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel" onClick={cancelDelete}>
+                {t('general.cancel', 'ביטול')}
+              </button>
+              <button className="modal-btn delete" onClick={confirmDeleteEvent}>
+                {t('general.delete', 'מחיקה')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
