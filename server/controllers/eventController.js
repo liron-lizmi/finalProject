@@ -60,7 +60,10 @@ const updateEvent = async (req, res) => {
     event.guestCount = guestCount !== undefined ? guestCount : event.guestCount;
     event.notes = notes !== undefined ? notes : event.notes;
     
-    if (venue) {
+    if (venue === null) {
+      event.venue = null;
+    } 
+    else if (venue) {
       event.venue = {
         name: venue.name || event.venue?.name,
         address: venue.address || event.venue?.address,
@@ -68,7 +71,6 @@ const updateEvent = async (req, res) => {
         website: venue.website || event.venue?.website
       };
     }
-
     const updatedEvent = await event.save();
     res.json(updatedEvent);
   } catch (err) {

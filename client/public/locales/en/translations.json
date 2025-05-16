@@ -263,6 +263,15 @@
     }
   },
   "venues": {
+    "addManuallyButton": "Add Manual Venue",
+    "deleteVenue": "Delete Venue",
+    "venueDetails": {
+      "name": "Name",
+      "address": "Address",
+      "phone": "Phone",
+      "website": "Website"
+    },
+    "venueDeletedSuccess": "Venue deleted successfully",
     "searchTitle": "Venue Search",
     "searchSubtitle": "Find the perfect venue for your event",
     "searchPlaceholder": "Search by city, neighborhood or venue name",

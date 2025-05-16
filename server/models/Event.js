@@ -20,10 +20,9 @@ const EventSchema = new mongoose.Schema({
     required: function() {
       return i18next.t('validation.eventTimeRequired');
     },
-    default: '18:00',  // שעה ברירת מחדל (6 בערב) בפורמט 24 שעות
+    default: '18:00',  
     validate: {
       validator: function(v) {
-        // בדיקה שהערך הוא בפורמט תקין של שעה בתבנית 24 שעות
         return /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/.test(v);
       },
       message: function() {
@@ -38,24 +37,11 @@ const EventSchema = new mongoose.Schema({
       return i18next.t('validation.eventUserRequired');
     }
   },
-  type: {
-    type: String,
-    enum: ['wedding', 'bar_mitzvah', 'birthday', 'corporate', 'conference', 'other'],
-    default: 'other'
-  },
-  guestCount: {
-    type: Number,
-    default: 0
-  },
-  notes: {
-    type: String,
-    trim: true
-  },
   venue: {
     name: String,
     address: String,
     phone: String,
-    website: String
+    website: String 
   },
   createdAt: {
     type: Date,

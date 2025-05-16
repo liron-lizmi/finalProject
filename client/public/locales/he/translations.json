@@ -263,6 +263,15 @@
     }
   },
   "venues": {
+    "addManuallyButton": "הוסף אולם ידנית",
+    "deleteVenue": "מחק אולם",
+    "venueDetails": {
+      "name": "שם",
+      "address": "כתובת",
+      "phone": "טלפון",
+      "website": "אתר"
+    },
+    "venueDeletedSuccess": "האולם נמחק בהצלחה",
     "searchTitle": "חיפוש מקום לאירוע",
     "searchSubtitle": "מצא את המקום המושלם לאירוע שלך",
     "searchPlaceholder": "חפש לפי עיר, שכונה או שם המקום",
