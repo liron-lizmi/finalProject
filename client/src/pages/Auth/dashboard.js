@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { account } from '../../appwrite';
 import axios from 'axios';
@@ -8,95 +8,113 @@ import '../../styles/AuthPages.css';
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
+  const isRTL = i18n.language === 'he'; 
   
-  // הוספת הסטייטים החדשים לחלון הקופץ
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
 
   useEffect(() => {
+    console.log("Dashboard mounted, search params:", location.search);
+    
     const checkUserSession = async () => {
-      const isGoogleAuth = localStorage.getItem('googleAuth') === 'true';
       try {
-        const localUser = localStorage.getItem('user');
-        if (localUser && !isGoogleAuth) {
-          const parsedUser = JSON.parse(localUser);
-          setUser(parsedUser);
+        const isGoogleAuth = new URLSearchParams(location.search).get('auth') === 'google';
+
+        if (isGoogleAuth) {
           setLoading(false);
-          return;
         }
-
-        try {
-          const userData = await account.get();
-          if (isGoogleAuth) {
-            localStorage.removeItem('googleAuth');
-            try {
-              const response = await axios.post('/api/auth/check-user-exists', { email: userData.email });
-              if (!response.data.exists) {
-                console.log('Creating new user from Google login');
-                const names = userData.name ? userData.name.split(' ') : ['', ''];
-                const firstName = names[0] || '';
-                const lastName = names.slice(1).join(' ') || '';
-                const registerResponse = await axios.post('/api/auth/register-oauth', {
-                  email: userData.email,
-                  firstName: firstName,
-                  lastName: lastName,
-                  provider: 'google',
-                  providerId: userData.$id
-                });
-                
-                if (registerResponse.data.token) {
-                  localStorage.setItem('token', registerResponse.data.token);
-                  localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
-                  setUser(registerResponse.data.user);
-                  setLoading(false);
-                  return;
-                }
-              }
-            } catch (error) {
-              console.error('Error creating/checking user:', error);
-            }
-          }
-
+        
+        if (isGoogleAuth) {
+          console.log("Google authentication redirect detected");
+          
           try {
-            const loginResponse = await axios.post('/api/auth/login-oauth', {
-              email: userData.email,
-              provider: 'google',
-              providerId: userData.$id
+            const userData = await account.get();
+            console.log("Appwrite user data:", userData);
+            
+            const checkResponse = await axios.post('/api/auth/check-user-exists', { 
+              email: userData.email 
             });
             
-            if (loginResponse.data.token) {
-              localStorage.setItem('token', loginResponse.data.token);
-              localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
-              setUser(loginResponse.data.user);
-              setLoading(false);
-              return;
+            if (!checkResponse.data.exists) {
+              const names = userData.name ? userData.name.split(' ') : ['', ''];
+              const firstName = names[0] || '';
+              const lastName = names.slice(1).join(' ') || '';
+              
+              const registerResponse = await axios.post('/api/auth/register-oauth', {
+                email: userData.email,
+                firstName: firstName,
+                lastName: lastName,
+                provider: 'google',
+                providerId: userData.$id
+              });
+              
+              if (registerResponse.data.token) {
+                localStorage.setItem('token', registerResponse.data.token);
+                localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
+                setUser(registerResponse.data.user);
+                setLoading(false);
+                navigate('/dashboard', { replace: true });
+                return;
+              }
+            } else {
+              const loginResponse = await axios.post('/api/auth/login-oauth', {
+                email: userData.email,
+                provider: 'google',
+                providerId: userData.$id
+              });
+              
+              if (loginResponse.data.token) {
+                localStorage.setItem('token', loginResponse.data.token);
+                localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+                setUser(loginResponse.data.user);
+                navigate('/dashboard', { replace: true });
+                return;
+              }
             }
-          } catch (loginError) {
-            console.error('OAuth login error:', loginError);
+          } catch (error) {
+            console.error("Error during Google auth flow:", error);
+            navigate('/login', { replace: true });
+            return;
           }
-
-          const userInfo = {
-            id: userData.$id,
-            email: userData.email,
-            name: userData.name || userData.email
-          };
+        } else {
+          const token = localStorage.getItem('token');
+          const localUser = localStorage.getItem('user');
           
-          localStorage.setItem('user', JSON.stringify(userInfo));
-          setUser(userInfo);
-          setLoading(false);
-        } catch (error) {
-          console.error('Session check error:', error);
-          navigate('/login');
-          return;
+          if (token && localUser) {
+            setUser(JSON.parse(localUser));
+            setLoading(false);
+          } else {
+            try {
+              const userData = await account.get();
+              
+              const loginResponse = await axios.post('/api/auth/login-oauth', {
+                email: userData.email,
+                provider: 'google',
+                providerId: userData.$id
+              });
+              
+              if (loginResponse.data.token) {
+                localStorage.setItem('token', loginResponse.data.token);
+                localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+                setUser(loginResponse.data.user);
+                setLoading(false);
+              } else {
+                navigate('/login', { replace: true });
+              }
+            } catch (err) {
+              console.error("No authenticated session found:", err);
+              navigate('/login', { replace: true });
+            }
+          }
         }
       } catch (error) {
-        console.error('Dashboard error:', error);
-        navigate('/login');
+        console.error('Dashboard session check error:', error);
+        navigate('/login', { replace: true });
       } finally {
         setLoading(false);
       }
@@ -109,7 +127,6 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         if (!token) {
           console.error('No token found');
-          navigate('/login');
           return;
         }
 
@@ -125,9 +142,11 @@ const Dashboard = () => {
         setError(t('errors.loadEventsFailed', 'Error loading events'));
       }
     };
-
-    fetchEvents();
-  }, [navigate, t]);
+    
+    if (!loading) {
+      fetchEvents();
+    }
+  }, [navigate, location.search, t, i18n.language]);
 
   const handleLogout = async () => {
     try {
@@ -153,13 +172,11 @@ const Dashboard = () => {
     navigate(`/event/${eventId}`);
   };
 
-  // פתיחת חלון קופץ למחיקה
   const handleDeleteEventClick = (eventId, eventTitle) => {
     setEventToDelete({ id: eventId, title: eventTitle });
     setShowDeleteModal(true);
   };
 
-  // מחיקת האירוע לאחר אישור
   const confirmDeleteEvent = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -186,18 +203,15 @@ const Dashboard = () => {
     }
   };
 
-  // ביטול מחיקה
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setEventToDelete(null);
   };
 
-  // Function to convert the date format to DD/MM/YYYY
   const formatDate = (dateString) => {
     if (!dateString) return '';
     
     const date = new Date(dateString);
-    // Format date according to language
     if (i18n.language === 'en') {
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -228,7 +242,6 @@ const Dashboard = () => {
 
   return (
     <div className={`dashboard-wrapper ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
-      {/* Header */}
       <header className="dashboard-header">
         <div className="header-container">
           <div className={`header-${isRTL ? 'right' : 'left'}`}>
@@ -275,7 +288,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Create Event Card */}
           <div className="create-event-card">
             <div className="create-event-content">
               <div className="sparkle-icon">
@@ -291,7 +303,6 @@ const Dashboard = () => {
             </button>
           </div>
 
-          {/* Events Section */}
           <div className="events-section">
             <div className="section-header">
               <h2>
@@ -370,7 +381,6 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* חלון קופץ למחיקת אירוע */}
       {showDeleteModal && (
         <div className="modal-overlay">
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -385,7 +395,6 @@ const Dashboard = () => {
             </div>
             <div className="modal-body">
               <p>{t('dashboard.deleteConfirm', 'האם אתה בטוח שברצונך למחוק את האירוע', { title: eventToDelete?.title })}</p>
-              {/* <div className="event-to-delete">"{eventToDelete?.title}"?</div> */}
             </div>
             <div className="modal-footer">
               <button className="modal-btn cancel" onClick={cancelDelete}>

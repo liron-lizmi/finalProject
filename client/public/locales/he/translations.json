@@ -34,13 +34,18 @@
       "requireNumber": "מספר אחד לפחות",
       "requireLength": "אורך מינימלי של 6 תווים",
       "connecting": "מתחבר...",
-      "connectWithGoogle": "התחבר עם Google",
+      "connectWithGoogle": "התחבר באמצעות Google",
       "or": "או",
       "enterEmailPlaceholder": "הזן את כתובת האימייל שלך",
       "sendResetLink": "שלח קישור לאיפוס סיסמה",
       "sending": "שולח...",
       "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
-      "backToLogin": "חזרה להתחברות"
+      "backToLogin": "חזרה להתחברות",
+      "googleLoginError": "אירעה שגיאה בהתחברות עם Google",
+      "invalidCredentials": "שם משתמש או סיסמה שגויים",
+      "passwordRequired": "סיסמה היא שדה חובה",
+      "invalidEmailFormat": "נא להזין כתובת אימייל תקינה",
+      "emailRequired": "אימייל הוא שדה חובה"
     },
     "dashboard": {
       "title": "לוח בקרה",

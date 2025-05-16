@@ -263,6 +263,9 @@ const registerOAuth = async (req, res) => {
 
     const randomPassword = crypto.randomBytes(32).toString('hex');
 
+    const sanitizedFirstName = firstName || ''; 
+    const sanitizedLastName = lastName || '';
+
     const user = new User({
       firstName,
       lastName,
@@ -289,7 +292,7 @@ const registerOAuth = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        name: `${user.firstName} ${user.lastName}`
+        name: `${user.firstName} ${user.lastName}`.trim()
       }
     });
   } catch (err) {
@@ -349,7 +352,7 @@ const loginOAuth = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        name: `${user.firstName} ${user.lastName}`
+        name: `${user.firstName} ${user.lastName}`.trim()
       }
     });
   } catch (err) {

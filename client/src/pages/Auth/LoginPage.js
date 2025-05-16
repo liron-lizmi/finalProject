@@ -1,4 +1,3 @@
-// LoginPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
+  const isRTL = i18n.language === 'he'; 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
@@ -38,16 +37,16 @@ const LoginPage = () => {
     const newErrors = {};
     
     if (!formData.email.trim()) {
-      newErrors.email = 'אימייל הוא שדה חובה';
+      newErrors.email = t('auth.emailRequired');
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        newErrors.email = 'נא להזין כתובת אימייל תקינה';
+        newErrors.email = t('auth.invalidEmailFormat');
       }
     }
     
     if (!formData.password) {
-      newErrors.password = 'סיסמה היא שדה חובה';
+      newErrors.password = t('auth.passwordRequired');
     }
     
     setErrors(newErrors);
@@ -74,27 +73,26 @@ const LoginPage = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setServerError(err.response?.data?.message || 'שם משתמש או סיסמה שגויים');
+      setServerError(err.response?.data?.message || t('auth.invalidCredentials'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // פונקציה לטיפול בהתחברות עם גוגל
   const handleGoogleLogin = async () => {
     try {
-      // מציין שיש לנסות לרשום את המשתמש אם הוא לא קיים
-      localStorage.setItem('googleAuth', 'true');
-      
-      // נבצע התחברות דרך גוגל
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+
       await createOAuth2Session(
         'google', 
-        window.location.origin + '/dashboard', 
-        window.location.origin + '/auth-failed'  
+        window.location.origin + '/dashboard?auth=google&direct=true', 
+        window.location.origin + '/login?auth=failed' 
       );
     } catch (error) {
       console.error('Google login error:', error);
-      setServerError('אירעה שגיאה בהתחברות עם Google');
+      setServerError(t('auth.googleLoginError'));
     }
   };
 

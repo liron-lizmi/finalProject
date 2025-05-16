@@ -40,7 +40,12 @@
     "sendResetLink": "Send Password Reset Link",
     "sending": "Sending...",
     "resetLinkSent": "Password reset link has been sent to your email",
-    "backToLogin": "Back to Login"
+    "backToLogin": "Back to Login",
+    "googleLoginError": "Error occurred while connecting with Google",
+    "invalidCredentials": "Invalid username or password",
+    "passwordRequired": "Password is required",
+    "invalidEmailFormat": "Please enter a valid email address",
+    "emailRequired": "Email is required"
   },
   "dashboard": {
     "title": "Dashboard",

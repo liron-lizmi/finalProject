@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
@@ -23,7 +23,7 @@ import EventSharePage from './pages/Events/Features/EventSharePage';
 
 const App = () => {
   const { t, i18n, ready } = useTranslation();
-  
+
   useEffect(() => {
     console.log('Translation ready:', ready);
     console.log('Current language:', i18n.language);
@@ -31,9 +31,18 @@ const App = () => {
     console.log('Translation for test key:', t('home.features.vendors.title'));
   }, [ready, i18n.language, t]);
 
+  const AuthRedirect = () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('source') === 'google') {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return null;
+  };
+
   return (
     <>
       <Router>
+        <AuthRedirect />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -44,9 +53,9 @@ const App = () => {
           <Route path="/auth-failed" element={<AuthFailed />} />
           <Route path="/venues" element={<VenuePage />} />
           <Route path="/create-event" element={<CreateEventPage />} />
-          
+
           <Route path="/event/:id" element={<EventDetailsPage />} />
-          
+
           <Route path="/event/:id/venue" element={<EventVenuePage />} />
           <Route path="/event/:id/vendors" element={<EventVendorsPage />} />
           <Route path="/event/:id/guests" element={<EventGuestsPage />} />
