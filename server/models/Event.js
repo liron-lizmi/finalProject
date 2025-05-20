@@ -1,3 +1,4 @@
+// models/Event.js
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 
@@ -43,6 +44,24 @@ const EventSchema = new mongoose.Schema({
     phone: String,
     website: String 
   },
+  vendors: [{
+    name: {
+      type: String,
+      required: function() {
+        return i18next.t('validation.vendorNameRequired');
+      }
+    },
+    category: {
+      type: String,
+      required: function() {
+        return i18next.t('validation.vendorCategoryRequired');
+      },
+      enum: ['catering', 'photography', 'music', 'decoration', 'lighting', 'flowers', 'other']
+    },
+    phone: String,
+    website: String,
+    notes: String
+  }],
   createdAt: {
     type: Date,
     default: Date.now

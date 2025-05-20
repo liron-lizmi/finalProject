@@ -92,8 +92,69 @@
         "description": "Choose the perfect venue for your event"
       },
       "vendors": {
-        "title": "Vendor Selection",
-        "description": "Photographer, DJ, catering and more"
+        "title": "Search Vendors",
+        "description": "Find the perfect vendors for your event",
+        "searchPlaceholder": "Search by name, location or service type",
+        "searchButton": "Search",
+        "filtersTitle": "Filter Results",
+        "filters": {
+          "areaLabel": "Area",
+          "allAreas": "All Areas",
+          "jerusalem": "Jerusalem & Surroundings",
+          "center": "Center",
+          "south": "South",
+          "north": "North",
+          "categoryLabel": "Category",
+          "allCategories": "All Categories",
+          "amenitiesLabel": "Amenities",
+          "delivery": "Delivery",
+          "kosher": "Kosher",
+          "vegan": "Vegan",
+          "discount": "Discounts",
+          "applyButton": "Apply Filters"
+        },
+        "categories": {
+          "catering": "Catering",
+          "photography": "Photography",
+          "music": "Music",
+          "decoration": "Decoration",
+          "lighting": "Lighting",
+          "flowers": "Flowers",
+          "other": "Other"
+        },
+        "searchResults": "Search Results",
+        "loading": "Loading vendors...",
+        "noResults": "No vendors found. Try changing your search or filters.",
+        "defaultVendorName": "Vendor",
+        "noAddress": "No address",
+        "details": {
+          "address": "Address",
+          "phone": "Phone",
+          "website": "Website",
+          "rating": "Rating",
+          "outOf5": "out of 5",
+          "reviews": "reviews",
+          "priceLevel": "Price Level",
+          "openingHours": "Opening Hours",
+          "reviewsTitle": "Reviews"
+        },
+        "selectButton": "Select This Vendor",
+        "vendorAddedSuccess": "Vendor added successfully!",
+        "vendorDeletedSuccess": "Vendor removed successfully!",
+        "noVendorSelected": "No vendors selected. You can search for vendors or add one manually.",
+        "searchAndFilterButton": "Search Vendors",
+        "addManuallyButton": "Add Vendor Manually",
+        "selectedVendors": "Selected Vendors",
+        "vendorDetails": {
+          "name": "Vendor Name",
+          "category": "Category",
+          "phone": "Phone",
+          "website": "Website",
+          "notes": "Notes"
+        },
+        "deleteVendor": "Remove Vendor",
+        "addAnotherVendor": "Add Another Vendor",
+        "changeVendor": "Change Vendor"
       },
       "guests": {
         "title": "Guest List",

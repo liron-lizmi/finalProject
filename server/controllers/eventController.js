@@ -12,11 +12,10 @@ const getUserEvents = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-    const { title, date, time, type, guestCount, notes, venue } = req.body;
-
+    const { title, date, time, type, guestCount, notes, venue, vendors } = req.body;
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     const validTime = time && timeRegex.test(time) ? time : '18:00';
-
+    
     const newEvent = new Event({
       title,
       date,
@@ -25,13 +24,20 @@ const createEvent = async (req, res) => {
       guestCount: guestCount || 0,
       notes,
       venue,
+      vendors: vendors || [], 
       user: req.userId
     });
-
+    
     const savedEvent = await newEvent.save();
     res.status(201).json(savedEvent);
   } catch (err) {
     console.error('Error creating event:', err);
+    
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ errors });
+    }
+    
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -39,20 +45,20 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, date, time, type, guestCount, notes, venue } = req.body;
-
+    const { title, date, time, type, guestCount, notes, venue, vendors } = req.body;
+    
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
-
+    
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     let validTime = event.time;  
     
     if (time) {
       validTime = timeRegex.test(time) ? time : event.time;
     }
-
+    
     event.title = title || event.title;
     event.date = date || event.date;
     event.time = validTime;  
@@ -71,10 +77,26 @@ const updateEvent = async (req, res) => {
         website: venue.website || event.venue?.website
       };
     }
+    
+    if (vendors !== undefined) {
+      if (!vendors || vendors.length === 0) {
+        event.vendors = [];
+      } 
+      else {
+        event.vendors = vendors;
+      }
+    }
+    
     const updatedEvent = await event.save();
     res.json(updatedEvent);
   } catch (err) {
     console.error('Error updating event:', err);
+    
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ errors });
+    }
+    
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -82,12 +104,10 @@ const updateEvent = async (req, res) => {
 const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
-
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
-
     await Event.findByIdAndDelete(id);
     res.json({ message: req.t('events.deleteSuccess') });
   } catch (err) {
@@ -99,12 +119,10 @@ const deleteEvent = async (req, res) => {
 const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
-
     res.json(event);
   } catch (err) {
     console.error('Error fetching event:', err);

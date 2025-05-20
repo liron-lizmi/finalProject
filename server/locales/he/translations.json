@@ -9,44 +9,68 @@
       "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
       "resetError": "אירעה שגיאה בתהליך איפוס הסיסמה",
       "emailRequired": "נדרש אימייל",
-      "authenticationFailed": "אימות נכשל, אנא התחבר מחדש"
+      "authenticationFailed": "אימות נכשל, אנא התחבר מחדש",
+      "vendorNotFound": "ספק לא נמצא",
+      "vendorExistingName": "ספק עם שם זה כבר קיים באירוע זה",
+      "vendorRequired": "פרטי הספק הם שדות חובה"
     },
     "success": {
       "passwordReset": "הסיסמה עודכנה בהצלחה",
       "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
-      "registrationComplete": "הרישום הושלם בהצלחה"
+      "registrationComplete": "הרישום הושלם בהצלחה",
+      "vendorAdded": "הספק נוסף בהצלחה לאירוע",
+      "vendorUpdated": "פרטי הספק עודכנו בהצלחה",
+      "vendorDeleted": "הספק הוסר בהצלחה מהאירוע"
     },
     "email": {
       "sendError": "אירעה שגיאה בשליחת אימייל אישור, אך הרישום הושלם בהצלחה"
     },
     "events": {
-    "notFound": "אירוע לא נמצא",
-    "deleteSuccess": "אירוע נמחק בהצלחה",
-    "createSuccess": "אירוע נוצר בהצלחה",
-    "updateSuccess": "אירוע עודכן בהצלחה"
+      "notFound": "אירוע לא נמצא",
+      "deleteSuccess": "אירוע נמחק בהצלחה",
+      "createSuccess": "אירוע נוצר בהצלחה",
+      "updateSuccess": "אירוע עודכן בהצלחה",
+      "vendors": {
+        "addSuccess": "הספק נוסף בהצלחה לאירוע",
+        "updateSuccess": "פרטי הספק עודכנו בהצלחה",
+        "deleteSuccess": "הספק הוסר בהצלחה מהאירוע",
+        "notFound": "ספק לא נמצא באירוע זה",
+        "categories": {
+          "catering": "קייטרינג",
+          "photography": "צילום",
+          "music": "מוזיקה",
+          "decoration": "עיצוב",
+          "lighting": "תאורה",
+          "flowers": "פרחים",
+          "other": "אחר"
+        }
+      }
     },
     "auth": {
-    "noToken": "אין הרשאה, נדרשת התחברות",
-    "invalidToken": "טוקן לא תקין"
+      "noToken": "אין הרשאה, נדרשת התחברות",
+      "invalidToken": "טוקן לא תקין"
     },
     "validation": {
-    "firstNameRequired": "שם פרטי הוא שדה חובה",
-    "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
-    "firstNameMax": "שם פרטי לא יכול להכיל יותר מ-50 תווים",
-    "lastNameRequired": "שם משפחה הוא שדה חובה",
-    "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
-    "lastNameMax": "שם משפחה לא יכול להכיל יותר מ-50 תווים",
-    "emailRequired": "אימייל הוא שדה חובה",
-    "emailInvalid": "נא להזין כתובת אימייל תקינה",
-    "passwordRequired": "סיסמה היא שדה חובה",
-    "passwordMin": "הסיסמה צריכה להכיל לפחות 6 תווים",
-    "passwordMax": "הסיסמה לא יכולה להכיל יותר מ-30 תווים",
-    "passwordComplexity": "הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות",
-    "eventTitleRequired": "כותרת האירוע היא שדה חובה",
-    "eventDateRequired": "תאריך האירוע הוא שדה חובה",
-    "eventTimeRequired": "שעת האירוע היא שדה חובה",
-    "eventUserRequired": "יש צורך במשתמש עבור האירוע",
-    "invalidTimeFormat": "פורמט שעה לא תקין. יש להשתמש בפורמט 24 שעות (למשל: 18:00)"
-  }
-  
+      "firstNameRequired": "שם פרטי הוא שדה חובה",
+      "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
+      "firstNameMax": "שם פרטי לא יכול להכיל יותר מ-50 תווים",
+      "lastNameRequired": "שם משפחה הוא שדה חובה",
+      "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
+      "lastNameMax": "שם משפחה לא יכול להכיל יותר מ-50 תווים",
+      "emailRequired": "אימייל הוא שדה חובה",
+      "emailInvalid": "נא להזין כתובת אימייל תקינה",
+      "passwordRequired": "סיסמה היא שדה חובה",
+      "passwordMin": "הסיסמה צריכה להכיל לפחות 6 תווים",
+      "passwordMax": "הסיסמה לא יכולה להכיל יותר מ-30 תווים",
+      "passwordComplexity": "הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות",
+      "eventTitleRequired": "כותרת האירוע היא שדה חובה",
+      "eventDateRequired": "תאריך האירוע הוא שדה חובה",
+      "eventTimeRequired": "שעת האירוע היא שדה חובה",
+      "eventUserRequired": "יש צורך במשתמש עבור האירוע",
+      "invalidTimeFormat": "פורמט שעה לא תקין. יש להשתמש בפורמט 24 שעות (למשל: 18:00)",
+      "vendorNameRequired": "שם הספק הוא שדה חובה",
+      "vendorCategoryRequired": "קטגוריית הספק היא שדה חובה",
+      "vendorPhoneInvalid": "נא להזין מספר טלפון תקין",
+      "vendorWebsiteInvalid": "נא להזין כתובת אתר תקינה"
+    }
 }

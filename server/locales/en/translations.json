@@ -9,43 +9,68 @@
       "samePassword": "Cannot reset password to current password. Please choose a new password",
       "resetError": "An error occurred during password reset",
       "emailRequired": "Email is required",
-      "authenticationFailed": "Authentication failed, please log in again"
+      "authenticationFailed": "Authentication failed, please log in again",
+      "vendorNotFound": "Vendor not found",
+      "vendorExistingName": "Vendor with this name already exists for this event",
+      "vendorRequired": "Vendor information is required"
     },
     "success": {
       "passwordReset": "Password updated successfully",
       "resetLinkSent": "Password reset link sent to your email",
-      "registrationComplete": "Registration completed successfully"
+      "registrationComplete": "Registration completed successfully",
+      "vendorAdded": "Vendor added successfully to the event",
+      "vendorUpdated": "Vendor updated successfully",
+      "vendorDeleted": "Vendor removed successfully from the event"
     },
     "email": {
       "sendError": "There was an error sending confirmation email, but registration was completed successfully"
     },
     "events": {
-    "notFound": "Event not found",
-    "deleteSuccess": "Event deleted successfully",
-    "createSuccess": "Event created successfully",
-    "updateSuccess": "Event updated successfully"
+      "notFound": "Event not found",
+      "deleteSuccess": "Event deleted successfully",
+      "createSuccess": "Event created successfully",
+      "updateSuccess": "Event updated successfully",
+      "vendors": {
+        "addSuccess": "Vendor added successfully to the event",
+        "updateSuccess": "Vendor information updated successfully",
+        "deleteSuccess": "Vendor removed successfully from the event",
+        "notFound": "Vendor not found in this event",
+        "categories": {
+          "catering": "Catering",
+          "photography": "Photography",
+          "music": "Music",
+          "decoration": "Decoration",
+          "lighting": "Lighting",
+          "flowers": "Flowers",
+          "other": "Other"
+        }
+      }
     },
     "auth": {
-    "noToken": "No authorization, login required",
-    "invalidToken": "Invalid token"
+      "noToken": "No authorization, login required",
+      "invalidToken": "Invalid token"
     },
     "validation": {
-    "firstNameRequired": "First name is required",
-    "firstNameMin": "First name must contain at least 2 characters",
-    "firstNameMax": "First name cannot contain more than 50 characters",
-    "lastNameRequired": "Last name is required",
-    "lastNameMin": "Last name must contain at least 2 characters",
-    "lastNameMax": "Last name cannot contain more than 50 characters",
-    "emailRequired": "Email is required",
-    "emailInvalid": "Please enter a valid email address",
-    "passwordRequired": "Password is required",
-    "passwordMin": "Password must contain at least 6 characters",
-    "passwordMax": "Password cannot contain more than 30 characters",
-    "passwordComplexity": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-    "eventTitleRequired": "Event title is required",
-    "eventDateRequired": "Event date is required",
-    "eventTimeRequired": "Event time is required",
-    "eventUserRequired": "User is required for the event",
-    "invalidTimeFormat": "Invalid time format. Please use 24-hour format (e.g. 18:00)"
+      "firstNameRequired": "First name is a required field",
+      "firstNameMin": "First name must be at least 2 characters long",
+      "firstNameMax": "First name cannot be more than 50 characters long",
+      "lastNameRequired": "Last name is a required field",
+      "lastNameMin": "Last name must be at least 2 characters long",
+      "lastNameMax": "Last name cannot be more than 50 characters long",
+      "emailRequired": "Email is a required field",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is a required field",
+      "passwordMin": "Password must be at least 6 characters long",
+      "passwordMax": "Password cannot be more than 30 characters long",
+      "passwordComplexity": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      "eventTitleRequired": "Event title is a required field",
+      "eventDateRequired": "Event date is a required field",
+      "eventTimeRequired": "Event time is a required field",
+      "eventUserRequired": "An associated user is required for the event",
+      "invalidTimeFormat": "Invalid time format. Use 24-hour format (e.g., 18:00)",
+      "vendorNameRequired": "Vendor name is a required field",
+      "vendorCategoryRequired": "Vendor category is a required field",
+      "vendorPhoneInvalid": "Please enter a valid phone number",
+      "vendorWebsiteInvalid": "Please enter a valid website URL"
     }
 }

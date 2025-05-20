@@ -10,6 +10,9 @@ const {
 } = require('../controllers/eventController');
 const auth = require('../middleware/auth');
 
+const vendorRoutes = require('./vendorRoutes');
+router.use('/:eventId/vendors', vendorRoutes);
+
 router.use(auth);
 
 router.get('/', getUserEvents);

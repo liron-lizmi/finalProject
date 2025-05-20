@@ -92,8 +92,69 @@
           "description": "בחר את המקום המושלם לאירוע שלך"
         },
         "vendors": {
-          "title": "בחירת ספקים",
-          "description": "צלם, תקליטן, קייטרינג ועוד"
+          "title": "חיפוש ספקים",
+          "description": "מצא את הספקים המושלמים לאירוע שלך", 
+          "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
+          "searchButton": "חפש",
+          "filtersTitle": "סינון תוצאות",
+          "filters": {
+            "areaLabel": "אזור",
+            "allAreas": "כל האזורים",
+            "jerusalem": "ירושלים והסביבה",
+            "center": "מרכז",
+            "south": "דרום",
+            "north": "צפון",
+            "categoryLabel": "קטגוריה",
+            "allCategories": "כל הקטגוריות",
+            "amenitiesLabel": "שירותים נוספים",
+            "delivery": "משלוח",
+            "kosher": "כשר",
+            "vegan": "טבעוני",
+            "discount": "הנחות",
+            "applyButton": "החל סינון"
+          },
+          "categories": {
+            "catering": "קייטרינג",
+            "photography": "צילום",
+            "music": "מוזיקה",
+            "decoration": "עיצוב",
+            "lighting": "תאורה",
+            "flowers": "פרחים",
+            "other": "אחר"
+          },
+          "searchResults": "תוצאות חיפוש",
+          "loading": "טוען ספקים...",
+          "noResults": "לא נמצאו ספקים. נסה לשנות את החיפוש או הסינון.",
+          "defaultVendorName": "ספק",
+          "noAddress": "אין כתובת",
+          "details": {
+            "address": "כתובת",
+            "phone": "טלפון",
+            "website": "אתר",
+            "rating": "דירוג",
+            "outOf5": "מתוך 5",
+            "reviews": "ביקורות",
+            "priceLevel": "רמת מחיר",
+            "openingHours": "שעות פתיחה",
+            "reviewsTitle": "ביקורות"
+          },
+          "selectButton": "בחר ספק זה",
+          "vendorAddedSuccess": "הספק נוסף בהצלחה!",
+          "vendorDeletedSuccess": "הספק הוסר בהצלחה!",
+          "noVendorSelected": "לא נבחרו ספקים. ניתן לחפש ספקים או להוסיף ספק באופן ידני.",
+          "searchAndFilterButton": "חפש ספקים",
+          "addManuallyButton": "הוסף ספק ידנית",
+          "selectedVendors": "הספקים שנבחרו",
+          "vendorDetails": {
+            "name": "שם הספק",
+            "category": "קטגוריה",
+            "phone": "טלפון",
+            "website": "אתר",
+            "notes": "הערות"
+          },
+          "deleteVendor": "הסר ספק",
+          "addAnotherVendor": "הוסף ספק נוסף",
+          "changeVendor": "החלף ספק"
         },
         "guests": {
           "title": "רשימת מוזמנים",
