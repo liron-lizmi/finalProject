@@ -58,6 +58,7 @@ const Dashboard = () => {
                 localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
                 setUser(registerResponse.data.user);
                 setLoading(false);
+                await fetchEvents();
                 navigate('/dashboard', { replace: true });
                 return;
               }
@@ -72,6 +73,7 @@ const Dashboard = () => {
                 localStorage.setItem('token', loginResponse.data.token);
                 localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
                 setUser(loginResponse.data.user);
+                await fetchEvents();
                 navigate('/dashboard', { replace: true });
                 return;
               }
@@ -88,6 +90,7 @@ const Dashboard = () => {
           if (token && localUser) {
             setUser(JSON.parse(localUser));
             setLoading(false);
+            await fetchEvents();
           } else {
             try {
               const userData = await account.get();
@@ -103,6 +106,7 @@ const Dashboard = () => {
                 localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
                 setUser(loginResponse.data.user);
                 setLoading(false);
+                await fetchEvents();
               } else {
                 navigate('/login', { replace: true });
               }
@@ -120,8 +124,6 @@ const Dashboard = () => {
       }
     };
 
-    checkUserSession();
-
     const fetchEvents = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -130,21 +132,29 @@ const Dashboard = () => {
           return;
         }
 
+        console.log("Fetching events...");
         const response = await axios.get('/api/events', {
           headers: {
             'x-auth-token': token
           }
         });
         
+        console.log("Events fetched:", response.data.length);
         setEvents(response.data);
       } catch (err) {
         console.error('Error fetching events:', err);
         setError(t('errors.loadEventsFailed', 'Error loading events'));
       }
     };
+
+    checkUserSession();
     
-    if (!loading) {
+    const shouldRefresh = new URLSearchParams(location.search).get('refresh') === 'true';
+    if (shouldRefresh) {
       fetchEvents();
+      
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
     }
   }, [navigate, location.search, t, i18n.language]);
 

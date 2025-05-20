@@ -296,7 +296,7 @@ const CreateEventPage = () => {
         }
       );
 
-      navigate('/dashboard');
+      navigate('/dashboard?refresh=true');
       
     } catch (err) {
       console.error('Error creating event:', err);
