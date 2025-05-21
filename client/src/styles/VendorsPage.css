@@ -875,6 +875,46 @@
     .form-input-field:invalid {
         border-color: #d32f2f;
     }
+
+    /* תיקון עיצוב טופס ספק מנואלי */
+.manual-vendor-form {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .manual-vendor-form .form-group {
+    text-align: right;
+    max-width: 600px;
+    margin: 0 auto 15px;
+  }
+  
+  .manual-vendor-form .form-group label {
+    text-align: right;
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    width: 100%;
+  }
+  
+  .manual-vendor-form .form-group input,
+  .manual-vendor-form .form-group textarea,
+  .manual-vendor-form .form-group select {
+    background-color: #f9f9f9;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .manual-vendor-form .form-actions {
+    max-width: 600px;
+    margin: 25px auto 0;
+    justify-content: center;
+  }
   
     @media (min-width: 768px) {
         .vendors-content {

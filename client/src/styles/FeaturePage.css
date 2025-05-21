@@ -1,4 +1,3 @@
-/* הסגנון המלא עבור EventVenuePage */
 
 .feature-page-container {
   max-width: 1200px;
@@ -253,6 +252,41 @@
   animation: fadeInDown 0.5s ease;
 }
 
+.notes-field {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.manual-vendor-form {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.manual-vendor-form .form-group {
+  text-align: right;
+  max-width: 400px;
+  margin: 0 auto 15px;
+}
+
+.manual-vendor-form .form-group label {
+  text-align: right;
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  padding-right: 10px;
+}
+
 @keyframes fadeInDown {
   from {
     opacity: 0;
@@ -283,12 +317,15 @@
   font-weight: 500;
 }
 
-.form-group input {
+.form-group input
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .form-actions {

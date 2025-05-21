@@ -59,38 +59,54 @@ const updateEvent = async (req, res) => {
       validTime = timeRegex.test(time) ? time : event.time;
     }
     
-    event.title = title || event.title;
-    event.date = date || event.date;
-    event.time = validTime;  
-    event.type = type || event.type;
-    event.guestCount = guestCount !== undefined ? guestCount : event.guestCount;
-    event.notes = notes !== undefined ? notes : event.notes;
+    if (title !== undefined) event.title = title;
+    if (date !== undefined) event.date = date;
+    if (time !== undefined) event.time = validTime;
+    if (type !== undefined) event.type = type;
+    if (guestCount !== undefined) event.guestCount = guestCount;
+    if (notes !== undefined) event.notes = notes;
     
     if (venue === null) {
-      event.venue = null;
+      event.venue = undefined;
     } 
     else if (venue) {
       event.venue = {
-        name: venue.name || event.venue?.name,
-        address: venue.address || event.venue?.address,
-        phone: venue.phone || event.venue?.phone,
-        website: venue.website || event.venue?.website
+        name: venue.name || '',
+        address: venue.address || '',
+        phone: venue.phone || '',
+        website: venue.website || ''
       };
     }
     
     if (vendors !== undefined) {
-      if (!vendors || vendors.length === 0) {
+      if (typeof vendors === 'string') {
+        try {
+          const parsedVendors = JSON.parse(vendors);
+          event.vendors = parsedVendors;
+        } catch (parseError) {
+          console.error('Error parsing vendors string:', parseError);
+          return res.status(400).json({ message: 'Invalid vendors format' });
+        }
+      } else if (Array.isArray(vendors)) {
+        const processedVendors = vendors.map(vendor => ({
+          name: vendor.name || 'Unknown',
+          category: vendor.category || 'other',
+          phone: vendor.phone || '000-000-0000',
+          notes: vendor.notes || ''
+        }));
+        event.vendors = processedVendors;
+      } else if (!vendors || vendors.length === 0) {
         event.vendors = [];
-      } 
-      else {
-        event.vendors = vendors;
       }
     }
+    
+    console.log("Saving event with vendors:", JSON.stringify(event.vendors, null, 2));
     
     const updatedEvent = await event.save();
     res.json(updatedEvent);
   } catch (err) {
     console.error('Error updating event:', err);
+    console.warn("Error updating event:", err);
     
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);

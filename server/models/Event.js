@@ -58,8 +58,22 @@ const EventSchema = new mongoose.Schema({
       },
       enum: ['catering', 'photography', 'music', 'decoration', 'lighting', 'flowers', 'other']
     },
-    phone: String,
-    website: String,
+    phone: {
+      type: String,
+      required: function() {
+        return i18next.t('validation.vendorPhoneRequired');
+      },
+      default: '000-000-0000',
+      validate: {
+        validator: function(v) {
+          if (!v || v.trim() === '') return false;
+          return /^[0-9+\-\s()]*$/.test(v);
+        },
+        message: function() {
+          return i18next.t('validation.invalidPhoneFormat');
+        }
+      }
+    },
     notes: String
   }],
   createdAt: {

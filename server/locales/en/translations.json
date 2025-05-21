@@ -71,6 +71,7 @@
       "vendorNameRequired": "Vendor name is a required field",
       "vendorCategoryRequired": "Vendor category is a required field",
       "vendorPhoneInvalid": "Please enter a valid phone number",
-      "vendorWebsiteInvalid": "Please enter a valid website URL"
+      "vendorPhoneRequired": "Vendor phone number is required",
+      "invalidPhoneFormat": "Phone number can only contain digits.)"
     }
 }

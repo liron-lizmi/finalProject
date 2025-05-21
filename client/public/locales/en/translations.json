@@ -10,7 +10,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "back": "Back",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "select": "Select"
   },
   "auth": {
     "email": "Email",
@@ -123,7 +124,8 @@
           "lighting": "Lighting",
           "flowers": "Flowers",
           "other": "Other",
-          "choose": "Choose a category"
+          "choose": "Choose a category",
+          "all": "All Categories"
         },
         "searchResults": "Search Results",
         "loading": "Loading vendors...",
@@ -152,7 +154,6 @@
           "name": "Vendor Name",
           "category": "Category",
           "phone": "Phone",
-          "website": "Website",
           "notes": "Notes"
         },
         "deleteVendor": "Remove Vendor",

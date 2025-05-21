@@ -71,6 +71,7 @@
       "vendorNameRequired": "שם הספק הוא שדה חובה",
       "vendorCategoryRequired": "קטגוריית הספק היא שדה חובה",
       "vendorPhoneInvalid": "נא להזין מספר טלפון תקין",
-      "vendorWebsiteInvalid": "נא להזין כתובת אתר תקינה"
+      "vendorPhoneRequired": "מספר טלפון של הספק הוא שדה חובה",
+      "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות "
     }
 }

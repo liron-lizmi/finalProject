@@ -19,16 +19,22 @@ const EventVendorsPage = () => {
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualVendor, setManualVendor] = useState({
     name: '',
-    category: 'catering',
+    category: '',
     phone: '',
-    website: '',
     notes: ''
   });
+  const [phoneError, setPhoneError] = useState('');
   const [showVendorSelectionModal, setShowVendorSelectionModal] = useState(false);
   const [vendorActionType, setVendorActionType] = useState(null);
   const [vendorToChangeIndex, setVendorToChangeIndex] = useState(null);
   
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+
+  // טלפון תקין - רק מספרים, תווי מקף, פלוס, כוכבית, סוגריים ורווחים
+  const validatePhone = (phoneNumber) => {
+    const phoneRegex = /^[0-9+\-\s()*]*$/;
+    return phoneRegex.test(phoneNumber);
+  };
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -69,56 +75,50 @@ const EventVendorsPage = () => {
         navigate('/login');
         return;
       }
-
+  
       setVendorDeleteSuccess(false);
-
+  
       const vendorData = {
         name: vendor.name,
         category: vendor.category || 'other',
         phone: vendor.phone || vendor.formatted_phone_number || '',
-        website: vendor.website || vendor.url || '',
         notes: vendor.notes || ''
       };
-
-      const eventVendors = event.vendors || [];
-      
-     if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
-        const updatedVendors = [...eventVendors];
-        updatedVendors[vendorToChangeIndex] = vendorData;
-        
-        await axios.put(`/api/events/${id}`, 
-          { vendors: updatedVendors },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-auth-token': token
-            }
-          }
-        );
-      } else {
-        await axios.put(`/api/events/${id}`, 
-          { vendors: [...eventVendors, vendorData] },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-auth-token': token
-            }
-          }
-        );
+  
+      if (!vendorData.phone || vendorData.phone.trim() === '') {
+        setError(t('errors.vendorPhoneRequired'));
+        return;
       }
-
+  
+      const eventVendors = event.vendors || [];
+      let updatedEvent = { ...event };
+      
+      if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
+        updatedEvent.vendors = [...eventVendors];
+        updatedEvent.vendors[vendorToChangeIndex] = vendorData;
+      } else {
+        updatedEvent.vendors = [...eventVendors, vendorData];
+      }
+      
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        }
+      });
+  
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
           'x-auth-token': token
         }
       });
-
+  
       setEvent(response.data);
       setVendorUpdateSuccess(true);
       setShowVendorsPage(false);
       setVendorToChangeIndex(null);
       setVendorActionType(null);
-
+  
       setTimeout(() => {
         setVendorUpdateSuccess(false);
       }, 3000);
@@ -130,6 +130,15 @@ const EventVendorsPage = () => {
 
   const handleManualVendorChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'phone') {
+      if (!validatePhone(value)) {
+        setPhoneError(t('errors.invalidPhoneFormat'));
+      } else {
+        setPhoneError('');
+      }
+    }
+    
     setManualVendor(prev => ({
       ...prev,
       [name]: value
@@ -138,6 +147,19 @@ const EventVendorsPage = () => {
 
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log("מספר טלפון שנשלח:", manualVendor.phone);
+    
+    if (!manualVendor.phone || manualVendor.phone.trim() === '') {
+      setPhoneError(t('errors.invalidPhoneFormat'));
+      return;
+    }
+    
+    if (!validatePhone(manualVendor.phone)) {
+      setPhoneError(t('errors.invalidPhoneFormat'));
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -145,43 +167,43 @@ const EventVendorsPage = () => {
         navigate('/login');
         return;
       }
-
+  
       setVendorDeleteSuccess(false);
-
+  
       const eventVendors = event.vendors || [];
       
-      // If changing an existing vendor
+      // וודא שהטלפון אינו ריק
+      const vendorToSubmit = {
+        name: manualVendor.name,
+        category: manualVendor.category || 'other',
+        phone: manualVendor.phone.trim(),
+        notes: manualVendor.notes || ''
+      };
+      
+      console.log("Submitting vendor with phone:", vendorToSubmit.phone);
+      
+      let updatedEvent = { ...event };
+      
       if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
-        const updatedVendors = [...eventVendors];
-        updatedVendors[vendorToChangeIndex] = manualVendor;
-        
-        await axios.put(`/api/events/${id}`, 
-          { vendors: updatedVendors },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-auth-token': token
-            }
-          }
-        );
+        updatedEvent.vendors = [...eventVendors];
+        updatedEvent.vendors[vendorToChangeIndex] = vendorToSubmit;
       } else {
-        await axios.put(`/api/events/${id}`, 
-          { vendors: [...eventVendors, manualVendor] },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'x-auth-token': token
-            }
-          }
-        );
+        updatedEvent.vendors = [...eventVendors, vendorToSubmit];
       }
-
+      
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
+        }
+      });
+  
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
           'x-auth-token': token
         }
       });
-
+  
       setEvent(response.data);
       setVendorUpdateSuccess(true);
       setShowManualForm(false);
@@ -189,12 +211,12 @@ const EventVendorsPage = () => {
       setVendorActionType(null);
       setManualVendor({
         name: '',
-        category: 'catering',
+        category: '',
         phone: '',
-        website: '',
         notes: ''
       });
-
+      setPhoneError('');
+  
       setTimeout(() => {
         setVendorUpdateSuccess(false);
       }, 3000);
@@ -212,31 +234,30 @@ const EventVendorsPage = () => {
         navigate('/login');
         return;
       }
-
+  
       setVendorUpdateSuccess(false);
-
+  
+      let updatedEvent = { ...event };
       const updatedVendors = [...(event.vendors || [])];
       updatedVendors.splice(index, 1);
-
-      await axios.put(`/api/events/${id}`, 
-        { vendors: updatedVendors },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
-          }
+      updatedEvent.vendors = updatedVendors;
+  
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
         }
-      );
-
+      });
+  
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
           'x-auth-token': token
         }
       });
-
+  
       setEvent(response.data);
       setVendorDeleteSuccess(true);
-
+  
       setTimeout(() => {
         setVendorDeleteSuccess(false);
       }, 3000);
@@ -367,7 +388,9 @@ const EventVendorsPage = () => {
         <div className={`manual-vendor-form ${isRTL ? 'rtl' : 'ltr'}`}>
           <form onSubmit={handleManualVendorSubmit}>
             <div className="form-group">
-              <label htmlFor="name">{t('events.features.vendors.vendorDetails.name')}*</label>
+              <label htmlFor="name">
+                {t('events.features.vendors.vendorDetails.name')}*
+              </label>
               <input
                 type="text"
                 id="name"
@@ -375,10 +398,13 @@ const EventVendorsPage = () => {
                 value={manualVendor.name}
                 onChange={handleManualVendorChange}
                 required
+                placeholder=""
               />
             </div>
             <div className="form-group">
-              <label htmlFor="category">{t('events.features.vendors.vendorDetails.category')}*</label>
+              <label htmlFor="category">
+                {t('events.features.vendors.vendorDetails.category')}*
+              </label>
               <select
                 id="category"
                 name="category"
@@ -386,6 +412,7 @@ const EventVendorsPage = () => {
                 onChange={handleManualVendorChange}
                 required
               >
+                <option value="">{t('general.select')}</option>
                 <option value="catering">{t('events.features.vendors.categories.catering')}</option>
                 <option value="photography">{t('events.features.vendors.categories.photography')}</option>
                 <option value="music">{t('events.features.vendors.categories.music')}</option>
@@ -396,35 +423,33 @@ const EventVendorsPage = () => {
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="phone">{t('events.features.vendors.vendorDetails.phone')}</label>
+              <label htmlFor="phone">
+                {t('events.features.vendors.vendorDetails.phone')}*
+              </label>
               <input
-                type="text"
+                type="tel"
                 id="phone"
                 name="phone"
                 value={manualVendor.phone}
                 onChange={handleManualVendorChange}
+                required
+                placeholder=""
               />
+              {phoneError && <p className="error-text">{phoneError}</p>}
             </div>
             <div className="form-group">
-              <label htmlFor="website">{t('events.features.vendors.vendorDetails.website')}</label>
-              <input
-                type="text"
-                id="website"
-                name="website"
-                value={manualVendor.website}
-                onChange={handleManualVendorChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="notes">{t('events.features.vendors.vendorDetails.notes')}</label>
+              <label htmlFor="notes">
+                {t('events.features.vendors.vendorDetails.notes')}
+              </label>
               <textarea
                 id="notes"
                 name="notes"
-                rows="3"
                 value={manualVendor.notes}
                 onChange={handleManualVendorChange}
-              ></textarea>
-            </div>
+                placeholder=""
+                className="notes-field"
+              />
+          </div>
             <div className="form-actions">
               <button type="submit" className="save-vendor-button">
                 {t('general.save')}
@@ -454,19 +479,6 @@ const EventVendorsPage = () => {
               
               {vendor.phone && (
                 <p><strong>{t('events.features.vendors.vendorDetails.phone')}:</strong> {vendor.phone}</p>
-              )}
-              
-              {vendor.website && (
-                <p>
-                  <strong>{t('events.features.vendors.vendorDetails.website')}:</strong>{' '}
-                  <a 
-                    href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    {vendor.website}
-                  </a>
-                </p>
               )}
               
               {vendor.notes && (
