@@ -16,7 +16,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden; 
+  overflow: visible; 
   width: 100%;
   box-sizing: border-box;
 }
@@ -70,7 +70,7 @@ html, body {
   border-bottom: 2px solid #eee;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .event-form-container:hover {
@@ -99,6 +99,7 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: visible;
 }
 
 .rtl .form-group {
@@ -294,18 +295,20 @@ html, body {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
-  z-index: 100;
+  z-index: 1000;
   font-family: 'Heebo', 'Arial', sans-serif;
-  overflow: hidden;
+  overflow: visible; 
   border: 1px solid #eee;
 }
 
 .rtl.calendar-dropdown {
   right: 0;
+  left: auto;
 }
 
 .ltr.calendar-dropdown {
   left: 0;
+  right: auto;
 }
 
 .calendar-header {
@@ -458,9 +461,9 @@ html, body {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
-  z-index: 100;
+  z-index: 1000;
   border: 1px solid #eee;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .rtl.time-picker-dropdown {
