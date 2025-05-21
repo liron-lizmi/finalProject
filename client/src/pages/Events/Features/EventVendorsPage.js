@@ -24,6 +24,9 @@ const EventVendorsPage = () => {
     website: '',
     notes: ''
   });
+  const [showVendorSelectionModal, setShowVendorSelectionModal] = useState(false);
+  const [vendorActionType, setVendorActionType] = useState(null);
+  const [vendorToChangeIndex, setVendorToChangeIndex] = useState(null);
   
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
@@ -79,15 +82,30 @@ const EventVendorsPage = () => {
 
       const eventVendors = event.vendors || [];
       
-      await axios.put(`/api/events/${id}`, 
-        { vendors: [...eventVendors, vendorData] },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
+     if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
+        const updatedVendors = [...eventVendors];
+        updatedVendors[vendorToChangeIndex] = vendorData;
+        
+        await axios.put(`/api/events/${id}`, 
+          { vendors: updatedVendors },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-auth-token': token
+            }
           }
-        }
-      );
+        );
+      } else {
+        await axios.put(`/api/events/${id}`, 
+          { vendors: [...eventVendors, vendorData] },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-auth-token': token
+            }
+          }
+        );
+      }
 
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
@@ -98,6 +116,8 @@ const EventVendorsPage = () => {
       setEvent(response.data);
       setVendorUpdateSuccess(true);
       setShowVendorsPage(false);
+      setVendorToChangeIndex(null);
+      setVendorActionType(null);
 
       setTimeout(() => {
         setVendorUpdateSuccess(false);
@@ -130,15 +150,31 @@ const EventVendorsPage = () => {
 
       const eventVendors = event.vendors || [];
       
-      await axios.put(`/api/events/${id}`, 
-        { vendors: [...eventVendors, manualVendor] },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
+      // If changing an existing vendor
+      if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
+        const updatedVendors = [...eventVendors];
+        updatedVendors[vendorToChangeIndex] = manualVendor;
+        
+        await axios.put(`/api/events/${id}`, 
+          { vendors: updatedVendors },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-auth-token': token
+            }
           }
-        }
-      );
+        );
+      } else {
+        await axios.put(`/api/events/${id}`, 
+          { vendors: [...eventVendors, manualVendor] },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-auth-token': token
+            }
+          }
+        );
+      }
 
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
@@ -149,6 +185,8 @@ const EventVendorsPage = () => {
       setEvent(response.data);
       setVendorUpdateSuccess(true);
       setShowManualForm(false);
+      setVendorToChangeIndex(null);
+      setVendorActionType(null);
       setManualVendor({
         name: '',
         category: 'catering',
@@ -206,6 +244,22 @@ const EventVendorsPage = () => {
       console.error('Error deleting vendor:', err);
       setError(t('errors.generalError'));
     }
+  };
+
+  const handleShowVendorOptions = (actionType, vendorIndex = null) => {
+    setVendorActionType(actionType);
+    setVendorToChangeIndex(vendorIndex);
+    setShowVendorSelectionModal(true);
+  };
+
+  const handleSelectAPIVendors = () => {
+    setShowVendorSelectionModal(false);
+    setShowVendorsPage(true);
+  };
+
+  const handleSelectManualVendor = () => {
+    setShowVendorSelectionModal(false);
+    setShowManualForm(true);
   };
 
   const getCategoryIcon = (category) => {
@@ -269,6 +323,43 @@ const EventVendorsPage = () => {
       {vendorDeleteSuccess && (
         <div className="success-message">
           {t('events.features.vendors.vendorDeletedSuccess')}
+        </div>
+      )}
+      
+      {/* Vendor Selection Modal */}
+      {showVendorSelectionModal && (
+        <div className="vendor-selection-modal">
+          <div className="vendor-selection-modal-content">
+            <h3>
+              {vendorActionType === 'change' 
+                ? t('events.features.vendors.changeVendorOptions') 
+                : t('events.features.vendors.addVendorOptions')}
+            </h3>
+            <div className="vendor-selection-options">
+              <button 
+                className="select-vendor-button" 
+                onClick={handleSelectAPIVendors}
+              >
+                {t('events.features.vendors.searchAndFilterButton')}
+              </button>
+              <button 
+                className="add-manual-vendor-button" 
+                onClick={handleSelectManualVendor}
+              >
+                {t('events.features.vendors.addManuallyButton')}
+              </button>
+            </div>
+            <button 
+              className="cancel-button" 
+              onClick={() => {
+                setShowVendorSelectionModal(false);
+                setVendorActionType(null);
+                setVendorToChangeIndex(null);
+              }}
+            >
+              {t('general.cancel')}
+            </button>
+          </div>
         </div>
       )}
       
@@ -350,56 +441,62 @@ const EventVendorsPage = () => {
         </div>
       ) : event.vendors && event.vendors.length > 0 ? (
         <div className="selected-vendors">
-    <h3>{t('events.features.vendors.selectedVendors')}</h3>
-    {event.vendors.map((vendor, index) => (
-      <div key={index} className="vendor-details-card">
-        <div className="vendor-card-header">
-          <div className="vendor-icon-name">
-            <span className="vendor-icon">{getCategoryIcon(vendor.category)}</span>
-            <h4>{vendor.name}</h4>
-          </div>
-          <span className="vendor-category">{getCategoryName(vendor.category)}</span>
-        </div>
-        
-        {vendor.phone && (
-          <p><strong>{t('events.features.vendors.vendorDetails.phone')}:</strong> {vendor.phone}</p>
-        )}
-        
-        {vendor.website && (
-          <p>
-            <strong>{t('events.features.vendors.vendorDetails.website')}:</strong>{' '}
-            <a 
-              href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} 
-              target="_blank" 
-              rel="noopener noreferrer"
+          <h3>{t('events.features.vendors.selectedVendors')}</h3>
+          {event.vendors.map((vendor, index) => (
+            <div key={index} className="vendor-details-card">
+              <div className="vendor-card-header">
+                <div className="vendor-icon-name">
+                  <span className="vendor-icon">{getCategoryIcon(vendor.category)}</span>
+                  <h4>{vendor.name}</h4>
+                </div>
+                <span className="vendor-category">{getCategoryName(vendor.category)}</span>
+              </div>
+              
+              {vendor.phone && (
+                <p><strong>{t('events.features.vendors.vendorDetails.phone')}:</strong> {vendor.phone}</p>
+              )}
+              
+              {vendor.website && (
+                <p>
+                  <strong>{t('events.features.vendors.vendorDetails.website')}:</strong>{' '}
+                  <a 
+                    href={vendor.website.startsWith('http') ? vendor.website : `https://${vendor.website}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    {vendor.website}
+                  </a>
+                </p>
+              )}
+              
+              {vendor.notes && (
+                <p><strong>{t('events.features.vendors.vendorDetails.notes')}:</strong> {vendor.notes}</p>
+              )}
+              
+              <div className="vendor-actions">
+                <button 
+                  className="change-vendor-button" 
+                  onClick={() => handleShowVendorOptions('change', index)}
+                >
+                  {t('events.features.vendors.changeVendor')}
+                </button>
+                <button className="delete-vendor-button" onClick={() => handleDeleteVendor(index)}>
+                  {t('events.features.vendors.deleteVendor')}
+                </button>
+              </div>
+            </div>
+          ))}
+          
+          <div className="add-more-vendors">
+            <button 
+              className="add-vendor-button" 
+              onClick={() => handleShowVendorOptions('add')}
             >
-              {vendor.website}
-            </a>
-          </p>
-        )}
-        
-        {vendor.notes && (
-          <p><strong>{t('events.features.vendors.vendorDetails.notes')}:</strong> {vendor.notes}</p>
-        )}
-        
-        <div className="vendor-actions">
-          <button className="change-vendor-button" onClick={() => setShowVendorsPage(true)}>
-            {t('events.features.vendors.changeVendor')}
-          </button>
-          <button className="delete-vendor-button" onClick={() => handleDeleteVendor(index)}>
-            {t('events.features.vendors.deleteVendor')}
-          </button>
+              {t('events.features.vendors.addAnotherVendor')}
+            </button>
+          </div>
         </div>
-      </div>
-    ))}
-    
-    <div className="add-more-vendors">
-      <button className="add-vendor-button" onClick={() => setShowVendorsPage(true)}>
-        {t('events.features.vendors.addAnotherVendor')}
-      </button>
-    </div>
-  </div>
-) : (
+      ) : (
         <div className="no-vendor-selected">
           <p>{t('events.features.vendors.noVendorSelected')}</p>
           <div className="vendor-selection-options">

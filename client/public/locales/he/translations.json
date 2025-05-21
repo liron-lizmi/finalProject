@@ -97,6 +97,8 @@
           "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
           "searchButton": "חפש",
           "filtersTitle": "סינון תוצאות",
+          "changeVendorOptions": "איך תרצה לשנות את הספק הזה?",
+          "addVendorOptions": "איך תרצה להוסיף ספק זה?",
           "filters": {
             "areaLabel": "אזור",
             "allAreas": "כל האזורים",
@@ -120,7 +122,8 @@
             "decoration": "עיצוב",
             "lighting": "תאורה",
             "flowers": "פרחים",
-            "other": "אחר"
+            "other": "אחר",
+            "choose": "בחר קטגוריה"
           },
           "searchResults": "תוצאות חיפוש",
           "loading": "טוען ספקים...",
@@ -216,7 +219,10 @@
       "eventLoadFailed": "אירעה שגיאה בטעינת פרטי האירוע",
       "emailRequired": "אנא הכנס כתובת אימייל",
       "emailNotFound": "אימייל לא קיים במערכת",
-      "emailSendFailed": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר"
+      "emailSendFailed": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר",
+      "vendorPhoneRequired": "מספר טלפון של הספק נדרש",
+      "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות, רווחים ותווים מיוחדים כמו +, -, ()",
+      "phoneNumbersOnly": "אנא הכנס מספר טלפון תקין (ספרות, רווחים, +, -, וסוגריים בלבד)"
     },
     "home": {
       "hero": {

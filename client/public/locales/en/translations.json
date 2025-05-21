@@ -97,6 +97,8 @@
         "searchPlaceholder": "Search by name, location or service type",
         "searchButton": "Search",
         "filtersTitle": "Filter Results",
+        "changeVendorOptions": "How would you like to change this vendor?",
+        "addVendorOptions": "How would you like to add a vendor?",
         "filters": {
           "areaLabel": "Area",
           "allAreas": "All Areas",
@@ -120,7 +122,8 @@
           "decoration": "Decoration",
           "lighting": "Lighting",
           "flowers": "Flowers",
-          "other": "Other"
+          "other": "Other",
+          "choose": "Choose a category"
         },
         "searchResults": "Search Results",
         "loading": "Loading vendors...",
@@ -216,7 +219,10 @@
     "eventLoadFailed": "Error loading event details",
     "emailRequired": "Please enter an email address",
     "emailNotFound": "Email not found in our system",
-    "emailSendFailed": "Failed to send email. Please try again later."
+    "emailSendFailed": "Failed to send email. Please try again later.",
+    "vendorPhoneRequired": "Vendor phone number is required",
+    "invalidPhoneFormat": "Phone number can only contain digits, spaces, and special characters like +, -, ()",
+    "phoneNumbersOnly": "Please enter a valid phone number (digits, spaces, +, -, and parentheses only)"
   },
   "home": {
     "hero": {

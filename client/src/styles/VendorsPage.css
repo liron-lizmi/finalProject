@@ -604,6 +604,11 @@
     margin-bottom: 8px;
     font-weight: 500;
   }
+
+  .form-group label::after {
+    content: '';
+    margin-left: 4px;
+  }
   
   .form-group input,
   .form-group select,
@@ -795,62 +800,142 @@
     .add-vendor-button:hover {
         background-color: #333;
     }
-  
-  @media (min-width: 768px) {
-    .vendors-content {
-      flex-direction: row;
-      gap: 20px;
+
+    .vendor-selection-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        overflow-y: auto;
+        padding: 20px;
     }
-  
-    .vendors-filters {
-      width: 250px;
-      flex-shrink: 0;
-      height: fit-content;
+    
+    .vendor-selection-modal-content {
+        background-color: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        padding: 30px;
+        position: relative;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
     }
-  
-    .vendors-results-container {
-      flex: 1;
+    
+    .vendor-selection-modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #000;
+        font-size: 1.3rem;
     }
-  
-    .vendors-map {
-      height: 400px;
+    
+    .vendor-selection-modal .vendor-selection-options {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin: 20px 0;
     }
-  }
-  
-  @media (max-width: 767px) {
-    .vendor-card-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
+    
+    .vendor-selection-modal .select-vendor-button,
+    .vendor-selection-modal .add-manual-vendor-button {
+        width: 100%;
+        max-width: 300px;
+        padding: 15px;
+        font-size: 1rem;
     }
-  
-    .vendor-category {
-      margin-left: 30px;
-    }
-  
-    [dir="rtl"] .vendor-category {
-      margin-left: 0;
-      margin-right: 30px;
-    }
-  
-    .vendor-selection-options,
-    .add-more-vendors,
-    .form-actions {
-      flex-direction: column;
-      gap: 10px;
-    }
-  
-    .vendor-actions {
-      justify-content: center;
+      
+    .vendor-selection-modal .cancel-button {
+        margin-top: 10px;
+        width: 100%;
+        max-width: 300px;
     }
 
-  }
+    .form-input-field {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        background-color: #f9f9f9;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+      
+    .form-input-field:focus {
+        background-color: #fff;
+        border-color: #000;
+        outline: none;
+    }
+      
+    .form-input-field:invalid {
+        border-color: #d32f2f;
+    }
+  
+    @media (min-width: 768px) {
+        .vendors-content {
+            flex-direction: row;
+            gap: 20px;
+        }
+    
+        .vendors-filters {
+            width: 250px;
+            flex-shrink: 0;
+            height: fit-content;
+        }
+    
+        .vendors-results-container {
+            flex: 1;
+        }
+  
+        .vendors-map {
+            height: 400px;
+        }
 
-  @media (max-width: 500px) {
-    .vendor-actions {
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
+        .vendor-selection-modal-content {
+            width: 95%;
+            padding: 20px;
+        }
+    }
+  
+    @media (max-width: 767px) {
+        .vendor-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+    
+        .vendor-category {
+            margin-left: 30px;
+        }
+    
+        [dir="rtl"] .vendor-category {
+            margin-left: 0;
+            margin-right: 30px;
+        }
+    
+        .vendor-selection-options,
+        .add-more-vendors,
+        .form-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+    
+        .vendor-actions {
+            justify-content: center;
+        }
+
+    }
+
+    @media (max-width: 500px) {
+        .vendor-actions {
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
     }    
   
 }
