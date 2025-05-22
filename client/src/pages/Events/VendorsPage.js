@@ -1,4 +1,3 @@
-// pages/Events/VendorsPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -27,15 +26,97 @@ const VendorsPage = ({ onSelectVendor }) => {
   const [filters, setFilters] = useState({
     area: 'all',
     vendorType: 'all',
-    category: 'all',
-    amenities: {
-      delivery: false,
-      kosher: false,
-      vegan: false,
-      discount: false
-    },
-    distance: '50',
+    specificFilters: [], 
   });
+
+  const getSpecificFilters = (vendorType) => {
+    switch (vendorType) {
+      case 'catering':
+        return {
+          labelKey: 'vendors.specificFilters.catering.title',
+          options: [
+            { value: 'dairy', labelKey: 'vendors.specificFilters.catering.dairy' },
+            { value: 'meat', labelKey: 'vendors.specificFilters.catering.meat' },
+            { value: 'pareve', labelKey: 'vendors.specificFilters.catering.pareve' },
+            { value: 'vegan', labelKey: 'vendors.specificFilters.catering.vegan' },
+            { value: 'gluten-free', labelKey: 'vendors.specificFilters.catering.glutenFree' }
+          ]
+        };
+      case 'photographer':
+        return {
+          labelKey: 'vendors.specificFilters.photographer.title',
+          options: [
+            { value: 'wedding', labelKey: 'vendors.specificFilters.photographer.wedding' },
+            { value: 'event', labelKey: 'vendors.specificFilters.photographer.event' },
+            { value: 'portrait', labelKey: 'vendors.specificFilters.photographer.portrait' },
+            { value: 'commercial', labelKey: 'vendors.specificFilters.photographer.commercial' }
+          ]
+        };
+      case 'florist':
+        return {
+          labelKey: 'vendors.specificFilters.florist.title',
+          options: [
+            { value: 'bridal', labelKey: 'vendors.specificFilters.florist.bridal' },
+            { value: 'arrangements', labelKey: 'vendors.specificFilters.florist.arrangements' },
+            { value: 'decorations', labelKey: 'vendors.specificFilters.florist.decorations' },
+            { value: 'plants', labelKey: 'vendors.specificFilters.florist.plants' }
+          ]
+        };
+      case 'musician':
+        return {
+          labelKey: 'vendors.specificFilters.musician.title',
+          options: [
+            { value: 'solo', labelKey: 'vendors.specificFilters.musician.solo' },
+            { value: 'band', labelKey: 'vendors.specificFilters.musician.band' },
+            { value: 'classical', labelKey: 'vendors.specificFilters.musician.classical' },
+            { value: 'modern', labelKey: 'vendors.specificFilters.musician.modern' },
+            { value: 'traditional', labelKey: 'vendors.specificFilters.musician.traditional' }
+          ]
+        };
+      case 'dj':
+        return {
+          labelKey: 'vendors.specificFilters.dj.title',
+          options: [
+            { value: 'wedding', labelKey: 'vendors.specificFilters.dj.wedding' },
+            { value: 'party', labelKey: 'vendors.specificFilters.dj.party' },
+            { value: 'corporate', labelKey: 'vendors.specificFilters.dj.corporate' },
+            { value: 'with-equipment', labelKey: 'vendors.specificFilters.dj.withEquipment' }
+          ]
+        };
+      case 'decorator':
+        return {
+          labelKey: 'vendors.specificFilters.decorator.title',
+          options: [
+            { value: 'balloons', labelKey: 'vendors.specificFilters.decorator.balloons' },
+            { value: 'lighting', labelKey: 'vendors.specificFilters.decorator.lighting' },
+            { value: 'furniture', labelKey: 'vendors.specificFilters.decorator.furniture' },
+            { value: 'backdrops', labelKey: 'vendors.specificFilters.decorator.backdrops' }
+          ]
+        };
+      case 'makeup':
+        return {
+          labelKey: 'vendors.specificFilters.makeup.title',
+          options: [
+            { value: 'bridal', labelKey: 'vendors.specificFilters.makeup.bridal' },
+            { value: 'event', labelKey: 'vendors.specificFilters.makeup.event' },
+            { value: 'with-hairstyling', labelKey: 'vendors.specificFilters.makeup.withHairstyling' },
+            { value: 'mobile', labelKey: 'vendors.specificFilters.makeup.mobile' }
+          ]
+        };
+      case 'transport':
+        return {
+          labelKey: 'vendors.specificFilters.transport.title',
+          options: [
+            { value: 'luxury-cars', labelKey: 'vendors.specificFilters.transport.luxuryCars' },
+            { value: 'buses', labelKey: 'vendors.specificFilters.transport.buses' },
+            { value: 'limousines', labelKey: 'vendors.specificFilters.transport.limousines' },
+            { value: 'classic-cars', labelKey: 'vendors.specificFilters.transport.classicCars' }
+          ]
+        };
+      default:
+        return null;
+    }
+  };
 
   const [selectedPhoto, setSelectedPhoto] = useState(0);
  
@@ -184,7 +265,7 @@ const VendorsPage = ({ onSelectVendor }) => {
    
     try {
       const mapOptions = {
-        center: { lat: 31.7683, lng: 35.2137 }, 
+        center: { lat: 31.7683, lng: 35.2137 },
         zoom: 11,
         styles: [
           { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
@@ -230,7 +311,7 @@ const VendorsPage = ({ onSelectVendor }) => {
             try {
               if (placesService.current) {
                 console.log("Directly performing search with location:", userLocation);
-                searchVendors(userLocation, filters.category, newMap);
+                searchVendors(userLocation, filters.vendorType, newMap);
               } else {
                 console.error("Places service not available for search");
                 setLoading(false);
@@ -245,7 +326,7 @@ const VendorsPage = ({ onSelectVendor }) => {
             try {
               if (placesService.current) {
                 console.log("Directly performing search with default location:", mapOptions.center);
-                searchVendors(mapOptions.center, filters.category, newMap);
+                searchVendors(mapOptions.center, filters.vendorType, newMap);
               } else {
                 console.error("Places service not available for search");
                 setLoading(false);
@@ -261,7 +342,7 @@ const VendorsPage = ({ onSelectVendor }) => {
         try {
           if (placesService.current) {
             console.log("Directly performing search with default location:", mapOptions.center);
-            searchVendors(mapOptions.center, filters.category, newMap);
+            searchVendors(mapOptions.center, filters.vendorType, newMap);
           } else {
             console.error("Places service not available for search");
             setLoading(false);
@@ -278,7 +359,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  const searchVendors = async (location, category, mapParamDirect = null) => {
+  const searchVendors = async (location, vendorType, mapParamDirect = null) => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
       console.error("Google Maps or Places API not available");
       setLoading(false);
@@ -301,43 +382,151 @@ const VendorsPage = ({ onSelectVendor }) => {
     setLoading(true);
    
     let query = '';
-    switch (category) {
+    switch (vendorType) {
       case 'catering':
-        query = 'catering service restaurant';
+        query = 'catering service food';
+        if (filters.specificFilters.length > 0) {
+          filters.specificFilters.forEach(filter => {
+            switch (filter) {
+              case 'dairy':
+                query += ' dairy kosher';
+                break;
+              case 'meat':
+                query += ' meat kosher';
+                break;
+              case 'pareve':
+                query += ' pareve kosher';
+                break;
+              case 'vegan':
+                query += ' vegan';
+                break;
+              case 'gluten-free':
+                query += ' gluten free';
+                break;
+            }
+          });
+        }
         break;
-      case 'photography':
+      case 'photographer':
         query = 'photographer photography studio';
+        if (filters.specificFilters.length > 0) {
+          query += ' ' + filters.specificFilters.join(' ');
+        }
         break;
-      case 'music':
-        query = 'dj music band';
-        break;
-      case 'decoration':
-        query = 'event decoration design';
-        break;
-      case 'lighting':
-        query = 'event lighting';
-        break;
-      case 'flowers':
+      case 'florist':
         query = 'florist flower shop';
+        if (filters.specificFilters.length > 0) {
+          filters.specificFilters.forEach(filter => {
+            switch (filter) {
+              case 'bridal':
+                query += ' bridal wedding';
+                break;
+              case 'arrangements':
+                query += ' arrangements';
+                break;
+              case 'decorations':
+                query += ' decorations';
+                break;
+              case 'plants':
+                query += ' plants';
+                break;
+            }
+          });
+        }
+        break;
+      case 'musician':
+        query = 'musician entertainment';
+        if (filters.specificFilters.length > 0) {
+          query += ' ' + filters.specificFilters.join(' ');
+        }
+        break;
+      case 'dj':
+        query = 'dj sound entertainment';
+        if (filters.specificFilters.length > 0) {
+          filters.specificFilters.forEach(filter => {
+            switch (filter) {
+              case 'wedding':
+                query += ' wedding';
+                break;
+              case 'party':
+                query += ' party';
+                break;
+              case 'corporate':
+                query += ' corporate';
+                break;
+              case 'with-equipment':
+                query += ' equipment sound system';
+                break;
+            }
+          });
+        }
+        break;
+      case 'decorator':
+        query = 'event decorator design';
+        if (filters.specificFilters.length > 0) {
+          query += ' ' + filters.specificFilters.join(' ');
+        }
+        break;
+      case 'makeup':
+        query = 'makeup artist beauty';
+        if (filters.specificFilters.length > 0) {
+          filters.specificFilters.forEach(filter => {
+            switch (filter) {
+              case 'bridal':
+                query += ' bridal wedding';
+                break;
+              case 'event':
+                query += ' event';
+                break;
+              case 'with-hairstyling':
+                query += ' hairstyling';
+                break;
+              case 'mobile':
+                query += ' mobile service';
+                break;
+            }
+          });
+        }
+        break;
+      case 'transport':
+        query = 'transportation rental service';
+        if (filters.specificFilters.length > 0) {
+          filters.specificFilters.forEach(filter => {
+            switch (filter) {
+              case 'luxury-cars':
+                query += ' luxury cars';
+                break;
+              case 'buses':
+                query += ' buses';
+                break;
+              case 'limousines':
+                query += ' limousines';
+                break;
+              case 'classic-cars':
+                query += ' classic vintage cars';
+                break;
+            }
+          });
+        }
         break;
       default:
-        query = 'event services';
+        query = 'event services provider';
         break;
     }
    
     if (filters.area !== 'all') {
       switch (filters.area) {
-        case 'ירושלים והסביבה':
+        case 'ירושלים':
           query += ' Jerusalem';
           break;
         case 'מרכז':
-          query += ' Center';
+          query += ' Tel Aviv Center';
           break;
         case 'דרום':
-          query += ' South';
+          query += ' Beer Sheva South';
           break;
         case 'צפון':
-          query += ' North';
+          query += ' Haifa North';
           break;
         default:
           query += ' ' + filters.area;
@@ -351,7 +540,7 @@ const VendorsPage = ({ onSelectVendor }) => {
    
     query += ' Israel';
    
-    console.log("Searching for:", query, "near", location);
+    console.log("Searching for vendors:", query, "near", location);
    
     let locationObj = location;
     if (typeof location.lat === 'function') {
@@ -364,7 +553,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     const request = {
       query: query,
       location: locationObj,
-      radius: parseInt(filters.distance) * 1000,
+      radius: 50000,
       language: isRTL ? 'he' : 'en' 
     };
 
@@ -375,8 +564,6 @@ const VendorsPage = ({ onSelectVendor }) => {
          
           const processedResults = await Promise.all(results.map(async vendor => {
             let processedVendor = { ...vendor };
-            
-            processedVendor.category = category || 'other';
             
             if (containsHebrew(vendor.name)) {
               processedVendor.originalName = vendor.name;
@@ -428,15 +615,13 @@ const VendorsPage = ({ onSelectVendor }) => {
  
   const filterVendors = (vendors) => {
     return vendors.filter(vendor => {
-      if (Object.values(filters.amenities).some(val => val)) {
-        const vendorText = vendor.name + ' ' + (vendor.vicinity || '') + ' ' + (vendor.formatted_address || '');
-       
-        if (filters.amenities.delivery && !vendorText.toLowerCase().includes('deliver')) return false;
-        if (filters.amenities.kosher && !vendorText.toLowerCase().includes('kosher')) return false;
-        if (filters.amenities.vegan && !vendorText.toLowerCase().includes('vegan')) return false;
-        if (filters.amenities.discount && !vendorText.toLowerCase().includes('discount')) return false;
-      }
-     
+      const vendorText = (vendor.name + ' ' + (vendor.vicinity || '') + ' ' + (vendor.formatted_address || '')).toLowerCase();
+      
+      const venueKeywords = ['hotel', 'hall', 'venue', 'event center', 'convention', 'resort', 'banquet', 'palace', 'manor', 'estate'];
+      const isVenue = venueKeywords.some(keyword => vendorText.includes(keyword));
+      
+      if (isVenue) return false;
+      
       return true;
     });
   };
@@ -454,684 +639,637 @@ const VendorsPage = ({ onSelectVendor }) => {
     console.log("Adding markers using map:", currentMap ? "available" : "not available");
    
     const newMarkers = vendors.map(vendor => {
-        if (!vendor.geometry || !vendor.geometry.location) return null;
+      if (!vendor.geometry || !vendor.geometry.location) return null;
      
+      try {
+        let marker;
+       
+        if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
+          console.log("Using AdvancedMarkerElement");
+          marker = new window.google.maps.marker.AdvancedMarkerElement({
+            position: vendor.geometry.location,
+            map: currentMap,
+            title: vendor.name
+          });
+         
+          marker.addListener('gm_click', () => {
+            getVendorDetails(vendor.place_id);
+          });
+        } else {
+          console.log("Using regular Marker (deprecated)");
+          marker = new window.google.maps.Marker({
+            position: vendor.geometry.location,
+            map: currentMap,
+            title: vendor.name
+          });
+         
+          marker.addListener('click', () => {
+            getVendorDetails(vendor.place_id);
+          });
+        }
+       
+        return marker;
+      } catch (error) {
+        console.error("Error creating marker:", error);
+        return null;
+      }
+    }).filter(Boolean);
+   
+    setMarkers(newMarkers);
+  };
+ 
+  const clearMarkers = () => {
+    markers.forEach(marker => {
+      if (marker) {
         try {
-          let marker;
-         
-          if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
-            console.log("Using AdvancedMarkerElement");
-            marker = new window.google.maps.marker.AdvancedMarkerElement({
-              position: vendor.geometry.location,
-              map: currentMap,
-              title: vendor.name
-            });
-           
-            marker.addListener('gm_click', () => {
-              getVendorDetails(vendor.place_id);
-            });
-          } else {
-            console.log("Using regular Marker (deprecated)");
-            marker = new window.google.maps.Marker({
-              position: vendor.geometry.location,
-              map: currentMap,
-              title: vendor.name
-            });
-           
-            marker.addListener('click', () => {
-              getVendorDetails(vendor.place_id);
-            });
+          if (typeof marker.setMap === 'function') {
+            marker.setMap(null);
+          } else if (marker.map) {
+            marker.map = null;
           }
-         
-          return marker;
         } catch (error) {
-          console.error("Error creating marker:", error);
-          return null;
+          console.error("Error clearing marker:", error);
         }
-      }).filter(Boolean);
-     
-      setMarkers(newMarkers);
+      }
+    });
+    setMarkers([]);
+  };
+ 
+  const getVendorDetails = async (placeId) => {
+    if (!placesService.current || !placeId) return;
+  
+    const request = {
+      placeId: placeId,
+      fields: [
+        'name', 'formatted_address', 'formatted_phone_number',
+        'website', 'photos', 'rating', 'reviews',
+        'opening_hours', 'price_level', 'user_ratings_total',
+        'geometry', 'vicinity', 'url', 'photo'
+      ],
+      language: isRTL ? 'he' : 'en' 
     };
-   
-    const clearMarkers = () => {
-      markers.forEach(marker => {
-        if (marker) {
-          try {
-            if (typeof marker.setMap === 'function') {
-              marker.setMap(null);
-            } else if (marker.map) {
-              marker.map = null;
-            }
-          } catch (error) {
-            console.error("Error clearing marker:", error);
-          }
+  
+    placesService.current.getDetails(request, async (place, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+        console.log("Vendor details loaded:", place.name);
+        
+        let processedPlace = { ...place };
+        
+        if (containsHebrew(place.name)) {
+          processedPlace.originalName = place.name;
         }
-      });
-      setMarkers([]);
-    };
-   
-    const getVendorDetails = async (placeId) => {
-      if (!placesService.current || !placeId) return;
-    
-      const request = {
-        placeId: placeId,
-        fields: [
-          'name', 'formatted_address', 'formatted_phone_number',
-          'website', 'photos', 'rating', 'reviews',
-          'opening_hours', 'price_level', 'user_ratings_total',
-          'geometry', 'vicinity', 'url', 'photo'
-        ],
-        language: isRTL ? 'he' : 'en' 
-      };
-    
-      placesService.current.getDetails(request, async (place, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-          console.log("Vendor details loaded:", place.name);
-          
-          // Find the vendor in our list to get its category
-          const vendorInList = vendors.find(v => v.place_id === placeId);
-          const category = vendorInList ? vendorInList.category : filters.category || 'other';
-          
-          let processedPlace = { ...place, category };
-          
+        
+        if (place.formatted_address && containsHebrew(place.formatted_address)) {
+          processedPlace.originalFormattedAddress = place.formatted_address;
+        }
+        
+        if (place.vicinity && containsHebrew(place.vicinity)) {
+          processedPlace.originalVicinity = place.vicinity;
+        }
+        
+        if (isEnglish) {
           if (containsHebrew(place.name)) {
-            processedPlace.originalName = place.name;
+            processedPlace.name = await translateText(place.name, 'en');
           }
           
           if (place.formatted_address && containsHebrew(place.formatted_address)) {
-            processedPlace.originalFormattedAddress = place.formatted_address;
+            processedPlace.formatted_address = await translateText(place.formatted_address, 'en');
           }
           
           if (place.vicinity && containsHebrew(place.vicinity)) {
-            processedPlace.originalVicinity = place.vicinity;
+            processedPlace.vicinity = await translateText(place.vicinity, 'en');
           }
           
-          if (isEnglish) {
-            if (containsHebrew(place.name)) {
-              processedPlace.name = await translateText(place.name, 'en');
-            }
-            
-            if (place.formatted_address && containsHebrew(place.formatted_address)) {
-              processedPlace.formatted_address = await translateText(place.formatted_address, 'en');
-            }
-            
-            if (place.vicinity && containsHebrew(place.vicinity)) {
-              processedPlace.vicinity = await translateText(place.vicinity, 'en');
-            }
-            
-            if (place.opening_hours && place.opening_hours.weekday_text) {
-              processedPlace.opening_hours = {
-                ...place.opening_hours,
-                weekday_text: await Promise.all(
-                  place.opening_hours.weekday_text.map(async (day) => {
-                    if (containsHebrew(day)) {
-                      return await translateText(day, 'en');
-                    }
-                    return day;
-                  })
-                )
-              };
-            }
+          if (place.opening_hours && place.opening_hours.weekday_text) {
+            processedPlace.opening_hours = {
+              ...place.opening_hours,
+              weekday_text: await Promise.all(
+                place.opening_hours.weekday_text.map(async (day) => {
+                  if (containsHebrew(day)) {
+                    return await translateText(day, 'en');
+                  }
+                  return day;
+                })
+              )
+            };
           }
-          
-          setSelectedVendor(processedPlace);
-          
-          if (selectedVendorPhotoIndex !== null) {
-            setSelectedPhoto(selectedVendorPhotoIndex);
-          } else {
-            setSelectedPhoto(0);
-          }
-        } else {
-          console.error("Failed to get vendor details:", status);
         }
-      });
-    };
-   
-    const handleSearchChange = (e) => {
-      setSearch(e.target.value);
-    };
-   
-    const handleSearchSubmit = (e) => {
-      e.preventDefault();
-     
-      if (!geocoder.current) {
-        console.error("Geocoder not initialized");
-        if (window.google && window.google.maps && window.google.maps.Geocoder) {
-          geocoder.current = new window.google.maps.Geocoder();
+        
+        setSelectedVendor(processedPlace);
+        
+        if (selectedVendorPhotoIndex !== null) {
+          setSelectedPhoto(selectedVendorPhotoIndex);
         } else {
-          console.error("Google Maps Geocoder API not available");
-          return;
+          setSelectedPhoto(0);
+        }
+      } else {
+        console.error("Failed to get vendor details:", status);
+      }
+    });
+  };
+ 
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
+ 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+   
+    if (!geocoder.current) {
+      console.error("Geocoder not initialized");
+      if (window.google && window.google.maps && window.google.maps.Geocoder) {
+        geocoder.current = new window.google.maps.Geocoder();
+      } else {
+        console.error("Google Maps Geocoder API not available");
+        return;
+      }
+    }
+   
+    const geocodeRequest = {
+      address: search,
+      language: 'en',
+      region: 'IL'
+    };
+   
+    geocoder.current.geocode(geocodeRequest, (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        const location = results[0].geometry.location;
+        const currentMap = mapInstance.current || map;
+        if (currentMap) {
+          currentMap.setCenter(location);
+        }
+        searchVendors(location, filters.vendorType, currentMap);
+      } else {
+        const currentMap = mapInstance.current || map;
+        if (currentMap && currentMap.getCenter) {
+          searchVendors(currentMap.getCenter(), filters.vendorType, currentMap);
+        } else {
+          searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.vendorType, currentMap);
         }
       }
-     
-      const geocodeRequest = {
-        address: search,
-        language: 'en',
-        region: 'IL'
+    });
+  };
+ 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    
+    // If vendor type changes, reset specific filters
+    if (name === 'vendorType') {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value,
+        specificFilters: []
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleSpecificFilterChange = (filterValue) => {
+    setFilters(prev => ({
+      ...prev,
+      specificFilters: prev.specificFilters.includes(filterValue)
+        ? prev.specificFilters.filter(f => f !== filterValue)
+        : [...prev.specificFilters, filterValue]
+    }));
+  };
+ 
+  const applyFilters = () => {
+    const currentMap = mapInstance.current || map;
+ 
+    if (currentMap && currentMap.getCenter) {
+      searchVendors(currentMap.getCenter(), filters.vendorType, currentMap);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          searchVendors(userLocation, filters.vendorType, currentMap);
+        },
+        () => {
+          searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.vendorType, currentMap);
+        }
+      );
+    } else {
+      searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.vendorType, currentMap);
+    }
+  };
+ 
+  const selectVendor = (vendor) => {
+    try {
+      const vendorData = {
+        place_id: vendor.place_id,
+        id: vendor.place_id,
+        name: vendor.name,
+        address: vendor.formatted_address || vendor.vicinity,
+        phone: vendor.formatted_phone_number || '',
+        website: vendor.website || '',
+        rating: vendor.rating || 0,
+        price_level: vendor.price_level || 0
       };
      
-      geocoder.current.geocode(geocodeRequest, (results, status) => {
-        if (status === 'OK' && results && results[0]) {
-          const location = results[0].geometry.location;
-          const currentMap = mapInstance.current || map;
-          if (currentMap) {
-            currentMap.setCenter(location);
-          }
-          searchVendors(location, filters.category, currentMap);
-        } else {
-          const currentMap = mapInstance.current || map;
-          if (currentMap && currentMap.getCenter) {
-            searchVendors(currentMap.getCenter(), filters.category, currentMap);
-          } else {
-            searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.category, currentMap);
-          }
-        }
-      });
-    };
-   
-    const handleFilterChange = (e) => {
-      const { name, value, type, checked } = e.target;
-     
-      if (type === 'checkbox') {
-        setFilters(prev => ({
-          ...prev,
-          amenities: {
-            ...prev.amenities,
-            [name]: checked
-          }
-        }));
-      } else {
-        setFilters(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      }
-    };
-   
-    const applyFilters = () => {
-      const currentMap = mapInstance.current || map;
-   
-      if (currentMap && currentMap.getCenter) {
-        searchVendors(currentMap.getCenter(), filters.category, currentMap);
-      } else if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            searchVendors(userLocation, filters.category, currentMap);
-          },
-          () => {
-            searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.category, currentMap);
-          }
-        );
-      } else {
-        searchVendors({ lat: 31.7683, lng: 35.2137 }, filters.category, currentMap);
-      }
-    };
-   
-    const selectVendor = (vendor) => {
-      try {
-
-        const category = vendor.category; 
-        const vendorCategory = (category === 'all' || !category) ? 'other' : category;
-
-        const vendorData = {
-          place_id: vendor.place_id,
-          id: vendor.place_id,
-          name: vendor.name,
-          category: vendorCategory,
-          address: vendor.formatted_address || vendor.vicinity,
-          phone: vendor.formatted_phone_number || '',
-          website: vendor.website || '',
-          rating: vendor.rating || 0,
-          price_level: vendor.price_level || 0
-        };
+      if (onSelectVendor && typeof onSelectVendor === 'function') {
+        onSelectVendor(vendorData);
+        setSuccessMessage(t('vendors.vendorAddedSuccess'));
        
-        if (onSelectVendor && typeof onSelectVendor === 'function') {
-          onSelectVendor(vendorData);
-          setSuccessMessage(t('events.features.vendors.vendorAddedSuccess'));
-         
-          setTimeout(() => {
-            setSelectedVendor(null);
-          }, 2000);
-        } else {
-          localStorage.setItem('selectedVendor', JSON.stringify(vendorData));
-          navigate('/create-event', { state: { vendor: vendorData } });
-        }
-      } catch (error) {
-        console.error("Error selecting vendor:", error);
+        setTimeout(() => {
+          setSelectedVendor(null);
+        }, 2000);
+      } else {
+        localStorage.setItem('selectedVendor', JSON.stringify(vendorData));
+        navigate('/create-event', { state: { vendor: vendorData } });
       }
-    };
+    } catch (error) {
+      console.error("Error selecting vendor:", error);
+    }
+  };
+ 
+  const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
+    try {
+      if (photo && typeof photo.getUrl === 'function') {
+        if (useHighQuality) {
+          return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
+        }
+        return photo.getUrl({ maxWidth, maxHeight });
+      }
+    } catch (error) {
+      console.error("Error getting photo URL:", error);
+    }
     
-    const getCategoryIcon = (category) => {
-      switch(category?.toLowerCase()) {
-        case 'catering':
-          return '🍽️';
-        case 'photography':
-          return '📸';
-        case 'music':
-          return '🎵';
-        case 'decoration':
-          return '🎨';
-        case 'lighting':
-          return '💡';
-        case 'flowers':
-          return '💐';
-        default:
-          return '👨‍🍳';
-      }
-    };
-   
-    const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
-      try {
-        if (photo && typeof photo.getUrl === 'function') {
-          if (useHighQuality) {
-            return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
-          }
-          return photo.getUrl({ maxWidth, maxHeight });
-        }
-      } catch (error) {
-        console.error("Error getting photo URL:", error);
-      }
-      
+    return null;
+  };
+
+  const getMainVendorImage = (vendor) => {
+    if (!vendor.photos || vendor.photos.length === 0) {
       return null;
-    };
-  
-    const getMainVendorImage = (vendor) => {
-      if (!vendor.photos || vendor.photos.length === 0) {
-        return null;
-      }
-  
-      try {
-        for (let i = 0; i < vendor.photos.length; i++) {
-          const imageUrl = getPhotoUrl(vendor.photos[i], 300, 200, true);
-          if (imageUrl) {
-            return { url: imageUrl, index: i };
-          }
-        }
-      } catch (error) {
-        console.error("Error getting main vendor image:", error);
-      }
-  
-      return null;
-    };
-  
-    const getValidPhotos = (vendor) => {
-      if (!vendor.photos || vendor.photos.length === 0) {
-        return [];
-      }
-  
-      const validPhotos = [];
+    }
+
+    try {
       for (let i = 0; i < vendor.photos.length; i++) {
-        try {
-          const photoUrl = getPhotoUrl(vendor.photos[i], 100, 70);
-          if (photoUrl) {
-            validPhotos.push({ photo: vendor.photos[i], url: photoUrl, index: i });
-          }
-        } catch (error) {
-          console.error("Error getting photo at index", i, error);
+        const imageUrl = getPhotoUrl(vendor.photos[i], 300, 200, true);
+        if (imageUrl) {
+          return { url: imageUrl, index: i };
         }
       }
-  
-      return validPhotos;
-    };
-   
-    return (
-      <div className="vendors-page">
-        <div className="vendors-header">
-          <h1>{t('events.features.vendors.title')}</h1>
-          <p>{t('events.features.vendors.description')}</p>
-        </div>
-       
-        <div className="vendors-search-container">
-          <form onSubmit={handleSearchSubmit} className="vendors-search-form">
-            <input
-              type="text"
-              placeholder={t('events.features.vendors.searchPlaceholder')}
-              value={search}
-              onChange={handleSearchChange}
-              className="vendors-search-input"
-            />
-            <button type="submit" className="vendors-search-button">{t('events.features.vendors.searchButton')}</button>
-          </form>
-        </div>
-       
-        <div className="vendors-content">
-          <div className="vendors-filters">
-            <h3>{t('events.features.vendors.filtersTitle')}</h3>
-           
-            {/* Area */}
-            <div className="filter-group">
-              <label htmlFor="area">{t('events.features.vendors.filters.areaLabel')}</label>
-              <select
-                id="area"
-                name="area"
-                value={filters.area}
-                onChange={handleFilterChange}
-                className={isRTL ? 'rtl-select' : 'ltr-select'}
-              >
-                <option value="all">{t('events.features.vendors.filters.allAreas')}</option>
-                <option value="ירושלים והסביבה">{t('events.features.vendors.filters.jerusalem')}</option>
-                <option value="מרכז">{t('events.features.vendors.filters.center')}</option>
-                <option value="דרום">{t('events.features.vendors.filters.south')}</option>
-                <option value="צפון">{t('events.features.vendors.filters.north')}</option>
-              </select>
-            </div>
-           
-            {/* Vendor Category */}
-            <div className="filter-group">
-              <label htmlFor="category">{t('events.features.vendors.filters.categoryLabel')}</label>
-              <select
-                id="category"
-                name="category"
-                value={filters.category}
-                onChange={handleFilterChange}
-                className={isRTL ? 'rtl-select' : 'ltr-select'}
-              >
-                <option value="all">{t('events.features.vendors.filters.allCategories')}</option>
-                <option value="catering">{t('events.features.vendors.categories.catering')}</option>
-                <option value="photography">{t('events.features.vendors.categories.photography')}</option>
-                <option value="music">{t('events.features.vendors.categories.music')}</option>
-                <option value="decoration">{t('events.features.vendors.categories.decoration')}</option>
-                <option value="lighting">{t('events.features.vendors.categories.lighting')}</option>
-                <option value="flowers">{t('events.features.vendors.categories.flowers')}</option>
-              </select>
-            </div>
-           
-            {/* Amenities */}
-            <div className="filter-group amenities-group">
-              <label>{t('events.features.vendors.filters.amenitiesLabel')}</label>
-              <div className="checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="delivery"
-                    checked={filters.amenities.delivery}
-                    onChange={handleFilterChange}
-                  />
-                  {t('events.features.vendors.filters.delivery')}
-                </label>
-               
-                <label>
-                  <input
-                    type="checkbox"
-                    name="kosher"
-                    checked={filters.amenities.kosher}
-                    onChange={handleFilterChange}
-                  />
-                  {t('events.features.vendors.filters.kosher')}
-                </label>
-               
-                <label>
-                  <input
-                    type="checkbox"
-                    name="vegan"
-                    checked={filters.amenities.vegan}
-                    onChange={handleFilterChange}
-                  />
-                  {t('events.features.vendors.filters.vegan')}
-                </label>
-               
-                <label>
-                  <input
-                    type="checkbox"
-                    name="discount"
-                    checked={filters.amenities.discount}
-                    onChange={handleFilterChange}
-                  />
-                  {t('events.features.vendors.filters.discount')}
-                </label>
-              </div>
-            </div>
-           
-            <button className="filter-apply-button" onClick={applyFilters}>{t('events.features.vendors.filters.applyButton')}</button>
+    } catch (error) {
+      console.error("Error getting main vendor image:", error);
+    }
+
+    return null;
+  };
+
+  const getValidPhotos = (vendor) => {
+    if (!vendor.photos || vendor.photos.length === 0) {
+      return [];
+    }
+
+    const validPhotos = [];
+    for (let i = 0; i < vendor.photos.length; i++) {
+      try {
+        const photoUrl = getPhotoUrl(vendor.photos[i], 100, 70);
+        if (photoUrl) {
+          validPhotos.push({ photo: vendor.photos[i], url: photoUrl, index: i });
+        }
+      } catch (error) {
+        console.error("Error getting photo at index", i, error);
+      }
+    }
+
+    return validPhotos;
+  };
+
+  // Get current specific filters based on selected vendor type
+  const currentSpecificFilters = getSpecificFilters(filters.vendorType);
+ 
+  return (
+    <div className="vendors-page">
+      <div className="vendors-header">
+        <h1>{t('vendors.searchTitle')}</h1>
+        <p>{t('vendors.searchSubtitle')}</p>
+      </div>
+     
+      <div className="vendors-search-container">
+        <form onSubmit={handleSearchSubmit} className="vendors-search-form">
+          <input
+            type="text"
+            placeholder={t('vendors.searchPlaceholder')}
+            value={search}
+            onChange={handleSearchChange}
+            className="vendors-search-input"
+          />
+          <button type="submit" className="vendors-search-button">{t('vendors.searchButton')}</button>
+        </form>
+      </div>
+     
+      <div className="vendors-content">
+        <div className="vendors-filters">
+          <h3>{t('vendors.filtersTitle')}</h3>
+         
+          {/* Area Filter */}
+          <div className="filter-group">
+            <label htmlFor="area">{t('vendors.filters.areaLabel')}</label>
+            <select
+              id="area"
+              name="area"
+              value={filters.area}
+              onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
+            >
+              <option value="all">{t('vendors.filters.allAreas')}</option>
+              <option value="ירושלים">{t('vendors.filters.jerusalem')}</option>
+              <option value="מרכז">{t('vendors.filters.center')}</option>
+              <option value="דרום">{t('vendors.filters.south')}</option>
+              <option value="צפון">{t('vendors.filters.north')}</option>
+            </select>
           </div>
          
-          <div className="vendors-results-container">
-            <div className="vendors-map" ref={mapRef}></div>
-           
-            <div className="vendors-list">
-              <h3>{t('events.features.vendors.searchResults')}</h3>
-             
-              {loading ? (
-                <div className="loading-indicator">
-                  <div className="loading-spinner"></div>
-                  <p>{t('events.features.vendors.loading')}</p>
-                </div>
-              ) : vendors.length === 0 ? (
-                <div className="no-results">{t('events.features.vendors.noResults')}</div>
-              ) : (
-                <div className="vendors-grid">
-                  {vendors.map(vendor => {
-                    const mainImageData = getMainVendorImage(vendor);
-                    const categoryIcon = getCategoryIcon(vendor.category);
-                    
-                    return (
-                      <div
-                        key={vendor.place_id}
-                        className={`vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSelectedVendorPhotoIndex(mainImageData ? mainImageData.index : null);
-                          getVendorDetails(vendor.place_id);
-                        }}
-                      >
-                        <div className="vendor-category-badge">
-                          <span className="category-icon">{categoryIcon}</span>
-                        </div>
-                        
-                        <div className="vendor-image">
-                          {mainImageData && mainImageData.url ? (
-                            <img
-                              src={mainImageData.url}
-                              alt={vendor.name}
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`;
-                              }}
-                            />
-                          ) : (
-                            <img
-                              src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`}
-                              alt={vendor.name || t('vendors.defaultVendorName')}
-                            />
-                          )}
-                        </div>
-                       
-                        <div className="vendor-info">
-                          <h4>{vendor.name}</h4>
-                          <p className="vendor-address">
-                            {vendor.formatted_address || vendor.vicinity || t('events.features.vendors.noAddress')}
-                          </p>
-                         
-                          {vendor.rating && (
-                            <div className="vendor-rating">
-                              <span className="stars">
-                                {Array(Math.floor(vendor.rating)).fill().map((_, i) => (
-                                  <span key={i} className="star">★</span>
-                                ))}
-                                {vendor.rating % 1 > 0 && <span className="star half">★</span>}
-                              </span>
-                              <span className="rating-value">{vendor.rating}</span>
-                              <span className="review-count">({vendor.user_ratings_total || 0})</span>
-                            </div>
-                          )}
-                         
-                          {vendor.price_level && (
-                            <div className="vendor-price">
-                              {'$'.repeat(vendor.price_level)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+          {/* Vendor Type */}
+          <div className="filter-group">
+            <label htmlFor="vendorType">{t('vendors.filters.typeLabel')}</label>
+            <select
+              id="vendorType"
+              name="vendorType"
+              value={filters.vendorType}
+              onChange={handleFilterChange}
+              className={isRTL ? 'rtl-select' : 'ltr-select'}
+            >
+              <option value="all">{t('vendors.filters.allTypes')}</option>
+              <option value="catering">{t('vendors.filters.catering')}</option>
+              <option value="photographer">{t('vendors.filters.photographer')}</option>
+              <option value="florist">{t('vendors.filters.florist')}</option>
+              <option value="musician">{t('vendors.filters.musician')}</option>
+              <option value="dj">{t('vendors.filters.dj')}</option>
+              <option value="decorator">{t('vendors.filters.decorator')}</option>
+              <option value="makeup">{t('vendors.filters.makeup')}</option>
+              <option value="transport">{t('vendors.filters.transport')}</option>
+            </select>
           </div>
-         
-          {selectedVendor && (
-            <div className="vendor-details">
-              <div className="vendor-details-content">
-                <div className="vendor-details-header">
-                  <div className="vendor-title-section">
-                    <span className="vendor-category-icon">{getCategoryIcon(selectedVendor.category)}</span>
-                    <h2>{selectedVendor.name}</h2>
+
+          {/* Specific Filter - Only show when vendor type is selected */}
+          {filters.vendorType !== 'all' && currentSpecificFilters && (
+            <div className="filter-group">
+              <label>{t(currentSpecificFilters.labelKey)}</label>
+              <div className="checkbox-filters">
+                {currentSpecificFilters.options.map(option => (
+                  <div key={option.value} className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      id={`filter-${option.value}`}
+                      checked={filters.specificFilters.includes(option.value)}
+                      onChange={() => handleSpecificFilterChange(option.value)}
+                      className="filter-checkbox"
+                    />
+                    <label 
+                      htmlFor={`filter-${option.value}`} 
+                      className="checkbox-label"
+                    >
+                      {t(option.labelKey)}
+                    </label>
                   </div>
-                  <button className="close-details" onClick={() => {
-                    setSelectedVendor(null);
-                    setSelectedVendorPhotoIndex(null);
-                  }}>×</button>
-                </div>
-               
-                {/* Success message */}
-                {successMessage && (
-                  <div className="success-message">
-                    {successMessage}
-                  </div>
-                )}
-               
-                <div className="vendor-details-body">
-                  <div className="vendor-photos">
-                    <div className="main-photo">
-                      {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
-                        (() => {
-                          const validPhotos = getValidPhotos(selectedVendor);
-                          if (validPhotos.length > 0) {
-                            const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
-                            const photoToShow = validPhotos[photoIndex];
-                            
-                            return (
-                              <img
-                                src={getPhotoUrl(photoToShow.photo, 600, 400, true)}
-                                alt={selectedVendor.name}
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('events.features.vendors.defaultVendorName'))}`;
-                                }}
-                              />
-                            );
-                          } else {
-                            return (
-                              <img
-                                src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('events.features.vendors.defaultVendorName'))}`}
-                                alt={selectedVendor.name || t('vendors.defaultVendorName')}
-                              />
-                            );
-                          }
-                        })()
-                      ) : (
-                        <img
-                          src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('events.features.vendors.defaultVendorName'))}`}
-                          alt={selectedVendor.name || t('vendors.defaultVendorName')}
-                        />
-                      )}
-                    </div>
-                    
-                    {selectedVendor.photos && selectedVendor.photos.length > 0 && getValidPhotos(selectedVendor).length > 0 && (
-                      <div className="all-photos">
-                        {getValidPhotos(selectedVendor).map(({ photo, url, index }) => (
-                          <img
-                            key={index}
-                            src={url}
-                            alt={`${selectedVendor.name} - ${index + 1}`}
-                            className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
-                            onClick={() => setSelectedPhoto(index)}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                              
-                  <div className="vendor-info-detailed">
-                    <p className="category">
-                      <strong>{t('events.features.vendors.vendorDetails.category')}:</strong> {t(`events.features.vendors.categories.${selectedVendor.category?.toLowerCase()}`) || selectedVendor.category}
-                    </p>
-                    
-                    <p className="address">
-                      <strong>{t('events.features.vendors.details.address')}:</strong> {
-                        isRTL && selectedVendor.originalFormattedAddress ? 
-                        selectedVendor.originalFormattedAddress : 
-                        selectedVendor.formatted_address || selectedVendor.vicinity
-                      }
-                    </p>
-                   
-                    {selectedVendor.formatted_phone_number && (
-                      <p className="phone">
-                        <strong>{t('events.features.vendors.details.phone')}:</strong> {selectedVendor.formatted_phone_number}
-                      </p>
-                    )}
-                   
-                    {selectedVendor.website && (
-                      <p className="website">
-                        <strong>{t('events.features.vendors.details.website')}:</strong> <a href={selectedVendor.website} target="_blank" rel="noopener noreferrer">{selectedVendor.website}</a>
-                      </p>
-                    )}
-                   
-                    {selectedVendor.rating && (
-                      <p className="rating-details">
-                        <strong>{t('events.features.vendors.details.rating')}:</strong> {selectedVendor.rating} {t('events.features.vendors.details.outOf5')} ({selectedVendor.user_ratings_total} {t('events.features.vendors.details.reviews')})
-                      </p>
-                    )}
-                   
-                    {selectedVendor.price_level && (
-                      <p className="price-details">
-                        <strong>{t('events.features.vendors.details.priceLevel')}:</strong> {'$'.repeat(selectedVendor.price_level)}
-                      </p>
-                    )}
-                   
-                    {selectedVendor.opening_hours && selectedVendor.opening_hours.weekday_text && (
-                      <div className="opening-hours">
-                        <strong>{t('events.features.vendors.details.openingHours')}:</strong>
-                        <ul>
-                          {selectedVendor.opening_hours.weekday_text.map((day, index) => (
-                            <li key={index}>{day}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                 
-                  {selectedVendor.reviews && selectedVendor.reviews.length > 0 && (
-                    <div className="vendor-reviews">
-                      <h3>{t('events.features.vendors.details.reviewsTitle')}</h3>
-                      <div className="reviews-list">
-                        {selectedVendor.reviews.slice(0, 3).map((review, index) => (
-                          <div key={index} className="review">
-                            <div className="review-header">
-                              <span className="reviewer">{review.author_name}</span>
-                              <span className="review-rating">
-                                {'★'.repeat(review.rating)}
-                                {'☆'.repeat(5 - review.rating)}
-                              </span>
-                              <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
-                            </div>
-                            <p className="review-text">{review.text}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                 
-                  <div className="vendor-actions">
-                    {!successMessage && (
-                      <button className="select-vendor-button" onClick={() => selectVendor(selectedVendor)}>
-                        {t('events.features.vendors.selectButton')}
-                      </button>
-                    )}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}
+         
+          <button className="filter-apply-button" onClick={applyFilters}>{t('vendors.filters.applyButton')}</button>
         </div>
+       
+        <div className="vendors-results-container">
+          <div className="vendors-map" ref={mapRef}></div>
+         
+          <div className="vendors-list">
+            <h3>{t('vendors.searchResults')}</h3>
+           
+            {loading ? (
+              <div className="loading-indicator">
+                <div className="loading-spinner"></div>
+                <p>{t('vendors.loading')}</p>
+              </div>
+            ) : vendors.length === 0 ? (
+              <div className="no-results">{t('vendors.noResults')}</div>
+            ) : (
+              <div className="vendors-grid">
+                {vendors.map(vendor => {
+                  const mainImageData = getMainVendorImage(vendor);
+                  
+                  return (
+                    <div
+                      key={vendor.place_id}
+                      className={`vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedVendorPhotoIndex(mainImageData ? mainImageData.index : null);
+                        getVendorDetails(vendor.place_id);
+                      }}
+                    >
+                      <div className="vendor-image">
+                        {mainImageData && mainImageData.url ? (
+                          <img
+                            src={mainImageData.url}
+                            alt={vendor.name}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`;
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`}
+                            alt={vendor.name || t('vendors.defaultVendorName')}
+                          />
+                        )}
+                      </div>
+                     
+                      <div className="vendor-info">
+                        <h4>{vendor.name}</h4>
+                        <p className="vendor-address">
+                          {vendor.formatted_address || vendor.vicinity || t('vendors.noAddress')}
+                        </p>
+                       
+                        {vendor.rating && (
+                          <div className="vendor-rating">
+                            <span className="stars">
+                              {Array(Math.floor(vendor.rating)).fill().map((_, i) => (
+                                <span key={i} className="star">★</span>
+                              ))}
+                              {vendor.rating % 1 > 0 && <span className="star half">★</span>}
+                            </span>
+                            <span className="rating-value">{vendor.rating}</span>
+                            <span className="review-count">({vendor.user_ratings_total || 0})</span>
+                          </div>
+                        )}
+                       
+                        {vendor.price_level && (
+                          <div className="vendor-price">
+                            {'₪'.repeat(vendor.price_level)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+       
+        {selectedVendor && (
+          <div className="vendor-details">
+            <div className="vendor-details-content">
+              <div className="vendor-details-header">
+                <h2>{selectedVendor.name}</h2>
+                <button className="close-details" onClick={() => {
+                  setSelectedVendor(null);
+                  setSelectedVendorPhotoIndex(null);
+                }}>×</button>
+              </div>
+             
+              {/* Success message */}
+              {successMessage && (
+                <div className="success-message">
+                  {successMessage}
+                </div>
+              )}
+             
+              <div className="vendor-details-content">
+                <div className="vendor-photos">
+                  <div className="main-photo">
+                    {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
+                      (() => {
+                        const validPhotos = getValidPhotos(selectedVendor);
+                        if (validPhotos.length > 0) {
+                          const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
+                          const photoToShow = validPhotos[photoIndex];
+                          
+                          return (
+                            <img
+                              src={getPhotoUrl(photoToShow.photo, 600, 400, true)}
+                              alt={selectedVendor.name}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`;
+                              }}
+                            />
+                          );
+                        } else {
+                          return (
+                            <img
+                              src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`}
+                              alt={selectedVendor.name || t('vendors.defaultVendorName')}
+                            />
+                          );
+                        }
+                      })()
+                    ) : (
+                      <img
+                        src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`}
+                        alt={selectedVendor.name || t('vendors.defaultVendorName')}
+                      />
+                    )}
+                  </div>
+                  
+                  {selectedVendor.photos && selectedVendor.photos.length > 0 && getValidPhotos(selectedVendor).length > 0 && (
+                    <div className="all-photos">
+                      {getValidPhotos(selectedVendor).map(({ photo, url, index }) => (
+                        <img
+                          key={index}
+                          src={url}
+                          alt={`${selectedVendor.name} - ${index + 1}`}
+                          className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
+                          onClick={() => setSelectedPhoto(index)}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                            
+                <div className="vendor-info-detailed">
+                  <p className="address">
+                    <strong>{t('vendors.details.address')}:</strong> {
+                      isRTL && selectedVendor.originalFormattedAddress ? 
+                      selectedVendor.originalFormattedAddress : 
+                      selectedVendor.formatted_address || selectedVendor.vicinity
+                    }
+                  </p>
+                 
+                  {selectedVendor.formatted_phone_number && (
+                    <p className="phone">
+                      <strong>{t('vendors.details.phone')}:</strong> {selectedVendor.formatted_phone_number}
+                    </p>
+                  )}
+                 
+                  {selectedVendor.website && (
+                    <p className="website">
+                      <strong>{t('vendors.details.website')}:</strong> <a href={selectedVendor.website} target="_blank" rel="noopener noreferrer">{selectedVendor.website}</a>
+                    </p>
+                  )}
+                 
+                  {selectedVendor.rating && (
+                    <p className="rating-details">
+                      <strong>{t('vendors.details.rating')}:</strong> {selectedVendor.rating} {t('vendors.details.outOf5')} ({selectedVendor.user_ratings_total} {t('vendors.details.reviews')})
+                    </p>
+                  )}
+                 
+                  {selectedVendor.price_level && (
+                    <p className="price-details">
+                      <strong>{t('vendors.details.priceLevel')}:</strong> {'₪'.repeat(selectedVendor.price_level)}
+                    </p>
+                  )}
+                 
+                  {selectedVendor.opening_hours && selectedVendor.opening_hours.weekday_text && (
+                    <div className="opening-hours">
+                      <strong>{t('vendors.details.openingHours')}:</strong>
+                      <ul>
+                        {selectedVendor.opening_hours.weekday_text.map((day, index) => (
+                          <li key={index}>{day}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+               
+                {selectedVendor.reviews && selectedVendor.reviews.length > 0 && (
+                  <div className="vendor-reviews">
+                    <h3>{t('vendors.details.reviewsTitle')}</h3>
+                    <div className="reviews-list">
+                      {selectedVendor.reviews.slice(0, 3).map((review, index) => (
+                        <div key={index} className="review">
+                          <div className="review-header">
+                            <span className="reviewer">{review.author_name}</span>
+                            <span className="review-rating">
+                              {'★'.repeat(review.rating)}
+                              {'☆'.repeat(5 - review.rating)}
+                            </span>
+                            <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
+                          </div>
+                          <p className="review-text">{review.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+               
+                <div className="vendor-actions">
+                  {!successMessage && (
+                    <button className="select-vendor-button" onClick={() => selectVendor(selectedVendor)}>
+                      {t('vendors.selectButton')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    );
-  };
-  
-  export default VendorsPage;
+    </div>
+  );
+};
+
+export default VendorsPage;

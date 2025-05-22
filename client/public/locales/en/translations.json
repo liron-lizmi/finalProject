@@ -421,5 +421,119 @@
       "openingHours": "Opening Hours",
       "reviewsTitle": "Reviews"
     }
+  },
+  "vendors": {
+    "searchTitle": "Find Vendors",
+    "searchSubtitle": "Find the perfect vendors for your event",
+    "searchButton": "Search",
+    "searchPlaceholder": "Search by name, location or service type",
+    "filtersTitle": "Filter Results",
+    "searchResults": "Search Results",
+    "loading": "Loading vendors...",
+    "noResults": "No vendors found matching your search",
+    "noAddress": "Address not available",
+    "defaultVendorName": "Vendor",
+    "selectButton": "Select Vendor",
+    "vendorAddedSuccess": "Vendor added successfully!",
+    "filters": {
+      "areaLabel": "Area",
+      "allAreas": "All Areas",
+      "jerusalem": "Jerusalem & Area",
+      "center": "Center",
+      "south": "South",
+      "north": "North",
+      "typeLabel": "Vendor Type",
+      "allTypes": "All Types",
+      "catering": "Catering",
+      "photographer": "Photography",
+      "florist": "Flowers",
+      "musician": "Music",
+      "dj": "DJ",
+      "decorator": "Decoration",
+      "makeup": "Makeup",
+      "transport": "Transportation",
+      "priceLabel": "Price Range",
+      "allPrices": "All Price Ranges",
+      "budget": "Budget",
+      "midRange": "Mid Range",
+      "luxury": "Luxury",
+      "distanceLabel": "Distance from Location",
+      "distance10": "Up to 10 km",
+      "distance25": "Up to 25 km",
+      "distance50": "Up to 50 km",
+      "distance100": "Up to 100 km",
+      "applyButton": "Apply Filters"
+    },
+    "specificFilters": {
+      "catering": {
+        "title": "Catering Type",
+        "dairy": "Dairy",
+        "meat": "Meat",
+        "pareve": "Pareve",
+        "vegan": "Vegan",
+        "glutenFree": "Gluten Free"
+      },
+      "photographer": {
+        "title": "Photography Field",
+        "wedding": "Wedding Photography",
+        "event": "Event Photography",
+        "portrait": "Portrait Photography",
+        "commercial": "Commercial Photography"
+      },
+      "florist": {
+        "title": "Flower Service Type",
+        "bridal": "Bridal Bouquets",
+        "arrangements": "Flower Arrangements",
+        "decorations": "Flower Decorations",
+        "plants": "Plants"
+      },
+      "musician": {
+        "title": "Music Type",
+        "solo": "Solo Musician",
+        "band": "Band",
+        "classical": "Classical Music",
+        "modern": "Modern Music",
+        "traditional": "Traditional Music"
+      },
+      "dj": {
+        "title": "Specialization",
+        "wedding": "Wedding DJ",
+        "party": "Party DJ",
+        "corporate": "Corporate DJ",
+        "withEquipment": "DJ with Equipment"
+      },
+      "decorator": {
+        "title": "Decoration Type",
+        "balloons": "Balloons",
+        "lighting": "Lighting",
+        "furniture": "Furniture",
+        "backdrops": "Backdrops"
+      },
+      "makeup": {
+        "title": "Makeup Type",
+        "bridal": "Bridal Makeup",
+        "event": "Event Makeup",
+        "withHairstyling": "Makeup & Hair Styling",
+        "mobile": "Mobile Service"
+      },
+      "transport": {
+        "title": "Vehicle Type",
+        "luxuryCars": "Luxury Cars",
+        "buses": "Buses",
+        "limousines": "Limousines",
+        "classicCars": "Classic Cars"
+      }
+    },
+    "details": {
+      "address": "Address",
+      "phone": "Phone",
+      "website": "Website",
+      "rating": "Rating",
+      "outOf5": "out of 5",
+      "reviews": "reviews",
+      "priceLevel": "Price Level",
+      "openingHours": "Opening Hours",
+      "reviewsTitle": "Reviews"
+    }
   }
 }

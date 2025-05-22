@@ -420,5 +420,119 @@
       "openingHours": "שעות פתיחה",
       "reviewsTitle": "ביקורות"
     }
+  },
+  "vendors": {
+    "searchTitle": "חיפוש ספקים",
+    "searchSubtitle": "מצא את הספקים המושלמים לאירוע שלך",
+    "searchButton": "חפש",
+    "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
+    "filtersTitle": "סינון תוצאות",
+    "searchResults": "תוצאות חיפוש",
+    "loading": "טוען ספקים...",
+    "noResults": "לא נמצאו ספקים התואמים את החיפוש שלך",
+    "noAddress": "כתובת לא זמינה",
+    "defaultVendorName": "ספק",
+    "selectButton": "בחר ספק",
+    "vendorAddedSuccess": "הספק נוסף בהצלחה!",
+    "filters": {
+      "areaLabel": "אזור",
+      "allAreas": "כל האזורים",
+      "jerusalem": "ירושלים והסביבה",
+      "center": "מרכז",
+      "south": "דרום",
+      "north": "צפון",
+      "typeLabel": "סוג ספק",
+      "allTypes": "כל הסוגים",
+      "catering": "קייטרינג",
+      "photographer": "צילום",
+      "florist": "פרחים",
+      "musician": "מוזיקה",
+      "dj": "תקליטן",
+      "decorator": "עיצוב",
+      "makeup": "איפור",
+      "transport": "הסעות",
+      "priceLabel": "טווח מחירים",
+      "allPrices": "כל הטווחים",
+      "budget": "חסכוני",
+      "midRange": "בינוני",
+      "luxury": "יוקרתי",
+      "distanceLabel": "מרחק מהמיקום",
+      "distance10": "עד 10 ק\"מ",
+      "distance25": "עד 25 ק\"מ",
+      "distance50": "עד 50 ק\"מ",
+      "distance100": "עד 100 ק\"מ",
+      "applyButton": "החל סינון"
+    },
+    "specificFilters": {
+      "catering": {
+        "title": "סוג קייטרינג",
+        "dairy": "חלבי",
+        "meat": "בשרי",
+        "pareve": "פרווה",
+        "vegan": "טבעוני",
+        "glutenFree": "ללא גלוטן"
+      },
+      "photographer": {
+        "title": "תחום צילום",
+        "wedding": "צילום חתונות",
+        "event": "צילום אירועים",
+        "portrait": "צילום פורטרטים",
+        "commercial": "צילום מסחרי"
+      },
+      "florist": {
+        "title": "סוג שירות פרחים",
+        "bridal": "זרי כלה",
+        "arrangements": "סידורי פרחים",
+        "decorations": "קישוטי פרחים",
+        "plants": "צמחים"
+      },
+      "musician": {
+        "title": "סוג מוזיקה",
+        "solo": "מוזיקאי סולו",
+        "band": "להקה",
+        "classical": "מוזיקה קלאסית",
+        "modern": "מוזיקה מודרנית",
+        "traditional": "מוזיקה מסורתית"
+      },
+      "dj": {
+        "title": "תחום התמחות",
+        "wedding": "DJ לחתונות",
+        "party": "DJ למסיבות",
+        "corporate": "DJ לאירועים עסקיים",
+        "withEquipment": "DJ עם ציוד"
+      },
+      "decorator": {
+        "title": "סוג קישוט",
+        "balloons": "בלונים",
+        "lighting": "תאורה",
+        "furniture": "רהיטים",
+        "backdrops": "רקעים"
+      },
+      "makeup": {
+        "title": "סוג איפור",
+        "bridal": "איפור כלה",
+        "event": "איפור לאירועים",
+        "withHairstyling": "איפור ועיצוב שיער",
+        "mobile": "שירות נייד"
+      },
+      "transport": {
+        "title": "סוג רכב",
+        "luxuryCars": "מכוניות יוקרה",
+        "buses": "אוטובוסים",
+        "limousines": "לימוזינות",
+        "classicCars": "מכוניות קלאסיות"
+      }
+    },
+    "details": {
+      "address": "כתובת",
+      "phone": "טלפון",
+      "website": "אתר",
+      "rating": "דירוג",
+      "outOf5": "מתוך 5",
+      "reviews": "ביקורות",
+      "priceLevel": "רמת מחיר",
+      "openingHours": "שעות פתיחה",
+      "reviewsTitle": "ביקורות"
+    }
   }
 }
