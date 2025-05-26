@@ -11,7 +11,8 @@
       "delete": "מחק",
       "back": "חזרה",
       "loading": "טוען...",
-      "select": "בחר"
+      "select": "בחר",
+      "backToEventDetails": "חזרה לפרטי האירוע"
     },
     "auth": {
       "email": "אימייל",
@@ -94,7 +95,7 @@
         },
         "vendors": {
           "title": "חיפוש ספקים",
-          "description": "מצא את הספקים המושלמים לאירוע שלך", 
+          "description": "מצא את הספקים המושלמים לאירוע שלך",
           "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
           "searchButton": "חפש",
           "filtersTitle": "סינון תוצאות",
@@ -117,13 +118,15 @@
             "applyButton": "החל סינון"
           },
           "categories": {
+            "all": "כל הקטגוריות",
             "catering": "קייטרינג",
             "photography": "צילום",
-            "music": "מוזיקה",
-            "decoration": "עיצוב",
-            "lighting": "תאורה",
             "flowers": "פרחים",
-            "other": "אחר",
+            "music": "מוזיקה",
+            "dj": "תקליטן",
+            "decoration": "עיצוב",
+            "makeup": "איפור",
+            "transportation": "הסעות",
             "choose": "בחר קטגוריה"
           },
           "searchResults": "תוצאות חיפוש",
@@ -381,7 +384,7 @@
       "typeLabel": "סוג המקום",
       "allTypes": "הכל",
       "restaurant": "מסעדה",
-      "eventVenue": "אולם אירועים", 
+      "eventVenue": "אולם אירועים",
       "banquetHall": "אולם כנסים",
       "hotel": "מלון",
       "park": "גן אירועים",

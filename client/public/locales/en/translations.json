@@ -11,7 +11,8 @@
     "delete": "Delete",
     "back": "Back",
     "loading": "Loading...",
-    "select": "Select"
+    "select": "Select",
+    "backToEventDetails": "Back to Event Details"
   },
   "auth": {
     "email": "Email",
@@ -117,15 +118,16 @@
           "applyButton": "Apply Filters"
         },
         "categories": {
+          "all": "All Categories",
           "catering": "Catering",
           "photography": "Photography",
-          "music": "Music",
-          "decoration": "Decoration",
-          "lighting": "Lighting",
           "flowers": "Flowers",
-          "other": "Other",
-          "choose": "Choose a category",
-          "all": "All Categories"
+          "music": "Music",
+          "dj": "DJ",
+          "decoration": "Decoration",
+          "makeup": "Makeup",
+          "transportation": "Transportation",
+          "choose": "Choose a category"
         },
         "searchResults": "Search Results",
         "loading": "Loading vendors...",
@@ -382,7 +384,7 @@
       "typeLabel": "Venue Type",
       "allTypes": "All",
       "restaurant": "Restaurant",
-      "eventVenue": "Event Hall", 
+      "eventVenue": "Event Hall",
       "banquetHall": "Banquet Hall",
       "hotel": "Hotel",
       "park": "Event Garden",
