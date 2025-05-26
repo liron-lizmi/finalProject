@@ -1,40 +1,84 @@
+.main-header {
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  padding: 0.8rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  height: 60px;
+}
+
+.logo-image {
+  height: 100%;
+  max-width: 200px;
+  object-fit: contain;
+}
+
+.rtl .header-content {
+  flex-direction: row-reverse;
+}
+
+.ltr .header-content {
+  flex-direction: row;
+}
 
 .feature-page-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   font-family: 'Heebo', 'Arial', sans-serif;
-  direction: rtl;
   color: #333;
 }
 
 .feature-page-header {
   display: flex;
-  flex-direction: row-reverse;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 30px;
+  position: relative;
 }
 
 .feature-title-section {
-  flex: 1;
-  text-align: center;
-  transform: translateX(-30px);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
 }
 
 .feature-header-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center !important;
   margin-bottom: 10px;
-  transform: translateX(-20px);
+  width: 100%;
+  text-align: center !important;
 }
 
 .feature-page-header h1 {
   font-size: 2.2rem;
   margin: 10px 0;
   color: #000;
-  transform: translateX(-10px);
+  text-align: center !important;
+  width: 100%;
 }
 
 .feature-icon {
@@ -47,7 +91,8 @@
   justify-content: center;
   border-radius: 50%;
   background-color: #f8f9fa;
-  transform: translateX(-20px);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .feature-description {
@@ -55,17 +100,20 @@
   color: #555;
   max-width: 600px;
   margin: 0 auto;
-  transform: translateX(-25px);
+  text-align: center !important;
+  width: 100%;
 }
 
 .back-button {
-  padding: 10px 15px;
+  padding: 0.6rem 1.1rem;
   background-color: transparent;
   border: 1px solid #000;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s;
+  position: relative; 
+  z-index: 2;
 }
 
 .back-button:hover {
@@ -76,6 +124,7 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
+  margin-top: 200px;
 }
 
 .event-info-panel {
@@ -90,11 +139,15 @@
 .event-info-panel h2 {
   margin: 0 0 5px;
   font-size: 1.4rem;
+  text-align: center;
 }
 
 .event-date {
   color: #555;
   margin: 0;
+  text-align: center;
+  width: 100%;
+  display: block;
 }
 
 .feature-main-content {
@@ -129,22 +182,6 @@
   text-align: center;
 }
 
-@media (max-width: 768px) {
-  .feature-page-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-  }
-  
-  .back-button {
-    margin-bottom: 10px;
-  }
-  
-  .feature-page-header h1 {
-    font-size: 1.8rem;
-  }
-}
-
 .coming-soon-message {
   text-align: center;
   margin: 40px 0;
@@ -164,7 +201,7 @@
 .guests-content,
 .seating-content,
 .timeline-content,
-.templates-content,
+.rides-content,
 .weather-content,
 .budget-content,
 .share-content {
@@ -202,7 +239,7 @@
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 12px 20px;
+  padding: 0.6rem 1.1rem;;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -218,7 +255,7 @@
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 12px 20px;
+  padding: 0.6rem 1.1rem;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -274,13 +311,11 @@
 }
 
 .manual-vendor-form .form-group {
-  text-align: right;
   max-width: 400px;
   margin: 0 auto 15px;
 }
 
 .manual-vendor-form .form-group label {
-  text-align: right;
   display: block;
   width: 100%;
   margin-right: 0;
@@ -341,7 +376,7 @@
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 12px 20px;
+  padding: 0.6rem 1.1rem;
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
@@ -357,7 +392,7 @@
   color: #000;
   border: 1px solid #000;
   border-radius: 4px;
-  padding: 12px 20px;
+  padding: 0.6rem 1.1rem;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s;
@@ -382,19 +417,126 @@
   margin-top: 20px;
 }
 
-.ltr {
-  direction: ltr;
-  text-align: left;
-}
-
+/* עבור עברית (RTL) */
 .rtl {
   direction: rtl;
   text-align: right;
 }
 
+.rtl .feature-page-header {
+  flex-direction: row-reverse;
+}
+
+.rtl .manual-vendor-form .form-group {
+  text-align: right;
+}
+
+.rtl .manual-vendor-form .form-group label {
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 0;
+}
+
+.rtl .feature-main-content {
+  text-align: right;
+}
+
+/* עבור אנגלית (LTR) */
+.ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+.ltr .feature-page-header {
+  flex-direction: row-reverse;
+}
+
+.ltr .manual-vendor-form .form-group {
+  text-align: left;
+}
+
+.ltr .manual-vendor-form .form-group label {
+  text-align: left;
+  padding-left: 10px;
+  padding-right: 0;
+}
+
+.ltr .feature-main-content {
+  text-align: left;
+}
+
+.ltr .event-info-panel {
+  text-align: center;
+}
+
+/* כותרות תמיד במרכז */
+.feature-title-section,
+.feature-header-content,
+.feature-page-header h1,
+.feature-description {
+  text-align: center !important;
+}
+
+/* יישור התאריך - תמיד במרכז */
+.event-info-panel {
+  text-align: center;
+}
+
+.event-date {
+  text-align: center;
+}
+
+.rtl .event-info-panel {
+  text-align: center;
+}
+
+.rtl .event-date {
+  text-align: center;
+}
+
+.ltr .event-info-panel {
+  text-align: center;
+}
+
+.ltr .event-date {
+  text-align: center;
+}
+
 @media (max-width: 768px) {
+  .feature-page-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+  
+  .back-button {
+    margin-bottom: 10px;
+  }
+  
+  .feature-page-header h1 {
+    font-size: 1.8rem;
+  }
+  
   .venue-actions {
     flex-direction: column;
     gap: 10px;
+  }
+  
+  .feature-title-section {
+    position: static;
+    transform: none;
+    left: auto;
+  }
+
+  .header-content {
+    padding: 0 15px;
+  }
+
+  .header-logo {
+    height: 45px;
+  }
+  
+  .logo-image {
+    max-width: 160px;
   }
 }

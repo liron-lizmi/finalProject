@@ -1,17 +1,17 @@
-// pages/Events/Features/EventTemplatesPage.js
+// pages/Events/Features/EventRidesPage.js
 import React from 'react';
 import FeaturePageTemplate from './FeaturePageTemplate';
 
-const EventTemplatesPage = () => {
+const EventRidesPage = () => {
   return (
     <FeaturePageTemplate
-      title="טמפלייטים"
-      icon="📝"
+      title="טרמפים"
+      icon="🚎"
       description="צור הזמנות, ברכות ומסמכים נוספים עבור האירוע שלך"
     >
-      <div className="templates-content">
-        <h3>טמפלייטים לאירוע</h3>
-        <p>כאן תוכל ליצור ולנהל טמפלייטים שונים עבור האירוע שלך.</p>
+      <div className="rides-content">
+        <h3>טרמפים לאירוע</h3>
+        <p>תיאום טרמפים בין משתתפי האירוע</p>
         <div className="coming-soon-message">
           <p>תכונה זו תהיה זמינה בקרוב!</p>
         </div>
@@ -20,4 +20,4 @@ const EventTemplatesPage = () => {
   );
 };
 
-export default EventTemplatesPage;
+export default EventRidesPage;

@@ -62,8 +62,8 @@ const EventDetailsPage = () => {
       case 'timeline':
         navigate(`/event/${id}/timeline`);
         break;
-      case 'templates':
-        navigate(`/event/${id}/templates`);
+      case 'rides':
+        navigate(`/event/${id}/rides`);
         break;
       case 'weather':
         navigate(`/event/${id}/weather`);
@@ -305,11 +305,11 @@ const EventDetailsPage = () => {
               </div>
             </div>
 
-            <div className="feature-card" onClick={() => handleFeatureClick('templates')}>
-              <div className="feature-emoji">📝</div>
+            <div className="feature-card" onClick={() => handleFeatureClick('rides')}>
+              <div className="feature-emoji">🚎</div>
               <div className="feature-content">
-                <h3>{t('events.features.templates.title')}</h3>
-                <p>{t('events.features.templates.description')}</p>
+                <h3>{t('events.features.rides.title')}</h3>
+                <p>{t('events.features.rides.description')}</p>
               </div>
               <div className="feature-action">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

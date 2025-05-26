@@ -2,29 +2,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import '../../../styles/FeaturePage.css';
 
-const FeaturePageTemplate = ({ 
-  title, 
-  icon, 
-  description, 
-  children 
+const FeaturePageTemplate = ({
+  title,
+  icon,
+  description,
+  children
 }) => {
+
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t, i18n } = useTranslation();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+
   useEffect(() => {
+    document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+    document.body.dir = isRTL ? 'rtl' : 'ltr';
+
+    document.documentElement.lang = isRTL ? 'he' : 'en';
+
     const fetchEventDetails = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('לא מחובר. נא להתחבר מחדש.');
-          navigate('/login');
-          return;
-        }
+          try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+              setError(t('errors.notLoggedIn'));
+              navigate('/login');
+              return;
+            }
+
 
         const response = await axios.get(`/api/events/${id}`, {
           headers: {
@@ -36,13 +47,13 @@ const FeaturePageTemplate = ({
         setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
-        setError('אירעה שגיאה בטעינת פרטי האירוע');
+        setError(t('errors.eventLoadFailed'));
         setLoading(false);
       }
     };
 
     fetchEventDetails();
-  }, [id, navigate]);
+  }, [id, navigate, t, i18n.language, isRTL]);
 
   const handleBack = () => {
     navigate(`/event/${id}`);
@@ -50,60 +61,114 @@ const FeaturePageTemplate = ({
 
   if (loading) {
     return (
-      <div className="feature-page-container">
-        <div className="loading-spinner"></div>
+      <div>
+        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="header-content">
+            <button className="back-button" onClick={handleBack}>
+              {t('general.backToEventDetails')}
+            </button>
+            <div className="header-logo">
+              <img src="/images.png" alt="Logo" className="logo-image" />
+            </div>
+          </div>
+        </div>
+        
+        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="loading-spinner"></div>
+        </div>
       </div>
     );
   }
 
+ 
   if (error) {
     return (
-      <div className="feature-page-container">
-        <div className="error-message">{error}</div>
-        <button className="back-button" onClick={handleBack}>חזרה לפרטי האירוע</button>
+      <div>
+        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="header-content">
+            <button className="back-button" onClick={handleBack}>
+              {t('general.back')}
+            </button>
+            <div className="header-logo">
+              <img src="/images/logo.png" alt="Logo" className="logo-image" />
+            </div>
+          </div>
+        </div>
+        
+        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="error-message">{error}</div>
+        </div>
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="feature-page-container">
-        <div className="error-message">האירוע לא נמצא</div>
-        <button className="back-button" onClick={handleBack}>חזרה לפרטי האירוע</button>
+      <div>
+        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="header-content">
+            <button className="back-button" onClick={handleBack}>
+              {t('general.back')}
+            </button>
+            <div className="header-logo">
+              <img src="/images/logo.png" alt="Logo" className="logo-image" />
+            </div>
+          </div>
+        </div>
+        
+        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="error-message">{t('errors.eventNotFound')}</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="feature-page-container">
-      <div className="feature-page-header">
-        <button className="back-button" onClick={handleBack}>
-          חזרה לפרטי האירוע
-        </button>
-        
-        <div className="feature-title-section">
-          <div className="feature-header-content">
-            <div className="feature-icon">{icon}</div>
-            <h1>{title}</h1>
+    <div>
+      <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="header-content">
+          <button className="back-button" onClick={handleBack}>
+            {t('general.backToEventDetails')}
+          </button>
+          <div className="header-logo">
+            <img src="/images/logo.png" alt="Logo" className="logo-image" />
           </div>
-          <p className="feature-description">{description}</p>
         </div>
       </div>
-
-      <div className="feature-page-content">
-        <div className="event-info-panel">
-          <h2>{event.title}</h2>
-          <p className="event-date">
-            {new Date(event.date).toLocaleDateString('he-IL', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </p>
+      
+      <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
+        <div className="feature-page-header">
+          <div className="feature-title-section">
+            <div className="feature-header-content">
+              <div className="feature-icon">{icon}</div>
+              <h1>{title}</h1>
+            </div>
+            <p className="feature-description">{description}</p>
+          </div>
         </div>
-        
-        <div className="feature-main-content">
-          {children}
+
+        <div className="feature-page-content">
+          <div className="event-info-panel">
+            <h2>{event.title}</h2>
+            <p className="event-date">
+            {isRTL 
+              ? new Date(event.date).toLocaleDateString('he-IL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })
+              : new Date(event.date).toLocaleDateString('en-US', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                }).toUpperCase()
+            }
+            </p>
+          </div>
+         
+          <div className="feature-main-content">
+            {children}
+          </div>
         </div>
       </div>
     </div>

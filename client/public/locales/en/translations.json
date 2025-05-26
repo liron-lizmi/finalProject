@@ -8,8 +8,8 @@
     "logout": "Logout",
     "save": "Save",
     "cancel": "Cancel",
-    "delete": "Delete",
     "back": "Back",
+    "delete": "Delete",
     "loading": "Loading...",
     "select": "Select",
     "backToEventDetails": "Back to Event Details"
@@ -175,9 +175,9 @@
         "title": "Schedule & Tasks",
         "description": "Plan timelines and manage tasks"
       },
-      "templates": {
-        "title": "Templates",
-        "description": "Invitations, greetings and more"
+      "rides": {
+        "title": "Rides",
+        "description": "Coordinating rides between event participants"
       },
       "weather": {
         "title": "Weather Forecast",
@@ -277,8 +277,7 @@
       },
       "timeline": {
         "title": "Precise Schedule Management",
-        "description": "Plan your event with a smart schedule for each stage. Get alerts for payment deadlines, vendor meetings and important tasks. Our tool ensures you don't miss any important detail on the way to the perfect event, offers pre-made templates for efficient handling, and allows sharing the schedule with family or a professional event planner.",
-        "cta": "Manage Schedule"
+        "description": "Plan your event with a smart schedule for every step. Get notifications about payment deadlines, vendor meetings, and important tasks. Our tool ensures you don't miss any important details on the way to the perfect event, offers rides to event attendees, and allows you to share your schedule with family or a professional event planner.",        "cta": "Manage Schedule"
       },
       "budget": {
         "title": "Smart Budget Management",

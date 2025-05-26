@@ -147,9 +147,7 @@ const EventVendorsPage = () => {
 
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
-   
-    console.log("מספר טלפון שנשלח:", manualVendor.phone);
-   
+      
     if (!manualVendor.phone || manualVendor.phone.trim() === '') {
       setPhoneError(t('errors.invalidPhoneFormat'));
       return;
@@ -172,16 +170,13 @@ const EventVendorsPage = () => {
  
       const eventVendors = event.vendors || [];
      
-      // וודא שהטלפון אינו ריק
       const vendorToSubmit = {
         name: manualVendor.name,
         category: manualVendor.category || 'other',
         phone: manualVendor.phone.trim(),
         notes: manualVendor.notes || ''
       };
-     
-      console.log("Submitting vendor with phone:", vendorToSubmit.phone);
-     
+          
       let updatedEvent = { ...event };
      
       if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
