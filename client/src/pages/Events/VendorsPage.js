@@ -1135,7 +1135,7 @@ const VendorsPage = ({ onSelectVendor }) => {
                 </div>
               )}
              
-              <div className="vendor-details-content">
+            {/* <div className="vendor-details-content"> */}
                 <div className="vendor-photos">
                   <div className="main-photo">
                     {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
@@ -1264,7 +1264,7 @@ const VendorsPage = ({ onSelectVendor }) => {
                   )}
                 </div>
               </div>
-            </div>
+            {/* </div> */}
           </div>
         )}
       </div>

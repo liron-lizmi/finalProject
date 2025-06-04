@@ -1013,7 +1013,7 @@ const VenuePage = ({ onSelectVenue }) => {
                 </div>
               )}
              
-              <div className="venue-details-content">
+              {/* <div className="venue-details-content"> */}
                 <div className="venue-photos">
                   <div className="main-photo">
                     {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
@@ -1141,7 +1141,7 @@ const VenuePage = ({ onSelectVenue }) => {
                     </button>
                   )}
                 </div>
-              </div>
+              {/* </div> */}
             </div>
           </div>
         )}

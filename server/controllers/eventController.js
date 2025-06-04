@@ -12,7 +12,7 @@ const getUserEvents = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-    const { title, date, time, type, guestCount, notes, venue, vendors } = req.body;
+    const { title, date, time, type, guestCount, notes, venues, vendors } = req.body;
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     const validTime = time && timeRegex.test(time) ? time : '18:00';
     
@@ -23,7 +23,7 @@ const createEvent = async (req, res) => {
       type: type || 'other',
       guestCount: guestCount || 0,
       notes,
-      venue,
+      venues: venues || [],
       vendors: vendors || [], 
       user: req.userId
     });
@@ -45,7 +45,7 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, date, time, type, guestCount, notes, venue, vendors } = req.body;
+    const { title, date, time, type, guestCount, notes, venues, vendors } = req.body;
     
     const event = await Event.findOne({ _id: id, user: req.userId });
     if (!event) {
@@ -66,16 +66,26 @@ const updateEvent = async (req, res) => {
     if (guestCount !== undefined) event.guestCount = guestCount;
     if (notes !== undefined) event.notes = notes;
     
-    if (venue === null) {
-      event.venue = undefined;
-    } 
-    else if (venue) {
-      event.venue = {
-        name: venue.name || '',
-        address: venue.address || '',
-        phone: venue.phone || '',
-        website: venue.website || ''
-      };
+    if (venues !== undefined) {
+      if (venues === null) {
+        event.venues = [];
+      } else if (Array.isArray(venues)) {
+        const processedVenues = venues.map(venue => ({
+          name: venue.name || '',
+          address: venue.address || '',
+          phone: venue.phone || '',
+          website: venue.website || ''
+        }));
+        event.venues = processedVenues;
+      } else if (typeof venues === 'string') {
+        try {
+          const parsedVenues = JSON.parse(venues);
+          event.venues = parsedVenues;
+        } catch (parseError) {
+          console.error('Error parsing venues string:', parseError);
+          return res.status(400).json({ message: 'Invalid venues format' });
+        }
+      }
     }
     
     if (vendors !== undefined) {
@@ -100,6 +110,7 @@ const updateEvent = async (req, res) => {
       }
     }
     
+    console.log("Saving event with venues:", JSON.stringify(event.venues, null, 2));
     console.log("Saving event with vendors:", JSON.stringify(event.vendors, null, 2));
     
     const updatedEvent = await event.save();

@@ -38,12 +38,21 @@ const EventSchema = new mongoose.Schema({
       return i18next.t('validation.eventUserRequired');
     }
   },
-  venue: {
-    name: String,
-    address: String,
-    phone: String,
-    website: String 
-  },
+  venues: [{
+    name: {
+      type: String,
+      required: function() {
+        return i18next.t('validation.venueNameRequired');
+      }
+    },
+    address: {
+      type: String,
+      required: function() {
+        return i18next.t('validation.venueAddressRequired');
+      }
+    },
+    phone: String
+  }],
   vendors: [{
     name: {
       type: String,
@@ -83,5 +92,4 @@ const EventSchema = new mongoose.Schema({
 });
 
 const Event = mongoose.model('Event', EventSchema);
-
 module.exports = Event;

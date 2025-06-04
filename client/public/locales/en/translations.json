@@ -225,7 +225,9 @@
     "emailSendFailed": "Failed to send email. Please try again later.",
     "vendorPhoneRequired": "Vendor phone number is required",
     "invalidPhoneFormat": "Phone number can only contain digits, spaces, and special characters like +, -, ()",
-    "phoneNumbersOnly": "Please enter a valid phone number (digits, spaces, +, -, and parentheses only)"
+    "phoneNumbersOnly": "Please enter a valid phone number (digits, spaces, +, -, and parentheses only)",
+    "venueNameRequired": "Venue name is required",
+    "venueAddressRequired": "Venue address is required"
   },
   "home": {
     "hero": {
@@ -334,6 +336,9 @@
   "venues": {
     "addManuallyButton": "Add Manual Venue",
     "deleteVenue": "Delete Venue",
+    "changeVenueOptions": "How would you like to change this venue?",
+    "addVenueOptions": "How would you like to add a venue?",
+    "addAnotherVenue": "Add Another Venue",
     "venueDetails": {
       "name": "Name",
       "address": "Address",

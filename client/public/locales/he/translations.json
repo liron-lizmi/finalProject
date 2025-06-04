@@ -148,7 +148,7 @@
           "selectButton": "בחר ספק זה",
           "vendorAddedSuccess": "הספק נוסף בהצלחה!",
           "vendorDeletedSuccess": "הספק הוסר בהצלחה!",
-          "noVendorSelected": "לא נבחרו ספקים. ניתן לחפש ספקים או להוסיף ספק באופן ידני.",
+          "noVendorSelected": "עדיין לא נבחרו ספקים",
           "searchAndFilterButton": "חפש ספקים",
           "addManuallyButton": "הוסף ספק ידנית",
           "selectedVendors": "הספקים שנבחרו",
@@ -225,7 +225,9 @@
       "emailSendFailed": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר",
       "vendorPhoneRequired": "מספר טלפון של הספק נדרש",
       "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות",
-      "phoneNumbersOnly": "אנא הכנס מספר טלפון תקין (ספרות, רווחים, +, -, וסוגריים בלבד)"
+      "phoneNumbersOnly": "אנא הכנס מספר טלפון תקין (ספרות, רווחים, +, -, וסוגריים בלבד)",
+      "venueNameRequired": "שם המקום הוא שדה חובה",
+      "venueAddressRequired": "כתובת המקום היא שדה חובה"
     },
     "home": {
       "hero": {
@@ -335,6 +337,9 @@
   "venues": {
     "addManuallyButton": "הוסף אולם ידנית",
     "deleteVenue": "מחק אולם",
+    "changeVenueOptions": "איך תרצה לשנות את מיקום האירוע?",
+    "addVenueOptions": "איך תרצה להוסיף מיקום?",
+    "addAnotherVenue": "הוסף מיקום נוסף",
     "venueDetails": {
       "name": "שם",
       "address": "כתובת",
@@ -347,7 +352,7 @@
     "searchPlaceholder": "חפש לפי עיר, שכונה או שם המקום",
     "selectedVenue": "המקום שנבחר",
     "changeVenue": "שנה מקום",
-    "noVenueSelected": "לא נבחר מקום לאירוע שלך עדיין.",
+    "noVenueSelected": "עדיין לא נבחר מקום לאירוע שלך.",
     "searchAndFilterButton": "חפש וסנן מקומות לאירוע",
     "searchButton": "חפש",
     "filtersTitle": "סינון תוצאות",

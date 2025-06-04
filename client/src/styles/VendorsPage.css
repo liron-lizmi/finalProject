@@ -372,29 +372,36 @@ html[dir="ltr"] .rating-value {
 }
 
 .vendor-details {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow-y: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8); 
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start; 
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;  
+    padding-top: 50px;  
 }
 
 .vendor-details-content {
-  background-color: #fff;
-  border-radius: 8px;
-  max-width: 800px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 20px;
-  position: relative;
+    background-color: #fff;
+    border-radius: 8px;
+    max-width: 800px;
+    width: 100%;
+    max-height: none;  
+    padding: 40px; 
+    position: relative;
+    overflow: visible;  
+    margin: 0;
+    border: none;
+    outline: none;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+    box-sizing: border-box;
 }
 
 .vendor-details-header {
@@ -442,7 +449,7 @@ html[dir="ltr"] .rating-value {
 .all-photos {
   display: flex;
   gap: 10px;
-  overflow-x: auto;
+  overflow: visible;
   padding-bottom: 10px;
   flex-wrap: wrap;
   justify-content: flex-start;
@@ -551,39 +558,36 @@ html[dir="ltr"] .review-rating {
   color: #444;
 }
 
-/* תיקון עבור כפתורי פעולות ספקים */
 .vendor-actions {
   margin-top: 30px;
   display: flex;
   justify-content: center;
-  gap: 15px; /* הוספת רווח בין הכפתורים */
+  gap: 15px; 
   align-items: center;
 }
 
-/* עבור RTL (עברית) - כפתור מחיקה בצד שמאל, שינוי בצד ימין */
 html[dir="rtl"] .vendor-actions {
   flex-direction: row;
 }
 
 html[dir="rtl"] .delete-vendor-button {
-  order: 2; /* כפתור מחיקה יהיה שני (צד שמאל) */
+  order: 2; 
 }
 
 html[dir="rtl"] .change-vendor-button {
-  order: 1; /* כפתור שינוי יהיה ראשון (צד ימין) */
+  order: 1;
 }
 
-/* עבור LTR (אנגלית) - כפתור מחיקה בצד ימין, שינוי בצד שמאל */
 html[dir="ltr"] .vendor-actions {
   flex-direction: row;
 }
 
 html[dir="ltr"] .delete-vendor-button {
-  order: 1; /* כפתור מחיקה יהיה ראשון (צד ימין) */
+  order: 1; 
 }
 
 html[dir="ltr"] .change-vendor-button {
-  order: 2; /* כפתור שינוי יהיה שני (צד שמאל) */
+  order: 2; 
 }
 
 .select-vendor-button {
@@ -612,7 +616,6 @@ html[dir="ltr"] .change-vendor-button {
   font-weight: bold;
 }
 
-/* Additional elements for vendor selection functionality */
 .manual-vendor-form {
   background-color: #fff;
   border-radius: 4px;
@@ -863,7 +866,7 @@ html[dir="ltr"] .change-vendor-button {
   width: 100%;
   max-width: 300px;
   padding: 12px;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 .vendor-selection-modal .cancel-button {
@@ -936,12 +939,12 @@ html[dir="rtl"] .nested-checkbox-group {
   color: #333;
 }
 
-/* Hide category badges and icons */
 .vendor-category-badge,
 .vendor-category-icon,
 .category-icon {
   display: none;
 }
+
 
 @media (max-width: 768px) {
   .vendor-details-content {
@@ -983,7 +986,6 @@ html[dir="rtl"] .nested-checkbox-group {
     gap: 10px;
   }
   
-  /* במובייל, הסדר לא משנה כי הכפתורים זה מעל זה */
   html[dir="rtl"] .delete-vendor-button,
   html[dir="ltr"] .delete-vendor-button,
   html[dir="rtl"] .change-vendor-button,

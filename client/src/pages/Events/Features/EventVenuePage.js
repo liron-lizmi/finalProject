@@ -20,10 +20,34 @@ const EventVenuePage = () => {
   const [manualVenue, setManualVenue] = useState({
     name: '',
     address: '',
-    phone: ''
+    phone: '',
+    website: ''
   });
-  
+  const [showVenueSelectionModal, setShowVenueSelectionModal] = useState(false);
+  const [venueActionType, setVenueActionType] = useState(null);
+  const [venueToChangeIndex, setVenueToChangeIndex] = useState(null);
+  const [venueErrors, setVenueErrors] = useState({});
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+
+  const validateVenueField = (name, value) => {
+    const errors = {};
+    
+    if (name === 'name' && (!value || value.trim() === '')) {
+      errors.name = t('errors.venueNameRequired');
+    }
+    
+    if (name === 'address' && (!value || value.trim() === '')) {
+      errors.address = t('errors.venueAddressRequired');
+    }
+    
+    if (name === 'phone' && value && value.trim() !== '') {
+      if (!/^[0-9+\-\s()]*$/.test(value)) {
+        errors.phone = t('errors.invalidPhoneFormat');
+      }
+    }
+    
+    return errors;
+  };
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -74,15 +98,22 @@ const EventVenuePage = () => {
         website: venue.website || venue.url || venue.formatted_website || ''
       };
 
-      await axios.put(`/api/events/${id}`, 
-        { venue: venueData },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
-          }
+      const eventVenues = event.venues || [];
+      let updatedEvent = { ...event };
+      
+      if (venueActionType === 'change' && venueToChangeIndex !== null) {
+        updatedEvent.venues = [...eventVenues];
+        updatedEvent.venues[venueToChangeIndex] = venueData;
+      } else {
+        updatedEvent.venues = [...eventVenues, venueData];
+      }
+
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
         }
-      );
+      });
 
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
@@ -93,6 +124,8 @@ const EventVenuePage = () => {
       setEvent(response.data);
       setVenueUpdateSuccess(true);
       setShowVenuePage(false);
+      setVenueToChangeIndex(null);
+      setVenueActionType(null);
 
       setTimeout(() => {
         setVenueUpdateSuccess(false);
@@ -105,14 +138,43 @@ const EventVenuePage = () => {
 
   const handleManualVenueChange = (e) => {
     const { name, value } = e.target;
+    
     setManualVenue(prev => ({
       ...prev,
       [name]: value
+    }));
+    
+    const fieldErrors = validateVenueField(name, value);
+    setVenueErrors(prev => ({
+      ...prev,
+      [name]: fieldErrors[name] || null
     }));
   };
 
   const handleManualVenueSubmit = async (e) => {
     e.preventDefault();
+    
+    const allErrors = {};
+    
+    if (!manualVenue.name || manualVenue.name.trim() === '') {
+      allErrors.name = t('errors.venueNameRequired');
+    }
+    
+    if (!manualVenue.address || manualVenue.address.trim() === '') {
+      allErrors.address = t('errors.venueAddressRequired');
+    }
+    
+    if (manualVenue.phone && manualVenue.phone.trim() !== '') {
+      if (!/^[0-9+\-\s()]*$/.test(manualVenue.phone)) {
+        allErrors.phone = t('errors.invalidPhoneFormat');
+      }
+    }
+    
+    if (Object.keys(allErrors).length > 0) {
+      setVenueErrors(allErrors);
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -123,15 +185,30 @@ const EventVenuePage = () => {
 
       setVenueDeleteSuccess(false);
 
-      await axios.put(`/api/events/${id}`, 
-        { venue: manualVenue },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
-          }
+      const eventVenues = event.venues || [];
+      
+      const venueToSubmit = {
+        name: manualVenue.name.trim(),
+        address: manualVenue.address.trim(),
+        phone: manualVenue.phone.trim(),
+        website: manualVenue.website.trim()
+      };
+      
+      let updatedEvent = { ...event };
+      
+      if (venueActionType === 'change' && venueToChangeIndex !== null) {
+        updatedEvent.venues = [...eventVenues];
+        updatedEvent.venues[venueToChangeIndex] = venueToSubmit;
+      } else {
+        updatedEvent.venues = [...eventVenues, venueToSubmit];
+      }
+
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
         }
-      );
+      });
 
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
@@ -142,10 +219,14 @@ const EventVenuePage = () => {
       setEvent(response.data);
       setVenueUpdateSuccess(true);
       setShowManualForm(false);
+      setVenueToChangeIndex(null);
+      setVenueActionType(null);
+      setVenueErrors({});
       setManualVenue({
         name: '',
         address: '',
-        phone: ''
+        phone: '',
+        website: ''
       });
 
       setTimeout(() => {
@@ -157,7 +238,7 @@ const EventVenuePage = () => {
     }
   };
 
-  const handleDeleteVenue = async () => {
+  const handleDeleteVenue = async (index) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -168,15 +249,17 @@ const EventVenuePage = () => {
 
       setVenueUpdateSuccess(false);
 
-      await axios.put(`/api/events/${id}`, 
-        { venue: null },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-auth-token': token
-          }
+      let updatedEvent = { ...event };
+      const updatedVenues = [...(event.venues || [])];
+      updatedVenues.splice(index, 1);
+      updatedEvent.venues = updatedVenues;
+
+      await axios.put(`/api/events/${id}`, updatedEvent, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token
         }
-      );
+      });
 
       const response = await axios.get(`/api/events/${id}`, {
         headers: {
@@ -194,6 +277,22 @@ const EventVenuePage = () => {
       console.error('Error deleting venue:', err);
       setError(t('errors.generalError'));
     }
+  };
+
+  const handleShowVenueOptions = (actionType, venueIndex = null) => {
+    setVenueActionType(actionType);
+    setVenueToChangeIndex(venueIndex);
+    setShowVenueSelectionModal(true);
+  };
+  
+  const handleSelectAPIVenues = () => {
+    setShowVenueSelectionModal(false);
+    setShowVenuePage(true);
+  };
+  
+  const handleSelectManualVenue = () => {
+    setShowVenueSelectionModal(false);
+    setShowManualForm(true);
   };
 
   if (loading) {
@@ -236,6 +335,43 @@ const EventVenuePage = () => {
           {t('venues.venueDeletedSuccess')}
         </div>
       )}
+
+      {/* Venue Selection Modal */}
+      {showVenueSelectionModal && (
+        <div className="vendor-selection-modal">
+          <div className="vendor-selection-modal-content">
+            <h3>
+              {venueActionType === 'change'
+                ? t('venues.changeVenueOptions')
+                : t('venues.addVenueOptions')}
+            </h3>
+            <div className="vendor-selection-options">
+              <button
+                className="select-venue-button"
+                onClick={handleSelectAPIVenues}
+              >
+                {t('venues.searchAndFilterButton')}
+              </button>
+              <button
+                className="add-manual-venue-button"
+                onClick={handleSelectManualVenue}
+              >
+                {t('venues.addManuallyButton')}
+              </button>
+            </div>
+            <button
+              className="cancel-button"
+              onClick={() => {
+                setShowVenueSelectionModal(false);
+                setVenueActionType(null);
+                setVenueToChangeIndex(null);
+              }}
+            >
+              {t('general.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
       
       {showManualForm ? (
         <div className={`manual-venue-form ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -248,18 +384,27 @@ const EventVenuePage = () => {
                 name="name"
                 value={manualVenue.name}
                 onChange={handleManualVenueChange}
+                className={venueErrors.name ? 'error' : ''}
                 required
               />
+              {venueErrors.name && (
+                <div className="error-text">{venueErrors.name}</div>
+              )}
             </div>
             <div className="form-group">
-              <label htmlFor="address">{t('venues.venueDetails.address')}</label>
+              <label htmlFor="address">{t('venues.venueDetails.address')}*</label>
               <input
                 type="text"
                 id="address"
                 name="address"
                 value={manualVenue.address}
                 onChange={handleManualVenueChange}
+                className={venueErrors.address ? 'error' : ''}
+                required
               />
+              {venueErrors.address && (
+                <div className="error-text">{venueErrors.address}</div>
+              )}
             </div>
             <div className="form-group">
               <label htmlFor="phone">{t('venues.venueDetails.phone')}</label>
@@ -268,6 +413,20 @@ const EventVenuePage = () => {
                 id="phone"
                 name="phone"
                 value={manualVenue.phone}
+                onChange={handleManualVenueChange}
+                className={venueErrors.phone ? 'error' : ''}
+              />
+              {venueErrors.phone && (
+                <div className="error-text">{venueErrors.phone}</div>
+              )}
+            </div>
+            <div className="form-group">
+              <label htmlFor="website">{t('venues.venueDetails.website')}</label>
+              <input
+                type="text"
+                id="website"
+                name="website"
+                value={manualVenue.website}
                 onChange={handleManualVenueChange}
               />
             </div>
@@ -278,67 +437,77 @@ const EventVenuePage = () => {
               <button 
                 type="button" 
                 className="cancel-button" 
-                onClick={() => setShowManualForm(false)}
+                onClick={() => {
+                  setShowManualForm(false);
+                  setVenueErrors({});
+                  setVenueToChangeIndex(null);
+                  setVenueActionType(null);
+                }}
               >
                 {t('general.cancel')}
               </button>
             </div>
           </form>
         </div>
-      ) : event.venue && event.venue.name ? (
-        <div className="selected-venue">
+      ) : event.venues && event.venues.length > 0 ? (
+        <div className="selected-venues">
           <h3>{t('venues.selectedVenue')}</h3>
-          <div className="venue-details-card">
-            <h4>{event.venue.name}</h4>
-            {event.venue.address && (
-              <p><strong>{t('venues.venueDetails.address')}:</strong> {event.venue.address}</p>
-            )}
-            {event.venue.phone && (
-              <p><strong>{t('venues.venueDetails.phone')}:</strong> {event.venue.phone}</p>
-            )}
-            {event.venue.website && (
-              <p>
-                <strong>{t('venues.venueDetails.website')}:</strong>{' '}
-                <a 
-                  href={event.venue.website.startsWith('http') ? event.venue.website : `https://${event.venue.website}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+          {event.venues.map((venue, index) => (
+            <div key={index} className="venue-details-card">
+              <h4>{venue.name}</h4>
+              {venue.address && (
+                <p><strong>{t('venues.venueDetails.address')}:</strong> {venue.address}</p>
+              )}
+              {venue.phone && (
+                <p><strong>{t('venues.venueDetails.phone')}:</strong> {venue.phone}</p>
+              )}
+              {venue.website && (
+                <p>
+                  <strong>{t('venues.venueDetails.website')}:</strong>{' '}
+                  <a 
+                    href={venue.website.startsWith('http') ? venue.website : `https://${venue.website}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    {venue.website}
+                  </a>
+                </p>
+              )}
+              
+              <div className="venue-actions">
+                <button 
+                  className="change-venue-button" 
+                  onClick={() => handleShowVenueOptions('change', index)}
                 >
-                  {event.venue.website}
-                </a>
-              </p>
-            )}
-          </div>
-          <div className="venue-actions">
-            {isRTL ? (
-              <>
-                <button className="change-venue-button" onClick={() => setShowVenuePage(true)}>
                   {t('venues.changeVenue')}
                 </button>
-                <button className="delete-venue-button" onClick={handleDeleteVenue}>
+                <button 
+                  className="delete-venue-button" 
+                  onClick={() => handleDeleteVenue(index)}
+                >
                   {t('venues.deleteVenue')}
                 </button>
-              </>
-            ) : (
-              <>
-                <button className="delete-venue-button" onClick={handleDeleteVenue}>
-                  {t('venues.deleteVenue')}
-                </button>
-                <button className="change-venue-button" onClick={() => setShowVenuePage(true)}>
-                  {t('venues.changeVenue')}
-                </button>
-              </>
-            )}
+              </div>
+            </div>
+          ))}
+
+          <div className="add-more-venues">
+            <button
+              className="add-venue-button"
+              onClick={() => handleShowVenueOptions('add')}
+            >
+              {t('venues.addAnotherVenue')}
+            </button>
           </div>
         </div>
       ) : (
         <div className="no-venue-selected">
           <p>{t('venues.noVenueSelected')}</p>
           <div className="venue-selection-options">
-            <button className="select-venue-button" onClick={() => setShowVenuePage(true)}>
+            <button className="select-venue-button" onClick={() => handleShowVenueOptions('add')}>
               {t('venues.searchAndFilterButton')}
             </button>
-            <button className="add-manual-venue-button" onClick={() => setShowManualForm(true)}>
+            <button className="add-manual-venue-button" onClick={() => handleShowVenueOptions('add')}>
               {t('venues.addManuallyButton')}
             </button>
           </div>
