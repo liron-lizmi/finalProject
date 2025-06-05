@@ -30,7 +30,6 @@ const EventVendorsPage = () => {
  
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
-  // טלפון תקין - רק מספרים, תווי מקף, פלוס, כוכבית, סוגריים ורווחים
   const validatePhone = (phoneNumber) => {
     const phoneRegex = /^[0-9+\-\s()*]*$/;
     return phoneRegex.test(phoneNumber);
@@ -278,6 +277,16 @@ const EventVendorsPage = () => {
     setShowManualForm(true);
   };
 
+  const handleDirectAPIVendors = () => {
+    setVendorActionType('add');
+    setShowVendorsPage(true);
+  };
+
+  const handleDirectManualVendor = () => {
+    setVendorActionType('add');
+    setShowManualForm(true);
+  };
+
   const getCategoryIcon = (category) => {
     switch(category?.toLowerCase()) {
       case 'catering':
@@ -292,17 +301,45 @@ const EventVendorsPage = () => {
         return '🎧';
       case 'decoration':
         return '🎨';
+      case 'lighting':
+        return '💡';
       case 'makeup':
         return '💄';
       case 'transportation':
         return '🚗';
+      case 'other':
+        return '👨';
       default:
         return '👨';
     }
   };
 
   const getCategoryName = (category) => {
-    return t(`events.features.vendors.categories.${category?.toLowerCase()}`) || category;
+    console.log("getCategoryName called with:", category);
+    
+    if (!category || category === 'other' || category === '') {
+      const translation = t('events.features.vendors.categories.other');
+      console.log("Translation for 'other':", translation);
+      
+      if (translation === 'events.features.vendors.categories.other') {
+        return isRTL ? 'אחר' : 'Other';
+      }
+      return translation;
+    }
+    
+    const translationKey = `events.features.vendors.categories.${category?.toLowerCase()}`;
+    const translation = t(translationKey);
+    console.log(`Translation for ${translationKey}:`, translation);
+    
+    if (translation === translationKey) {
+      const fallbackTranslation = t('events.features.vendors.categories.other');
+      if (fallbackTranslation === 'events.features.vendors.categories.other') {
+        return isRTL ? 'אחר' : 'Other';
+      }
+      return fallbackTranslation;
+    }
+    
+    return translation;
   };
 
   if (loading) {
@@ -346,7 +383,7 @@ const EventVendorsPage = () => {
         </div>
       )}
      
-      {/* Vendor Selection Modal */}
+      {/* Vendor Selection Modal - רק כאשר משנים ספק קיים */}
       {showVendorSelectionModal && (
         <div className="vendor-selection-modal">
           <div className="vendor-selection-modal-content">
@@ -411,7 +448,6 @@ const EventVendorsPage = () => {
                 onChange={handleManualVendorChange}
                 required
               >
-               
                 <option value="">{t('general.select')}</option>
                 <option value="catering">{t('events.features.vendors.categories.catering')}</option>
                 <option value="photography">{t('events.features.vendors.categories.photography')}</option>
@@ -419,10 +455,10 @@ const EventVendorsPage = () => {
                 <option value="music">{t('events.features.vendors.categories.music')}</option>
                 <option value="dj">{t('events.features.vendors.categories.dj')}</option>
                 <option value="decoration">{t('events.features.vendors.categories.decoration')}</option>
+                <option value="lighting">{t('events.features.vendors.categories.lighting')}</option>
                 <option value="makeup">{t('events.features.vendors.categories.makeup')}</option>
-                <option value="transportation">{t('events.features.vendors.categories.transportation')}</option>,
-                {/* <option value="other">{t('events.features.vendors.categories.other')}</option> */}
-
+                <option value="transportation">{t('events.features.vendors.categories.transportation')}</option>
+                <option value="other">{t('events.features.vendors.categories.other')}</option>
               </select>
             </div>
             <div className="form-group">
@@ -460,7 +496,17 @@ const EventVendorsPage = () => {
               <button
                 type="button"
                 className="cancel-button"
-                onClick={() => setShowManualForm(false)}
+                onClick={() => {
+                  setShowManualForm(false);
+                  setPhoneError('');
+                  setVendorActionType(null);
+                  setManualVendor({
+                    name: '',
+                    category: '',
+                    phone: '',
+                    notes: ''
+                  });
+                }}
               >
                 {t('general.cancel')}
               </button>
@@ -515,10 +561,10 @@ const EventVendorsPage = () => {
         <div className="no-vendor-selected">
           <p>{t('events.features.vendors.noVendorSelected')}</p>
           <div className="vendor-selection-options">
-            <button className="select-vendor-button" onClick={() => setShowVendorsPage(true)}>
+            <button className="select-vendor-button" onClick={handleDirectAPIVendors}>
               {t('events.features.vendors.searchAndFilterButton')}
             </button>
-            <button className="add-manual-vendor-button" onClick={() => setShowManualForm(true)}>
+            <button className="add-manual-vendor-button" onClick={handleDirectManualVendor}>
               {t('events.features.vendors.addManuallyButton')}
             </button>
           </div>

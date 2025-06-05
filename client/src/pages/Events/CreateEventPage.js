@@ -138,10 +138,18 @@ const CreateEventPage = () => {
     const selected = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth(),
-      day
+      day,
+      12,
+      0,  
+      0,  
+      0   
     );
     
-    const formattedDate = selected.toISOString().split('T')[0];
+    const year = selected.getFullYear();
+    const month = (selected.getMonth() + 1).toString().padStart(2, '0');
+    const dayStr = selected.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${dayStr}`;
+    
     setEventData(prev => ({
       ...prev,
       eventDate: formattedDate
@@ -218,7 +226,12 @@ const CreateEventPage = () => {
 
   const handleToday = () => {
     const todayDate = new Date();
-    const formattedDate = todayDate.toISOString().split('T')[0];
+    
+    const year = todayDate.getFullYear();
+    const month = (todayDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = todayDate.getDate().toString().padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
     setEventData(prev => ({
       ...prev,
       eventDate: formattedDate

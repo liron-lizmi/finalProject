@@ -25,7 +25,6 @@ const EventVenuePage = () => {
   });
   const [showVenueSelectionModal, setShowVenueSelectionModal] = useState(false);
   const [venueActionType, setVenueActionType] = useState(null);
-  const [venueToChangeIndex, setVenueToChangeIndex] = useState(null);
   const [venueErrors, setVenueErrors] = useState({});
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
@@ -98,15 +97,9 @@ const EventVenuePage = () => {
         website: venue.website || venue.url || venue.formatted_website || ''
       };
 
-      const eventVenues = event.venues || [];
       let updatedEvent = { ...event };
       
-      if (venueActionType === 'change' && venueToChangeIndex !== null) {
-        updatedEvent.venues = [...eventVenues];
-        updatedEvent.venues[venueToChangeIndex] = venueData;
-      } else {
-        updatedEvent.venues = [...eventVenues, venueData];
-      }
+      updatedEvent.venues = [venueData];
 
       await axios.put(`/api/events/${id}`, updatedEvent, {
         headers: {
@@ -124,7 +117,6 @@ const EventVenuePage = () => {
       setEvent(response.data);
       setVenueUpdateSuccess(true);
       setShowVenuePage(false);
-      setVenueToChangeIndex(null);
       setVenueActionType(null);
 
       setTimeout(() => {
@@ -184,8 +176,6 @@ const EventVenuePage = () => {
       }
 
       setVenueDeleteSuccess(false);
-
-      const eventVenues = event.venues || [];
       
       const venueToSubmit = {
         name: manualVenue.name.trim(),
@@ -196,12 +186,7 @@ const EventVenuePage = () => {
       
       let updatedEvent = { ...event };
       
-      if (venueActionType === 'change' && venueToChangeIndex !== null) {
-        updatedEvent.venues = [...eventVenues];
-        updatedEvent.venues[venueToChangeIndex] = venueToSubmit;
-      } else {
-        updatedEvent.venues = [...eventVenues, venueToSubmit];
-      }
+      updatedEvent.venues = [venueToSubmit];
 
       await axios.put(`/api/events/${id}`, updatedEvent, {
         headers: {
@@ -219,7 +204,6 @@ const EventVenuePage = () => {
       setEvent(response.data);
       setVenueUpdateSuccess(true);
       setShowManualForm(false);
-      setVenueToChangeIndex(null);
       setVenueActionType(null);
       setVenueErrors({});
       setManualVenue({
@@ -238,7 +222,7 @@ const EventVenuePage = () => {
     }
   };
 
-  const handleDeleteVenue = async (index) => {
+  const handleDeleteVenue = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -250,9 +234,7 @@ const EventVenuePage = () => {
       setVenueUpdateSuccess(false);
 
       let updatedEvent = { ...event };
-      const updatedVenues = [...(event.venues || [])];
-      updatedVenues.splice(index, 1);
-      updatedEvent.venues = updatedVenues;
+      updatedEvent.venues = [];
 
       await axios.put(`/api/events/${id}`, updatedEvent, {
         headers: {
@@ -279,9 +261,8 @@ const EventVenuePage = () => {
     }
   };
 
-  const handleShowVenueOptions = (actionType, venueIndex = null) => {
+  const handleShowVenueOptions = (actionType) => {
     setVenueActionType(actionType);
-    setVenueToChangeIndex(venueIndex);
     setShowVenueSelectionModal(true);
   };
   
@@ -292,6 +273,16 @@ const EventVenuePage = () => {
   
   const handleSelectManualVenue = () => {
     setShowVenueSelectionModal(false);
+    setShowManualForm(true);
+  };
+
+  const handleDirectAPIVenues = () => {
+    setVenueActionType('add');
+    setShowVenuePage(true);
+  };
+
+  const handleDirectManualVenue = () => {
+    setVenueActionType('add');
     setShowManualForm(true);
   };
 
@@ -336,15 +327,11 @@ const EventVenuePage = () => {
         </div>
       )}
 
-      {/* Venue Selection Modal */}
+      {/* Venue Selection Modal - רק כאשר משנים מקום קיים */}
       {showVenueSelectionModal && (
         <div className="vendor-selection-modal">
           <div className="vendor-selection-modal-content">
-            <h3>
-              {venueActionType === 'change'
-                ? t('venues.changeVenueOptions')
-                : t('venues.addVenueOptions')}
-            </h3>
+            <h3>{t('venues.changeVenueOptions')}</h3>
             <div className="vendor-selection-options">
               <button
                 className="select-venue-button"
@@ -364,7 +351,6 @@ const EventVenuePage = () => {
               onClick={() => {
                 setShowVenueSelectionModal(false);
                 setVenueActionType(null);
-                setVenueToChangeIndex(null);
               }}
             >
               {t('general.cancel')}
@@ -440,7 +426,6 @@ const EventVenuePage = () => {
                 onClick={() => {
                   setShowManualForm(false);
                   setVenueErrors({});
-                  setVenueToChangeIndex(null);
                   setVenueActionType(null);
                 }}
               >
@@ -452,62 +437,52 @@ const EventVenuePage = () => {
       ) : event.venues && event.venues.length > 0 ? (
         <div className="selected-venues">
           <h3>{t('venues.selectedVenue')}</h3>
-          {event.venues.map((venue, index) => (
-            <div key={index} className="venue-details-card">
-              <h4>{venue.name}</h4>
-              {venue.address && (
-                <p><strong>{t('venues.venueDetails.address')}:</strong> {venue.address}</p>
-              )}
-              {venue.phone && (
-                <p><strong>{t('venues.venueDetails.phone')}:</strong> {venue.phone}</p>
-              )}
-              {venue.website && (
-                <p>
-                  <strong>{t('venues.venueDetails.website')}:</strong>{' '}
-                  <a 
-                    href={venue.website.startsWith('http') ? venue.website : `https://${venue.website}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  >
-                    {venue.website}
-                  </a>
-                </p>
-              )}
-              
-              <div className="venue-actions">
-                <button 
-                  className="change-venue-button" 
-                  onClick={() => handleShowVenueOptions('change', index)}
+          {/* מציג רק את המקום הראשון (כי אמור להיות רק אחד) */}
+          <div className="venue-details-card">
+            <h4>{event.venues[0].name}</h4>
+            {event.venues[0].address && (
+              <p><strong>{t('venues.venueDetails.address')}:</strong> {event.venues[0].address}</p>
+            )}
+            {event.venues[0].phone && (
+              <p><strong>{t('venues.venueDetails.phone')}:</strong> {event.venues[0].phone}</p>
+            )}
+            {event.venues[0].website && (
+              <p>
+                <strong>{t('venues.venueDetails.website')}:</strong>{' '}
+                <a 
+                  href={event.venues[0].website.startsWith('http') ? event.venues[0].website : `https://${event.venues[0].website}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
                 >
-                  {t('venues.changeVenue')}
-                </button>
-                <button 
-                  className="delete-venue-button" 
-                  onClick={() => handleDeleteVenue(index)}
-                >
-                  {t('venues.deleteVenue')}
-                </button>
-              </div>
+                  {event.venues[0].website}
+                </a>
+              </p>
+            )}
+            
+            <div className="venue-actions">
+              <button 
+                className="change-venue-button" 
+                onClick={() => handleShowVenueOptions('change')}
+              >
+                {t('venues.changeVenue')}
+              </button>
+              <button 
+                className="delete-venue-button" 
+                onClick={handleDeleteVenue}
+              >
+                {t('venues.deleteVenue')}
+              </button>
             </div>
-          ))}
-
-          <div className="add-more-venues">
-            <button
-              className="add-venue-button"
-              onClick={() => handleShowVenueOptions('add')}
-            >
-              {t('venues.addAnotherVenue')}
-            </button>
           </div>
         </div>
       ) : (
         <div className="no-venue-selected">
           <p>{t('venues.noVenueSelected')}</p>
           <div className="venue-selection-options">
-            <button className="select-venue-button" onClick={() => handleShowVenueOptions('add')}>
+            <button className="select-venue-button" onClick={handleDirectAPIVenues}>
               {t('venues.searchAndFilterButton')}
             </button>
-            <button className="add-manual-venue-button" onClick={() => handleShowVenueOptions('add')}>
+            <button className="add-manual-venue-button" onClick={handleDirectManualVenue}>
               {t('venues.addManuallyButton')}
             </button>
           </div>

@@ -31,6 +31,20 @@ const EventSchema = new mongoose.Schema({
       }
     }
   },
+  type: {
+    type: String,
+    default: 'other',
+    enum: ['wedding', 'birthday', 'corporate', 'conference', 'party', 'other']
+  },
+  guestCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  notes: {
+    type: String,
+    trim: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -51,7 +65,8 @@ const EventSchema = new mongoose.Schema({
         return i18next.t('validation.venueAddressRequired');
       }
     },
-    phone: String
+    phone: String,
+    website: String
   }],
   vendors: [{
     name: {
@@ -65,7 +80,18 @@ const EventSchema = new mongoose.Schema({
       required: function() {
         return i18next.t('validation.vendorCategoryRequired');
       },
-      enum: ['catering', 'photography', 'music', 'decoration', 'lighting', 'flowers', 'other']
+      enum: [
+        'catering',          
+        'photography',       
+        'music',            
+        'decoration',      
+        'lighting',         
+        'flowers',          
+        'dj',              
+        'makeup',         
+        'transportation',   
+        'other'           
+      ]
     },
     phone: {
       type: String,
@@ -83,12 +109,24 @@ const EventSchema = new mongoose.Schema({
         }
       }
     },
-    notes: String
+    notes: {
+      type: String,
+      trim: true
+    }
   }],
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+});
+
+EventSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 const Event = mongoose.model('Event', EventSchema);

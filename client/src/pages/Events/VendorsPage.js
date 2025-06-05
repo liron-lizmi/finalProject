@@ -29,6 +29,96 @@ const VendorsPage = ({ onSelectVendor }) => {
     specificFilters: [], 
   });
 
+  const determineCategoryFromVendorType = (vendorType) => {
+    switch (vendorType) {
+      case 'catering':
+        return 'catering';
+      case 'photographer':
+        return 'photography';
+      case 'florist':
+        return 'flowers';
+      case 'musician':
+        return 'music';
+      case 'dj':
+        return 'dj';
+      case 'decorator':
+        return 'decoration'; 
+      case 'makeup':
+        return 'makeup';
+      case 'transport':
+        return 'transportation';
+      default:
+        return 'other';
+    }
+  };
+
+  const determineCategoryFromPlaceTypes = (types) => {
+    if (!types || !Array.isArray(types)) return 'other';
+    
+    const typeMapping = {
+      'restaurant': 'catering',
+      'food': 'catering',
+      'meal_takeaway': 'catering',
+      'meal_delivery': 'catering',
+      'bakery': 'catering',
+      'cafe': 'catering',
+      
+      'photographer': 'photography',
+      'photography': 'photography',
+      
+      'florist': 'flowers',
+      'flower_shop': 'flowers',
+      
+      'musician': 'music',
+      'music': 'music',
+      'entertainment': 'music',
+      
+      'beauty_salon': 'makeup',
+      'hair_care': 'makeup',
+      'spa': 'makeup',
+      
+      'car_rental': 'transportation',
+      'taxi_stand': 'transportation',
+      'bus_station': 'transportation',
+      'travel_agency': 'transportation',
+      
+      'event_planning': 'decoration',
+      'establishment': 'decoration'
+    };
+    
+    for (const type of types) {
+      if (typeMapping[type]) {
+        return typeMapping[type];
+      }
+    }
+    
+    return 'other';
+  };
+
+  const determineCategoryFromName = (name, description = '') => {
+    const text = (name + ' ' + description).toLowerCase();
+    
+    const keywords = {
+      catering: ['קייטרינג', 'אוכל', 'מזון', 'catering', 'food', 'restaurant', 'chef', 'cooking', 'מסעדה', 'בישול'],
+      photography: ['צילום', 'צלם', 'photography', 'photographer', 'photo', 'camera', 'צילומים', 'מצלמה'],
+      flowers: ['פרחים', 'זרים', 'flowers', 'florist', 'bouquet', 'floral', 'פרח', 'זר'],
+      music: ['מוזיקה', 'נגן', 'תזמורת', 'music', 'musician', 'band', 'singer', 'נגנים'],
+      dj: ['דיג\'יי', 'די ג\'יי', 'dj', 'disc jockey', 'sound', 'די-ג\'יי'],
+      decoration: ['עיצוב', 'קישוט', 'decoration', 'design', 'decor', 'עיצובים', 'קישוטים', 'הפקה', 'events', 'הפקת אירועים', 'event planning', 'אירועים', 'ניהול אירועים', 'm-event', 'ניהול', 'תכנון אירועים', 'מפיק', 'הפקות'],
+      lighting: ['תאורה', 'lighting', 'אור', 'תאורת', 'lights'],
+      makeup: ['איפור', 'יופי', 'makeup', 'beauty', 'cosmetics', 'hair', 'מאפרת', 'שיער'],
+      transportation: ['הסעות', 'רכב', 'transportation', 'car', 'bus', 'taxi', 'limousine', 'הסעה']
+    };
+    
+    for (const [category, words] of Object.entries(keywords)) {
+      if (words.some(word => text.includes(word))) {
+        return category;
+      }
+    }
+    
+    return 'other';
+  };
+
   const getSpecificFilters = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -382,136 +472,141 @@ const VendorsPage = ({ onSelectVendor }) => {
     setLoading(true);
    
     let query = '';
-    switch (vendorType) {
-      case 'catering':
-        query = 'catering service food';
-        if (filters.specificFilters.length > 0) {
-          filters.specificFilters.forEach(filter => {
-            switch (filter) {
-              case 'dairy':
-                query += ' dairy kosher';
-                break;
-              case 'meat':
-                query += ' meat kosher';
-                break;
-              case 'pareve':
-                query += ' pareve kosher';
-                break;
-              case 'vegan':
-                query += ' vegan';
-                break;
-              case 'gluten-free':
-                query += ' gluten free';
-                break;
-            }
-          });
-        }
-        break;
-      case 'photographer':
-        query = 'photographer photography studio';
-        if (filters.specificFilters.length > 0) {
-          query += ' ' + filters.specificFilters.join(' ');
-        }
-        break;
-      case 'florist':
-        query = 'florist flower shop';
-        if (filters.specificFilters.length > 0) {
-          filters.specificFilters.forEach(filter => {
-            switch (filter) {
-              case 'bridal':
-                query += ' bridal wedding';
-                break;
-              case 'arrangements':
-                query += ' arrangements';
-                break;
-              case 'decorations':
-                query += ' decorations';
-                break;
-              case 'plants':
-                query += ' plants';
-                break;
-            }
-          });
-        }
-        break;
-      case 'musician':
-        query = 'musician entertainment';
-        if (filters.specificFilters.length > 0) {
-          query += ' ' + filters.specificFilters.join(' ');
-        }
-        break;
-      case 'dj':
-        query = 'dj sound entertainment';
-        if (filters.specificFilters.length > 0) {
-          filters.specificFilters.forEach(filter => {
-            switch (filter) {
-              case 'wedding':
-                query += ' wedding';
-                break;
-              case 'party':
-                query += ' party';
-                break;
-              case 'corporate':
-                query += ' corporate';
-                break;
-              case 'with-equipment':
-                query += ' equipment sound system';
-                break;
-            }
-          });
-        }
-        break;
-      case 'decorator':
-        query = 'event decorator design';
-        if (filters.specificFilters.length > 0) {
-          query += ' ' + filters.specificFilters.join(' ');
-        }
-        break;
-      case 'makeup':
-        query = 'makeup artist beauty';
-        if (filters.specificFilters.length > 0) {
-          filters.specificFilters.forEach(filter => {
-            switch (filter) {
-              case 'bridal':
-                query += ' bridal wedding';
-                break;
-              case 'event':
-                query += ' event';
-                break;
-              case 'with-hairstyling':
-                query += ' hairstyling';
-                break;
-              case 'mobile':
-                query += ' mobile service';
-                break;
-            }
-          });
-        }
-        break;
-      case 'transport':
-        query = 'transportation rental service';
-        if (filters.specificFilters.length > 0) {
-          filters.specificFilters.forEach(filter => {
-            switch (filter) {
-              case 'luxury-cars':
-                query += ' luxury cars';
-                break;
-              case 'buses':
-                query += ' buses';
-                break;
-              case 'limousines':
-                query += ' limousines';
-                break;
-              case 'classic-cars':
-                query += ' classic vintage cars';
-                break;
-            }
-          });
-        }
-        break;
-      default:
-        query = 'event services provider';
-        break;
+    
+    if (!vendorType || vendorType === 'all') {
+      query = 'event services wedding party celebration catering photographer florist music entertainment';
+    } else {
+      switch (vendorType) {
+        case 'catering':
+          query = 'catering service food';
+          if (filters.specificFilters.length > 0) {
+            filters.specificFilters.forEach(filter => {
+              switch (filter) {
+                case 'dairy':
+                  query += ' dairy kosher';
+                  break;
+                case 'meat':
+                  query += ' meat kosher';
+                  break;
+                case 'pareve':
+                  query += ' pareve kosher';
+                  break;
+                case 'vegan':
+                  query += ' vegan';
+                  break;
+                case 'gluten-free':
+                  query += ' gluten free';
+                  break;
+              }
+            });
+          }
+          break;
+        case 'photographer':
+          query = 'photographer photography studio';
+          if (filters.specificFilters.length > 0) {
+            query += ' ' + filters.specificFilters.join(' ');
+          }
+          break;
+        case 'florist':
+          query = 'florist flower shop';
+          if (filters.specificFilters.length > 0) {
+            filters.specificFilters.forEach(filter => {
+              switch (filter) {
+                case 'bridal':
+                  query += ' bridal wedding';
+                  break;
+                case 'arrangements':
+                  query += ' arrangements';
+                  break;
+                case 'decorations':
+                  query += ' decorations';
+                  break;
+                case 'plants':
+                  query += ' plants';
+                  break;
+              }
+            });
+          }
+          break;
+        case 'musician':
+          query = 'musician entertainment';
+          if (filters.specificFilters.length > 0) {
+            query += ' ' + filters.specificFilters.join(' ');
+          }
+          break;
+        case 'dj':
+          query = 'dj sound entertainment';
+          if (filters.specificFilters.length > 0) {
+            filters.specificFilters.forEach(filter => {
+              switch (filter) {
+                case 'wedding':
+                  query += ' wedding';
+                  break;
+                case 'party':
+                  query += ' party';
+                  break;
+                case 'corporate':
+                  query += ' corporate';
+                  break;
+                case 'with-equipment':
+                  query += ' equipment sound system';
+                  break;
+              }
+            });
+          }
+          break;
+        case 'decorator':
+          query = 'event decorator design planning';
+          if (filters.specificFilters.length > 0) {
+            query += ' ' + filters.specificFilters.join(' ');
+          }
+          break;
+        case 'makeup':
+          query = 'makeup artist beauty';
+          if (filters.specificFilters.length > 0) {
+            filters.specificFilters.forEach(filter => {
+              switch (filter) {
+                case 'bridal':
+                  query += ' bridal wedding';
+                  break;
+                case 'event':
+                  query += ' event';
+                  break;
+                case 'with-hairstyling':
+                  query += ' hairstyling';
+                  break;
+                case 'mobile':
+                  query += ' mobile service';
+                  break;
+              }
+            });
+          }
+          break;
+        case 'transport':
+          query = 'transportation rental service';
+          if (filters.specificFilters.length > 0) {
+            filters.specificFilters.forEach(filter => {
+              switch (filter) {
+                case 'luxury-cars':
+                  query += ' luxury cars';
+                  break;
+                case 'buses':
+                  query += ' buses';
+                  break;
+                case 'limousines':
+                  query += ' limousines';
+                  break;
+                case 'classic-cars':
+                  query += ' classic vintage cars';
+                  break;
+              }
+            });
+          }
+          break;
+        default:
+          query = 'event services provider';
+          break;
+      }
     }
    
     if (filters.area !== 'all') {
@@ -540,7 +635,7 @@ const VendorsPage = ({ onSelectVendor }) => {
    
     query += ' Israel';
    
-    console.log("Searching for vendors:", query, "near", location);
+    console.log("Searching for vendors:", query, "near", location, "vendorType:", vendorType);
    
     let locationObj = location;
     if (typeof location.lat === 'function') {
@@ -704,14 +799,14 @@ const VendorsPage = ({ onSelectVendor }) => {
         'name', 'formatted_address', 'formatted_phone_number',
         'website', 'photos', 'rating', 'reviews',
         'opening_hours', 'price_level', 'user_ratings_total',
-        'geometry', 'vicinity', 'url', 'photo'
+        'geometry', 'vicinity', 'url', 'photo', 'types'
       ],
       language: isRTL ? 'he' : 'en' 
     };
   
     placesService.current.getDetails(request, async (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-        console.log("Vendor details loaded:", place.name);
+        console.log("Vendor details loaded:", place.name, "Types:", place.types);
         
         let processedPlace = { ...place };
         
@@ -813,7 +908,6 @@ const VendorsPage = ({ onSelectVendor }) => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     
-    // If vendor type changes, reset specific filters
     if (name === 'vendorType') {
       setFilters(prev => ({
         ...prev,
@@ -862,6 +956,35 @@ const VendorsPage = ({ onSelectVendor }) => {
  
   const selectVendor = (vendor) => {
     try {
+      let category = 'other';
+      
+      console.log("=== Vendor Selection Debug ===");
+      console.log("Vendor name:", vendor.name);
+      console.log("Current filter:", filters.vendorType);
+      console.log("Vendor types:", vendor.types);
+      console.log("Vendor vicinity:", vendor.vicinity);
+      
+      if (filters.vendorType && filters.vendorType !== 'all') {
+        category = determineCategoryFromVendorType(filters.vendorType);
+        console.log("Category from filter:", category);
+      } 
+      else if (vendor.types && vendor.types.length > 0) {
+        const typeCategory = determineCategoryFromPlaceTypes(vendor.types);
+        if (typeCategory !== 'other') {
+          category = typeCategory;
+          console.log("Category from place types:", category);
+        }
+      }
+      
+      if (category === 'other') {
+        const nameBasedCategory = determineCategoryFromName(vendor.name, vendor.vicinity);
+        category = nameBasedCategory;
+        console.log("Category from name analysis:", category);
+      }
+      
+      console.log("Final category assigned:", category);
+      console.log("===============================");
+      
       const vendorData = {
         place_id: vendor.place_id,
         id: vendor.place_id,
@@ -870,9 +993,10 @@ const VendorsPage = ({ onSelectVendor }) => {
         phone: vendor.formatted_phone_number || '',
         website: vendor.website || '',
         rating: vendor.rating || 0,
-        price_level: vendor.price_level || 0
+        price_level: vendor.price_level || 0,
+        category: category
       };
-     
+   
       if (onSelectVendor && typeof onSelectVendor === 'function') {
         onSelectVendor(vendorData);
         setSuccessMessage(t('vendors.vendorAddedSuccess'));
@@ -943,7 +1067,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     return validPhotos;
   };
 
-  // Get current specific filters based on selected vendor type
   const currentSpecificFilters = getSpecificFilters(filters.vendorType);
  
   return (
@@ -1135,7 +1258,6 @@ const VendorsPage = ({ onSelectVendor }) => {
                 </div>
               )}
              
-            {/* <div className="vendor-details-content"> */}
                 <div className="vendor-photos">
                   <div className="main-photo">
                     {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
@@ -1264,7 +1386,6 @@ const VendorsPage = ({ onSelectVendor }) => {
                   )}
                 </div>
               </div>
-            {/* </div> */}
           </div>
         )}
       </div>
