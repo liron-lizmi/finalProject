@@ -311,9 +311,9 @@ const EventVenuePage = () => {
 
   return (
     <FeaturePageTemplate
-      title={t('events.features.venue.title')}
+      title={t('events.features.venues.title')}
       icon="🏢"
-      description={t('events.features.venue.description')}
+      description={t('events.features.venues.description')}
     >
       {venueUpdateSuccess && (
         <div className="success-message">

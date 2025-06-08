@@ -89,10 +89,72 @@
     "planningProgress": "Event Planning Progress",
     "eventNotFound": "Event not found",
     "features": {
-      "venue": {
-        "title": "Venue Selection",
-        "description": "Choose the perfect venue for your event"
-      },
+      "venues": {
+          "title": "Venue Selection",
+          "description": "Choose the perfect venue for your event",
+          "searchTitle": "Search Event Venues",
+          "searchSubtitle": "Find the perfect venue for your event",
+          "searchPlaceholder": "Search for a venue or address...",
+          "searchButton": "Search",
+          "filtersTitle": "Filter Results",
+          "loading": "Loading venues...",
+          "noResults": "No results found",
+          "searchResults": "Search Results",
+          "selectButton": "Select This Venue",
+          "venueAddedSuccess": "Venue added successfully!",
+          "defaultVenueName": "Event Venue",
+          "noAddress": "Address not available",
+          "filters": {
+            "areaLabel": "Area",
+            "allAreas": "All Israel",
+            "jerusalem": "Jerusalem & Surroundings",
+            "center": "Center",
+            "south": "South",
+            "north": "North",
+            "typeLabel": "Venue Type",
+            "allTypes": "All Types",
+            "restaurant": "Restaurant",
+            "eventVenue": "Event Venue",
+            "banquetHall": "Banquet Hall",
+            "hotel": "Hotel",
+            "park": "Park",
+            "museum": "Museum",
+            "styleLabel": "Style",
+            "allStyles": "All Styles",
+            "modern": "Modern",
+            "classic": "Classic",
+            "outdoor": "Outdoor",
+            "urban": "Urban",
+            "luxury": "Luxury",
+            "outside/garden": "Outdoor/Garden",
+            "capacityLabel": "Capacity",
+            "selectCapacity": "Select Capacity",
+            "upTo50": "Up to 50 people",
+            "upTo100": "Up to 100 people",
+            "upTo200": "Up to 200 people",
+            "upTo300": "Up to 300 people",
+            "upTo500": "Up to 500 people",
+            "above500": "Over 500 people",
+            "amenitiesLabel": "Amenities",
+            "parking": "Parking",
+            "accessibility": "Accessibility",
+            "outdoorSpace": "Outdoor Space",
+            "catering": "Catering",
+            "accommodation": "Accommodation Options",
+            "applyButton": "Apply Filters"
+          },
+          "details": {
+            "address": "Address",
+            "phone": "Phone",
+            "website": "Website",
+            "rating": "Rating",
+            "outOf5": "out of 5",
+            "reviews": "reviews",
+            "priceLevel": "Price Level",
+            "openingHours": "Opening Hours",
+            "reviewsTitle": "Reviews"
+          }
+        },
       "vendors": {
         "title": "Search Vendors",
         "description": "Find the perfect vendors for your event",
@@ -111,10 +173,6 @@
           "categoryLabel": "Category",
           "allCategories": "All Categories",
           "amenitiesLabel": "Amenities",
-          "delivery": "Delivery",
-          "kosher": "Kosher",
-          "vegan": "Vegan",
-          "discount": "Discounts",
           "applyButton": "Apply Filters"
         },
         "categories": {
@@ -382,7 +440,7 @@
       "areaLabel": "Area",
       "allAreas": "All Areas",
       "jerusalem": "Jerusalem & Surroundings",
-      "center": "Central",
+      "center": "Center",
       "south": "South",
       "north": "North",
       "typeLabel": "Venue Type",
@@ -444,7 +502,7 @@
     "filters": {
       "areaLabel": "Area",
       "allAreas": "All Areas",
-      "jerusalem": "Jerusalem & Area",
+      "jerusalem": "Jerusalem & Surroundings",
       "center": "Center",
       "south": "South",
       "north": "North",
@@ -458,17 +516,8 @@
       "decorator": "Design & Event Planning",
       "makeup": "Makeup",
       "transport": "Transportation",
-      "priceLabel": "Price Range",
-      "allPrices": "All Price Ranges",
-      "budget": "Budget",
-      "midRange": "Mid Range",
-      "luxury": "Luxury",
-      "distanceLabel": "Distance from Location",
-      "distance10": "Up to 10 km",
-      "distance25": "Up to 25 km",
-      "distance50": "Up to 50 km",
-      "distance100": "Up to 100 km",
-      "applyButton": "Apply Filters"
+      "applyButton": "Apply Filters",
+      "kashrutLabel": "Kashrut"
     },
     "specificFilters": {
       "catering": {
@@ -477,7 +526,16 @@
         "meat": "Meat",
         "pareve": "Pareve",
         "vegan": "Vegan",
-        "glutenFree": "Gluten Free"
+        "vegetarian": "Vegetarian",
+        "glutenFree": "Gluten Free",
+        "kashrut": {
+          "all": "all",
+          "mehadrin": "mehadrin",
+          "regularKosher": "regular kosher",
+          "rabbinate": "rabbinate",
+          "badatz": "badatz",
+          "nonKosher": "non-kosher"
+        }
       },
       "photographer": {
         "title": "Photography Field",
@@ -543,3 +601,4 @@
     }
   }
 }
+

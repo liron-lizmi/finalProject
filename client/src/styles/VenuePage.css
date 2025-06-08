@@ -87,23 +87,6 @@ html[dir="ltr"] .venue-search-button {
   gap: 20px;
 }
 
-@media (min-width: 992px) {
-  .venue-content {
-    flex-direction: row;
-  }
-  
-  .venue-filters {
-    flex: 0 0 250px;
-    align-self: flex-start;
-    position: sticky;
-    top: 20px;
-  }
-  
-  .venue-results-container {
-    flex: 1;
-  }
-}
-
 .venue-filters {
   background-color: #f8f8f8;
   padding: 20px;
@@ -213,13 +196,6 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
   overflow: hidden;
   border: 1px solid #ddd;
 }
-
-@media (min-width: 768px) {
-  .venue-map {
-    height: 400px;
-  }
-}
-
 .venue-list {
   background-color: #fff;
   border-radius: 4px;
@@ -251,27 +227,23 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
   margin: 20px auto;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin: 0 8px 0 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+html[dir="rtl"] .loading-spinner.small {
+  margin: 0 0 0 8px;
 }
 
 .venues-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-}
-
-@media (min-width: 576px) {
-  .venues-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 992px) {
-  .venues-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 .venue-card {
@@ -362,12 +334,6 @@ html[dir="ltr"] .rating-value {
 .review-count {
   color: #666;
   font-size: 0.85rem;
-}
-
-.venue-price {
-  color: #2e7d32;
-  font-weight: bold;
-  margin-top: auto;
 }
 
 .venue-details {
@@ -606,6 +572,150 @@ html[dir="ltr"] .review-rating {
   text-align: center;
 }
 
+.venue-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.results-info {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+  padding: 20px 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  min-width: 40px;
+  height: 40px;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.pagination-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-prev,
+.pagination-next {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.pagination-ellipsis {
+  padding: 0 8px;
+  color: #666;
+  font-size: 14px;
+}
+
+.venue-map .gm-style {
+  filter: grayscale(20%);
+}
+
+.venue-map .gm-style > div:first-child > div + div > div > div:nth-child(2) > div > div {
+  background-color: #f5f5f5 !important;
+}
+
+.venue-map .gm-style-pbc {
+  background-color: #f5f5f5 !important;
+}
+
+[dir="rtl"] .pagination {
+  direction: ltr;
+}
+
+[dir="rtl"] .pagination-prev::before {
+  content: "›";
+}
+
+[dir="rtl"] .pagination-next::before {
+  content: "‹";
+}
+
+[dir="rtl"] .pagination-prev,
+[dir="rtl"] .pagination-next {
+  font-size: 18px;
+}
+
+.image-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+}
+
+.loading-spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.venue-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.venue-image img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (min-width: 576px) {
+  .venues-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .venue-details-content {
     padding: 15px;
@@ -618,4 +728,47 @@ html[dir="ltr"] .review-rating {
   .venue-details-header h2 {
     font-size: 1.3rem;
   }
+
+  .pagination-btn {
+    min-width: 35px;
+    height: 35px;
+    font-size: 13px;
+  }
+  
+  .venue-list-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .results-info {
+    font-size: 13px;
+  }
+
+  .venue-map {
+    height: 400px;
+  }
 }
+
+@media (min-width: 992px) {
+  .venue-content {
+    flex-direction: row;
+  }
+  
+  .venue-filters {
+    flex: 0 0 250px;
+    align-self: flex-start;
+    position: sticky;
+    top: 20px;
+  }
+  
+  .venue-results-container {
+    flex: 1;
+  }
+
+  .venues-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
