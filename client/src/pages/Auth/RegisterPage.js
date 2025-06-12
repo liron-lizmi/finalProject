@@ -7,7 +7,7 @@ import '../../styles/AuthPages.css';
 
 const RegisterPage = () => {
   const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'he'; // Check if current language is Hebrew
+  const isRTL = i18n.language === 'he'; 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -49,8 +49,8 @@ const RegisterPage = () => {
         to_name: `${userData.firstName} ${userData.lastName}`,
         to_email: userData.email,
         user_name: `${userData.firstName} ${userData.lastName}`,
-        message: t('emails.welcomeMessage', 'ברוכים הבאים לאתר שלנו! חשבונך נוצר בהצלחה.'),
-        site_name: t('general.appName', 'אפליקציית אירועים'),
+        message: t('emails.welcomeMessage'),
+        site_name: t('general.appName'),
         login_url: `${window.location.origin}/login`
       };
 
@@ -135,10 +135,8 @@ const RegisterPage = () => {
       });
 
       if (response.data.token) {
-        // שמירת המידע בלוקל סטורג'
         localStorage.setItem('token', response.data.token);
         
-        // יצירת אובייקט משתמש מלא יותר לשמירה
         const userObject = {
           ...response.data.user,
           name: `${formData.firstName} ${formData.lastName}`,
@@ -154,8 +152,8 @@ const RegisterPage = () => {
         });
         
         const message = emailSent 
-          ? t('auth.registerSuccess', 'נרשמת בהצלחה!') 
-          : t('auth.registerSuccessNoEmail', 'נרשמת בהצלחה! לא הצלחנו לשלוח אימייל אישור.');
+          ? t('auth.registerSuccess') 
+          : t('auth.registerSuccessNoEmail',);
         
         setSuccessMessage(message);
         

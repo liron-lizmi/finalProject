@@ -110,9 +110,6 @@ const updateEvent = async (req, res) => {
       }
     }
     
-    console.log("Saving event with venues:", JSON.stringify(event.venues, null, 2));
-    console.log("Saving event with vendors:", JSON.stringify(event.vendors, null, 2));
-    
     const updatedEvent = await event.save();
     res.json(updatedEvent);
   } catch (err) {

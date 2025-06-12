@@ -112,7 +112,7 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s;
-  position: relative; 
+  position: relative;
   z-index: 2;
 }
 
@@ -341,15 +341,6 @@
   }
 }
 
-.manual-venue-form {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #fff;
-  border: none;
-  box-shadow: none;
-}
-
 .form-group {
   margin-bottom: 15px;
 }
@@ -373,50 +364,45 @@
 
 .form-actions {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 15px;
   margin-top: 25px;
 }
 
+.rtl .manual-venue-form .form-group {
+  text-align: right;
+}
 
-.save-venue-button,
-.add-manual-venue-button {
-  background-color: #000;
-  color: #fff;
-  border: none;
+.rtl .manual-venue-form .form-group label {
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 0;
+}
+
+.ltr .manual-venue-form .form-group {
+  text-align: left;
+}
+
+.ltr .manual-venue-form .form-group label {
+  text-align: left;
+  padding-left: 10px;
+  padding-right: 0;
+}
+
+.cancel-button {
+  background-color: #f8f8f8;
+  color: #333;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 0.6rem 1.1rem;
-  font-size: 1.1rem;
+  padding: 10px 20px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
-.save-venue-button:hover,
-.add-manual-venue-button:hover {
-  background-color: #333;
-}
-
-.cancel-button {
-  background-color: transparent;
-  color: #000;
-  border: 1px solid #000;
-  border-radius: 4px;
-  padding: 0.6rem 1.1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
 .cancel-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.venue-selection-options {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  margin-top: 20px;
+  background-color: #e8e8e8;
+  transform: none;
 }
 
 .rtl {
@@ -535,26 +521,6 @@
   margin-bottom: 20px;
 }
 
-.add-more-venues {
-  text-align: center;
-  margin-top: 20px;
-}
-
-.add-venue-button {
-  background-color: #000;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.6rem 1.1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.add-venue-button:hover {
-  background-color: #333;
-}
-
 .error-text {
   color: #d32f2f;
   font-size: 0.875rem;
@@ -570,25 +536,26 @@
 }
 
 @media (max-width: 768px) {
+ 
   .feature-page-header {
     flex-direction: column;
     gap: 15px;
     align-items: center;
   }
-  
+ 
   .back-button {
     margin-bottom: 10px;
   }
-  
+ 
   .feature-page-header h1 {
     font-size: 1.8rem;
   }
-  
+ 
   .venue-details-card .venue-actions {
     flex-direction: column;
     gap: 10px;
   }
-  
+ 
   .feature-title-section {
     position: static;
     transform: none;
@@ -602,8 +569,10 @@
   .header-logo {
     height: 45px;
   }
-  
+ 
   .logo-image {
     max-width: 160px;
   }
+ 
+
 }

@@ -27,11 +27,11 @@ const ResetPassword = () => {
 
   const validatePassword = () => {
     if (!formData.password) {
-      setError(t('errors.newPasswordRequired', 'אנא הזן סיסמה חדשה'));
+      setError(t('errors.newPasswordRequired'));
       return false;
     }
     if (formData.password.length < 6) {
-      setError(t('errors.shortPassword', 'הסיסמה צריכה להכיל לפחות 6 תווים'));
+      setError(t('errors.shortPassword'));
       return false;
     }
 
@@ -40,12 +40,12 @@ const ResetPassword = () => {
     const hasNumbers = /\d/.test(formData.password);
 
     if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
-      setError(t('errors.passwordRequirements', 'הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר'));
+      setError(t('errors.passwordRequirements'));
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError(t('errors.passwordMismatch', 'הסיסמאות אינן תואמות'));
+      setError(t('errors.passwordMismatch'));
       return false;
     }
 
@@ -67,16 +67,16 @@ const ResetPassword = () => {
         password: formData.password
       });
 
-      setMessage(response.data.message || t('auth.passwordUpdated', 'הסיסמה עודכנה בהצלחה'));
+      setMessage(response.data.message || t('auth.passwordUpdated'));
       
       setTimeout(() => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || t('errors.generalError', 'אירעה שגיאה. אנא נסה שוב מאוחר יותר');
+      const errorMessage = err.response?.data?.message || t('errors.generalError');
       
       if (err.response?.data?.code === 'SAME_PASSWORD') {
-        setError(t('errors.samePassword', 'השתמשת בסיסמה זו בעבר, אנא בחר סיסמה חדשה'));
+        setError(t('errors.samePassword'));
       } else {
         setError(errorMessage);
       }
@@ -90,19 +90,19 @@ const ResetPassword = () => {
 
     return (
       <div className="password-strength">
-        <h4>{t('auth.passwordRequirements', 'דרישות הסיסמה:')}</h4>
+        <h4>{t('auth.passwordRequirements')}</h4>
         <ul>
           <li className={/[A-Z]/.test(formData.password) ? 'valid' : 'invalid'}>
-            {t('auth.requireUppercase', 'אות גדולה אחת לפחות')}
+            {t('auth.requireUppercase')}
           </li>
           <li className={/[a-z]/.test(formData.password) ? 'valid' : 'invalid'}>
-            {t('auth.requireLowercase', 'אות קטנה אחת לפחות')}
+            {t('auth.requireLowercase')}
           </li>
           <li className={/\d/.test(formData.password) ? 'valid' : 'invalid'}>
-            {t('auth.requireNumber', 'מספר אחד לפחות')}
+            {t('auth.requireNumber')}
           </li>
           <li className={formData.password.length >= 6 ? 'valid' : 'invalid'}>
-            {t('auth.requireLength', 'אורך מינימלי של 6 תווים')}
+            {t('auth.requireLength')}
           </li>
         </ul>
       </div>
@@ -126,7 +126,7 @@ const ResetPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>{t('auth.resetPasswordTitle', 'איפוס סיסמה')}</h2>
+        <h2>{t('auth.resetPasswordTitle')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
@@ -135,7 +135,7 @@ const ResetPassword = () => {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder={t('auth.newPassword', 'סיסמה חדשה')}
+              placeholder={t('auth.newPassword')}
               value={formData.password}
               onChange={handleChange}
               required
@@ -151,7 +151,7 @@ const ResetPassword = () => {
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
-              placeholder={t('auth.confirmPassword', 'אימות סיסמה')}
+              placeholder={t('auth.confirmPassword')}
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -171,12 +171,12 @@ const ResetPassword = () => {
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? t('auth.updatingPassword', 'מעדכן סיסמה...') : t('auth.updatePassword', 'עדכן סיסמה')}
+            {isSubmitting ? t('auth.updatingPassword') : t('auth.updatePassword')}
           </button>
         </form>
         
         <p className="auth-link">
-          <span onClick={() => navigate('/login')}>{t('auth.backToLogin', 'חזרה להתחברות')}</span>
+          <span onClick={() => navigate('/login')}>{t('auth.backToLogin')}</span>
         </p>
       </div>
     </div>

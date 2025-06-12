@@ -7,7 +7,7 @@
 }
 
 .venue-page {
-  direction: inherit; 
+  direction: inherit;
 }
 
 .venue-header {
@@ -705,6 +705,72 @@ html[dir="ltr"] .review-rating {
   transition: opacity 0.3s ease;
 }
 
+.manual-venue-form {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.manual-venue-form .form-group {
+  max-width: 600px;
+  margin: 0 auto 15px;
+}
+
+.manual-venue-form .form-group label {
+  display: block;
+  width: 100%;
+  margin-right: 0;
+  padding-right: 10px;
+}
+
+.save-venue-button,
+.add-manual-venue-button {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.save-venue-button:hover,
+.add-manual-venue-button:hover {
+  background-color: #333;
+}
+
+.add-venue-button {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.6rem 1.1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.add-venue-button:hover {
+  background-color: #333;
+}
+
+.venue-selection-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.add-more-venues {
+  text-align: center;
+  margin-top: 20px;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -720,11 +786,11 @@ html[dir="ltr"] .review-rating {
   .venue-details-content {
     padding: 15px;
   }
-  
+ 
   .main-photo {
     height: 200px;
   }
-  
+ 
   .venue-details-header h2 {
     font-size: 1.3rem;
   }
@@ -734,13 +800,13 @@ html[dir="ltr"] .review-rating {
     height: 35px;
     font-size: 13px;
   }
-  
+ 
   .venue-list-header {
     flex-direction: column;
     gap: 10px;
     text-align: center;
   }
-  
+ 
   .results-info {
     font-size: 13px;
   }
@@ -748,20 +814,44 @@ html[dir="ltr"] .review-rating {
   .venue-map {
     height: 400px;
   }
+ 
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    align-items: stretch;
+  }
+
+  .save-venue-button,
+  .cancel-button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+ 
+  .manual-venue-form .form-actions {
+    max-width: 600px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+  }
+  
 }
+
 
 @media (min-width: 992px) {
   .venue-content {
     flex-direction: row;
   }
-  
+ 
   .venue-filters {
     flex: 0 0 250px;
     align-self: flex-start;
     position: sticky;
     top: 20px;
   }
-  
+ 
   .venue-results-container {
     flex: 1;
   }
@@ -771,4 +861,26 @@ html[dir="ltr"] .review-rating {
   }
 }
 
+@media (max-width: 480px) {
+  .form-actions {
+    gap: 8px;
+    margin-top: 15px;
+  }
 
+  .save-venue-button,
+  .cancel-button {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    max-width: 150px;
+    border-radius: 3px;
+  }
+
+  .manual-venue-form .form-actions {
+    padding: 0 15px;
+  }
+
+  .manual-venue-form .form-group {
+    margin: 0 auto 12px;
+    padding: 0 15px;
+  }
+}

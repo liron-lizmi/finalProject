@@ -143,7 +143,7 @@ const Dashboard = () => {
         setEvents(response.data);
       } catch (err) {
         console.error('Error fetching events:', err);
-        setError(t('errors.loadEventsFailed', 'Error loading events'));
+        setError(t('errors.loadEventsFailed'));
       }
     };
 
@@ -191,7 +191,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError(t('errors.notLoggedIn', 'Not logged in. Please login again.'));
+        setError(t('errors.notLoggedIn'));
         navigate('/login');
         return;
       }
@@ -207,7 +207,7 @@ const Dashboard = () => {
       setEventToDelete(null);
     } catch (err) {
       console.error('Error deleting event:', err);
-      setError(t('errors.deleteEventFailed', 'Error deleting the event'));
+      setError(t('errors.deleteEventFailed',));
       setShowDeleteModal(false);
       setEventToDelete(null);
     }
@@ -395,7 +395,7 @@ const Dashboard = () => {
         <div className="modal-overlay">
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`}>
             <div className="modal-header">
-              <h3>{t('dashboard.confirmDelete', 'אישור מחיקה')}</h3>
+              <h3>{t('dashboard.confirmDelete')}</h3>
               <button className="modal-close" onClick={cancelDelete}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -404,14 +404,14 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="modal-body">
-              <p>{t('dashboard.deleteConfirm', 'האם אתה בטוח שברצונך למחוק את האירוע', { title: eventToDelete?.title })}</p>
+              <p>{t('dashboard.deleteConfirm', { title: eventToDelete?.title })}</p>
             </div>
             <div className="modal-footer">
               <button className="modal-btn cancel" onClick={cancelDelete}>
-                {t('general.cancel', 'ביטול')}
+                {t('general.cancel')}
               </button>
               <button className="modal-btn delete" onClick={confirmDeleteEvent}>
-                {t('general.delete', 'מחיקה')}
+                {t('general.delete')}
               </button>
             </div>
           </div>

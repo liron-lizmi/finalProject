@@ -8,9 +8,6 @@ const LanguageSwitcher = () => {
 
   const handleLanguageChange = (lng) => {
     changeLanguage(lng);
-    // Force a re-render if needed by triggering a state change
-    // This is especially important for components that don't directly 
-    // subscribe to language changes
     window.dispatchEvent(new Event('languageChanged'));
   };
 

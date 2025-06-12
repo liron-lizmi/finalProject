@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import emailjs from 'emailjs-com';
+import { useTranslation } from 'react-i18next';
 import '../../styles/AuthPages.css';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -19,13 +21,13 @@ const ForgotPassword = () => {
     e.preventDefault();
     
     if (!email) {
-      setError('אנא הכנס כתובת אימייל');
+      setError(t('validation.emailRequired'));
       return;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('כתובת האימייל אינה תקינה');
+      setError(t('validation.emailInvalid'));
       return;
     }
     
@@ -62,7 +64,7 @@ const ForgotPassword = () => {
         console.error('Email sending error:', emailError);
       }
       
-      setMessage('קישור לאיפוס סיסמה נשלח לאימייל שלך');
+      setMessage(t('success.resetLinkSent'));
       
       setEmail('');
       
@@ -70,11 +72,11 @@ const ForgotPassword = () => {
       console.error('Error details:', err);
       
       if (err.response?.status === 404) {
-        setError('אימייל לא קיים במערכת');
+        setError(t('errors.emailNotExists'));
       } else if (err.message?.includes('emailjs')) {
-        setError('אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר');
+        setError(t('errors.emailSendError'));
       } else {
-        setError(err.response?.data?.message || 'אירעה שגיאה. אנא נסה שוב מאוחר יותר');
+        setError(err.response?.data?.message || t('errors.generalError'));
       }
     } finally {
       setIsSubmitting(false);
@@ -84,7 +86,7 @@ const ForgotPassword = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>שחזור סיסמה</h2>
+        <h2>{t('forgotPassword.title')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
@@ -92,7 +94,7 @@ const ForgotPassword = () => {
           <div className="form-group">
             <input
               type="email"
-              placeholder="הזן את כתובת האימייל שלך"
+              placeholder={t('forgotPassword.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -104,12 +106,12 @@ const ForgotPassword = () => {
             className="auth-button"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'שולח...' : 'שלח קישור לאיפוס סיסמה'}
+            {isSubmitting ? t('forgotPassword.submitting') : t('forgotPassword.submitButton')}
           </button>
         </form>
         
         <p className="auth-link">
-          <span onClick={() => navigate('/login')}>חזרה להתחברות</span>
+          <span onClick={() => navigate('/login')}>{t('forgotPassword.backToLogin')}</span>
         </p>
       </div>
     </div>

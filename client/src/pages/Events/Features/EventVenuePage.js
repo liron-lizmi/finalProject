@@ -327,7 +327,6 @@ const EventVenuePage = () => {
         </div>
       )}
 
-      {/* Venue Selection Modal - רק כאשר משנים מקום קיים */}
       {showVenueSelectionModal && (
         <div className="vendor-selection-modal">
           <div className="vendor-selection-modal-content">
@@ -437,7 +436,6 @@ const EventVenuePage = () => {
       ) : event.venues && event.venues.length > 0 ? (
         <div className="selected-venues">
           <h3>{t('venues.selectedVenue')}</h3>
-          {/* מציג רק את המקום הראשון (כי אמור להיות רק אחד) */}
           <div className="venue-details-card">
             <h4>{event.venues[0].name}</h4>
             {event.venues[0].address && (

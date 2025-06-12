@@ -84,11 +84,6 @@ const EventVendorsPage = () => {
         notes: vendor.notes || ''
       };
  
-      if (!vendorData.phone || vendorData.phone.trim() === '') {
-        setError(t('errors.vendorPhoneRequired'));
-        return;
-      }
- 
       const eventVendors = event.vendors || [];
       let updatedEvent = { ...event };
      
@@ -146,7 +141,7 @@ const EventVendorsPage = () => {
 
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
-      
+     
     if (!manualVendor.phone || manualVendor.phone.trim() === '') {
       setPhoneError(t('errors.invalidPhoneFormat'));
       return;
@@ -175,7 +170,7 @@ const EventVendorsPage = () => {
         phone: manualVendor.phone.trim(),
         notes: manualVendor.notes || ''
       };
-          
+         
       let updatedEvent = { ...event };
      
       if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
@@ -316,21 +311,21 @@ const EventVendorsPage = () => {
 
   const getCategoryName = (category) => {
     console.log("getCategoryName called with:", category);
-    
+   
     if (!category || category === 'other' || category === '') {
       const translation = t('events.features.vendors.categories.other');
       console.log("Translation for 'other':", translation);
-      
+     
       if (translation === 'events.features.vendors.categories.other') {
         return isRTL ? 'אחר' : 'Other';
       }
       return translation;
     }
-    
+   
     const translationKey = `events.features.vendors.categories.${category?.toLowerCase()}`;
     const translation = t(translationKey);
     console.log(`Translation for ${translationKey}:`, translation);
-    
+   
     if (translation === translationKey) {
       const fallbackTranslation = t('events.features.vendors.categories.other');
       if (fallbackTranslation === 'events.features.vendors.categories.other') {
@@ -338,7 +333,7 @@ const EventVendorsPage = () => {
       }
       return fallbackTranslation;
     }
-    
+   
     return translation;
   };
 
@@ -383,7 +378,6 @@ const EventVendorsPage = () => {
         </div>
       )}
      
-      {/* Vendor Selection Modal - רק כאשר משנים ספק קיים */}
       {showVendorSelectionModal && (
         <div className="vendor-selection-modal">
           <div className="vendor-selection-modal-content">
@@ -455,10 +449,8 @@ const EventVendorsPage = () => {
                 <option value="music">{t('events.features.vendors.categories.music')}</option>
                 <option value="dj">{t('events.features.vendors.categories.dj')}</option>
                 <option value="decoration">{t('events.features.vendors.categories.decoration')}</option>
-                <option value="lighting">{t('events.features.vendors.categories.lighting')}</option>
                 <option value="makeup">{t('events.features.vendors.categories.makeup')}</option>
                 <option value="transportation">{t('events.features.vendors.categories.transportation')}</option>
-                <option value="other">{t('events.features.vendors.categories.other')}</option>
               </select>
             </div>
             <div className="form-group">
