@@ -53,6 +53,13 @@
     "noToken": "No authorization, login required",
     "invalidToken": "Invalid token"
   },
+  "forgotPassword": {
+      "title": "Password Recovery",
+      "emailPlaceholder": "Enter your email address",
+      "submitButton": "Send Password Reset Link",
+      "submitting": "Sending...",
+      "backToLogin": "Back to Login"
+  },
   "validation": {
     "firstNameRequired": "First name is a required field",
     "firstNameMin": "First name must be at least 2 characters long",
@@ -81,7 +88,10 @@
     "userRequired": "User is required",
     "invalidEmail": "Invalid email address",
     "passwordTooShort": "Password is too short",
-    "invalidDate": "Invalid date"
+    "invalidDate": "Invalid date",
+    "emailNotExists": "Email does not exist in the system",
+    "emailSendError": "An error occurred sending the email. Please try again later",
+    "generalError": "An error occurred. Please try again later"
   },
   "guests": {
     "notFound": "Guest not found",

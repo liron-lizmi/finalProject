@@ -56,6 +56,13 @@
     "databaseError": "שגיאת מסד נתונים",
     "userNotFound": "משתמש לא נמצא"
   },
+  "forgotPassword": {
+      "title": "שחזור סיסמה",
+      "emailPlaceholder": "הזן את כתובת האימייל שלך",
+      "submitButton": "שלח קישור לאיפוס סיסמה",
+      "submitting": "שולח...",
+      "backToLogin": "חזרה להתחברות"
+  },
   "validation": {
     "firstNameRequired": "שם פרטי הוא שדה חובה",
     "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
@@ -84,7 +91,11 @@
     "userRequired": "משתמש נדרש",
     "invalidEmail": "כתובת אימייל לא תקינה",
     "passwordTooShort": "סיסמה קצרה מדי",
-    "invalidDate": "תאריך לא תקין"
+    "invalidDate": "תאריך לא תקין",
+    "vendorRequired": "פרטי הספק הם שדות חובה",
+    "emailNotExists": "אימייל לא קיים במערכת",
+    "emailSendError": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר",
+    "generalError": "אירעה שגיאה. אנא נסה שוב מאוחר יותר"
   },  
   "guests": {
     "notFound": "מוזמן לא נמצא",

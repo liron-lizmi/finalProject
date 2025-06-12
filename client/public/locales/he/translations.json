@@ -125,6 +125,7 @@
             "classic": "קלאסי",
             "urban": "חוץ/גן",
             "luxury": "יוקרתי",
+            "outside/garden": "חוץ/גן",
             "capacityLabel": "תכולה (מספר אורחים)",
             "selectCapacity": "בחר תכולה",
             "upTo50": "עד 50 איש",
