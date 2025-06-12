@@ -285,7 +285,14 @@
     "invalidPhoneFormat": "Phone number can only contain digits, spaces, and special characters like +, -, ()",
     "phoneNumbersOnly": "Please enter a valid phone number (digits, spaces, +, -, and parentheses only)",
     "venueNameRequired": "Venue name is required",
-    "venueAddressRequired": "Venue address is required"
+    "venueAddressRequired": "Venue address is required",
+    "serverError": "Server error",
+    "authError": "Authentication error - redirecting to login...",
+    "eventNotFound": "Event not found or you don't have access to it",
+    "fetchGuests": "Error loading guest list",
+    "addGuest": "Error adding guest",
+    "deleteGuest": "Error deleting guest",
+    "networkError": "Network error - please check your internet connection"
   },
   "home": {
     "hero": {
@@ -599,6 +606,57 @@
       "openingHours": "Opening Hours",
       "reviewsTitle": "Reviews"
     }
+  },
+  "guests": {
+    "title": "Guest List",
+    "description": "Manage your guest list, send invitations and receive RSVPs",
+    "addGuest": "Add Guest",
+    "addNewGuest": "Add New Guest",
+    "searchPlaceholder": "Search guests...",
+    "noGuests": "No guests yet. Add your first guest!",
+    "noFilteredGuests": "No guests found with current filters",
+    "confirmDelete": "Are you sure you want to delete this guest?",
+    "invitationSent": "Invitation sent",
+    "invitationNotSent": "Invitation not sent",
+    "guestNote": "Guest note",
+    "stats": {
+      "total": "Total Guests",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "pending": "Pending"
+    },
+    "groups": {
+      "all": "All Groups",
+      "family": "Family",
+      "friends": "Friends",
+      "work": "Work",
+      "other": "Other"
+    },
+    "rsvp": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "no_response": "No Response"
+    },
+    "form": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "add": "Add",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "validation": {
+    "phoneRequired": "Phone number is required",
+    "eventRequired": "Event is required",
+    "userRequired": "User is required",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "invalidPhoneFormat": "Invalid phone format"
   }
 }
 

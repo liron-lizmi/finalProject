@@ -1,0 +1,378 @@
+/* EventGuestsPage.css */
+
+.guests-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.guests-error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #c00;
+  text-align: center;
+  font-size: 16px;
+}
+
+.guests-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.guests-stat-card {
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e9ecef;
+}
+
+.guests-stat-card.total {
+  background-color: #f8f9fa;
+}
+
+.guests-stat-card.confirmed {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.guests-stat-card.declined {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.guests-stat-card.pending {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.guests-stat-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.guests-stat-card.confirmed .guests-stat-number {
+  color: #155724;
+}
+
+.guests-stat-card.declined .guests-stat-number {
+  color: #721c24;
+}
+
+.guests-stat-card.pending .guests-stat-number {
+  color: #856404;
+}
+
+.guests-stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.guests-stat-card.confirmed .guests-stat-label {
+  color: #155724;
+}
+
+.guests-stat-card.declined .guests-stat-label {
+  color: #721c24;
+}
+
+.guests-stat-card.pending .guests-stat-label {
+  color: #856404;
+}
+
+.guests-controls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.guests-add-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+.guests-add-button:hover {
+  background-color: #0056b3;
+}
+
+.guests-search-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+.guests-filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.guests-form {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.guests-form h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.guests-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.guests-form-input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.guests-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.guests-form-submit {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.guests-form-submit:hover {
+  background-color: #1e7e34;
+}
+
+.guests-form-cancel {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.guests-form-cancel:hover {
+  background-color: #545b62;
+}
+
+.guests-empty-message {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.guests-table {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.guests-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 120px 100px 80px;
+  gap: 15px;
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  align-items: center;
+}
+
+.guests-table-row:last-child {
+  border-bottom: none;
+}
+
+.guests-table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.guest-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.guest-name {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.guest-phone {
+  font-size: 14px;
+  color: #666;
+}
+
+.guest-group {
+  font-size: 14px;
+  color: #666;
+}
+
+.guest-notes {
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.guest-rsvp-status {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.guest-rsvp-status.confirmed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.guest-rsvp-status.declined {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.guest-rsvp-status.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.guest-rsvp-status.no_response {
+  background-color: #e2e3e5;
+  color: #6c757d;
+}
+
+.guest-invitation-status {
+  font-size: 12px;
+  color: #999;
+}
+
+.guest-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.guest-delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.guest-delete-button:hover {
+  background-color: #c82333;
+}
+
+/* התאמה למסכים קטנים */
+@media (max-width: 768px) {
+  .guests-container {
+    padding: 10px;
+  }
+
+  .guests-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .guests-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .guests-search-input {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .guests-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guests-table-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .guest-info {
+    order: 1;
+  }
+
+  .guest-group {
+    order: 2;
+  }
+
+  .guest-rsvp-status {
+    order: 3;
+    justify-self: start;
+  }
+
+  .guest-invitation-status {
+    order: 4;
+  }
+
+  .guest-actions {
+    order: 5;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 480px) {
+  .guests-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .guests-stat-card {
+    padding: 10px;
+  }
+
+  .guests-stat-number {
+    font-size: 20px;
+  }
+
+  .guests-form {
+    padding: 15px;
+  }
+
+  .guests-form-actions {
+    flex-direction: column;
+  }
+
+  .guests-table-row {
+    padding: 8px;
+  }
+}

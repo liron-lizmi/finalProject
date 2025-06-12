@@ -1,77 +1,97 @@
 {
-    "errors": {
-      "serverError": "שגיאת שרת",
-      "userExists": "משתמש עם אימייל זה כבר קיים במערכת",
-      "invalidCredentials": "שם משתמש או סיסמה שגויים",
-      "userNotFound": "משתמש לא נמצא",
-      "emailNotFound": "לא נמצא משתמש עם אימייל זה",
-      "resetTokenInvalid": "הטוקן אינו תקף או שפג תוקפו",
-      "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
-      "resetError": "אירעה שגיאה בתהליך איפוס הסיסמה",
-      "emailRequired": "נדרש אימייל",
-      "authenticationFailed": "אימות נכשל, אנא התחבר מחדש",
-      "vendorNotFound": "ספק לא נמצא",
-      "vendorExistingName": "ספק עם שם זה כבר קיים באירוע זה",
-      "vendorRequired": "פרטי הספק הם שדות חובה"
-    },
-    "success": {
-      "passwordReset": "הסיסמה עודכנה בהצלחה",
-      "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
-      "registrationComplete": "הרישום הושלם בהצלחה",
-      "vendorAdded": "הספק נוסף בהצלחה לאירוע",
-      "vendorUpdated": "פרטי הספק עודכנו בהצלחה",
-      "vendorDeleted": "הספק הוסר בהצלחה מהאירוע"
-    },
-    "email": {
-      "sendError": "אירעה שגיאה בשליחת אימייל אישור, אך הרישום הושלם בהצלחה"
-    },
-    "events": {
-      "notFound": "אירוע לא נמצא",
-      "deleteSuccess": "אירוע נמחק בהצלחה",
-      "createSuccess": "אירוע נוצר בהצלחה",
-      "updateSuccess": "אירוע עודכן בהצלחה",
-      "vendors": {
-        "addSuccess": "הספק נוסף בהצלחה לאירוע",
-        "updateSuccess": "פרטי הספק עודכנו בהצלחה",
-        "deleteSuccess": "הספק הוסר בהצלחה מהאירוע",
-        "notFound": "ספק לא נמצא באירוע זה",
-        "categories": {
-          "catering": "קייטרינג",
-          "photography": "צילום",
-          "music": "מוזיקה",
-          "decoration": "עיצוב",
-          "lighting": "תאורה",
-          "flowers": "פרחים",
-          "other": "אחר"
-        }
+  "errors": {
+    "serverError": "שגיאת שרת",
+    "userExists": "משתמש עם אימייל זה כבר קיים במערכת",
+    "invalidCredentials": "שם משתמש או סיסמה שגויים",
+    "userNotFound": "משתמש לא נמצא",
+    "emailNotFound": "לא נמצא משתמש עם אימייל זה",
+    "resetTokenInvalid": "הטוקן אינו תקף או שפג תוקפו",
+    "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
+    "resetError": "אירעה שגיאה בתהליך איפוס הסיסמה",
+    "emailRequired": "נדרש אימייל",
+    "authenticationFailed": "אימות נכשל, אנא התחבר מחדש",
+    "vendorNotFound": "ספק לא נמצא",
+    "vendorExistingName": "ספק עם שם זה כבר קיים באירוע זה",
+    "vendorRequired": "פרטי הספק הם שדות חובה"
+  },
+  "success": {
+    "passwordReset": "הסיסמה עודכנה בהצלחה",
+    "resetLinkSent": "קישור לאיפוס סיסמה נשלח לאימייל שלך",
+    "registrationComplete": "הרישום הושלם בהצלחה",
+    "vendorAdded": "הספק נוסף בהצלחה לאירוע",
+    "vendorUpdated": "פרטי הספק עודכנו בהצלחה",
+    "vendorDeleted": "הספק הוסר בהצלחה מהאירוע"
+  },
+  "email": {
+    "sendError": "אירעה שגיאה בשליחת אימייל אישור, אך הרישום הושלם בהצלחה"
+  },
+  "events": {
+    "notFound": "אירוע לא נמצא",
+    "deleteSuccess": "אירוע נמחק בהצלחה",
+    "createSuccess": "אירוע נוצר בהצלחה",
+    "updateSuccess": "אירוע עודכן בהצלחה",
+    "accessDenied": "אין הרשאה לגשת לאירוע זה",
+    "vendors": {
+      "addSuccess": "הספק נוסף בהצלחה לאירוע",
+      "updateSuccess": "פרטי הספק עודכנו בהצלחה",
+      "deleteSuccess": "הספק הוסר בהצלחה מהאירוע",
+      "notFound": "ספק לא נמצא באירוע זה",
+      "categories": {
+        "catering": "קייטרינג",
+        "photography": "צילום",
+        "music": "מוזיקה",
+        "decoration": "עיצוב",
+        "lighting": "תאורה",
+        "flowers": "פרחים",
+        "other": "אחר"
       }
-    },
-    "auth": {
-      "noToken": "אין הרשאה, נדרשת התחברות",
-      "invalidToken": "טוקן לא תקין"
-    },
-    "validation": {
-      "firstNameRequired": "שם פרטי הוא שדה חובה",
-      "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
-      "firstNameMax": "שם פרטי לא יכול להכיל יותר מ-50 תווים",
-      "lastNameRequired": "שם משפחה הוא שדה חובה",
-      "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
-      "lastNameMax": "שם משפחה לא יכול להכיל יותר מ-50 תווים",
-      "emailRequired": "אימייל הוא שדה חובה",
-      "emailInvalid": "נא להזין כתובת אימייל תקינה",
-      "passwordRequired": "סיסמה היא שדה חובה",
-      "passwordMin": "הסיסמה צריכה להכיל לפחות 6 תווים",
-      "passwordMax": "הסיסמה לא יכולה להכיל יותר מ-30 תווים",
-      "passwordComplexity": "הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות",
-      "eventTitleRequired": "כותרת האירוע היא שדה חובה",
-      "eventDateRequired": "תאריך האירוע הוא שדה חובה",
-      "eventTimeRequired": "שעת האירוע היא שדה חובה",
-      "eventUserRequired": "יש צורך במשתמש עבור האירוע",
-      "invalidTimeFormat": "פורמט שעה לא תקין. יש להשתמש בפורמט 24 שעות (למשל: 18:00)",
-      "vendorNameRequired": "שם הספק הוא שדה חובה",
-      "vendorCategoryRequired": "קטגוריית הספק היא שדה חובה",
-      "vendorPhoneInvalid": "נא להזין מספר טלפון תקין",
-      "vendorPhoneRequired": "מספר טלפון של הספק הוא שדה חובה",
-      "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות "
     }
+  },
+  "auth": {
+    "noToken": "אין הרשאה, נדרשת התחברות",
+    "invalidToken": "טוקן לא תקין",
+    "serverError": "שגיאת שרת",
+    "validationError": "שגיאת ולידציה",
+    "missingParameters": "חסרים פרמטרים נדרשים",
+    "databaseError": "שגיאת מסד נתונים",
+    "userNotFound": "משתמש לא נמצא"
+  },
+  "validation": {
+    "firstNameRequired": "שם פרטי הוא שדה חובה",
+    "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
+    "firstNameMax": "שם פרטי לא יכול להכיל יותר מ-50 תווים",
+    "lastNameRequired": "שם משפחה הוא שדה חובה",
+    "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
+    "lastNameMax": "שם משפחה לא יכול להכיל יותר מ-50 תווים",
+    "emailRequired": "אימייל הוא שדה חובה",
+    "emailInvalid": "נא להזין כתובת אימייל תקינה",
+    "passwordRequired": "סיסמה היא שדה חובה",
+    "passwordMin": "הסיסמה צריכה להכיל לפחות 6 תווים",
+    "passwordMax": "הסיסמה לא יכולה להכיל יותר מ-30 תווים",
+    "passwordComplexity": "הסיסמה חייבת להכיל אות גדולה, אות קטנה ומספר אחד לפחות",
+    "eventTitleRequired": "כותרת האירוע היא שדה חובה",
+    "eventDateRequired": "תאריך האירוע הוא שדה חובה",
+    "eventTimeRequired": "שעת האירוע היא שדה חובה",
+    "eventUserRequired": "יש צורך במשתמש עבור האירוע",
+    "invalidTimeFormat": "פורמט שעה לא תקין. יש להשתמש בפורמט 24 שעות (למשל: 18:00)",
+    "vendorNameRequired": "שם הספק הוא שדה חובה",
+    "vendorCategoryRequired": "קטגוריית הספק היא שדה חובה",
+    "vendorPhoneInvalid": "נא להזין מספר טלפון תקין",
+    "vendorPhoneRequired": "מספר טלפון של הספק הוא שדה חובה",
+    "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות ",
+    "phoneRequired": "מספר טלפון נדרש",
+    "eventRequired": "אירוע נדרש",
+    "userRequired": "משתמש נדרש",
+    "invalidEmail": "כתובת אימייל לא תקינה",
+    "passwordTooShort": "סיסמה קצרה מדי",
+    "invalidDate": "תאריך לא תקין"
+  },  
+  "guests": {
+    "notFound": "מוזמן לא נמצא",
+    "accessDenied": "אין הרשאה לגשת למוזמן זה",
+    "createSuccess": "מוזמן נוסף בהצלחה",
+    "updateSuccess": "מוזמן עודכן בהצלחה",
+    "deleteSuccess": "מוזמן נמחק בהצלחה",
+    "rsvpUpdateSuccess": "תגובת המוזמן עודכנה בהצלחה"
+  }
 }

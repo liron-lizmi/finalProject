@@ -17,7 +17,7 @@ i18next
     fallbackLng: 'he',
     supportedLngs: ['he', 'en'],
     backend: {
-      loadPath: path.join(__dirname, './locales/{{lng}}/{{ns}}.json'),
+      loadPath: path.join(__dirname, './locales/{{lng}}/translations.json'),
     },
     detection: {
       order: ['header', 'cookie', 'querystring'],
@@ -36,17 +36,41 @@ const eventRoutes = require('./routes/eventRoutes');
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
 if (!MONGO_URI) {
     console.error('MONGO_URI is not defined in environment variables. Check your .env file.');
     process.exit(1);
 }
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-
 app.use(middleware.handle(i18next));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+app.get('/', (req, res) => {
+    res.send('API is running...');
+});
+
+app.use('*', (req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ 
+    message: req.t ? req.t('errors.serverError') : 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
 
 mongoose.connect(MONGO_URI)
 .then(() => {
@@ -59,10 +83,4 @@ mongoose.connect(MONGO_URI)
     console.error('Failed to connect to MongoDB:', err);
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/events', eventRoutes);
-
-app.get('/', (req, res) => {
-    res.send('API is running...');
-});
+module.exports = app;

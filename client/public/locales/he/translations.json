@@ -285,7 +285,14 @@
     "invalidPhoneFormat": "מספר הטלפון יכול להכיל רק ספרות",
     "phoneNumbersOnly": "אנא הכנס מספר טלפון תקין (ספרות, רווחים, +, -, וסוגריים בלבד)",
     "venueNameRequired": "שם המקום הוא שדה חובה",
-    "venueAddressRequired": "כתובת המקום היא שדה חובה"
+    "venueAddressRequired": "כתובת המקום היא שדה חובה",
+    "serverError": "שגיאת שרת",
+    "authError": "שגיאת אימות - מעביר אותך לדף התחברות...",
+    "eventNotFound": "האירוע לא נמצא או שאין לך הרשאה לגשת אליו",
+    "fetchGuests": "שגיאה בטעינת רשימת המוזמנים",
+    "addGuest": "שגיאה בהוספת המוזמן",
+    "deleteGuest": "שגיאה במחיקת המוזמן",
+    "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט"
   },
   "home": {
     "hero": {
@@ -344,262 +351,313 @@
       "title": "ניהול תקציב חכם",
       "description": "עקוב אחר התקציב שלך והוצאות האירוע בזמן אמת. הכלי החכם שלנו עוזר לך להתמקד במה שחשוב באמת, לזהות מקומות לחסוך ולוודא שתישאר במסגרת התקציב שהגדרת. קבל תובנות לגבי דפוסי הוצאה, השווה בין הצעות מחיר, וקבל התראות כשמתקרבים למגבלות תקציב.",
       "cta": "נהל תקציב"
-    }
-  },
-  "process": {
-    "title": "תהליך תכנון פשוט ואפקטיבי",
-    "description": "מהרעיון הראשוני ועד ליום האירוע, מערכת PlanIt מלווה אותך בכל צעד בדרך",
-    "step1": {
-      "title": "הגדרת האירוע",
-      "description": "צור חשבון ב-PlanIt והגדר את סוג האירוע, התאריך, מספר המוזמנים והתקציב. המערכת תתאים את עצמה לצרכים הספציפיים שלך ותיצור תוכנית עבודה אישית."
-    },
-    "step2": {
-      "title": "בחירת מקום וספקים",
-      "description": "המערכת תציע לך אפשרויות מותאמות אישית למקומות וספקים המתאימים לדרישות ולתקציב שלך. תוכל להשוות מחירים, לקרוא חוות דעת, ולקבל החלטות מושכלות במקום אחד."
-    },
-    "step3": {
-      "title": "ניהול הזמנות ואורחים",
-      "description": "שליחת הזמנות דיגיטליות מעוצבות, מעקב אחר אישורי הגעה, וניהול הערות מיוחדות כמו העדפות תפריט או צרכים מיוחדים. המערכת מרכזת את כל המידע במקום אחד ומאפשרת תקשורת קלה עם האורחים."
-    },
-    "step4": {
-      "title": "תכנון סופי ולוגיסטיקה",
-      "description": "עיצוב סידורי הישיבה, תיאום סופי עם ספקים ובניית לוח זמנים מפורט ליום האירוע. המערכת מוודאת שכל הפרטים הקטנים מטופלים ושהכל מוכן ליום הגדול."
-    },
-    "step5": {
-      "title": "ניהול האירוע בזמן אמת",
-      "description": "קבל גישה לכל הנתונים החשובים ביום האירוע, שתף משימות עם אנשי צוות, ותעד רגעים מיוחדים ביומן האירוע הדיגיטלי. גם אחרי האירוע, תוכל לשלוח תודות לאורחים ולספקים ולסכם את האירוע המוצלח שלך."
-    }
-  },
-  "testimonials": {
-    "title": "לקוחות מספרים",
-    "quote": "\"PlanIt פשוט שינה את כל חווית תכנון החתונה שלנו. במקום לחץ ודאגות, יכולנו באמת ליהנות מהתהליך. הכלים לניהול תקציב ורשימת מוזמנים חסכו לנו המון זמן וכסף, וביום האירוע הכל התנהל בצורה מושלמת!\"",
-    "author": "רונית ודן",
-    "event": "חתונה בגן אירועים, יוני 2024"
-  },
-  "cta": {
-    "title": "מוכנים להתחיל?",
-    "description": "פתחו חשבון חינמי והתחילו לתכנן את האירוע המושלם שלכם כבר היום!",
-    "button": "צור חשבון חדש"
-  },
-  "footer": {
-    "description": "PlanIt הוא הפתרון המושלם לתכנון וניהול אירועים מוצלחים. אנו מחויבים לעזור לך להפוך את החזון שלך למציאות.",
-    "about": "אודות",
-    "services": "שירותים",
-    "blog": "בלוג",
-    "contact": "צור קשר",
-    "terms": "תנאי שימוש",
-    "privacy": "מדיניות פרטיות",
-    "copyright": "כל הזכויות שמורות © 2025 PlanIt"
-  }
-},
-"venues": {
-  "addManuallyButton": "הוסף אולם ידנית",
-  "deleteVenue": "מחק אולם",
-  "changeVenueOptions": "איך תרצה לשנות את מיקום האירוע?",
-  "addVenueOptions": "איך תרצה להוסיף מיקום?",
-  "addAnotherVenue": "הוסף מיקום נוסף",
-  "venueDetails": {
-    "name": "שם",
-    "address": "כתובת",
-    "phone": "טלפון",
-    "website": "אתר"
-  },
-  "venueDeletedSuccess": "האולם נמחק בהצלחה",
-  "searchTitle": "חיפוש מקום לאירוע",
-  "searchSubtitle": "מצא את המקום המושלם לאירוע שלך",
-  "searchPlaceholder": "חפש לפי עיר, שכונה או שם המקום",
-  "selectedVenue": "המקום שנבחר",
-  "changeVenue": "שנה מקום",
-  "noVenueSelected": "עדיין לא נבחר מקום לאירוע שלך.",
-  "searchAndFilterButton": "חפש וסנן מקומות לאירוע",
-  "searchButton": "חפש",
-  "filtersTitle": "סינון תוצאות",
-  "searchResults": "תוצאות חיפוש",
-  "loading": "טוען מקומות...",
-  "noResults": "לא נמצאו מקומות. נסה לשנות את החיפוש או הסינון.",
-  "defaultVenueName": "מקום אירוע",
-  "venueAddedSuccess": "המקום נוסף בהצלחה לאירוע שלך",
-  "selectButton": "בחר מקום זה לאירוע",
-  "searchQueries": {
-    "restaurant": "מסעדה",
-    "eventVenue": "אולם אירועים",
-    "banquetHall": "אולם כנסים",
-    "hotel": "מלון",
-    "park": "גן אירועים",
-    "museum": "מוזיאון",
-    "default": "אולם אירועים"
-  },
-  "styles": {
-    "modern": "מודרני",
-    "classic": "קלאסי",
-    "outdoor": "חוץ",
-    "garden": "גן",
-    "urban": "אורבני",
-    "luxury": "יוקרה"
-  },
-  "filters": {
-    "areaLabel": "אזור",
-    "allAreas": "כל האזורים",
-    "jerusalem": "ירושלים והסביבה",
-    "center": "מרכז",
-    "south": "דרום",
-    "north": "צפון",
-    "typeLabel": "סוג המקום",
-    "allTypes": "הכל",
-    "restaurant": "מסעדה",
-    "eventVenue": "אולם אירועים",
-    "banquetHall": "אולם כנסים",
-    "hotel": "מלון",
-    "park": "גן אירועים",
-    "museum": "מוזיאון",
-    "styleLabel": "סגנון אולם",
-    "allStyles": "הכל",
-    "modern": "מודרני",
-    "classic": "קלאסי",
-    "outdoor": "חוץ/גן",
-    "urban": "אורבני",
-    "luxury": "יוקרה",
-    "capacityLabel": "תכולה (מספר אורחים)",
-    "selectCapacity": "בחר תכולה",
-    "upTo50": "עד 50 אורחים",
-    "upTo100": "עד 100 אורחים",
-    "upTo200": "עד 200 אורחים",
-    "upTo300": "עד 300 אורחים",
-    "upTo500": "עד 500 אורחים",
-    "above500": "מעל 500 אורחים",
-    "amenitiesLabel": "שירותים נלווים",
-    "parking": "חניה",
-    "accessibility": "נגישות",
-    "outdoorSpace": "שטח חוץ",
-    "catering": "קייטרינג במקום",
-    "accommodation": "אפשרויות לינה",
-    "applyButton": "החל סינון"
-  },
-  "details": {
-    "address": "כתובת",
-    "phone": "טלפון",
-    "website": "אתר",
-    "rating": "דירוג",
-    "outOf5": "מתוך 5",
-    "reviews": "ביקורות",
-    "priceLevel": "רמת מחיר",
-    "openingHours": "שעות פתיחה",
-    "reviewsTitle": "ביקורות"
-  }
-},
-"vendors": {
-  "searchTitle": "חיפוש ספקים",
-  "searchSubtitle": "מצא את הספקים המושלמים לאירוע שלך",
-  "searchButton": "חפש",
-  "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
-  "filtersTitle": "סינון תוצאות",
-  "searchResults": "תוצאות חיפוש",
-  "loading": "טוען ספקים...",
-  "noResults": "לא נמצאו ספקים התואמים את החיפוש שלך",
-  "noAddress": "כתובת לא זמינה",
-  "defaultVendorName": "ספק",
-  "selectButton": "בחר ספק",
-  "vendorAddedSuccess": "הספק נוסף בהצלחה!",
-  "filters": {
-    "areaLabel": "אזור",
-    "allAreas": "כל האזורים",
-    "jerusalem": "ירושלים והסביבה",
-    "center": "מרכז",
-    "south": "דרום",
-    "north": "צפון",
-    "typeLabel": "סוג ספק",
-    "allTypes": "כל הסוגים",
-    "catering": "קייטרינג",
-    "photographer": "צילום",
-    "florist": "פרחים",
-    "musician": "מוזיקה",
-    "dj": "תקליטן",
-    "decorator": "עיצוב",
-    "makeup": "איפור",
-    "transport": "הסעות",
-    "applyButton": "החל סינון",
-    "kashrutLabel": "כשרות"
-  },
-  "specificFilters": {
-    "catering": {
-      "title": "סוג קייטרינג",
-      "dairy": "חלבי",
-      "meat": "בשרי",
-      "pareve": "פרווה",
-      "vegetarian": "צמחוני",
-      "vegan": "טבעוני",
-      "glutenFree": "ללא גלוטן",
-      "kashrut": {
-        "all": "הכל",
-        "mehadrin": "מהדרין",
-        "regularKosher": "כשרות רגילה",
-        "rabbinate": "רבנות",
-        "badatz": "בדץ",
-        "nonKosher": "לא כשר"
       }
     },
-    "photographer": {
-      "title": "תחום צילום",
-      "wedding": "צילום חתונות",
-      "event": "צילום אירועים",
-      "portrait": "צילום פורטרטים",
-      "commercial": "צילום מסחרי"
+    "process": {
+      "title": "תהליך תכנון פשוט ואפקטיבי",
+      "description": "מהרעיון הראשוני ועד ליום האירוע, מערכת PlanIt מלווה אותך בכל צעד בדרך",
+      "step1": {
+        "title": "הגדרת האירוע",
+        "description": "צור חשבון ב-PlanIt והגדר את סוג האירוע, התאריך, מספר המוזמנים והתקציב. המערכת תתאים את עצמה לצרכים הספציפיים שלך ותיצור תוכנית עבודה אישית."
+      },
+      "step2": {
+        "title": "בחירת מקום וספקים",
+        "description": "המערכת תציע לך אפשרויות מותאמות אישית למקומות וספקים המתאימים לדרישות ולתקציב שלך. תוכל להשוות מחירים, לקרוא חוות דעת, ולקבל החלטות מושכלות במקום אחד."
+      },
+      "step3": {
+        "title": "ניהול הזמנות ואורחים",
+        "description": "שליחת הזמנות דיגיטליות מעוצבות, מעקב אחר אישורי הגעה, וניהול הערות מיוחדות כמו העדפות תפריט או צרכים מיוחדים. המערכת מרכזת את כל המידע במקום אחד ומאפשרת תקשורת קלה עם האורחים."
+      },
+      "step4": {
+        "title": "תכנון סופי ולוגיסטיקה",
+        "description": "עיצוב סידורי הישיבה, תיאום סופי עם ספקים ובניית לוח זמנים מפורט ליום האירוע. המערכת מוודאת שכל הפרטים הקטנים מטופלים ושהכל מוכן ליום הגדול."
+      },
+      "step5": {
+        "title": "ניהול האירוע בזמן אמת",
+        "description": "קבל גישה לכל הנתונים החשובים ביום האירוע, שתף משימות עם אנשי צוות, ותעד רגעים מיוחדים ביומן האירוע הדיגיטלי. גם אחרי האירוע, תוכל לשלוח תודות לאורחים ולספקים ולסכם את האירוע המוצלח שלך."
+      }
     },
-    "florist": {
-      "title": "סוג שירות פרחים",
-      "bridal": "זרי כלה",
-      "arrangements": "סידורי פרחים",
-      "decorations": "קישוטי פרחים",
-      "plants": "צמחים"
+    "testimonials": {
+      "title": "לקוחות מספרים",
+      "quote": "\"PlanIt פשוט שינה את כל חווית תכנון החתונה שלנו. במקום לחץ ודאגות, יכולנו באמת ליהנות מהתהליך. הכלים לניהול תקציב ורשימת מוזמנים חסכו לנו המון זמן וכסף, וביום האירוע הכל התנהל בצורה מושלמת!\"",
+      "author": "רונית ודן",
+      "event": "חתונה בגן אירועים, יוני 2024"
     },
-    "musician": {
-      "title": "סוג מוזיקה",
-      "solo": "מוזיקאי סולו",
-      "band": "להקה",
-      "classical": "מוזיקה קלאסית",
-      "modern": "מוזיקה מודרנית",
-      "traditional": "מוזיקה מסורתית"
+    "cta": {
+      "title": "מוכנים להתחיל?",
+      "description": "פתחו חשבון חינמי והתחילו לתכנן את האירוע המושלם שלכם כבר היום!",
+      "button": "צור חשבון חדש"
     },
-    "dj": {
-      "title": "תחום התמחות",
-      "wedding": "DJ לחתונות",
-      "party": "DJ למסיבות",
-      "corporate": "DJ לאירועים עסקיים",
-      "withEquipment": "DJ עם ציוד"
-    },
-    "decorator": {
-      "title": "סוג קישוט",
-      "balloons": "בלונים",
-      "lighting": "תאורה",
-      "furniture": "רהיטים",
-      "backdrops": "רקעים"
-    },
-    "makeup": {
-      "title": "סוג איפור",
-      "bridal": "איפור כלה",
-      "event": "איפור לאירועים",
-      "withHairstyling": "איפור ועיצוב שיער",
-      "mobile": "שירות נייד"
-    },
-    "transport": {
-      "title": "סוג רכב",
-      "luxuryCars": "מכוניות יוקרה",
-      "buses": "אוטובוסים",
-      "limousines": "לימוזינות",
-      "classicCars": "מכוניות קלאסיות"
+    "footer": {
+      "description": "PlanIt הוא הפתרון המושלם לתכנון וניהול אירועים מוצלחים. אנו מחויבים לעזור לך להפוך את החזון שלך למציאות.",
+      "about": "אודות",
+      "services": "שירותים",
+      "blog": "בלוג",
+      "contact": "צור קשר",
+      "terms": "תנאי שימוש",
+      "privacy": "מדיניות פרטיות",
+      "copyright": "כל הזכויות שמורות © 2025 PlanIt"
     }
   },
-  "details": {
-    "address": "כתובת",
-    "phone": "טלפון",
-    "website": "אתר",
-    "rating": "דירוג",
-    "outOf5": "מתוך 5",
-    "reviews": "ביקורות",
-    "priceLevel": "רמת מחיר",
-    "openingHours": "שעות פתיחה",
-    "reviewsTitle": "ביקורות"
+  "venues": {
+    "addManuallyButton": "הוסף אולם ידנית",
+    "deleteVenue": "מחק אולם",
+    "changeVenueOptions": "איך תרצה לשנות את מיקום האירוע?",
+    "addVenueOptions": "איך תרצה להוסיף מיקום?",
+    "addAnotherVenue": "הוסף מיקום נוסף",
+    "venueDetails": {
+      "name": "שם",
+      "address": "כתובת",
+      "phone": "טלפון",
+      "website": "אתר"
+    },
+    "venueDeletedSuccess": "האולם נמחק בהצלחה",
+    "searchTitle": "חיפוש מקום לאירוע",
+    "searchSubtitle": "מצא את המקום המושלם לאירוע שלך",
+    "searchPlaceholder": "חפש לפי עיר, שכונה או שם המקום",
+    "selectedVenue": "המקום שנבחר",
+    "changeVenue": "שנה מקום",
+    "noVenueSelected": "עדיין לא נבחר מקום לאירוע שלך.",
+    "searchAndFilterButton": "חפש וסנן מקומות לאירוע",
+    "searchButton": "חפש",
+    "filtersTitle": "סינון תוצאות",
+    "searchResults": "תוצאות חיפוש",
+    "loading": "טוען מקומות...",
+    "noResults": "לא נמצאו מקומות. נסה לשנות את החיפוש או הסינון.",
+    "defaultVenueName": "מקום אירוע",
+    "venueAddedSuccess": "המקום נוסף בהצלחה לאירוע שלך",
+    "selectButton": "בחר מקום זה לאירוע",
+    "searchQueries": {
+      "restaurant": "מסעדה",
+      "eventVenue": "אולם אירועים",
+      "banquetHall": "אולם כנסים",
+      "hotel": "מלון",
+      "park": "גן אירועים",
+      "museum": "מוזיאון",
+      "default": "אולם אירועים"
+    },
+    "styles": {
+      "modern": "מודרני",
+      "classic": "קלאסי",
+      "outdoor": "חוץ",
+      "garden": "גן",
+      "urban": "אורבני",
+      "luxury": "יוקרה"
+    },
+    "filters": {
+      "areaLabel": "אזור",
+      "allAreas": "כל האזורים",
+      "jerusalem": "ירושלים והסביבה",
+      "center": "מרכז",
+      "south": "דרום",
+      "north": "צפון",
+      "typeLabel": "סוג המקום",
+      "allTypes": "הכל",
+      "restaurant": "מסעדה",
+      "eventVenue": "אולם אירועים",
+      "banquetHall": "אולם כנסים",
+      "hotel": "מלון",
+      "park": "גן אירועים",
+      "museum": "מוזיאון",
+      "styleLabel": "סגנון אולם",
+      "allStyles": "הכל",
+      "modern": "מודרני",
+      "classic": "קלאסי",
+      "outdoor": "חוץ/גן",
+      "urban": "אורבני",
+      "luxury": "יוקרה",
+      "capacityLabel": "תכולה (מספר אורחים)",
+      "selectCapacity": "בחר תכולה",
+      "upTo50": "עד 50 אורחים",
+      "upTo100": "עד 100 אורחים",
+      "upTo200": "עד 200 אורחים",
+      "upTo300": "עד 300 אורחים",
+      "upTo500": "עד 500 אורחים",
+      "above500": "מעל 500 אורחים",
+      "amenitiesLabel": "שירותים נלווים",
+      "parking": "חניה",
+      "accessibility": "נגישות",
+      "outdoorSpace": "שטח חוץ",
+      "catering": "קייטרינג במקום",
+      "accommodation": "אפשרויות לינה",
+      "applyButton": "החל סינון"
+    },
+    "details": {
+      "address": "כתובת",
+      "phone": "טלפון",
+      "website": "אתר",
+      "rating": "דירוג",
+      "outOf5": "מתוך 5",
+      "reviews": "ביקורות",
+      "priceLevel": "רמת מחיר",
+      "openingHours": "שעות פתיחה",
+      "reviewsTitle": "ביקורות"
+    }
+  },
+  "vendors": {
+    "searchTitle": "חיפוש ספקים",
+    "searchSubtitle": "מצא את הספקים המושלמים לאירוע שלך",
+    "searchButton": "חפש",
+    "searchPlaceholder": "חפש לפי שם, מיקום או סוג שירות",
+    "filtersTitle": "סינון תוצאות",
+    "searchResults": "תוצאות חיפוש",
+    "loading": "טוען ספקים...",
+    "noResults": "לא נמצאו ספקים התואמים את החיפוש שלך",
+    "noAddress": "כתובת לא זמינה",
+    "defaultVendorName": "ספק",
+    "selectButton": "בחר ספק",
+    "vendorAddedSuccess": "הספק נוסף בהצלחה!",
+    "filters": {
+      "areaLabel": "אזור",
+      "allAreas": "כל האזורים",
+      "jerusalem": "ירושלים והסביבה",
+      "center": "מרכז",
+      "south": "דרום",
+      "north": "צפון",
+      "typeLabel": "סוג ספק",
+      "allTypes": "כל הסוגים",
+      "catering": "קייטרינג",
+      "photographer": "צילום",
+      "florist": "פרחים",
+      "musician": "מוזיקה",
+      "dj": "תקליטן",
+      "decorator": "עיצוב",
+      "makeup": "איפור",
+      "transport": "הסעות",
+      "applyButton": "החל סינון",
+      "kashrutLabel": "כשרות"
+    },
+    "specificFilters": {
+      "catering": {
+        "title": "סוג קייטרינג",
+        "dairy": "חלבי",
+        "meat": "בשרי",
+        "pareve": "פרווה",
+        "vegetarian": "צמחוני",
+        "vegan": "טבעוני",
+        "glutenFree": "ללא גלוטן",
+        "kashrut": {
+          "all": "הכל",
+          "mehadrin": "מהדרין",
+          "regularKosher": "כשרות רגילה",
+          "rabbinate": "רבנות",
+          "badatz": "בדץ",
+          "nonKosher": "לא כשר"
+        }
+      },
+      "photographer": {
+        "title": "תחום צילום",
+        "wedding": "צילום חתונות",
+        "event": "צילום אירועים",
+        "portrait": "צילום פורטרטים",
+        "commercial": "צילום מסחרי"
+      },
+      "florist": {
+        "title": "סוג שירות פרחים",
+        "bridal": "זרי כלה",
+        "arrangements": "סידורי פרחים",
+        "decorations": "קישוטי פרחים",
+        "plants": "צמחים"
+      },
+      "musician": {
+        "title": "סוג מוזיקה",
+        "solo": "מוזיקאי סולו",
+        "band": "להקה",
+        "classical": "מוזיקה קלאסית",
+        "modern": "מוזיקה מודרנית",
+        "traditional": "מוזיקה מסורתית"
+      },
+      "dj": {
+        "title": "תחום התמחות",
+        "wedding": "DJ לחתונות",
+        "party": "DJ למסיבות",
+        "corporate": "DJ לאירועים עסקיים",
+        "withEquipment": "DJ עם ציוד"
+      },
+      "decorator": {
+        "title": "סוג קישוט",
+        "balloons": "בלונים",
+        "lighting": "תאורה",
+        "furniture": "רהיטים",
+        "backdrops": "רקעים"
+      },
+      "makeup": {
+        "title": "סוג איפור",
+        "bridal": "איפור כלה",
+        "event": "איפור לאירועים",
+        "withHairstyling": "איפור ועיצוב שיער",
+        "mobile": "שירות נייד"
+      },
+      "transport": {
+        "title": "סוג רכב",
+        "luxuryCars": "מכוניות יוקרה",
+        "buses": "אוטובוסים",
+        "limousines": "לימוזינות",
+        "classicCars": "מכוניות קלאסיות"
+      }
+    },
+    "details": {
+      "address": "כתובת",
+      "phone": "טלפון",
+      "website": "אתר",
+      "rating": "דירוג",
+      "outOf5": "מתוך 5",
+      "reviews": "ביקורות",
+      "priceLevel": "רמת מחיר",
+      "openingHours": "שעות פתיחה",
+      "reviewsTitle": "ביקורות"
+    }
+  },
+  "guests": {
+    "title": "רשימת מוזמנים",
+    "description": "נהל את רשימת המוזמנים שלך, שלח הזמנות וקבל אישורי הגעה",
+    "addGuest": "הוסף מוזמן",
+    "addNewGuest": "הוספת מוזמן חדש",
+    "searchPlaceholder": "חפש מוזמן...",
+    "noGuests": "אין מוזמנים עדיין. הוסף את המוזמן הראשון!",
+    "noFilteredGuests": "לא נמצאו מוזמנים בסינון הנוכחי",
+    "confirmDelete": "האם אתה בטוח שברצונך למחוק מוזמן זה?",
+    "invitationSent": "הזמנה נשלחה",
+    "invitationNotSent": "הזמנה לא נשלחה",
+    "guestNote": "הערת המוזמן",
+    "stats": {
+      "total": "סה״כ מוזמנים",
+      "confirmed": "אישרו הגעה",
+      "declined": "סירבו",
+      "pending": "ממתינים"
+    },
+    "groups": {
+      "all": "כל הקבוצות",
+      "family": "משפחה",
+      "friends": "חברים",
+      "work": "עבודה",
+      "other": "אחר"
+    },
+    "rsvp": {
+      "pending": "ממתין",
+      "confirmed": "אישר",
+      "declined": "סירב",
+      "no_response": "לא הגיב"
+    },
+    "form": {
+      "firstName": "שם פרטי",
+      "lastName": "שם משפחה",
+      "phone": "טלפון"
+    }
+  },
+  "common": {
+    "loading": "טוען...",
+    "add": "הוסף",
+    "cancel": "ביטול",
+    "delete": "מחיקה"
+  },
+  "validation": {
+    "phoneRequired": "מספר טלפון נדרש",
+    "eventRequired": "אירוע נדרש",
+    "userRequired": "משתמש נדרש",
+    "firstNameRequired": "שם פרטי נדרש",
+    "lastNameRequired": "שם משפחה נדרש",
+    "invalidPhoneFormat": "פורמט טלפון לא תקין"
   }
-}
 }
 
