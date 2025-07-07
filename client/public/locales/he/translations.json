@@ -377,6 +377,12 @@
           "saveError": "שגיאה בשמירת המשימה",
           "deleteError": "שגיאה במחיקת המשימה",
           "statusError": "שגיאה בעדכון סטטוס המשימה"
+        },
+        "reminders": {
+          "reminder": "תזכורת",
+          "overdue": "פיגור",
+          "viewTask": "צפה במשימה",
+          "dismiss": "סגור"
         }
       },
       "rides": {

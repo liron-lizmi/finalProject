@@ -371,6 +371,12 @@
           "saveError": "Error saving task",
           "deleteError": "Error deleting task",
           "statusError": "Error updating task status"
+        },
+        "reminders": {
+          "reminder": "Reminder",
+          "overdue": "Overdue",
+          "viewTask": "View Task",
+          "dismiss": "Dismiss"
         }
       },
       "timeline": {

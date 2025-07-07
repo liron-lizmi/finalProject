@@ -563,7 +563,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
               onChange={handleChange}
               onFocus={() => handleFocus('notes')}
               onBlur={handleBlur}
-              className={`form-textarea ${formData.notes ? 'filled' : ''}`}
+              className={`form-textarea ${formData.notes ? 'filled' : ''} ${isRTL ? 'form-textarea-rtl' : 'form-textarea-ltr'}`}
               placeholder={t('events.features.tasks.form.notesPlaceholder')}
               maxLength={500}
               rows={2}

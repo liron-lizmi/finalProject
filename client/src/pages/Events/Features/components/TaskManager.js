@@ -5,6 +5,7 @@ import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
 import GoogleCalendarSync from './GoogleCalendarSync';
 import InternalCalendar from './InternalCalendar';
+import ReminderToast from './ReminderToast';
 import FeaturePageTemplate from '../FeaturePageTemplate';
 import '../../../../styles/EventTimeline.css';
 
@@ -322,6 +323,12 @@ const TaskManager = ({ eventId }) => {
       icon="📋"
       description={t('events.features.tasks.description')}
     >
+      {/* הוספת רכיב התזכורות */}
+      <ReminderToast 
+        tasks={tasks} 
+        onTaskClick={handleEditTask}
+      />
+
       <div className="statistics-grid">
         <div className="stat-card total">
           <div className="stat-number">{statistics.total}</div>
