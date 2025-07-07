@@ -32,7 +32,7 @@
 }
 
 .ltr .header-content {
-  flex-direction: row;
+  flex-direction: row-reverse;
 }
 
 .feature-page-container {
