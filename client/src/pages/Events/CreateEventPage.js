@@ -120,7 +120,7 @@ const CreateEventPage = () => {
     if (value === '' || isValidTime(value)) {
       setTimeError('');
     } else {
-      setTimeError(t('errors.invalidTimeFormatExample'));
+      setTimeError(t('errors.invalidTimeFormat'));
     }
   };
 
@@ -272,7 +272,7 @@ const CreateEventPage = () => {
     }
     
     if (!timeToSubmit || !isValidTime(timeToSubmit)) {
-      setTimeError(t('errors.invalidTimeFormatExample'));
+      setTimeError(t('errors.invalidTimeForma'));
       hasError = true;
     }
     
@@ -393,14 +393,14 @@ const CreateEventPage = () => {
             className="calendar-btn clear"
             onClick={handleClearDate}
           >
-            {isRTL ? 'ניקוי' : 'Clear'}
+            {t('general.clear')}
           </button>
           <button 
             type="button" 
             className="calendar-btn today"
             onClick={handleToday}
           >
-            {isRTL ? 'היום' : 'Today'}
+            {t('general.today')}
           </button>
         </div>
       </div>
@@ -454,7 +454,7 @@ const CreateEventPage = () => {
               setShowTimePicker(false);
             }}
           >
-            {isRTL ? 'ניקוי' : 'Clear'}
+            {t('general.clear')}
           </button>
           <button 
             type="button" 
@@ -467,7 +467,7 @@ const CreateEventPage = () => {
               handleTimeSelection(hours, minutesStr);
             }}
           >
-            {isRTL ? 'עכשיו' : 'Now'}
+            {t('general.now')}
           </button>
         </div>
       </div>

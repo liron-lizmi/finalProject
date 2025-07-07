@@ -12,7 +12,10 @@
     "authenticationFailed": "אימות נכשל, אנא התחבר מחדש",
     "vendorNotFound": "ספק לא נמצא",
     "vendorExistingName": "ספק עם שם זה כבר קיים באירוע זה",
-    "vendorRequired": "פרטי הספק הם שדות חובה"
+    "vendorRequired": "פרטי הספק הם שדות חובה",
+    "invalidFormat": "פורמט לא תקין",
+    "routeNotFound": "נתיב לא נמצא",
+    "generalError": "אירעה שגיאה. אנא נסה שוב מאוחר יותר"
   },
   "success": {
     "passwordReset": "הסיסמה עודכנה בהצלחה",
@@ -45,6 +48,31 @@
         "flowers": "פרחים",
         "other": "אחר"
       }
+    },
+    "tasks": {
+      "notFound": "המשימה לא נמצאה",
+      "deleteSuccess": "המשימה נמחקה בהצלחה",
+      "updateSuccess": "המשימה עודכנה בהצלחה",
+      "statusUpdateSuccess": "סטטוס המשימה עודכן בהצלחה",
+      "createSuccess": "המשימה נוצרה בהצלחה",
+      "calendar": {
+        "sync": {
+          "notConnected": "יומן גוגל לא מחובר",
+          "connectionSuccess": "יומן גוגל חובר בהצלחה",
+          "disconnectSuccess": "יומן גוגל נותק בהצלחה",
+          "syncCompleted": "סנכרון הושלם בהצלחה",
+          "syncFailed": "שגיאה בסנכרון עם יומן גוגל",
+          "eventCreated": "אירוע נוצר ביומן גוגל",
+          "eventUpdated": "אירוע עודכן ביומן גוגל",
+          "eventDeleted": "אירוע נמחק מיומן גוגל"
+        }
+      }
+    },
+    "validation": {
+      "taskTitleRequired": "כותרת המשימה נדרשת",
+      "taskDueDateRequired": "תאריך יעד נדרש",
+      "taskEventRequired": "מזהה אירוע נדרש",
+      "taskUserRequired": "מזהה משתמש נדרש"
     }
   },
   "auth": {
@@ -55,13 +83,6 @@
     "missingParameters": "חסרים פרמטרים נדרשים",
     "databaseError": "שגיאת מסד נתונים",
     "userNotFound": "משתמש לא נמצא"
-  },
-  "forgotPassword": {
-      "title": "שחזור סיסמה",
-      "emailPlaceholder": "הזן את כתובת האימייל שלך",
-      "submitButton": "שלח קישור לאיפוס סיסמה",
-      "submitting": "שולח...",
-      "backToLogin": "חזרה להתחברות"
   },
   "validation": {
     "firstNameRequired": "שם פרטי הוא שדה חובה",
@@ -95,7 +116,10 @@
     "vendorRequired": "פרטי הספק הם שדות חובה",
     "emailNotExists": "אימייל לא קיים במערכת",
     "emailSendError": "אירעה שגיאה בשליחת המייל. אנא נסה שוב מאוחר יותר",
-    "generalError": "אירעה שגיאה. אנא נסה שוב מאוחר יותר"
+    "generalError": "אירעה שגיאה. אנא נסה שוב מאוחר יותר",
+    "invalidDateFormat": "פורמט תאריך לא תקין",
+    "invalidReminderDateFormat": "פורמט תאריך תזכורת לא תקין",
+    "reminderBeforeDue": "תאריך התזכורת חייב להיות לפני תאריך היעד"
   },  
   "guests": {
     "notFound": "מוזמן לא נמצא",

@@ -1,3 +1,4 @@
+// server/server.js
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
@@ -32,6 +33,7 @@ i18next
 
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes'); 
+const taskRoutes = require('./routes/taskRoutes');
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -47,6 +49,7 @@ app.use(middleware.handle(i18next));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/tasks', taskRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -61,14 +64,14 @@ app.get('/', (req, res) => {
 });
 
 app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+  res.status(404).json({ message: req.t('errors.routeNotFound') });
 });
 
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ 
-    message: req.t ? req.t('errors.serverError') : 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    message: req.t('errors.serverError'),
+    error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.generalError')
   });
 });
 

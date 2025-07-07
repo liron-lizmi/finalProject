@@ -83,7 +83,7 @@ const updateEvent = async (req, res) => {
           event.venues = parsedVenues;
         } catch (parseError) {
           console.error('Error parsing venues string:', parseError);
-          return res.status(400).json({ message: 'Invalid venues format' });
+          return res.status(400).json({ message: req.t('errors.invalidFormat') });
         }
       }
     }
@@ -95,7 +95,7 @@ const updateEvent = async (req, res) => {
           event.vendors = parsedVendors;
         } catch (parseError) {
           console.error('Error parsing vendors string:', parseError);
-          return res.status(400).json({ message: 'Invalid vendors format' });
+          return res.status(400).json({ message: req.t('errors.invalidFormat') });
         }
       } else if (Array.isArray(vendors)) {
         const processedVendors = vendors.map(vendor => ({

@@ -15,7 +15,10 @@
     "vendorRequired": "Vendor information is required",
     "validationError": "Validation error",
     "missingParameters": "Missing required parameters",
-    "databaseError": "Database error"
+    "databaseError": "Database error",
+    "invalidFormat": "Invalid format",
+    "routeNotFound": "Route not found", 
+    "generalError": "An error occurred. Please try again later"
   },
   "success": {
     "passwordReset": "Password updated successfully",
@@ -47,18 +50,36 @@
         "flowers": "Flowers",
         "other": "Other"
       }
+    },
+    "tasks": {
+      "notFound": "Task not found",
+      "deleteSuccess": "Task deleted successfully",
+      "updateSuccess": "Task updated successfully",
+      "statusUpdateSuccess": "Task status updated successfully",
+      "createSuccess": "Task created successfully",
+      "calendar": {
+        "sync": {
+          "notConnected": "Google Calendar not connected",
+          "connectionSuccess": "Google Calendar connected successfully",
+          "disconnectSuccess": "Google Calendar disconnected successfully", 
+          "syncCompleted": "Sync completed successfully",
+          "syncFailed": "Error syncing with Google Calendar",
+          "eventCreated": "Event created in Google Calendar",
+          "eventUpdated": "Event updated in Google Calendar",
+          "eventDeleted": "Event deleted from Google Calendar"
+        }
+      }
+    },
+    "validation": {
+      "taskTitleRequired": "Task title is required",
+      "taskDueDateRequired": "Due date is required",
+      "taskEventRequired": "Event ID is required",
+      "taskUserRequired": "User ID is required"
     }
   },
   "auth": {
     "noToken": "No authorization, login required",
     "invalidToken": "Invalid token"
-  },
-  "forgotPassword": {
-      "title": "Password Recovery",
-      "emailPlaceholder": "Enter your email address",
-      "submitButton": "Send Password Reset Link",
-      "submitting": "Sending...",
-      "backToLogin": "Back to Login"
   },
   "validation": {
     "firstNameRequired": "First name is a required field",
@@ -91,7 +112,10 @@
     "invalidDate": "Invalid date",
     "emailNotExists": "Email does not exist in the system",
     "emailSendError": "An error occurred sending the email. Please try again later",
-    "generalError": "An error occurred. Please try again later"
+    "generalError": "An error occurred. Please try again later",
+    "invalidDateFormat": "Invalid date format",
+    "invalidReminderDateFormat": "Invalid reminder date format", 
+    "reminderBeforeDue": "Reminder date must be before due date"
   },
   "guests": {
     "notFound": "Guest not found",

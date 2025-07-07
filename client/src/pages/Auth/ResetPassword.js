@@ -5,7 +5,7 @@ import axios from 'axios';
 import '../../styles/AuthPages.css';
 
 const ResetPassword = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { token } = useParams();
   const [formData, setFormData] = useState({
@@ -17,6 +17,8 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isRTL = i18n.language === 'he';
 
   const handleChange = (e) => {
     setFormData({
@@ -67,7 +69,7 @@ const ResetPassword = () => {
         password: formData.password
       });
 
-      setMessage(response.data.message || t('auth.passwordUpdated'));
+      setMessage(response.data.message || t('auth.updatedPasswordSuccess'));
       
       setTimeout(() => {
         navigate('/login');
@@ -124,14 +126,17 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className={`auth-container ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="auth-logo-container">
+        <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" onClick={() => navigate('/')} />
+      </div>
       <div className="auth-box">
         <h2>{t('auth.resetPasswordTitle')}</h2>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
         
         <form onSubmit={handleSubmit} noValidate>
-          <div className="form-group password-field">
+          <div className={`form-group password-field ${isRTL ? 'rtl' : 'ltr'}`}>
             <input
               type={showPassword ? "text" : "password"}
               name="password"
@@ -147,7 +152,7 @@ const ResetPassword = () => {
               {renderEyeIcon(showPassword)}
             </span>
           </div>
-          <div className="form-group password-field">
+          <div className={`form-group password-field ${isRTL ? 'rtl' : 'ltr'}`}>
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"

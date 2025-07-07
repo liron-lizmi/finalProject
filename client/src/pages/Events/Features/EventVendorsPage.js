@@ -309,33 +309,38 @@ const EventVendorsPage = () => {
     }
   };
 
-  const getCategoryName = (category) => {
-    console.log("getCategoryName called with:", category);
+  // const getCategoryName = (category) => {
+  //   console.log("getCategoryName called with:", category);
    
-    if (!category || category === 'other' || category === '') {
-      const translation = t('events.features.vendors.categories.other');
-      console.log("Translation for 'other':", translation);
+  //   if (!category || category === 'other' || category === '') {
+  //     const translation = t('events.features.vendors.categories.other');
+  //     console.log("Translation for 'other':", translation);
      
-      if (translation === 'events.features.vendors.categories.other') {
-        return isRTL ? 'אחר' : 'Other';
-      }
-      return translation;
-    }
+  //     if (translation === 'events.features.vendors.categories.other') {
+  //       return t('events.features.vendors.categories.other');
+  //     }
+  //     return translation;
+  //   }
    
-    const translationKey = `events.features.vendors.categories.${category?.toLowerCase()}`;
-    const translation = t(translationKey);
-    console.log(`Translation for ${translationKey}:`, translation);
+  //   const translationKey = `events.features.vendors.categories.${category?.toLowerCase()}`;
+  //   const translation = t(translationKey);
+  //   console.log(`Translation for ${translationKey}:`, translation);
    
-    if (translation === translationKey) {
-      const fallbackTranslation = t('events.features.vendors.categories.other');
-      if (fallbackTranslation === 'events.features.vendors.categories.other') {
-        return isRTL ? 'אחר' : 'Other';
-      }
-      return fallbackTranslation;
-    }
+  //   if (translation === translationKey) {
+  //     const fallbackTranslation = t('events.features.vendors.categories.other');
+  //     if (fallbackTranslation === 'events.features.vendors.categories.other') {
+  //       return t('events.features.vendors.categories.other');
+  //     }
+  //     return fallbackTranslation;
+  //   }
    
-    return translation;
-  };
+  //   return translation;
+  // };
+
+  const getCategoryName = (category) => {
+  const categoryToUse = category || 'other' || '';
+  return t(`events.features.vendors.categories.${categoryToUse}`);
+};
 
   if (loading) {
     return (

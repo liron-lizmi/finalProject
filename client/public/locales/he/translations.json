@@ -12,13 +12,22 @@
     "back": "חזרה",
     "loading": "טוען...",
     "select": "בחר",
-    "backToEventDetails": "חזרה לפרטי האירוע"
+    "backToEventDetails": "חזרה לפרטי האירוע",
+    "clear": "ניקוי",
+    "today": "היום",
+    "now": "עכשיו",
+    "showingResults": "מציג {{start}}-{{end}} מתוך {{total}} תוצאות",
+    "loadingPage": "טוען עמוד {{page}}..."
   },
   "auth": {
     "email": "אימייל",
     "password": "סיסמה",
     "confirmPassword": "אימות סיסמה",
     "forgotPassword": "שכחת סיסמה?",
+    "newPassword": "סיסמה חדשה",
+    "updatePassword": "עדכן סיסמה",
+    "updatingPassword": " מעדכן סיסמה...",
+    "updatedPasswordSuccess": "הסיסמה עודכנה בהצלחה",
     "loginButton": "התחבר",
     "signupButton": "הירשם",
     "firstName": "שם פרטי",
@@ -47,7 +56,8 @@
     "invalidCredentials": "שם משתמש או סיסמה שגויים",
     "passwordRequired": "סיסמה היא שדה חובה",
     "invalidEmailFormat": "נא להזין כתובת אימייל תקינה",
-    "emailRequired": "אימייל הוא שדה חובה"
+    "emailRequired": "אימייל הוא שדה חובה",
+    "notLoggedIn": "יש להתחבר תחילה"
   },
   "dashboard": {
     "title": "לוח בקרה",
@@ -186,7 +196,8 @@
           "decoration": "עיצוב והפקת אירועים",
           "makeup": "איפור",
           "transportation": "הסעות",
-          "choose": "בחר קטגוריה"
+          "choose": "בחר קטגוריה",
+          "other": "אחר"
         },
         "searchResults": "תוצאות חיפוש",
         "loading": "טוען ספקים...",
@@ -230,9 +241,143 @@
         "title": "סידורי הושבה",
         "description": "ארגון שולחנות ומקומות ישיבה"
       },
-      "timeline": {
-        "title": "ניהול לו\"ז ומשימות",
-        "description": "תכנון זמנים ומשימות לביצוע"
+      "tasks": {
+        "title": "ניהול משימות ולוח זמנים",
+        "description": "נהל את כל המשימות שקשורות לאירוע שלך בצורה מסודרת ויעילה",
+        "addTask": "הוסף משימה חדשה",
+        "createTask": "צור משימה ראשונה",
+        "editTask": "עריכת משימה",
+        "newTask": "משימה חדשה",
+        "loading": "טוען משימות...",
+        "noTasks": "אין משימות להצגה",
+        "noTasksMessage": "התחל ליצור משימות לאירוע שלך",
+        "noFilteredTasks": "אין משימות התואמות לסינון הנוכחי",
+        "calendar": {
+          "modeSelection": {
+            "title": "בחר אופן ניהול יומן המשימות",
+            "googleMode": "יומן גוגל",
+            "internalMode": "יומן פנימי"
+          },
+          "internal": {
+            "title": "יומן המשימות",
+            "showCalendar": "הצג יומן",
+            "hideCalendar": "הסתר יומן",
+            "monthView": "תצוגת חודש",
+            "weekView": "תצוגת שבוע",
+            "week": "שבוע",
+            "noTasks": "אין משימות להצגה ביומן",
+            "moreTasks": "משימות נוספות",
+            "todayLegend": "היום",
+            "eventDateLegend": "תאריך האירוע",
+            "description": "צפה במשימות שלך ביומן נוח וידידותי",
+            "tasksForDate": "משימות ליום {{date}}"
+          },
+          "sync": {
+            "title": "סנכרון עם יומן גוגל ",
+            "description": "סנכרן את המשימות שלך עם לוח השנה של Google",
+            "notConnected": "יומן גוגל לא מחובר",
+            "connected": "יומן גוגל מחובר",
+            "connectDescription": "חבר את יומן גוגל כדי לסנכרן את המשימות אוטומטית",
+            "connectButton": "🔗 חבר ליומן גוגל",
+            "disconnectButton": "🔌 נתק חיבור",
+            "syncButton": "🔄 סנכרן משימות",
+            "syncing": "מסנכרן...",
+            "autoSyncInfo": "המשימות שלך יסונכרנו אוטומטית ללוח השנה של גוגל",
+            "connectionError": "שגיאה בחיבור ליומן גוגל",
+            "disconnectError": "שגיאה בניתוק יומן גוגל",
+            "disconnectSuccess": "יומן גוגל נותק בהצלחה",
+            "disconnectConfirm": "האם אתה בטוח שברצונך לנתק את יומן גוגל?",
+            "syncCompleted": "סנכרון הושלם! {{count}} משימות סונכרנו בהצלחה",
+            "syncError": "שגיאה בסנכרון עם לוח השנה",
+            "syncPartialFailed": "{{count}} משימות נכשלו בסנכרון",
+            "connectionSuccess": "יומן גוגל חובר בהצלחה",
+            "authExpired": "החיבור ליומן גוגל פג תוקף. אנא התחבר/י מחדש"
+          }
+        },
+        "statistics": {
+          "total": "סה\"כ משימות",
+          "completed": "הושלמו",
+          "inProgress": "בתהליך",
+          "overdue": "באיחור"
+        },
+        "status": {
+          "pending": "ממתין",
+          "in_progress": "בתהליך",
+          "completed": "הושלם",
+          "cancelled": "בוטל"
+        },
+        "priority": {
+          "low": "נמוכה",
+          "medium": "בינונית",
+          "high": "גבוהה",
+          "urgent": "דחוף"
+        },
+        "category": {
+          "venue": "מקום",
+          "catering": "קייטרינג",
+          "decoration": "עיצוב",
+          "entertainment": "בידור",
+          "photography": "צילום",
+          "invitations": "הזמנות",
+          "transportation": "הסעות",
+          "budget": "תקציב",
+          "other": "אחר"
+        },
+        "form": {
+          "title": "כותרת המשימה",
+          "titlePlaceholder": "הזן כותרת למשימה",
+          "description": "תיאור",
+          "descriptionPlaceholder": "תאר את המשימה בפירוט...",
+          "dueDate": "תאריך יעד",
+          "priority": "עדיפות",
+          "category": "קטגוריה",
+          "assignee": "אחראי",
+          "assigneePlaceholder": "שם האחראי למשימה",
+          "estimatedDuration": "משך זמן מוערך (דקות)",
+          "reminderDate": "תאריך תזכורת",
+          "notes": "הערות",
+          "notesPlaceholder": "הערות נוספות למשימה...",
+          "datePlaceholder": "יום/חודש/שנה"       
+        },
+        "actions": {
+          "edit": "ערוך",
+          "delete": "מחק",
+          "complete": "סמן כהושלם",
+          "start": "התחל משימה",
+          "cancelComplete": "בטל השלמה"
+        },
+        "filters": {
+          "status": "סטטוס",
+          "priority": "עדיפות",
+          "category": "קטגוריה",
+          "all": "הכל"
+        },
+        "time": {
+          "today": "היום",
+          "tomorrow": "מחר",
+          "daysLeft": "עוד {{days}} ימים",
+          "daysOverdue": "באיחור של {{days}} ימים",
+          "hours": "שעות"
+        },
+        "validation": {
+          "titleRequired": "נא להזין כותרת למשימה",
+          "dueDateRequired": "נא לבחור תאריך יעד",
+          "dueDatePast": "תאריך היעד לא יכול להיות בעבר",
+          "estimatedDurationMin": "משך זמן מוערך צריך להיות לפחות 15 דקות",
+          "reminderBeforeDue": "תאריך התזכורת צריך להיות לפני תאריך היעד",
+          "dueDateAfterEvent": "תאריך היעד של המשימה צריך להיות לפני תאריך האירוע"
+        },
+        "messages": {
+          "createSuccess": "המשימה נוצרה בהצלחה",
+          "updateSuccess": "המשימה עודכנה בהצלחה",
+          "deleteConfirm": "האם אתה בטוח שברצונך למחוק את המשימה?",
+          "deleteSuccess": "המשימה נמחקה בהצלחה",
+          "statusUpdateSuccess": "סטטוס המשימה עודכן בהצלחה",
+          "loadError": "שגיאה בטעינת המשימות",
+          "saveError": "שגיאה בשמירת המשימה",
+          "deleteError": "שגיאה במחיקת המשימה",
+          "statusError": "שגיאה בעדכון סטטוס המשימה"
+        }
       },
       "rides": {
         "title": "טרמפים",
@@ -273,7 +418,6 @@
     "generalError": "אירעה שגיאה, אנא נסה שנית",
     "invalidDateFormat": "התאריך לא חוקי או שהוא עבר. יש להזין תאריך בפורמט DD/MM/YYYY",
     "invalidTimeFormat": "יש להזין שעה תקינה בפורמט 24 שעות",
-    "invalidTimeFormatExample": "יש להזין שעה תקינה בפורמט 24 שעות (לדוגמה: 14:30)",
     "notLoggedIn": "לא מחובר. נא להתחבר מחדש.",
     "eventCreationFailed": "אירעה שגיאה ביצירת האירוע",
     "loadEventsFailed": "אירעה שגיאה בטעינת האירועים",
@@ -293,7 +437,8 @@
     "fetchGuests": "שגיאה בטעינת רשימת המוזמנים",
     "addGuest": "שגיאה בהוספת המוזמן",
     "deleteGuest": "שגיאה במחיקת המוזמן",
-    "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט"
+    "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט",
+    "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה"
   },
   "home": {
     "hero": {

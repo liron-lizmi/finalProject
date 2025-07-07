@@ -1574,7 +1574,11 @@ const VendorsPage = ({ onSelectVendor }) => {
               <h3>{t('vendors.searchResults')}</h3>
               {!loading && allVendors.length > 0 && (
                 <div className="results-info">
-                  מציג {((currentPage - 1) * vendorsPerPage) + 1}-{Math.min(currentPage * vendorsPerPage, allVendors.length)} מתוך {allVendors.length} תוצאות
+                  {t('general.showingResults', { 
+                  start: ((currentPage - 1) * vendorsPerPage) + 1,
+                  end: Math.min(currentPage * vendorsPerPage, allVendors.length),
+                  total: allVendors.length 
+                })}
                 </div>
               )}
             </div>

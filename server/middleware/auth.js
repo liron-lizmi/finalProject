@@ -1,3 +1,4 @@
+//sevrver/middleware/auth.js
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
@@ -11,7 +12,7 @@ module.exports = (req, res, next) => {
   }
 
   if (!token) {
-    return res.status(401).json({ message: req.t ? req.t('auth.noToken') : 'No token provided' });
+    return res.status(401).json({ message: req.t('auth.noToken') });
   }
 
   try {
@@ -19,6 +20,6 @@ module.exports = (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (err) {
-    res.status(401).json({ message: req.t ? req.t('auth.invalidToken') : 'Invalid token' });
+    res.status(401).json({ message: req.t('auth.invalidToken') });
   }
 };
