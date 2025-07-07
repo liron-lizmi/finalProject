@@ -2,7 +2,7 @@
 const Event = require('../models/Event');
 const i18next = require('i18next');
 
-exports.getEventVendors = async (req, res) => {
+const getEventVendors = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
 
@@ -24,7 +24,7 @@ exports.getEventVendors = async (req, res) => {
   }
 };
 
-exports.addVendor = async (req, res) => {
+const addVendor = async (req, res) => {
     try {
       const event = await Event.findById(req.params.eventId);
   
@@ -68,7 +68,7 @@ exports.addVendor = async (req, res) => {
     }
 };
 
-exports.updateVendor = async (req, res) => {
+const updateVendor = async (req, res) => {
     try {
       const event = await Event.findById(req.params.eventId);
   
@@ -107,7 +107,7 @@ exports.updateVendor = async (req, res) => {
     }
 };
 
-exports.deleteVendor = async (req, res) => {
+const deleteVendor = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
 
@@ -136,4 +136,11 @@ exports.deleteVendor = async (req, res) => {
     console.error(err.message);
     res.status(500).send(i18next.t('errors.serverError'));
   }
+};
+
+module.exports = {
+  getEventVendors,
+  addVendor,
+  updateVendor,
+  deleteVendor
 };

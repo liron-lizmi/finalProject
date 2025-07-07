@@ -1378,7 +1378,11 @@ const VenuePage = ({ onSelectVenue }) => {
               <h3>{t('events.features.venues.searchResults')}</h3>
               {!loading && allVenues.length > 0 && (
                 <div className="results-info">
-                  מציג {((currentPage - 1) * venuesPerPage) + 1}-{Math.min(currentPage * venuesPerPage, allVenues.length)} מתוך {allVenues.length} תוצאות
+                  {t('common.showingResults', { 
+                  start: ((currentPage - 1) * venuesPerPage) + 1,
+                  end: Math.min(currentPage * venuesPerPage, allVenues.length),
+                  total: allVenues.length 
+                })}
                 </div>
               )}
             </div>
@@ -1391,7 +1395,7 @@ const VenuePage = ({ onSelectVenue }) => {
             ) : loadingPage ? (
               <div className="loading-indicator">
                 <div className="loading-spinner"></div>
-                <p>טוען עמוד {currentPage}...</p>
+                <p>{t('general.loadingPage', { page: currentPage })}</p>
               </div>
             ) : venues.length === 0 ? (
               <div className="no-results">{t('events.features.venues.noResults')}</div>

@@ -181,23 +181,23 @@ body {
 
 .success-message {
   background-color: #f0f9ee;
-  color: #2ecc71;
+  color: #2e7d32;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 25px;
   text-align: center;
   font-size: 15px;
   animation: fadeIn 0.3s ease;
-  box-shadow: 0 2px 10px rgba(46, 204, 113, 0.05);
+  box-shadow: 0 2px 10px rgba(46, 125, 50, 0.05);
 }
 
 .rtl .success-message {
-  border-right: 3px solid #2ecc71;
+  border-right: 3px solid #2e7d32;;
   border-left: none;
 }
 
 .ltr .success-message {
-  border-left: 3px solid #2ecc71;
+  border-left: 3px solid #2e7d32;
   border-right: none;
 }
 
@@ -264,11 +264,13 @@ body {
 .rtl.password-field input {
   padding-left: 45px !important;
   padding-right: 18px !important;
+  text-align: right;
 }
 
 .ltr.password-field input {
   padding-right: 45px !important;
   padding-left: 18px !important;
+  text-align: left;
 }
 
 .password-toggle {
@@ -301,6 +303,14 @@ body {
 .password-toggle svg {
   width: 22px;
   height: 22px;
+}
+
+.auth-container.rtl {
+  direction: rtl;
+}
+
+.auth-container.ltr {
+  direction: ltr;
 }
 
 .google-auth-button {
@@ -988,12 +998,16 @@ body {
 .auth-logo-container .logo {
   height: 60px;
   transition: all 0.3s ease;
-  cursor: pointer;
+  cursor: pointer !important; 
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
 .auth-logo-container .logo:hover {
   transform: translateY(-5px);
+}
+
+.auth-logo-container .logo img {
+  cursor: pointer;
 }
 
 .modal-overlay {

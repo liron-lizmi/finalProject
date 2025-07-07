@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { account } from '../../appwrite';
 import axios from 'axios';
@@ -17,6 +17,9 @@ const Dashboard = () => {
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
+
+  const params = new URLSearchParams(location.search);
+  const shouldRedirect = params.get('source') === 'google';
 
   useEffect(() => {
     console.log("Dashboard mounted, search params:", location.search);
@@ -158,6 +161,10 @@ const Dashboard = () => {
     }
   }, [navigate, location.search, t, i18n.language]);
 
+  if (shouldRedirect) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const handleLogout = async () => {
     try {
       try {
@@ -261,9 +268,7 @@ const Dashboard = () => {
           </div>
           <div className="header-center">
             <div className="user-greeting">
-              <span className="greeting-icon">
-              👋
-              </span>
+              <span className="greeting-icon">👋</span>
               <span>{t('dashboard.welcome')}</span>
               <h2>{user?.name || user?.firstName || user?.email}</h2>
             </div>
@@ -300,9 +305,7 @@ const Dashboard = () => {
 
           <div className="create-event-card">
             <div className="create-event-content">
-              <div className="sparkle-icon">
-                ✨
-              </div>
+              <div className="sparkle-icon">✨</div>
               <div className="create-event-text">
                 <h2>{t('dashboard.createEventTitle')}</h2>
                 <p>{t('dashboard.createEventDescription')}</p>
