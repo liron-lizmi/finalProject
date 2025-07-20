@@ -335,9 +335,12 @@
           "assigneePlaceholder": "שם האחראי למשימה",
           "estimatedDuration": "משך זמן מוערך (דקות)",
           "reminderDate": "תאריך תזכורת",
+          "reminderTime": "שעת תזכורת",
           "notes": "הערות",
           "notesPlaceholder": "הערות נוספות למשימה...",
-          "datePlaceholder": "יום/חודש/שנה"       
+          "datePlaceholder": "יום/חודש/שנה" ,
+          "dueTime": "שעת משימה",
+          "recurringReminder" : "תזכורת חוזרת"  
         },
         "actions": {
           "edit": "ערוך",
@@ -382,7 +385,13 @@
           "reminder": "תזכורת",
           "overdue": "פיגור",
           "viewTask": "צפה במשימה",
-          "dismiss": "סגור"
+          "dismiss": "סגור",
+          "selectFrequency": "בחר תדירות תזכורת",
+          "none": "ללא חזרה",
+          "daily": "יומי",
+          "weekly": "שבועי",
+          "biweekly": "דו-שבועי",
+          "taskOverdue": "המשימה באיחור"
         }
       },
       "rides": {

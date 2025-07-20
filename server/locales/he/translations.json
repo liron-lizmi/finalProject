@@ -72,7 +72,8 @@
       "taskTitleRequired": "כותרת המשימה נדרשת",
       "taskDueDateRequired": "תאריך יעד נדרש",
       "taskEventRequired": "מזהה אירוע נדרש",
-      "taskUserRequired": "מזהה משתמש נדרש"
+      "taskUserRequired": "מזהה משתמש נדרש",
+      "invalidTimeFormat": "פורמט השעה לא תקין"
     }
   },
   "auth": {

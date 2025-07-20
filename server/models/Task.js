@@ -29,6 +29,19 @@ const TaskSchema = new mongoose.Schema({
      }
     }
   },
+  dueTime: {
+    type: String,
+    validate: {
+        validator: function(value) {
+        if (!value) return true; 
+        return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value); 
+        },
+        message: function() {
+        return i18next.t('events.validation.invalidTimeFormat');
+        }
+    },
+    default: '09:00'
+  },
   priority: {
     type: String,
     enum: ['low', 'medium', 'high', 'urgent'],
@@ -65,6 +78,24 @@ const TaskSchema = new mongoose.Schema({
         return i18next.t('validation.invalidReminderDateFormat');
       }
     }
+  },
+  reminderTime: {
+    type: String,
+    validate: {
+      validator: function(value) {
+        if (!value) return true; 
+        return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value); 
+      },
+      message: function() {
+        return i18next.t('events.validation.invalidTimeFormat');
+      }
+    },
+    default: '09:00'
+  },
+  reminderRecurrence: {
+    type: String,
+    enum: ['none', 'daily', 'weekly', 'biweekly'],
+    default: 'none'
   },
   notes: {
     type: String,
@@ -116,12 +147,21 @@ TaskSchema.pre('save', function(next) {
     this.completedAt = undefined;
   }
 
-  // Validate reminder date is before due date
   if (this.reminderDate && this.dueDate) {
-    const reminderDate = new Date(this.reminderDate);
-    const dueDate = new Date(this.dueDate);
+    const reminderDateTime = new Date(this.reminderDate);
+    const dueDateTime = new Date(this.dueDate);
 
-    if (reminderDate >= dueDate) {
+    if (this.reminderTime) {
+      const [reminderHour, reminderMinute] = this.reminderTime.split(':');
+      reminderDateTime.setHours(parseInt(reminderHour), parseInt(reminderMinute), 0, 0);
+    }
+
+    if (this.dueTime) {
+      const [dueHour, dueMinute] = this.dueTime.split(':');
+      dueDateTime.setHours(parseInt(dueHour), parseInt(dueMinute), 0, 0);
+    }
+
+    if (reminderDateTime >= dueDateTime) {
       const error = new Error(i18next.t('validation.reminderBeforeDue'));
       error.name = 'ValidationError';
       return next(error);

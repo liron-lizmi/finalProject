@@ -8,10 +8,13 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
     title: '',
     description: '',
     dueDate: '',
+    dueTime: '09:00',
     priority: 'medium',
     category: 'other',
     reminderDate: '',
-    notes: ''
+    reminderTime: '09:00',
+    notes: '',
+    reminderRecurrence: 'none'
   });
 
   const [errors, setErrors] = useState({});
@@ -19,15 +22,23 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showDueDateCalendar, setShowDueDateCalendar] = useState(false);
   const [showReminderCalendar, setShowReminderCalendar] = useState(false);
+  const [showDueTimePicker, setShowDueTimePicker] = useState(false);
+  const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [focusedField, setFocusedField] = useState('');
   const [displayDueDate, setDisplayDueDate] = useState('');
   const [displayReminderDate, setDisplayReminderDate] = useState('');
+  const [recurringReminderEnabled, setRecurringReminderEnabled] = useState(false);
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
 
   const dueDateCalendarRef = useRef(null);
   const reminderCalendarRef = useRef(null);
   const dueDateInputRef = useRef(null);
   const reminderInputRef = useRef(null);
+  const dueTimePickerRef = useRef(null);
+  const dueTimePickerContainerRef = useRef(null);
+  const reminderTimePickerRef = useRef(null);
+  const reminderTimePickerContainerRef = useRef(null);
 
   const monthNames = {
     en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -38,6 +49,12 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
     en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
   };
+
+  const recurringOptions = [
+    { value: 'daily', label: t('events.features.tasks.reminders.daily') },
+    { value: 'weekly', label: t('events.features.tasks.reminders.weekly') },
+    { value: 'biweekly', label: t('events.features.tasks.reminders.biweekly') }
+  ];
 
   const showError = (message) => {
     setErrorMessage(message);
@@ -74,6 +91,20 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
           !event.target.classList.contains('task-reminder-display-input')) {
         setShowReminderCalendar(false);
       }
+      if (
+        dueTimePickerContainerRef.current && 
+        !dueTimePickerContainerRef.current.contains(event.target) &&
+        !event.target.classList.contains('due-time-icon')
+      ) {
+        setShowDueTimePicker(false);
+      }
+      if (
+        reminderTimePickerContainerRef.current && 
+        !reminderTimePickerContainerRef.current.contains(event.target) &&
+        !event.target.classList.contains('reminder-time-icon')
+      ) {
+        setShowReminderTimePicker(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -88,13 +119,17 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
         title: task.title || '',
         description: task.description || '',
         dueDate: task.dueDate || '',
+        dueTime: task.dueTime || '09:00',
         priority: task.priority || 'medium',
         category: task.category || 'other',
         reminderDate: task.reminderDate || '',
-        notes: task.notes || ''
+        reminderTime: task.reminderTime || '09:00',
+        notes: task.notes || '',
+        reminderRecurrence: task.reminderRecurrence || 'none'
       };
       
       setFormData(taskData);
+      setRecurringReminderEnabled(taskData.reminderRecurrence !== 'none');
       
       if (taskData.dueDate) {
         setDisplayDueDate(formatDateToDisplay(taskData.dueDate));
@@ -144,6 +179,25 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
     }
     
     return null;
+  };
+
+  const handleRecurringCheckboxChange = (e) => {
+    const isChecked = e.target.checked;
+    setRecurringReminderEnabled(isChecked);
+    
+    if (isChecked) {
+      setShowRecurringModal(true);
+    } else {
+      setFormData(prev => ({ ...prev, reminderRecurrence: 'none' }));
+    }
+  };
+
+  const handleRecurringOptionSelect = (option) => {
+    setFormData(prev => ({ ...prev, reminderRecurrence: option }));
+    setShowRecurringModal(false);
+    if (option === 'none') {
+      setRecurringReminderEnabled(false);
+    }
   };
 
   const handleDateSelect = (day, fieldName) => {
@@ -261,6 +315,8 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
     } else {
       setDisplayReminderDate('');
       setShowReminderCalendar(false);
+      // נקה גם את שעת התזכורת כשמנקים את התאריך
+      setFormData(prev => ({ ...prev, reminderTime: '' }));
     }
   };
 
@@ -289,6 +345,103 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
       setDisplayReminderDate(formattedDateDisplay);
       setShowReminderCalendar(false);
     }
+  };
+
+  const handleTimeSelection = (hour, minute, timeField) => {
+    const formattedTime = `${hour}:${minute}`;
+    setFormData(prev => ({
+      ...prev,
+      [timeField]: formattedTime
+    }));
+    
+    if (timeField === 'dueTime') {
+      setShowDueTimePicker(false);
+    } else {
+      setShowReminderTimePicker(false);
+    }
+  };
+
+  const renderTimePicker = (timeField, showPicker, setShowPicker, containerRef) => {
+    if (!showPicker) return null;
+    
+    const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+    const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
+    
+    return (
+      <div className={`time-picker-dropdown ${isRTL ? 'rtl' : 'ltr'}`} ref={containerRef}>
+        <div className={`time-picker-header ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="time-picker-close" onClick={() => setShowPicker(false)}>✕</div>
+        </div>
+        <div className={`time-picker-content ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className="time-picker-hours">
+            {hours.map(hour => (
+              <div 
+                key={hour} 
+                className="time-picker-hour"
+                onClick={() => {
+                  const minute = formData[timeField]?.split(':')?.[1] || '00';
+                  handleTimeSelection(hour, minute, timeField);
+                }}
+              >
+                {hour}
+              </div>
+            ))}
+          </div>
+          <div className="time-picker-minutes">
+            {minutes.map(minute => (
+              <div 
+                key={minute} 
+                className="time-picker-minute"
+                onClick={() => {
+                  const hour = formData[timeField]?.split(':')?.[0] || '09';
+                  handleTimeSelection(hour, minute, timeField);
+                }}
+              >
+                {minute}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="time-picker-footer">
+          <button 
+            type="button" 
+            className="time-picker-action" 
+            onClick={() => {
+              setFormData(prev => ({ ...prev, [timeField]: '' }));
+              setShowPicker(false);
+            }}
+          >
+            {t('general.clear')}
+          </button>
+          {timeField === 'dueTime' && (
+            <button 
+              type="button" 
+              className="time-picker-action primary" 
+              onClick={() => {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = Math.floor(now.getMinutes() / 5) * 5;
+                const minutesStr = minutes.toString().padStart(2, '0');
+                handleTimeSelection(hours, minutesStr, timeField);
+              }}
+            >
+              {t('general.now')}
+            </button>
+          )}
+          <button 
+            type="button" 
+            className="time-picker-action primary" 
+            onClick={() => {
+              const todayTime = '09:00';
+              const [hours, minutes] = todayTime.split(':');
+              handleTimeSelection(hours, minutes, timeField);
+            }}
+          >
+            {t('general.today')}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const renderCalendar = (show, fieldName, ref, inputRef) => {
@@ -383,10 +536,20 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
 
     if (formData.reminderDate) {
       if (formData.dueDate) {
-        const reminderDate = new Date(formData.reminderDate);
-        const dueDate = new Date(formData.dueDate);
+        const reminderDateTime = new Date(formData.reminderDate);
+        const dueDateTime = new Date(formData.dueDate);
         
-        if (reminderDate >= dueDate) {
+        if (formData.reminderTime) {
+          const [reminderHour, reminderMinute] = formData.reminderTime.split(':');
+          reminderDateTime.setHours(parseInt(reminderHour), parseInt(reminderMinute), 0, 0);
+        }
+        
+        if (formData.dueTime) {
+          const [dueHour, dueMinute] = formData.dueTime.split(':');
+          dueDateTime.setHours(parseInt(dueHour), parseInt(dueMinute), 0, 0);
+        }
+        
+        if (reminderDateTime >= dueDateTime) {
           newErrors.reminderDate = t('events.features.tasks.validation.reminderBeforeDue');
         }
       }
@@ -466,27 +629,50 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
             />
           </div>
 
-          <div className="form-group">
-            <label className="form-label">{t('events.features.tasks.form.dueDate')} *</label>
-            <div className="task-date-input-container">
-              <div className="task-date-display-wrapper">
-                <input
-                  ref={dueDateInputRef}
-                  type="text"
-                  placeholder="DD/MM/YYYY"
-                  value={displayDueDate}
-                  readOnly
-                  className={`task-date-display-input ${errors.dueDate ? 'input-error' : ''} ${formData.dueDate ? 'filled' : ''}`}
-                  onClick={() => toggleCalendar('dueDate')}
-                />
-                <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('dueDate')}>
-                  <span role="img" aria-label="calendar">📅</span>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">{t('events.features.tasks.form.dueDate')} *</label>
+              <div className="task-date-input-container">
+                <div className="task-date-display-wrapper">
+                  <input
+                    ref={dueDateInputRef}
+                    type="text"
+                    placeholder="DD/MM/YYYY"
+                    value={displayDueDate}
+                    readOnly
+                    className={`task-date-display-input ${errors.dueDate ? 'input-error' : ''} ${formData.dueDate ? 'filled' : ''}`}
+                    onClick={() => toggleCalendar('dueDate')}
+                  />
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('dueDate')}>
+                    <span role="img" aria-label="calendar">📅</span>
+                  </div>
                 </div>
+                {renderCalendar(showDueDateCalendar, 'dueDate', dueDateCalendarRef, dueDateInputRef)}
               </div>
-              {renderCalendar(showDueDateCalendar, 'dueDate', dueDateCalendarRef, dueDateInputRef)}
+              <div className="field-error-space">
+                {errors.dueDate && <div className="field-error">{errors.dueDate}</div>}
+              </div>
             </div>
-            <div className="field-error-space">
-              {errors.dueDate && <div className="field-error">{errors.dueDate}</div>}
+
+            <div className="form-group">
+              <label className="form-label">{t('events.features.tasks.form.dueTime')}</label>
+              
+              <div className="time-input-container">
+                <input
+                  type="text"
+                  name="dueTime"
+                  value={formData.dueTime}
+                  onChange={handleChange}
+                  ref={dueTimePickerRef}
+                  placeholder="HH:MM"
+                  className={`time-input ${formData.dueTime ? 'filled' : ''}`}
+                />
+                <div className={`time-icon due-time-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => setShowDueTimePicker(!showDueTimePicker)}>
+                  <span role="img" aria-label="clock">🕒</span>
+                </div>
+                
+                {renderTimePicker('dueTime', showDueTimePicker, setShowDueTimePicker, dueTimePickerContainerRef)}
+              </div>
             </div>
           </div>
 
@@ -531,27 +717,75 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">{t('events.features.tasks.form.reminderDate')}</label>
-            <div className="task-date-input-container">
-              <div className="task-date-display-wrapper">
-                <input
-                  ref={reminderInputRef}
-                  type="text"
-                  placeholder="DD/MM/YYYY"
-                  value={displayReminderDate}
-                  readOnly
-                  className={`task-date-display-input ${errors.reminderDate ? 'input-error' : ''} ${formData.reminderDate ? 'filled' : ''}`}
-                  onClick={() => toggleCalendar('reminderDate')}
-                />
-                <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('reminderDate')}>
-                  <span role="img" aria-label="calendar">📅</span>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">{t('events.features.tasks.form.reminderDate')}</label>
+              <div className="task-date-input-container">
+                <div className="task-date-display-wrapper">
+                  <input
+                    ref={reminderInputRef}
+                    type="text"
+                    placeholder="DD/MM/YYYY"
+                    value={displayReminderDate}
+                    readOnly
+                    className={`task-date-display-input ${errors.reminderDate ? 'input-error' : ''} ${formData.reminderDate ? 'filled' : ''}`}
+                    onClick={() => toggleCalendar('reminderDate')}
+                  />
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('reminderDate')}>
+                    <span role="img" aria-label="calendar">📅</span>
+                  </div>
                 </div>
+                {renderCalendar(showReminderCalendar, 'reminderDate', reminderCalendarRef, reminderInputRef)}
               </div>
-              {renderCalendar(showReminderCalendar, 'reminderDate', reminderCalendarRef, reminderInputRef)}
+              <div className="field-error-space">
+                {errors.reminderDate && <div className="field-error">{errors.reminderDate}</div>}
+              </div>
             </div>
-            <div className="field-error-space">
-              {errors.reminderDate && <div className="field-error">{errors.reminderDate}</div>}
+
+            <div className="form-group">
+              <label className="form-label">{t('events.features.tasks.form.reminderTime')}</label>
+              
+              <div className="time-input-container">
+                <input
+                  type="text"
+                  name="reminderTime"
+                  value={formData.reminderTime}
+                  onChange={handleChange}
+                  ref={reminderTimePickerRef}
+                  placeholder="HH:MM"
+                  disabled={!formData.reminderDate}
+                  className={`time-input ${formData.reminderTime ? 'filled' : ''} ${!formData.reminderDate ? 'disabled' : ''}`}
+                />
+                <div 
+                  className={`time-icon reminder-time-icon ${isRTL ? 'rtl' : 'ltr'} ${!formData.reminderDate ? 'disabled' : ''}`} 
+                  onClick={() => formData.reminderDate && setShowReminderTimePicker(!showReminderTimePicker)}
+                >
+                  <span role="img" aria-label="clock">🕒</span>
+                </div>
+                
+                {formData.reminderDate && renderTimePicker('reminderTime', showReminderTimePicker, setShowReminderTimePicker, reminderTimePickerContainerRef)}
+              </div>
+            </div>
+          </div>
+
+          {/* Recurring Reminder Checkbox */}
+          <div className="form-group">
+            <div className="recurring-reminder-container">
+              <input
+                type="checkbox"
+                id="recurringReminder"
+                checked={recurringReminderEnabled}
+                onChange={handleRecurringCheckboxChange}
+                className="recurring-checkbox"
+              />
+              <label htmlFor="recurringReminder" className="recurring-label">
+                {t('events.features.tasks.form.recurringReminder')}
+              </label>
+              {formData.reminderRecurrence !== 'none' && (
+                <span className="recurring-selected">
+                  ({recurringOptions.find(opt => opt.value === formData.reminderRecurrence)?.label})
+                </span>
+              )}
             </div>
           </div>
 
@@ -589,6 +823,35 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
           </div>
         </form>
       </div>
+
+      {/* Recurring Reminder Options Modal */}
+      {showRecurringModal && (
+        <div className="modal-overlay recurring-modal-overlay" onClick={() => setShowRecurringModal(false)}>
+          <div className="modal-content recurring-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="recurring-modal-header">
+              <h3>{t('events.features.tasks.reminders.selectFrequency')}</h3>
+              <button 
+                className="modal-close" 
+                onClick={() => setShowRecurringModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="recurring-options">
+              {recurringOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`recurring-option-btn ${formData.reminderRecurrence === option.value ? 'selected' : ''}`}
+                  onClick={() => handleRecurringOptionSelect(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

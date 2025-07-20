@@ -100,19 +100,22 @@ const createCalendarEvent = async (taskData, eventData) => {
       throw new Error('Task due date is required');
     }
 
-    const startDate = new Date(taskData.dueDate);
-    if (isNaN(startDate.getTime())) {
+    const dueDate = new Date(taskData.dueDate);
+    const [hours, minutes] = (taskData.dueTime || '09:00').split(':');
+    dueDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    if (isNaN(dueDate.getTime())) {
       throw new Error('Invalid due date provided');
     }
 
     const defaultDuration = 60; 
-    const endDate = new Date(startDate.getTime() + (defaultDuration * 60000));
+    const endDate = new Date(dueDate.getTime() + (defaultDuration * 60000));
 
     const calendarEvent = {
       summary: taskData.title,
       description: `${taskData.description || ''}\n\nקטגוריה: ${getCategoryText(taskData.category)}\nעדיפות: ${getPriorityText(taskData.priority)}\n\nמשויך לאירוע: ${eventData.title}`,
       start: {
-        dateTime: startDate.toISOString(),
+        dateTime: dueDate.toISOString(),
         timeZone: 'Asia/Jerusalem',
       },
       end: {
@@ -126,9 +129,15 @@ const createCalendarEvent = async (taskData, eventData) => {
     };
 
     if (taskData.reminderDate) {
-      const reminderDate = new Date(taskData.reminderDate);
-      if (!isNaN(reminderDate.getTime())) {
-        const reminderMinutes = Math.floor((startDate - reminderDate) / (1000 * 60));
+      const reminderDateTime = new Date(taskData.reminderDate);
+      
+      if (taskData.reminderTime) {
+        const [reminderHours, reminderMinutes] = taskData.reminderTime.split(':');
+        reminderDateTime.setHours(parseInt(reminderHours), parseInt(reminderMinutes), 0, 0);
+      }
+      
+      if (!isNaN(reminderDateTime.getTime())) {
+        const reminderMinutes = Math.floor((dueDate - reminderDateTime) / (1000 * 60));
         if (reminderMinutes > 0 && reminderMinutes <= 40320) { 
           calendarEvent.reminders.overrides.push({
             method: 'email',
@@ -169,19 +178,22 @@ const updateCalendarEvent = async (googleEventId, taskData, eventData, oauth2Cli
       throw new Error('Task due date is required');
     }
 
-    const startDate = new Date(taskData.dueDate);
-    if (isNaN(startDate.getTime())) {
+    const dueDate = new Date(taskData.dueDate);
+    const [hours, minutes] = (taskData.dueTime || '09:00').split(':');
+    dueDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    if (isNaN(dueDate.getTime())) {
       throw new Error('Invalid due date provided');
     }
 
     const defaultDuration = 60; 
-    const endDate = new Date(startDate.getTime() + (defaultDuration * 60000));
+    const endDate = new Date(dueDate.getTime() + (defaultDuration * 60000));
 
     const calendarEvent = {
       summary: taskData.title,
       description: `${taskData.description || ''}\n\nקטגוריה: ${getCategoryText(taskData.category)}\nעדיפות: ${getPriorityText(taskData.priority)}\n\nמשויך לאירוע: ${eventData.title}`,
       start: {
-        dateTime: startDate.toISOString(),
+        dateTime: dueDate.toISOString(),
         timeZone: 'Asia/Jerusalem',
       },
       end: {
@@ -195,9 +207,15 @@ const updateCalendarEvent = async (googleEventId, taskData, eventData, oauth2Cli
     };
 
     if (taskData.reminderDate) {
-      const reminderDate = new Date(taskData.reminderDate);
-      if (!isNaN(reminderDate.getTime())) {
-        const reminderMinutes = Math.floor((startDate - reminderDate) / (1000 * 60));
+      const reminderDateTime = new Date(taskData.reminderDate);
+      
+      if (taskData.reminderTime) {
+        const [reminderHours, reminderMinutes] = taskData.reminderTime.split(':');
+        reminderDateTime.setHours(parseInt(reminderHours), parseInt(reminderMinutes), 0, 0);
+      }
+      
+      if (!isNaN(reminderDateTime.getTime())) {
+        const reminderMinutes = Math.floor((dueDate - reminderDateTime) / (1000 * 60));
         if (reminderMinutes > 0 && reminderMinutes <= 40320) {
           calendarEvent.reminders.overrides.push({
             method: 'email',
@@ -300,15 +318,18 @@ const syncEventTasksWithCalendar = async (eventId, tasks, eventData, userTokens)
         if (task.googleCalendarEventId) {
           calendarEvent = await updateCalendarEvent(task.googleCalendarEventId, task, eventData, oauth2Client);
         } else {
-          const startDate = new Date(task.dueDate);
+          const dueDate = new Date(task.dueDate);
+          const [hours, minutes] = (task.dueTime || '09:00').split(':');
+          dueDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          
           const defaultDuration = 60;
-          const endDate = new Date(startDate.getTime() + (defaultDuration * 60000));
+          const endDate = new Date(dueDate.getTime() + (defaultDuration * 60000));
 
           const calendarEventData = {
             summary: task.title,
             description: `${task.description || ''}\n\nקטגוריה: ${getCategoryText(task.category)}\nעדיפות: ${getPriorityText(task.priority)}\n\nמשויך לאירוע: ${eventData.title}`,
             start: {
-              dateTime: startDate.toISOString(),
+              dateTime: dueDate.toISOString(),
               timeZone: 'Asia/Jerusalem',
             },
             end: {
@@ -317,12 +338,39 @@ const syncEventTasksWithCalendar = async (eventId, tasks, eventData, userTokens)
             },
             reminders: {
               useDefault: false,
-              overrides: [{
-                method: 'email',
-                minutes: 1440 
-              }]
+              overrides: []
             }
           };
+
+          if (task.reminderDate) {
+            const reminderDateTime = new Date(task.reminderDate);
+            
+            if (task.reminderTime) {
+              const [reminderHours, reminderMinutes] = task.reminderTime.split(':');
+              reminderDateTime.setHours(parseInt(reminderHours), parseInt(reminderMinutes), 0, 0);
+            }
+            
+            if (!isNaN(reminderDateTime.getTime())) {
+              const reminderMinutes = Math.floor((dueDate - reminderDateTime) / (1000 * 60));
+              if (reminderMinutes > 0 && reminderMinutes <= 40320) {
+                calendarEventData.reminders.overrides.push({
+                  method: 'email',
+                  minutes: reminderMinutes
+                });
+                calendarEventData.reminders.overrides.push({
+                  method: 'popup',
+                  minutes: reminderMinutes
+                });
+              }
+            }
+          }
+
+          if (calendarEventData.reminders.overrides.length === 0) {
+            calendarEventData.reminders.overrides.push({
+              method: 'email',
+              minutes: 1440 
+            });
+          }
 
           const response = await calendar.events.insert({
             calendarId: 'primary',

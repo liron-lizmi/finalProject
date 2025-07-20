@@ -74,7 +74,8 @@
       "taskTitleRequired": "Task title is required",
       "taskDueDateRequired": "Due date is required",
       "taskEventRequired": "Event ID is required",
-      "taskUserRequired": "User ID is required"
+      "taskUserRequired": "User ID is required",
+      "invalidTimeFormat": "Invalid time format"
     }
   },
   "auth": {

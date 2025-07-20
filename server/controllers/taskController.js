@@ -32,9 +32,12 @@ const createTask = async (req, res) => {
       title, 
       description, 
       dueDate, 
+      dueTime,
       priority, 
       category, 
       reminderDate,
+      reminderTime,
+      reminderRecurrence,
       notes
     } = req.body;
     
@@ -74,7 +77,20 @@ const createTask = async (req, res) => {
         });
       }
 
-      if (taskReminderDate >= taskDueDate) {
+      const reminderDateTime = new Date(taskReminderDate);
+      const dueDateTime = new Date(dueDate);
+
+      if (reminderTime) {
+        const [reminderHour, reminderMinute] = reminderTime.split(':');
+        reminderDateTime.setHours(parseInt(reminderHour), parseInt(reminderMinute), 0, 0);
+      }
+
+      if (dueTime) {
+        const [dueHour, dueMinute] = dueTime.split(':');
+        dueDateTime.setHours(parseInt(dueHour), parseInt(dueMinute), 0, 0);
+      }
+
+      if (reminderDateTime >= dueDateTime) {
         return res.status(400).json({ 
           message: req.t('events.validation.reminderBeforeDue') 
         });
@@ -85,9 +101,12 @@ const createTask = async (req, res) => {
       title,
       description,
       dueDate: taskDueDate,
+      dueTime: dueTime || '09:00',
       priority: priority || 'medium',
       category: category || 'other',
       reminderDate: reminderDate ? new Date(reminderDate) : undefined,
+      reminderTime: reminderTime || undefined,
+      reminderRecurrence: reminderRecurrence || 'none',
       notes,
       event: eventId,
       user: req.userId
@@ -152,6 +171,23 @@ const updateTask = async (req, res) => {
       updateData.dueDate = taskDueDate;
     }
 
+    if (updateData.dueTime !== undefined) {
+      if (updateData.dueTime && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(updateData.dueTime)) {
+        return res.status(400).json({ 
+          message: req.t('events.validation.invalidTimeFormat') 
+        });
+      }
+      updateData.dueTime = updateData.dueTime || '09:00';
+    }
+
+    if (updateData.reminderTime !== undefined) {
+      if (updateData.reminderTime && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(updateData.reminderTime)) {
+        return res.status(400).json({ 
+          message: req.t('events.validation.invalidTimeFormat') 
+        });
+      }
+    }
+
     if (updateData.reminderDate) {
       const taskReminderDate = new Date(updateData.reminderDate);
       if (isNaN(taskReminderDate.getTime())) {
@@ -161,8 +197,24 @@ const updateTask = async (req, res) => {
       }
       updateData.reminderDate = taskReminderDate;
 
+      const reminderDateTime = new Date(taskReminderDate);
       const dueDate = updateData.dueDate || task.dueDate;
-      if (taskReminderDate >= dueDate) {
+      const dueDateTime = new Date(dueDate);
+
+      const reminderTime = updateData.reminderTime || task.reminderTime;
+      const dueTime = updateData.dueTime || task.dueTime;
+
+      if (reminderTime) {
+        const [reminderHour, reminderMinute] = reminderTime.split(':');
+        reminderDateTime.setHours(parseInt(reminderHour), parseInt(reminderMinute), 0, 0);
+      }
+
+      if (dueTime) {
+        const [dueHour, dueMinute] = dueTime.split(':');
+        dueDateTime.setHours(parseInt(dueHour), parseInt(dueMinute), 0, 0);
+      }
+
+      if (reminderDateTime >= dueDateTime) {
         return res.status(400).json({ 
           message: req.t('events.validation.reminderBeforeDue') 
         });

@@ -329,9 +329,12 @@
           "assigneePlaceholder": "Name of task assignee",
           "estimatedDuration": "Estimated Duration (minutes)",
           "reminderDate": "Reminder Date",
+          "reminderTime": "Reminder Time",
           "notes": "Notes",
           "notesPlaceholder": "Additional notes for the task...",
-          "datePlaceholder": "DD/MM/YYYY"
+          "datePlaceholder": "DD/MM/YYYY",
+          "dueTime": "Task Time",
+          "recurringReminder": "Recurring Reminder"
         },
         "actions": {
           "edit": "Edit",
@@ -376,7 +379,13 @@
           "reminder": "Reminder",
           "overdue": "Overdue",
           "viewTask": "View Task",
-          "dismiss": "Dismiss"
+          "dismiss": "Dismiss",
+          "selectFrequency": "Select Reminder Frequency",
+          "none": "No reminders set",
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "biweekly": "Biweekly",
+          "taskOverdue": "Task Overdue"
         }
       },
       "timeline": {
