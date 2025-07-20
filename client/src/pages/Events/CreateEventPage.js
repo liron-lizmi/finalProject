@@ -272,7 +272,7 @@ const CreateEventPage = () => {
     }
     
     if (!timeToSubmit || !isValidTime(timeToSubmit)) {
-      setTimeError(t('errors.invalidTimeForma'));
+      setTimeError(t('errors.invalidTimeFormat'));
       hasError = true;
     }
     
@@ -332,7 +332,7 @@ const CreateEventPage = () => {
     const days = [];
     
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
+      days.push(<div key={`empty-${i}`} className="task-calendar-day empty"></div>);
     }
     
     for (let day = 1; day <= daysInMonth; day++) {
@@ -342,7 +342,7 @@ const CreateEventPage = () => {
       days.push(
         <div
           key={day}
-          className={`calendar-day ${selectable ? 'selectable' : 'disabled'} ${selected ? 'selected' : ''}`}
+          className={`task-calendar-day ${selectable ? 'selectable' : 'disabled'} ${selected ? 'selected' : ''}`}
           onClick={() => selectable && handleDateSelect(day)}
         >
           {day}
@@ -359,45 +359,45 @@ const CreateEventPage = () => {
     const lang = isRTL ? 'he' : 'en';
     
     return (
-      <div className={`calendar-dropdown ${isRTL ? 'rtl' : 'ltr'}`} ref={calendarRef}>
-        <div className="calendar-header">
+      <div className={`task-calendar-dropdown ${isRTL ? 'ltr' : 'rtl'}`} ref={calendarRef}>
+        <div className="task-calendar-header">
           <button 
             type="button" 
-            className="month-nav prev" 
+            className="task-month-nav prev" 
             onClick={handlePrevMonth}
           >
-            &#9650;
+            {isRTL ? '❯' : '❮'}
           </button>
-          <div className="current-month">
+          <div className="task-current-month">
             {monthNames[lang][currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </div>
           <button 
             type="button" 
-            className="month-nav next" 
+            className="task-month-nav next" 
             onClick={handleNextMonth}
           >
-            &#9660;
+            {isRTL ? '❮' : '❯'}
           </button>
         </div>
-        <div className="calendar-days-header">
+        <div className="task-calendar-days-header">
           {dayNames[lang].map((day, index) => (
-            <div key={index} className="day-name">{day}</div>
+            <div key={index} className="task-day-name">{day}</div>
           ))}
         </div>
-        <div className="calendar-days">
+        <div className="task-calendar-days">
           {renderCalendarDays()}
         </div>
-        <div className="calendar-footer">
+        <div className="task-calendar-footer">
           <button 
             type="button" 
-            className="calendar-btn clear"
+            className="task-calendar-btn clear"
             onClick={handleClearDate}
           >
             {t('general.clear')}
           </button>
           <button 
             type="button" 
-            className="calendar-btn today"
+            className="task-calendar-btn today"
             onClick={handleToday}
           >
             {t('general.today')}
@@ -511,18 +511,18 @@ const CreateEventPage = () => {
           <div className="form-group">
             <label htmlFor="eventDate">{t('events.eventDate')}</label>
             
-            <div className="date-input-container">
-              <div className="date-display-wrapper">
+            <div className="task-date-input-container">
+              <div className="task-date-display-wrapper">
                 <input
                   type="text"
                   id="eventDateDisplay"
                   placeholder={isRTL ? "DD/MM/YYYY" : "MM/DD/YYYY"}
                   value={displayDate}
                   readOnly
-                  className={`date-display-input ${dateError ? 'input-error' : ''}`}
+                  className={`task-date-display-input ${dateError ? 'input-error' : ''} ${eventData.eventDate ? 'filled' : ''}`}
                   onClick={toggleCalendar}
                 />
-                <div className={`calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={toggleCalendar}>
+                <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={toggleCalendar}>
                   <span role="img" aria-label="calendar">📅</span>
                 </div>
               </div>
@@ -544,7 +544,7 @@ const CreateEventPage = () => {
                 ref={timePickerRef}
                 placeholder="HH:MM"
                 required
-                className={`time-input ${timeError ? 'input-error' : ''}`}
+                className={`time-input ${timeError ? 'input-error' : ''} ${eventData.eventTime ? 'filled' : ''}`}
               />
               <div className={`time-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={toggleTimePicker}>
                 <span role="img" aria-label="clock">🕒</span>

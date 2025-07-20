@@ -291,7 +291,7 @@ html, body {
 .calendar-dropdown {
   position: absolute;
   top: 45px;
-  width: 280px;
+  width: 220px;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
@@ -315,7 +315,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  padding: 10px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #eee;
 }
@@ -365,16 +365,17 @@ html, body {
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  padding: 8px;
+  gap: 2px;
+  padding: 6px;
 }
 
 .calendar-day {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  font-size: 14px;
+  width: 26px;
+  height: 26;
+  font-size: 12px;
   border-radius: 4px;
   cursor: default;
   transition: all 0.3s ease;
@@ -764,7 +765,7 @@ html, body {
  
   .time-picker-dropdown, .calendar-dropdown {
     width: 95%;
-    max-width: 280px;
+    max-width: 220px;
   }
 
   .auth-logo-container .logo {
@@ -800,7 +801,7 @@ html, body {
  
   .time-picker-dropdown, .calendar-dropdown {
     width: 95%;
-    max-width: 260px;
+    max-width: 200px;
   }
  
   .form-input, .date-display-input, .time-input {

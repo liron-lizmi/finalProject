@@ -34,13 +34,19 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
 
   const getTasksForDate = (date) => {
     const dateStr = formatDateForComparison(date);
-    return tasks.filter(task => {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
-      const taskDateStr = formatDateForComparison(taskDate);
-      return taskDateStr === dateStr;
+    const tasksForDate = tasks.filter(task => {
+        if (!task.dueDate) return false;
+        const taskDate = new Date(task.dueDate);
+        const taskDateStr = formatDateForComparison(taskDate);
+        return taskDateStr === dateStr;
     });
-  };
+    
+    return tasksForDate.sort((a, b) => {
+        const timeA = a.dueTime || '09:00';
+        const timeB = b.dueTime || '09:00';
+        return timeA.localeCompare(timeB);
+    });
+};
 
   const isToday = (date) => {
     const today = new Date();
@@ -122,7 +128,7 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
                     style={{ borderLeftColor: getPriorityColor(task.priority) }}
                   >
                     <span className="task-title">{task.title}</span>
-                    <span className="task-category">{t(`events.features.tasks.category.${task.category}`)}</span>
+                    <span className="task-time">{task.dueTime || '09:00'}</span>
                   </div>
                 ))}
                 
@@ -165,7 +171,7 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
       days.push(
         <div key={i} className={`week-day ${isToday(date) ? 'today' : ''} ${isEventDate(date) ? 'event-date' : ''}`}>
           <div className="week-day-header">
-            <div className="day-name">{dayNames[isRTL ? 'he' : 'en'][i]}</div>
+            <div className="day-name">{dayNames[isRTL ? 'he' : 'en'][date.getDay()]}</div>
             <div className="day-number">{date.getDate()}</div>
           </div>
           
