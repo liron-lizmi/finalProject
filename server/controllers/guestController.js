@@ -22,25 +22,52 @@ const getEventGuests = async (req, res) => {
 const addGuest = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { firstName, lastName, phone, group } = req.body;
+    const { firstName, lastName, phone, group, customGroup } = req.body;
     
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const newGuest = new Guest({
+    // עיבוד הקבוצה - אם זו קבוצה מותאמת
+    let finalGroup = group || 'other';
+    let finalCustomGroup = undefined;
+
+    // אם הקבוצה היא 'custom' או שהיא לא אחת מהקבוצות הסטנדרטיות
+    if (group === 'custom' || !['family', 'friends', 'work', 'other'].includes(group)) {
+      if (customGroup && customGroup.trim()) {
+        finalGroup = customGroup.trim();
+        finalCustomGroup = customGroup.trim();
+      } else if (!['family', 'friends', 'work', 'other'].includes(group)) {
+        // אם group עצמו הוא שם הקבוצה המותאמת
+        finalGroup = group;
+        finalCustomGroup = group;
+      } else {
+        finalGroup = 'other';
+      }
+    }
+
+    // יצירת אובייקט המוזמן עם ולידציה מותאמת
+    const guestData = {
       firstName,
       lastName,
       phone,
-      group: group || 'other',
+      group: finalGroup,
       event: eventId,
       user: req.userId
-    });
+    };
+
+    // הוסף customGroup רק אם הוא קיים
+    if (finalCustomGroup) {
+      guestData.customGroup = finalCustomGroup;
+    }
+
+    const newGuest = new Guest(guestData);
 
     const savedGuest = await newGuest.save();
     res.status(201).json(savedGuest);
   } catch (err) {
+    console.error('Error adding guest:', err);
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -105,9 +132,39 @@ const updateGuestRSVP = async (req, res) => {
   }
 };
 
+// פונקציה חדשה לקבלת כל הקבוצות הייחודיות של אירוע
+const getEventGroups = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const guests = await Guest.find({ event: eventId, user: req.userId }, 'group customGroup');
+    
+    const groups = new Set();
+    guests.forEach(guest => {
+      if (['family', 'friends', 'work', 'other'].includes(guest.group)) {
+        groups.add(guest.group);
+      } else if (guest.customGroup) {
+        groups.add(guest.customGroup);
+      } else {
+        groups.add(guest.group);
+      }
+    });
+
+    res.json(Array.from(groups));
+  } catch (err) {
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = {
   getEventGuests,
   addGuest,
   deleteGuest,
-  updateGuestRSVP
+  updateGuestRSVP,
+  getEventGroups
 };

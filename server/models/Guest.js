@@ -24,9 +24,14 @@ const GuestSchema = new mongoose.Schema({
   },
   group: {
     type: String,
-    enum: ['family', 'friends', 'work', 'other'],
-    default: 'other',
-    required: [true, 'validation.groupRequired']
+    required: [true, 'validation.groupRequired'],
+    default: 'other'
+    // הסרנו את enum כדי לאפשר כל ערך
+  },
+  customGroup: {
+    type: String,
+    trim: true
+    // שדה נוסף לשמירת שם הקבוצה המותאמת
   },
   rsvpStatus: {
     type: String,
@@ -81,9 +86,29 @@ const GuestSchema = new mongoose.Schema({
   }
 });
 
+// Pre-save middleware לעיבוד הקבוצות
 GuestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  
+  // אם זו קבוצה סטנדרטית, נקה את customGroup
+  if (['family', 'friends', 'work', 'other'].includes(this.group)) {
+    this.customGroup = undefined;
+  } else {
+    // אם זו קבוצה מותאמת, שמור אותה ב-customGroup גם
+    if (!this.customGroup) {
+      this.customGroup = this.group;
+    }
+  }
+  
   next();
+});
+
+// Virtual לקבלת שם הקבוצה לתצוגה
+GuestSchema.virtual('displayGroup').get(function() {
+  if (['family', 'friends', 'work', 'other'].includes(this.group)) {
+    return this.group;
+  }
+  return this.customGroup || this.group;
 });
 
 const Guest = mongoose.model('Guest', GuestSchema);
