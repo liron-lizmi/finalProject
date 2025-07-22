@@ -25,12 +25,9 @@ const EventGuestsPage = () => {
     customGroup: ''
   });
 
-  // פורמט מספר טלפון
   const formatPhoneNumber = (value) => {
-    // הסרת כל מה שלא ספרה
     const cleanedValue = value.replace(/\D/g, '');
     
-    // אם מתחיל ב-05 ויש 10 ספרות
     if (cleanedValue.startsWith('05') && cleanedValue.length <= 10) {
       if (cleanedValue.length <= 3) {
         return cleanedValue;
@@ -39,7 +36,6 @@ const EventGuestsPage = () => {
       }
     }
     
-    // אם לא מתחיל ב-05, תן למשתמש להמשיך להקליד
     if (cleanedValue.length <= 10) {
       if (cleanedValue.length <= 3) {
         return cleanedValue;
@@ -48,7 +44,7 @@ const EventGuestsPage = () => {
       }
     }
     
-    return value.slice(0, -1); // אל תאפשר יותר מ-11 תווים
+    return value.slice(0, -1); 
   };
 
   const handlePhoneChange = (e) => {
@@ -66,7 +62,6 @@ const EventGuestsPage = () => {
   };
 
   const validateForm = () => {
-    // נקה שגיאות קודמות
     setError('');
     
     if (!guestForm.firstName.trim()) {
@@ -81,12 +76,10 @@ const EventGuestsPage = () => {
       setError(t('validation.phoneRequired'));
       return false;
     }
-    // בדיקת פורמט טלפון ישראלי
     if (!/^05\d-\d{7}$/.test(guestForm.phone)) {
       setError(t('validation.invalidPhoneFormat'));
       return false;
     }
-    // בדיקה שאם נבחר "אחר" יש שם קבוצה מותאם
     if (guestForm.group === 'other' && !guestForm.customGroup.trim()) {
       setError(t('validation.customGroupRequired'));
       return false;
@@ -94,23 +87,18 @@ const EventGuestsPage = () => {
     return true;
   };
 
-  // פונקציה לקבלת שם הקבוצה לתצוגה
   const getGroupDisplayName = (guest) => {
-    // אם יש customGroup, השתמש בו
     if (guest.customGroup) {
       return guest.customGroup;
     }
     
-    // אם זו קבוצה סטנדרטית, השתמש בתרגום
     if (['family', 'friends', 'work', 'other'].includes(guest.group)) {
       return t(`guests.groups.${guest.group}`);
     }
     
-    // אחרת השתמש ב-group עצמו (לתמיכה לאחור)
     return guest.group;
   };
 
-  // פונקציה לקבלת רשימת קבוצות ייחודיות
   const getUniqueGroups = () => {
     const groups = new Set();
     guests.forEach(guest => {
@@ -234,11 +222,9 @@ const EventGuestsPage = () => {
     }
 
     try {
-      // הכנת האובייקט לשליחה
       let finalGroup = guestForm.group;
       let finalCustomGroup = undefined;
 
-      // אם הקבוצה היא 'other' ויש שם קבוצה מותאם
       if (guestForm.group === 'other' && guestForm.customGroup.trim()) {
         finalGroup = guestForm.customGroup.trim();
         finalCustomGroup = guestForm.customGroup.trim();
@@ -285,7 +271,6 @@ const EventGuestsPage = () => {
       const results = [];
       const errors = [];
 
-      // וודא שיש נתונים לייבוא
       if (!importedGuests || importedGuests.length === 0) {
         setError(t('import.errors.noData'));
         return;
@@ -295,7 +280,6 @@ const EventGuestsPage = () => {
 
       for (const guest of importedGuests) {
         try {
-          // ולידציה נוספת לפני שליחה
           const validatedGuest = {
             firstName: guest.firstName?.trim() || 'אנשי קשר',
             lastName: guest.lastName?.trim() || '',
@@ -304,15 +288,12 @@ const EventGuestsPage = () => {
             customGroup: undefined
           };
 
-          // טיפול בקבוצות מותאמות
           if (!['family', 'friends', 'work', 'other'].includes(guest.group)) {
             validatedGuest.group = guest.group;
             validatedGuest.customGroup = guest.group;
           }
 
-          // אם יש טלפון, ודא שהוא בפורמט תקין
           if (validatedGuest.phone && !/^05\d-\d{7}$/.test(validatedGuest.phone)) {
-            // ננסה לתקן את הפורמט
             const cleanPhone = validatedGuest.phone.replace(/\D/g, '');
             if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
               validatedGuest.phone = `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`;
@@ -343,14 +324,12 @@ const EventGuestsPage = () => {
         }
       }
 
-      // עדכן את רשימת המוזמנים
       if (results.length > 0) {
         setGuests(prevGuests => [...prevGuests, ...results]);
       }
 
-      // הצג הודעות על התוצאות
       if (results.length > 0 && errors.length === 0) {
-        setError(''); // נקה שגיאות קודמות
+        setError(''); 
         console.log(`Successfully imported ${results.length} guests`);
       } else if (results.length > 0 && errors.length > 0) {
         setError(`${t('import.partialSuccess')}: ${results.length} ${t('import.imported')}, ${errors.length} ${t('import.failed')}. ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`);

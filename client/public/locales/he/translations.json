@@ -57,7 +57,7 @@
     "passwordRequired": "סיסמה היא שדה חובה",
     "invalidEmailFormat": "נא להזין כתובת אימייל תקינה",
     "emailRequired": "אימייל הוא שדה חובה",
-    "notLoggedIn": "יש להתחבר תחילה"
+    "notLoggedIn": "לא מחובר. יש להתחבר תחילה"
   },
   "dashboard": {
     "title": "לוח בקרה",
@@ -133,6 +133,7 @@
             "allStyles": "הכל", 
             "modern": "מודרני",
             "classic": "קלאסי",
+            "outdoor": "חוץ",
             "urban": "חוץ/גן",
             "luxury": "יוקרתי",
             "outside/garden": "חוץ/גן",
@@ -447,13 +448,14 @@
     "venueNameRequired": "שם המקום הוא שדה חובה",
     "venueAddressRequired": "כתובת המקום היא שדה חובה",
     "serverError": "שגיאת שרת",
-    "authError": "שגיאת אימות - מעביר אותך לדף התחברות...",
-    "eventNotFound": "האירוע לא נמצא או שאין לך הרשאה לגשת אליו",
+    "authError": "שגיאת אימות - מפנה מחדש להתחברות",
+    "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט",
+    "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
+    "eventNotFound": "אירוע לא נמצא",
     "fetchGuests": "שגיאה בטעינת רשימת המוזמנים",
     "addGuest": "שגיאה בהוספת המוזמן",
     "deleteGuest": "שגיאה במחיקת המוזמן",
-    "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט",
-    "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה"
+    "importFailed": "הייבוא נכשל"
   },
   "home": {
     "hero": {
@@ -803,14 +805,18 @@
     "form": {
       "firstName": "שם פרטי",
       "lastName": "שם משפחה",
-      "phone": "טלפון"
+      "phone": "טלפון",
+      "group": "קבוצה",
+      "customGroup": "שם הקבוצה",
+      "customGroupPlaceholder": "לדוגמה: לימודים, שכנים, קהילה..."
     }
   },
   "common": {
     "loading": "טוען...",
     "add": "הוסף",
     "cancel": "ביטול",
-    "delete": "מחיקה"
+    "delete": "מחיקה",
+    "or": "או"
   },
   "validation": {
     "phoneRequired": "מספר טלפון נדרש",
@@ -818,7 +824,53 @@
     "userRequired": "משתמש נדרש",
     "firstNameRequired": "שם פרטי נדרש",
     "lastNameRequired": "שם משפחה נדרש",
-    "invalidPhoneFormat": "פורמט טלפון לא תקין"
+    "invalidPhoneFormat": "פורמט טלפון לא תקין (נדרש: 05X-XXXXXXX)",
+    "groupRequired": "קבוצה נדרשת",
+    "customGroupRequired": "שם הקבוצה נדרש כאשר נבחר 'אחר'"
+  },
+  "import": {
+    "title": "ייבוא מוזמנים",
+    "importGuests": "ייבוא מוזמנים",
+    "csv": "CSV/טקסט",
+    "excel": "Excel", 
+    "google": "Google Contacts",
+    "whatsapp": "WhatsApp",
+    "csvDescription": "העלה קובץ CSV או הדבק נתונים. תומך בפורמטים שונים כולל קבוצות מותאמות.",
+    "excelDescription": "העלה קובץ Excel עם העמודות: שם פרטי, שם משפחה, טלפון, קבוצה",
+    "excelNote": "הערה: אם קובץ Excel לא נתמך, נסה לשמור אותו כ-CSV ולהעלות בלשונית CSV",
+    "googleDescription": "ייבא אנשי קשר ישירות מ-Google Contacts",
+    "whatsappInstructions": {
+      "title": "כיצד לייצא אנשי קשר מ-WhatsApp:",
+      "step1": "פתח את WhatsApp באפליקציה או בווב",
+      "step2": "עבור להגדרות > נתונים ואחסון > ייצוא צ'אט",
+      "step3": "בחר את הצ'אטים שברצונך לייצא",
+      "step4": "שמור את הקובץ והעלה אותו כאן"
+    },
+    "uploadFile": "העלאת קובץ",
+    "pasteData": "הדבקת נתונים",
+    "csvPlaceholder": "יוסי,כהן,050-1234567,משפחה\nשרה,לוי,052-9876543,חברים\nדני,גרין,053-1111111,לימודים\nאו פשוט: יוסי כהן 050-1234567 לימודים",
+    "supportedFormats": "פורמטים נתמכים",
+    "unknownContact": "אנשי קשר",
+    "parseData": "עיבוד נתונים",
+    "connectGoogle": "התחבר ל-Google",
+    "selectWhatsappFile": "בחר קובץ WhatsApp",
+    "preview": "תצוגה מקדימה",
+    "contacts": "אנשי קשר",
+    "importButton": "ייבא",
+    "partialSuccess": "ייבוא חלקי",
+    "imported": "יובאו",
+    "failed": "נכשלו",
+    "errors": {
+      "invalidFormat": "פורמט קובץ לא תקין",
+      "emptyData": "אין נתונים לעיבוד",
+      "noData": "אין נתונים לייבוא",
+      "fileProcessing": "שגיאה בעיבוד הקובץ",
+      "noValidData": "לא נמצאו נתונים תקינים לייבוא",
+      "missingFirstName": "חסר שם פרטי",
+      "invalidPhone": "טלפון לא תקין",
+      "excelNotSupported": "קובץ Excel לא נתמך. אנא שמור כ-CSV והעלה בלשונית CSV",
+      "importFailed": "הייבוא נכשל",
+      "notImplemented": "תכונה זו תתווסף בקרוב"
+    }
   }
 }
-

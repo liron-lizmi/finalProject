@@ -58,11 +58,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setCsvData(csvData);
       parseCSVData(csvData);
     } catch (error) {
-      // אם XLSX לא זמין, נשתמש ב-FileReader כ-fallback
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          // ננסה לקרוא כטקסט (אם זה CSV disguised as Excel)
           const text = e.target.result;
           setCsvData(text);
           parseCSVData(text);
@@ -84,11 +82,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
     const data = [];
 
-    // אם יש רק שורה אחת, נתייחס אליה כנתונים (לא כהדרים)
     const startIndex = lines.length === 1 ? 0 : 1;
     const firstLine = lines[0];
     
-    // בדיקה אם השורה הראשונה נראית כמו הדרים
     const isHeader = firstLine.toLowerCase().includes('שם') || 
                     firstLine.toLowerCase().includes('name') ||
                     firstLine.toLowerCase().includes('טלפון') ||
@@ -103,22 +99,19 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       
       console.log('Processing line:', line);
       
-      // תמיכה בפסיקים רגילים ובפסיקים מתוך Excel
       const values = line.split(/[,\t]/).map(v => v.trim().replace(/^["']|["']$/g, ''));
       console.log('Split values:', values);
       
-      // אם יש רק ערך אחד, ננסה לפצל לפי רווחים
       if (values.length === 1 && values[0].includes(' ')) {
         const spaceSplit = values[0].split(/\s+/);
         if (spaceSplit.length >= 2) {
-          values[0] = spaceSplit[0]; // שם פרטי
-          values[1] = spaceSplit.slice(1, -1).join(' '); // שם משפחה
-          values[2] = spaceSplit[spaceSplit.length - 1]; // טלפון (הערך האחרון)
+          values[0] = spaceSplit[0]; 
+          values[1] = spaceSplit.slice(1, -1).join(' '); 
+          values[2] = spaceSplit[spaceSplit.length - 1]; 
           
-          // אם יש יותר מ-3 ערכים בפיצול רווחים, הרביעי יהיה הקבוצה
           if (spaceSplit.length > 3) {
-            values[3] = spaceSplit[spaceSplit.length - 2]; // הערך הלפני האחרון הוא הקבוצה
-            values[2] = spaceSplit[spaceSplit.length - 1]; // הערך האחרון הוא הטלפון
+            values[3] = spaceSplit[spaceSplit.length - 2]; 
+            values[2] = spaceSplit[spaceSplit.length - 1]; 
           }
         }
         console.log('Space split result:', values);
@@ -132,27 +125,22 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
           group: 'other'
         };
 
-        // אם יש רק ערך אחד, ננסה לזהות אם זה טלפון או שם
         if (values.length === 1) {
           const singleValue = values[0];
           if (/^05\d[\-\s]?\d{7}$/.test(singleValue.replace(/[\s\-]/g, ''))) {
-            // זה נראה כמו טלפון
             guest.phone = singleValue.replace(/[\s]/g, '').replace(/(\d{3})(\d{7})/, '$1-$2');
             guest.firstName = t('import.unknownContact');
             guest.lastName = '';
           } else {
-            // זה נראה כמו שם
             guest.firstName = singleValue;
             guest.lastName = '';
             guest.phone = '';
           }
         } else {
-          // יש מספר ערכים
           guest.firstName = values[0] || '';
           guest.lastName = values[1] || '';
           guest.phone = values[2] || '';
           
-          // עיבוד קבוצות - תמיכה מלאה בקבוצות מותאמות
           const groupValue = (values[3] || '').trim();
           
           if (['משפחה', 'family'].includes(groupValue.toLowerCase())) {
@@ -164,13 +152,11 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
           } else if (['אחר', 'other'].includes(groupValue.toLowerCase()) || !groupValue) {
             guest.group = 'other';
           } else {
-            // זו קבוצה מותאמת - שמור את השם המדויק כפי שהמשתמש רשם
             guest.group = groupValue;
           }
           
           console.log('Group processing:', values[3], '->', guest.group);
           
-          // תיקון פורמט טלפון
           if (guest.phone) {
             guest.phone = guest.phone.replace(/[\s\-]/g, '');
             if (/^05\d{8}$/.test(guest.phone)) {
@@ -181,7 +167,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         
         console.log('Created guest object:', guest);
         
-        // בדיקה שיש לפחות שם פרטי או טלפון
         if (guest.firstName || guest.phone) {
           data.push(guest);
         }
@@ -195,7 +180,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       return;
     }
 
-    setPreviewData(data.slice(0, 10)); // תצוגה מקדימה של 10 הראשונים
+    setPreviewData(data.slice(0, 10)); 
   };
 
   const handleManualCSV = () => {
@@ -244,12 +229,10 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     setLoading(false);
   };
 
-  // פונקציה לקבלת שם הקבוצה לתצוגה בתצוגה המקדימה
   const getGroupDisplayName = (group) => {
     if (['family', 'friends', 'work', 'other'].includes(group)) {
       return t(`guests.groups.${group}`);
     }
-    // אם זו קבוצה מותאמת, החזר את השם כפי שהוא
     return group;
   };
 
@@ -322,7 +305,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                     value={csvData}
                     onChange={(e) => {
                       setCsvData(e.target.value);
-                      // עיבוד אוטומטי של הנתונים כשהמשתמש מקליד
                       if (e.target.value.trim()) {
                         parseCSVData(e.target.value);
                       } else {

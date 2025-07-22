@@ -29,17 +29,14 @@ const addGuest = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    // עיבוד הקבוצה - אם זו קבוצה מותאמת
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
 
-    // אם הקבוצה היא 'custom' או שהיא לא אחת מהקבוצות הסטנדרטיות
     if (group === 'custom' || !['family', 'friends', 'work', 'other'].includes(group)) {
       if (customGroup && customGroup.trim()) {
         finalGroup = customGroup.trim();
         finalCustomGroup = customGroup.trim();
       } else if (!['family', 'friends', 'work', 'other'].includes(group)) {
-        // אם group עצמו הוא שם הקבוצה המותאמת
         finalGroup = group;
         finalCustomGroup = group;
       } else {
@@ -47,7 +44,6 @@ const addGuest = async (req, res) => {
       }
     }
 
-    // יצירת אובייקט המוזמן עם ולידציה מותאמת
     const guestData = {
       firstName,
       lastName,
@@ -57,7 +53,6 @@ const addGuest = async (req, res) => {
       user: req.userId
     };
 
-    // הוסף customGroup רק אם הוא קיים
     if (finalCustomGroup) {
       guestData.customGroup = finalCustomGroup;
     }
@@ -132,7 +127,6 @@ const updateGuestRSVP = async (req, res) => {
   }
 };
 
-// פונקציה חדשה לקבלת כל הקבוצות הייחודיות של אירוע
 const getEventGroups = async (req, res) => {
   try {
     const { eventId } = req.params;

@@ -56,7 +56,8 @@
     "invalidCredentials": "Invalid username or password",
     "passwordRequired": "Password is required",
     "invalidEmailFormat": "Please enter a valid email address",
-    "emailRequired": "Email is required"
+    "emailRequired": "Email is required",
+    "notLoggedIn": "Not logged in. Please log in again."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -126,16 +127,15 @@
             "eventVenue": "Event Venue",
             "banquetHall": "Banquet Hall",
             "hotel": "Hotel",
-            "park": "Park",
+            "park": "event garden",
             "museum": "Museum",
             "styleLabel": "Style",
             "allStyles": "All Styles",
             "modern": "Modern",
             "classic": "Classic",
             "outdoor": "Outdoor",
-            "urban": "Urban",
+            "urban": "Outdoor/Garden",
             "luxury": "Luxury",
-            "outside/garden": "Outdoor/Garden",
             "capacityLabel": "Capacity",
             "selectCapacity": "Select Capacity",
             "upTo50": "Up to 50 people",
@@ -234,6 +234,10 @@
         "title": "Guest List",
         "count": "{{count}} guests",
         "add": "Add guests"
+      },
+      "seating": {
+        "title": "Seating arrangements",
+        "description": "Organizing tables and seating"
       },
       "tasks": {
         "title": "Task and Timeline Management",
@@ -445,13 +449,14 @@
     "venueNameRequired": "Venue name is required",
     "venueAddressRequired": "Venue address is required",
     "serverError": "Server error",
-    "authError": "Authentication error - redirecting to login...",
+    "authError": "Authentication error - redirecting to login",
+    "networkError": "Network error - please check your internet connection",
+    "samePassword": "The password cannot be reset to the current password. Please choose a new password.",
     "eventNotFound": "Event not found or you don't have access to it",
     "fetchGuests": "Error loading guest list",
     "addGuest": "Error adding guest",
     "deleteGuest": "Error deleting guest",
-    "networkError": "Network error - please check your internet connection",
-    "samePassword": "Cannot reset password to current password. Please choose a new password"
+    "importFailed": "The import failed"
   },
   "home": {
     "hero": {
@@ -800,14 +805,18 @@
     "form": {
       "firstName": "First Name",
       "lastName": "Last Name",
-      "phone": "Phone"
+      "phone": "Phone",
+      "group": "Group",
+      "customGroup": "Group Name",
+      "customGroupPlaceholder": "e.g: Studies, Neighbors, Community..."
     }
   },
   "common": {
     "loading": "Loading...",
     "add": "Add",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "or": "or"
   },
   "validation": {
     "phoneRequired": "Phone number is required",
@@ -815,7 +824,53 @@
     "userRequired": "User is required",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
-    "invalidPhoneFormat": "Invalid phone format"
+    "invalidPhoneFormat": "Invalid phone format (required: 05X-XXXXXXX)",
+    "groupRequired": "Group is required",
+    "customGroupRequired": "Group name is required when 'Other' is selected"
+  },
+  "import": {
+    "title": "Import Guests",
+    "importGuests": "Import Guests",
+    "csv": "CSV/Text",
+    "excel": "Excel",
+    "google": "Google Contacts",
+    "whatsapp": "WhatsApp",
+    "csvDescription": "Upload a CSV file or paste data. Supports various formats including custom groups.",
+    "excelDescription": "Upload an Excel file with the columns: First Name, Last Name, Phone, Group",
+    "excelNote": "Note: If Excel file is not supported, try saving it as CSV and upload in the CSV tab",
+    "googleDescription": "Import contacts directly from Google Contacts",
+    "whatsappInstructions": {
+      "title": "How to export contacts from WhatsApp:",
+      "step1": "Open WhatsApp app or web",
+      "step2": "Go to Settings > Data and Storage > Export Chat",
+      "step3": "Select the chats you want to export",
+      "step4": "Save the file and upload it here"
+    },
+    "uploadFile": "Upload File",
+    "pasteData": "Paste Data",
+    "csvPlaceholder": "John,Doe,050-1234567,Family\nJane,Smith,052-9876543,Friends\nDan,Green,053-1111111,Studies\nOr simply: John Doe 050-1234567 Studies",
+    "supportedFormats": "Supported formats",
+    "unknownContact": "Contacts",
+    "parseData": "Parse Data",
+    "connectGoogle": "Connect to Google",
+    "selectWhatsappFile": "Select WhatsApp File",
+    "preview": "Preview",
+    "contacts": "Contacts",
+    "importButton": "Import",
+    "partialSuccess": "Partial import",
+    "imported": "Imported",
+    "failed": "Failed",
+    "errors": {
+      "invalidFormat": "Invalid file format",
+      "emptyData": "No data to process",
+      "noData": "No data to import",
+      "fileProcessing": "Error processing file",
+      "noValidData": "No valid data found for import",
+      "missingFirstName": "Missing first name",
+      "invalidPhone": "Invalid phone number",
+      "excelNotSupported": "Excel file not supported. Please save as CSV and upload in CSV tab",
+      "importFailed": "Import failed",
+      "notImplemented": "This feature will be added soon"
+    }
   }
 }
-
