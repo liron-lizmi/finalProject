@@ -18,7 +18,11 @@
     "databaseError": "Database error",
     "invalidFormat": "Invalid format",
     "routeNotFound": "Route not found", 
-    "generalError": "An error occurred. Please try again later"
+    "generalError": "An error occurred. Please try again later",
+    "googleInitError": "Google initialization error",
+    "googleClientIdNotConfigured": "Google Client ID is not configured in environment variables",
+    "unknownError": "Unknown error",
+    "googleNotConnected": "Not connected to Google"
   },
   "success": {
     "passwordReset": "Password updated successfully",
@@ -124,6 +128,16 @@
     "createSuccess": "Guest added successfully",
     "updateSuccess": "Guest updated successfully",
     "deleteSuccess": "Guest deleted successfully",
-    "rsvpUpdateSuccess": "Guest response updated successfully"
+    "rsvpUpdateSuccess": "Guest response updated successfully",
+    "googleConnectionSuccess": "Connected to Google Contacts successfully",
+    "googleDisconnectSuccess": "Disconnected from Google Contacts successfully",
+    "errors": {
+      "missingCode": "Missing Google authorization code",
+      "googleConnectionError": "Error connecting to Google Contacts",
+      "googleNotConnected": "Not connected to Google Contacts",
+      "googleTokenExpired": "Google connection expired, reconnection required",
+      "googleContactsFailed": "Failed to retrieve contacts from Google",
+      "googleDisconnectFailed": "Error disconnecting from Google Contacts"
+    }
   }
 }

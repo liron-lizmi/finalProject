@@ -783,6 +783,7 @@
     "invitationSent": "הזמנה נשלחה",
     "invitationNotSent": "הזמנה לא נשלחה",
     "guestNote": "הערת המוזמן",
+    "googleConnected": "מחובר לגוגל אנשי קשר בהצלחה",
     "stats": {
       "total": "סה״כ מוזמנים",
       "confirmed": "אישרו הגעה",
@@ -839,20 +840,38 @@
     "excelDescription": "העלה קובץ Excel עם העמודות: שם פרטי, שם משפחה, טלפון, קבוצה",
     "excelNote": "הערה: אם קובץ Excel לא נתמך, נסה לשמור אותו כ-CSV ולהעלות בלשונית CSV",
     "googleDescription": "ייבא אנשי קשר ישירות מ-Google Contacts",
+    "googleInstructions": {
+      "title": "כיצד לייבא אנשי קשר מ-Google:",
+      "step1": "לחץ על כפתור 'התחבר ל-Google' למטה",
+      "step2": "אשר את ההרשאות לגישה לאנשי הקשר שלך",
+      "step3": "בחר את אנשי הקשר שברצונך לייבא",
+      "continueToGroups": "המשך לעריכת קבוצות",
+      "editContactGroups": "ערוך קבוצות לאנשי קשר",
+      "editContactGroupsDescription": "בחר קבוצה לכל איש קשר או החל קבוצה לכולם יחד",
+      "quickActions": "פעולות מהירות",
+      "selectGroupForAll": "בחר קבוצה לכל הנבחרים",
+      "applyToAll": "החל על כולם",
+      "individualEditing": "עריכה אינדיבידואלית",
+      "continueToPreview": "המשך לתצוגה מקדימה",
+      "customGroup": "קבוצה מותאמת"
+    },
     "whatsappInstructions": {
       "title": "כיצד לייצא אנשי קשר מ-WhatsApp:",
       "step1": "פתח את WhatsApp באפליקציה או בווב",
       "step2": "עבור להגדרות > נתונים ואחסון > ייצוא צ'אט",
-      "step3": "בחר את הצ'אטים שברצונך לייצא",
+      "step3": "בחר כאת הצ'אטים שברצונך לייצא",
       "step4": "שמור את הקובץ והעלה אותו כאן"
     },
     "uploadFile": "העלאת קובץ",
     "pasteData": "הדבקת נתונים",
-    "csvPlaceholder": "יוסי,כהן,050-1234567,משפחה\nשרה,לוי,052-9876543,חברים\nדני,גרין,053-1111111,לימודים\nאו פשוט: יוסי כהן 050-1234567 לימודים",
+    "csvPlaceholder": "יוסי,כהן,050-1234567,משפחה\nשרה,לוי,052-9876543,חברים\nדני,גרין,053-1111111,לימודים",
     "supportedFormats": "פורמטים נתמכים",
     "unknownContact": "אנשי קשר",
     "parseData": "עיבוד נתונים",
     "connectGoogle": "התחבר ל-Google",
+    "googleNote": "הערה: המערכת תייבא רק אנשי קשר עם שם ומספר טלפון",
+    "googleConnectionSuccess": "התחברות ל-Google בוצעה בהצלחה!",
+    "googleDisconnectSuccess": "ההתנתקות מ-Google בוצעה בהצלחה",
     "selectWhatsappFile": "בחר קובץ WhatsApp",
     "preview": "תצוגה מקדימה",
     "contacts": "אנשי קשר",
@@ -860,6 +879,13 @@
     "partialSuccess": "ייבוא חלקי",
     "imported": "יובאו",
     "failed": "נכשלו",
+    "selectContacts": "בחר אנשי קשר",
+    "contactsFound": "אנשי קשר נמצאו", 
+    "selectAll": "בחר הכל",
+    "deselectAll": "בטל בחירה",
+    "confirmSelection": "אשר בחירה",
+    "loadContacts": "טען אנשי קשר מגוגל",
+    "disconnectGoogle": "התנתק מגוגל",
     "errors": {
       "invalidFormat": "פורמט קובץ לא תקין",
       "emptyData": "אין נתונים לעיבוד",
@@ -870,7 +896,10 @@
       "invalidPhone": "טלפון לא תקין",
       "excelNotSupported": "קובץ Excel לא נתמך. אנא שמור כ-CSV והעלה בלשונית CSV",
       "importFailed": "הייבוא נכשל",
-      "notImplemented": "תכונה זו תתווסף בקרוב"
+      "notImplemented": "תכונה זו תתווסף בקרוב",
+      "googleConnectionError": "שגיאה בהתחברות לגוגל אנשי קשר",
+      "googleContactsFailed": "שגיאה בטעינת אנשי קשר מגוגל", 
+      "googleDisconnectFailed": "שגיאה בהתנתקות מגוגל"
     }
   }
 }

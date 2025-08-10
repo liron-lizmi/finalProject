@@ -20,6 +20,8 @@ import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
 import EventSharePage from './pages/Events/Features/EventSharePage';
 import TaskManager from './pages/Events/Features/components/TaskManager';
 import GoogleAuthCallback from './pages/Events/Features/components/GoogleAuthCallback';
+import GoogleContactsCallback from './pages/components/GoogleContactsCallback';
+
 
 const App = () => {
   return (
@@ -48,6 +50,7 @@ const App = () => {
         <Route path="/event/:id/share" element={<EventSharePage />} />
 
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+        <Route path="/auth/google/contacts/callback" element={<GoogleContactsCallback />} />
       </Routes>
     </Router>
   );

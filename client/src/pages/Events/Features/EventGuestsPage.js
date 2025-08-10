@@ -272,7 +272,7 @@ const EventGuestsPage = () => {
       const errors = [];
 
       if (!importedGuests || importedGuests.length === 0) {
-        setError(t('import.errors.noData'));
+        setError(t('guest.errors.noData'));
         return;
       }
 
@@ -281,7 +281,7 @@ const EventGuestsPage = () => {
       for (const guest of importedGuests) {
         try {
           const validatedGuest = {
-            firstName: guest.firstName?.trim() || 'אנשי קשר',
+            firstName: guest.firstName?.trim() || t('import.unknownContact'),
             lastName: guest.lastName?.trim() || '',
             phone: guest.phone?.trim() || '',
             group: guest.group || 'other',
@@ -298,7 +298,7 @@ const EventGuestsPage = () => {
             if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
               validatedGuest.phone = `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`;
             } else {
-              errors.push(`${t('import.errors.invalidPhone')}: ${validatedGuest.firstName} ${validatedGuest.lastName}`);
+              errors.push(`${t('guests.errors.invalidPhone')}: ${validatedGuest.firstName} ${validatedGuest.lastName}`);
               continue;
             }
           }
@@ -334,7 +334,7 @@ const EventGuestsPage = () => {
       } else if (results.length > 0 && errors.length > 0) {
         setError(`${t('import.partialSuccess')}: ${results.length} ${t('import.imported')}, ${errors.length} ${t('import.failed')}. ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`);
       } else if (errors.length > 0) {
-        setError(`${t('import.errors.importFailed')}: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`);
+        setError(`${t('guests.errors.importFailed')}: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`);
       }
 
     } catch (err) {
@@ -489,7 +489,7 @@ const EventGuestsPage = () => {
               <div className="guests-form-grid">
                 <input
                   type="text"
-                  className="guests-form-input"
+                  className={`guests-form-input ${error === t('validation.firstNameRequired') ? 'error' : ''}`}
                   placeholder={t('guests.form.firstName')}
                   value={guestForm.firstName}
                   onChange={(e) => setGuestForm({...guestForm, firstName: e.target.value})}
@@ -500,14 +500,11 @@ const EventGuestsPage = () => {
                       setError('');
                     }
                   }}
-                  style={{
-                    borderColor: error === t('validation.firstNameRequired') ? '#dc3545' : '#ddd'
-                  }}
                   required
                 />
                 <input
                   type="text"
-                  className="guests-form-input"
+                  className={`guests-form-input ${error === t('validation.lastNameRequired') ? 'error' : ''}`}
                   placeholder={t('guests.form.lastName')}
                   value={guestForm.lastName}
                   onChange={(e) => setGuestForm({...guestForm, lastName: e.target.value})}
@@ -518,14 +515,11 @@ const EventGuestsPage = () => {
                       setError('');
                     }
                   }}
-                  style={{
-                    borderColor: error === t('validation.lastNameRequired') ? '#dc3545' : '#ddd'
-                  }}
                   required
                 />
                 <input
                   type="tel"
-                  className="guests-form-input"
+                  className={`guests-form-input ${error === t('validation.invalidPhoneFormat') || error === t('validation.phoneRequired') ? 'error' : ''}`}
                   placeholder={t('guests.form.phone')}
                   value={guestForm.phone}
                   onChange={handlePhoneChange}
@@ -535,10 +529,6 @@ const EventGuestsPage = () => {
                     } else if (error === t('validation.invalidPhoneFormat')) {
                       setError('');
                     }
-                  }}
-                  style={{
-                    borderColor: error === t('validation.invalidPhoneFormat') || 
-                                error === t('validation.phoneRequired') ? '#dc3545' : '#ddd'
                   }}
                   required
                 />
@@ -557,13 +547,10 @@ const EventGuestsPage = () => {
                 {guestForm.group === 'other' && (
                   <input
                     type="text"
-                    className="guests-form-input"
+                    className={`guests-form-input ${error === t('validation.customGroupRequired') ? 'error' : ''}`}
                     placeholder={t('guests.form.customGroupPlaceholder')}
                     value={guestForm.customGroup}
                     onChange={(e) => setGuestForm({...guestForm, customGroup: e.target.value})}
-                    style={{
-                      borderColor: error === t('validation.customGroupRequired') ? '#dc3545' : '#ddd'
-                    }}
                     required
                   />
                 )}

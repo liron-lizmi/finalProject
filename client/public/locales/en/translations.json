@@ -783,6 +783,7 @@
     "invitationSent": "Invitation sent",
     "invitationNotSent": "Invitation not sent",
     "guestNote": "Guest note",
+    "googleConnected": "Google Contacts connected",
     "stats": {
       "total": "Total Guests",
       "confirmed": "Confirmed",
@@ -839,6 +840,20 @@
     "excelDescription": "Upload an Excel file with the columns: First Name, Last Name, Phone, Group",
     "excelNote": "Note: If Excel file is not supported, try saving it as CSV and upload in the CSV tab",
     "googleDescription": "Import contacts directly from Google Contacts",
+    "googleInstructions": {
+      "title": "How to import contacts from Google:",
+      "step1": "Click the 'Connect to Google' button below",
+      "step2": "Authorize access to your contacts",
+      "step3": "Select the contacts you want to import",
+      "editContactGroups": "Edit contact groups",
+      "editContactGroupsDescription": "Select a group for each contact or apply a group to all at once",
+      "quickActions": "Quick actions",
+      "selectGroupForAll": "Select group for all selected",
+      "applyToAll": "Apply to all",
+      "individualEditing": "Individual editing",
+      "continueToPreview": "Continue to preview",
+      "customGroup": "Custom group"
+    },
     "whatsappInstructions": {
       "title": "How to export contacts from WhatsApp:",
       "step1": "Open WhatsApp app or web",
@@ -848,11 +863,14 @@
     },
     "uploadFile": "Upload File",
     "pasteData": "Paste Data",
-    "csvPlaceholder": "John,Doe,050-1234567,Family\nJane,Smith,052-9876543,Friends\nDan,Green,053-1111111,Studies\nOr simply: John Doe 050-1234567 Studies",
+    "csvPlaceholder": "John,Doe,050-1234567,Family\nJane,Smith,052-9876543,Friends\nDan,Green,053-1111111,Studies",
     "supportedFormats": "Supported formats",
     "unknownContact": "Contacts",
     "parseData": "Parse Data",
     "connectGoogle": "Connect to Google",
+    "googleNote": "Note: The system will only import contacts with a name and phone number",
+    "googleConnectionSuccess": "Successfully connected to Google!",
+    "googleDisconnectSuccess": "Successfully disconnected from Google",
     "selectWhatsappFile": "Select WhatsApp File",
     "preview": "Preview",
     "contacts": "Contacts",
@@ -860,6 +878,13 @@
     "partialSuccess": "Partial import",
     "imported": "Imported",
     "failed": "Failed",
+    "selectContacts": "Select Contacts",
+    "contactsFound": "Contacts Found",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "confirmSelection": "Confirm Selection",
+    "loadContacts": "Load Contacts from Google",
+    "disconnectGoogle": "Disconnect from Google",
     "errors": {
       "invalidFormat": "Invalid file format",
       "emptyData": "No data to process",
@@ -870,7 +895,10 @@
       "invalidPhone": "Invalid phone number",
       "excelNotSupported": "Excel file not supported. Please save as CSV and upload in CSV tab",
       "importFailed": "Import failed",
-      "notImplemented": "This feature will be added soon"
+      "notImplemented": "This feature will be added soon",
+      "googleConnectionError": "Error connecting to Google Contacts",
+      "googleContactsFailed": "Failed to load contacts from Google",
+      "googleDisconnectFailed": "Failed to disconnect from Google"
     }
   }
 }
