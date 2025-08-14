@@ -21,14 +21,118 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const [bulkGroupValue, setBulkGroupValue] = useState('');
   const [bulkCustomGroupName, setBulkCustomGroupName] = useState('');
 
+  // VCF states
+  const [vcfContacts, setVcfContacts] = useState([]);
+  const [showVcfContactSelection, setShowVcfContactSelection] = useState(false);
+  const [showVcfGroupEditor, setShowVcfGroupEditor] = useState(false);
+  const [vcfBulkGroupValue, setVcfBulkGroupValue] = useState('');
+  const [vcfBulkCustomGroupName, setVcfBulkCustomGroupName] = useState('');
+
   const importTabs = [
     { id: 'csv', label: t('import.csv'), icon: '📄' },
     { id: 'excel', label: t('import.excel'), icon: '📊' },
     { id: 'google', label: t('import.google'), icon: '📞' },
-    { id: 'whatsapp', label: t('import.whatsapp'), icon: '💬' }
+    { id: 'vcf', label: t('import.vcf'), icon: '📱' }
   ];
 
-  // Checking Google connection status when opening the tab
+  // Improved QUOTED-PRINTABLE decoder
+  const decodeQuotedPrintable = (str) => {
+    if (!str || !str.includes('=')) return str;
+    
+    try {
+      let processed = str.replace(/=\r?\n/g, '');
+
+      processed = processed.replace(/=\s*$/gm, '');
+      
+      processed = processed.replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
+      
+      processed = processed.replace(/=(?![0-9A-F]{2})/gi, '');
+      
+      // Handle UTF-8 decoding properly
+      try {
+        const bytes = [];
+        for (let i = 0; i < processed.length; i++) {
+          const charCode = processed.charCodeAt(i);
+          if (charCode <= 255) {
+            bytes.push(charCode);
+          } else {
+            const utf8Bytes = new TextEncoder().encode(processed.charAt(i));
+            bytes.push(...utf8Bytes);
+          }
+        }
+        
+        // Decode as UTF-8
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        const result = decoder.decode(new Uint8Array(bytes));
+        
+        return result;
+      } catch (utfError) {
+        console.warn('UTF-8 decoding failed, returning processed string:', utfError);
+        return processed;
+      }
+      
+    } catch (error) {
+      console.warn('Failed to decode quoted-printable:', str, error);
+      return str;
+    }
+  };
+
+  // Process VCF lines handling multi-line values
+  const processVCFLines = (rawLines) => {
+    const processedLines = [];
+    let currentLine = '';
+
+    for (const line of rawLines) {
+      const trimmedLine = line.trim();
+      
+      if (trimmedLine.startsWith(' ') || trimmedLine.startsWith('\t') || 
+          (currentLine && (trimmedLine.startsWith('=') || line.startsWith(' ') || line.startsWith('\t')))) {
+        currentLine += trimmedLine.replace(/^[\s\t]/, '');
+      } else {
+        if (currentLine) {
+          processedLines.push(currentLine);
+        }
+        currentLine = trimmedLine;
+      }
+    }
+    
+    // Add the last line
+    if (currentLine) {
+      processedLines.push(currentLine);
+    }
+    
+    return processedLines;
+  };
+
+  // Validate phone number
+  const validatePhoneNumber = (phone) => {
+    if (!phone) return { valid: false, message: '' };
+    
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    
+    // Check for +972 format
+    if (cleanPhone.startsWith('+972')) {
+      if (cleanPhone.length === 13 && /^\+972[5]\d{8}$/.test(cleanPhone)) {
+        const israeliNumber = '0' + cleanPhone.substring(4);
+        return { valid: true, formatted: israeliNumber.substring(0, 3) + '-' + israeliNumber.substring(3) };
+      }
+      return { valid: false, message: t('import.errors.invalidPhoneFormat972') };
+    }
+    
+    // Check for Israeli format
+    if (cleanPhone.startsWith('05')) {
+      if (cleanPhone.length === 10 && /^05\d{8}$/.test(cleanPhone)) {
+        return { valid: true, formatted: cleanPhone.substring(0, 3) + '-' + cleanPhone.substring(3) };
+      }
+      return { valid: false, message: t('import.errors.invalidPhoneFormat05') };
+    }
+    
+    return { valid: false, message: t('import.errors.invalidPhoneStart') };
+  };
+
+  // Check Google connection status when opening the tab
   useEffect(() => {
     if (isOpen && activeTab === 'google') {
       checkGoogleConnectionStatus();
@@ -120,7 +224,32 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     }
   };
 
-  // Update a group for a specific contact
+  // VCF Contact Selection Functions
+  const handleVcfContactSelection = (contactId, isSelected) => {
+    setVcfContacts(prev => 
+      prev.map(contact => 
+        contact.id === contactId 
+          ? { ...contact, selected: isSelected }
+          : contact
+      )
+    );
+  };
+
+  const handleVcfSelectAllContacts = (selectAll) => {
+    setVcfContacts(prev => 
+      prev.map(contact => ({ ...contact, selected: selectAll }))
+    );
+  };
+
+  const handleConfirmVcfSelection = () => {
+    const selectedContacts = vcfContacts.filter(contact => contact.selected);
+    if (selectedContacts.length > 0) {
+      setShowVcfContactSelection(false);
+      setShowVcfGroupEditor(true);
+    }
+  };
+
+  // Update a group for a specific Google contact
   const handleContactGroupChange = (contactId, newGroup, customGroupName = '') => {
     setGoogleContacts(prev => 
       prev.map(contact => 
@@ -135,7 +264,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     );
   };
 
-  // Apply a group to all selected
+  // Apply a group to all selected Google contacts
   const handleBulkGroupChange = () => {
     if (!bulkGroupValue) return;
 
@@ -164,59 +293,203 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     setShowGroupEditor(false);
   };
 
-  const handleFileUpload = async (event) => {
-    const uploadedFile = event.target.files[0];
-    if (!uploadedFile) return;
+  // VCF Group Editor Functions
+  const handleVcfContactGroupChange = (contactId, newGroup, customGroupName = '') => {
+    setVcfContacts(prev => 
+      prev.map(contact => 
+        contact.id === contactId 
+          ? { 
+              ...contact, 
+              group: newGroup,
+              customGroup: newGroup === 'custom' ? customGroupName : undefined
+            }
+          : contact
+      )
+    );
+  };
 
-    setFile(uploadedFile);
-    setError('');
-    setLoading(true);
+  // Apply a group to all VCF contacts
+  const handleVcfBulkGroupChange = () => {
+    if (!vcfBulkGroupValue) return;
 
-    try {
-      if (activeTab === 'excel') {
-        await handleExcelFile(uploadedFile);
-      } else if (activeTab === 'csv') {
-        await handleCSVFile(uploadedFile);
+    const finalGroup = vcfBulkGroupValue === 'custom' ? vcfBulkCustomGroupName : vcfBulkGroupValue;
+    const finalCustomGroup = vcfBulkGroupValue === 'custom' ? vcfBulkCustomGroupName : undefined;
+
+    setVcfContacts(prev => 
+      prev.map(contact => 
+        contact.selected 
+          ? { 
+              ...contact, 
+              group: finalGroup,
+              customGroup: finalCustomGroup
+            }
+          : contact
+      )
+    );
+
+    setVcfBulkGroupValue('');
+    setVcfBulkCustomGroupName('');
+  };
+
+  const handleConfirmVcfGroupEditor = () => {
+    const selectedContacts = vcfContacts.filter(contact => contact.selected);
+    setPreviewData(selectedContacts);
+    setShowVcfGroupEditor(false);
+  };
+
+  // Parse VCF data with improved name handling
+  const parseVCFData = (vcfText) => {
+    console.log('VCF Text received:', vcfText.substring(0, 500));
+    
+    const data = [];
+    const invalidContacts = [];
+    
+    const cleanText = vcfText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const vcardBlocks = cleanText.split(/BEGIN:VCARD/i);
+    
+    console.log('Found vCard blocks:', vcardBlocks.length);
+    
+    for (let i = 1; i < vcardBlocks.length; i++) {
+      const block = vcardBlocks[i];
+      
+      if (!block.includes('END:VCARD')) {
+        console.log('Block missing END:VCARD, skipping');
+        continue;
       }
-    } catch (err) {
-      setError(t('guests.errors.fileProcessing'));
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleCSVFile = async (file) => {
-    const text = await file.text();
-    setCsvData(text);
-    parseCSVData(text);
-  };
+      const rawLines = block.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      const lines = processVCFLines(rawLines);
+      
+      let firstName = '';
+      let lastName = '';
+      let phone = '';
+      let contactName = '';
+      let hasInvalidPhone = false;
+      let invalidPhoneDetails = '';
 
-  const handleExcelFile = async (file) => {
-    try {
-      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs');
-      
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const csvData = XLSX.utils.sheet_to_csv(firstSheet);
-      
-      setCsvData(csvData);
-      parseCSVData(csvData);
-    } catch (error) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target.result;
-          setCsvData(text);
-          parseCSVData(text);
-        } catch (err) {
-          setError(t('guests.errors.excelNotSupported'));
+      console.log('Processing block with processed lines:', lines.length);
+
+      lines.forEach(line => {
+        console.log('Processing line:', line);
+        
+        // Handle full name (FN)
+        if (line.startsWith('FN')) {
+          let fullNameValue = '';
+          
+          const colonIndex = line.indexOf(':');
+          if (colonIndex !== -1) {
+            fullNameValue = line.substring(colonIndex + 1).trim();
+          }
+          
+          // Decode QUOTED-PRINTABLE if needed
+          if (line.includes('QUOTED-PRINTABLE')) {
+            fullNameValue = decodeQuotedPrintable(fullNameValue);
+          }
+          
+          if (fullNameValue) {
+            contactName = fullNameValue;
+            const nameParts = fullNameValue.split(' ').filter(part => part.length > 0);
+            if (nameParts.length > 0) {
+              firstName = nameParts[0];
+              lastName = nameParts.slice(1).join(' ');
+            }
+          }
+          console.log('Found FN:', firstName, lastName);
         }
-      };
-      reader.readAsText(file);
+        
+        // Handle structured name (N)
+        else if (line.startsWith('N')) {
+          let nameValue = '';
+          
+          const colonIndex = line.indexOf(':');
+          if (colonIndex !== -1) {
+            nameValue = line.substring(colonIndex + 1).trim();
+          }
+          
+          // Decode QUOTED-PRINTABLE if needed
+          if (line.includes('QUOTED-PRINTABLE')) {
+            nameValue = decodeQuotedPrintable(nameValue);
+          }
+          
+          const nameParts = nameValue.split(';').map(part => part.trim());
+          // Only use N if we don't have name from FN
+          if (!firstName && !lastName && nameParts.length >= 2) {
+            lastName = nameParts[0] || '';
+            firstName = nameParts[1] || '';
+            if (!contactName) {
+              contactName = `${firstName} ${lastName}`.trim();
+            }
+          }
+          console.log('Found N:', firstName, lastName);
+        }
+        
+        // Handle phone
+        else if (line.startsWith('TEL')) {
+          const phoneMatch = line.match(/:([+\d\s\-\(\)\*]+)/);
+          if (phoneMatch && !phone) {
+            const rawPhone = phoneMatch[1].trim();
+            console.log('Raw phone found:', rawPhone);
+            
+            const phoneValidation = validatePhoneNumber(rawPhone);
+            if (phoneValidation.valid) {
+              phone = phoneValidation.formatted;
+              console.log('Valid formatted phone:', phone);
+            } else {
+              console.log('Invalid phone:', rawPhone, phoneValidation.message);
+              hasInvalidPhone = true;
+              invalidPhoneDetails = `${rawPhone} - ${phoneValidation.message}`;
+            }
+          }
+        }
+      });
+
+      // Add contact if we have name or phone
+      if (firstName || lastName || contactName) {
+        const displayName = contactName || `${firstName} ${lastName}`.trim() || t('import.unknownFirstName');
+        
+        if (hasInvalidPhone && !phone) {
+          invalidContacts.push({
+            name: displayName,
+            phone: invalidPhoneDetails,
+            reason: t('import.errors.invalidPhone')
+          });
+        } else {
+          const contact = {
+            id: `vcf-${i}`,
+            firstName: firstName || t('import.unknownFirstName'),
+            lastName: lastName || '',
+            phone: phone || '',
+            group: 'other',
+            selected: false
+          };
+          
+          console.log('Adding contact:', contact);
+          data.push(contact);
+        }
+      }
     }
+
+    console.log('Total contacts found:', data.length);
+    console.log('Invalid contacts found:', invalidContacts.length);
+
+    // Show warning for invalid contacts but still show table
+    if (invalidContacts.length > 0) {
+      const errorMessages = invalidContacts.map(contact => 
+        `${t('import.errors.contactInvalidPhone', { name: contact.name, phone: contact.phone })}`
+      );
+      setError(`${t('import.errors.invalidPhonesFound')}:\n${errorMessages.join('\n')}\n\n${t('import.errors.skippedInvalid')}`);
+    }
+
+    if (data.length === 0) {
+      setError(t('import.errors.noValidData'));
+      return;
+    }
+
+    setVcfContacts(data);
+    setShowVcfContactSelection(true);
   };
 
+  // Parse CSV data
   const parseCSVData = (csvText) => {
     const lines = csvText.split('\n').filter(line => line.trim());
     if (lines.length < 1) {
@@ -307,11 +580,75 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     }
 
     if (data.length === 0) {
-      setError(t('guests.errors.noValidData'));
+      setError(t('import.errors.noValidData'));
       return;
     }
 
     setPreviewData(data.slice(0, 10));
+  };
+
+  const handleFileUpload = async (event) => {
+    const uploadedFile = event.target.files[0];
+    if (!uploadedFile) return;
+
+    setFile(uploadedFile);
+    setError('');
+    setLoading(true);
+
+    try {
+      if (activeTab === 'excel') {
+        await handleExcelFile(uploadedFile);
+      } else if (activeTab === 'csv') {
+        await handleCSVFile(uploadedFile);
+      } else if (activeTab === 'vcf') {
+        await handleVCFFile(uploadedFile);
+      }
+    } catch (err) {
+      setError(t('guests.errors.fileProcessing'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCSVFile = async (file) => {
+    const text = await file.text();
+    setCsvData(text);
+    parseCSVData(text);
+  };
+
+  const handleExcelFile = async (file) => {
+    try {
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.0/package/xlsx.mjs');
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const csvData = XLSX.utils.sheet_to_csv(firstSheet);
+      
+      setCsvData(csvData);
+      parseCSVData(csvData);
+    } catch (error) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          setCsvData(text);
+          parseCSVData(text);
+        } catch (err) {
+          setError(t('guests.errors.excelNotSupported'));
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleVCFFile = async (file) => {
+    try {
+      const text = await file.text();
+      parseVCFData(text);
+    } catch (error) {
+      setError(t('import.errors.vcfProcessingError'));
+    }
   };
 
   const handleImport = async () => {
@@ -346,6 +683,11 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     setShowGroupEditor(false);
     setBulkGroupValue('');
     setBulkCustomGroupName('');
+    setVcfContacts([]);
+    setShowVcfContactSelection(false);
+    setShowVcfGroupEditor(false);
+    setVcfBulkGroupValue('');
+    setVcfBulkCustomGroupName('');
   };
 
   const getGroupDisplayName = (group) => {
@@ -395,7 +737,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         <div className="import-modal-content">
           {error && (
             <div className="import-error">
-              {error}
+              {error.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
           )}
 
@@ -590,7 +934,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                     <p>{t('import.googleInstructions.editContactGroupsDescription')} ({googleContacts.filter(c => c.selected).length} {t('import.contacts')})</p>
                   </div>
 
-                  {/* quick actions*/}
                   <div className="bulk-actions">
                     <h5>{t('import.googleInstructions.quickActions')}</h5>
                     <div className="bulk-actions-row">
@@ -627,7 +970,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                     </div>
                   </div>
 
-                  {/* Individual editing */}
                   <div className="individual-editor">
                     <h5>{t('import.googleInstructions.individualEditing')}</h5>
                     <div className="contact-editor-list">
@@ -694,32 +1036,203 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
             </div>
           )}
 
-          {/* WhatsApp Tab */}
-          {activeTab === 'whatsapp' && (
-            <div className="import-whatsapp-section">
-              <h3>{t('import.whatsapp')}</h3>
+          {/* VCF Tab */}
+          {activeTab === 'vcf' && (
+            <div className="import-vcf-section">
+              <h3>{t('import.vcf')}</h3>
               <div className="import-instructions">
-                <p><strong>{t('import.whatsappInstructions.title')}</strong></p>
+                <p><strong>{t('import.vcfInstructions.title')}</strong></p>
                 <ol>
-                  <li>{t('import.whatsappInstructions.step1')}</li>
-                  <li>{t('import.whatsappInstructions.step2')}</li>
-                  <li>{t('import.whatsappInstructions.step3')}</li>
-                  <li>{t('import.whatsappInstructions.step4')}</li>
+                  <li>{t('import.vcfInstructions.step1')}</li>
+                  <li>{t('import.vcfInstructions.step2')}</li>
+                  <li>{t('import.vcfInstructions.step3')}</li>
+                  <li>{t('import.vcfInstructions.step4')}</li>
+                  <li>{t('import.vcfInstructions.step5')}</li>
                 </ol>
               </div>
               
-              <button 
-                onClick={() => setError(t('guests.errors.notImplemented'))}
-                className="import-whatsapp-button"
-                disabled={loading}
-              >
-                {loading ? t('common.loading') : t('import.selectWhatsappFile')}
-              </button>
+              <div className="import-option">
+                <label>{t('import.uploadFile')}</label>
+                <input
+                  type="file"
+                  accept=".vcf,.txt"
+                  onChange={handleFileUpload}
+                  className="import-file-input"
+                />
+              </div>
+
+              {/* VCF Contact Selection */}
+              {showVcfContactSelection && (
+                <div className="vcf-contact-selection">
+                  <div className="contact-selection-header">
+                    <h4>{t('import.selectContacts')} ({vcfContacts.length} {t('import.contactsFound')})</h4>
+                    <div className="contact-selection-actions">
+                      <button 
+                        onClick={() => handleVcfSelectAllContacts(true)}
+                        className="select-all-button"
+                      >
+                        {t('import.selectAll')}
+                      </button>
+                      <button 
+                        onClick={() => handleVcfSelectAllContacts(false)}
+                        className="deselect-all-button"
+                      >
+                        {t('import.deselectAll')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="contact-selection-list">
+                    {vcfContacts.map(contact => (
+                      <div key={contact.id} className="contact-selection-item">
+                        <input
+                          type="checkbox"
+                          checked={contact.selected}
+                          onChange={(e) => handleVcfContactSelection(contact.id, e.target.checked)}
+                          className="contact-checkbox"
+                        />
+                        <div className="contact-info">
+                          <span className="contact-name">
+                            {contact.firstName} {contact.lastName}
+                          </span>
+                          <span className="contact-phone">
+                            {contact.phone}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="contact-selection-footer">
+                    <button 
+                      onClick={() => setShowVcfContactSelection(false)}
+                      className="cancel-selection-button"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button 
+                      onClick={handleConfirmVcfSelection}
+                      className="confirm-selection-button"
+                      disabled={!vcfContacts.some(c => c.selected)}
+                    >
+                      {t('import.googleInstructions.continueToGroups')} ({vcfContacts.filter(c => c.selected).length})
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* VCF Group Editor */}
+              {showVcfGroupEditor && (
+                <div className="vcf-group-editor">
+                  <div className="group-editor-header">
+                    <h4>{t('import.vcfInstructions.editContactGroups')}</h4>
+                    <p>{t('import.vcfInstructions.editContactGroupsDescription')} ({vcfContacts.filter(c => c.selected).length} {t('import.contacts')})</p>
+                  </div>
+
+                  <div className="bulk-actions">
+                    <h5>{t('import.googleInstructions.quickActions')}</h5>
+                    <div className="bulk-actions-row">
+                      <select
+                        value={vcfBulkGroupValue}
+                        onChange={(e) => setVcfBulkGroupValue(e.target.value)}
+                        className="bulk-group-select"
+                      >
+                        <option value="">{t('import.googleInstructions.selectGroupForAll')}</option>
+                        <option value="family">{t('guests.groups.family')}</option>
+                        <option value="friends">{t('guests.groups.friends')}</option>
+                        <option value="work">{t('guests.groups.work')}</option>
+                        <option value="other">{t('guests.groups.other')}</option>
+                        <option value="custom">{t('import.googleInstructions.customGroup')}</option>
+                      </select>
+                      
+                      {vcfBulkGroupValue === 'custom' && (
+                        <input
+                          type="text"
+                          value={vcfBulkCustomGroupName}
+                          onChange={(e) => setVcfBulkCustomGroupName(e.target.value)}
+                          placeholder={t('guests.form.customGroupPlaceholder')}
+                          className="bulk-custom-group-input"
+                        />
+                      )}
+                      
+                      <button
+                        onClick={handleVcfBulkGroupChange}
+                        className="apply-bulk-button"
+                        disabled={!vcfBulkGroupValue || (vcfBulkGroupValue === 'custom' && !vcfBulkCustomGroupName.trim())}
+                      >
+                        {t('import.googleInstructions.applyToAll')}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="individual-editor">
+                    <h5>{t('import.googleInstructions.individualEditing')}</h5>
+                    <div className="contact-editor-list">
+                      {vcfContacts.filter(contact => contact.selected).map(contact => (
+                        <div key={contact.id} className="contact-editor-item">
+                          <div className="contact-editor-info">
+                            <span className="contact-editor-name">
+                              {contact.firstName} {contact.lastName}
+                            </span>
+                            <span className="contact-editor-phone">
+                              {contact.phone}
+                            </span>
+                          </div>
+                          <div className="contact-editor-group">
+                            <select
+                              value={contact.group === contact.customGroup ? 'custom' : contact.group}
+                              onChange={(e) => {
+                                if (e.target.value === 'custom') {
+                                  handleVcfContactGroupChange(contact.id, 'custom', contact.customGroup || '');
+                                } else {
+                                  handleVcfContactGroupChange(contact.id, e.target.value);
+                                }
+                              }}
+                              className="contact-group-select"
+                            >
+                              <option value="family">{t('guests.groups.family')}</option>
+                              <option value="friends">{t('guests.groups.friends')}</option>
+                              <option value="work">{t('guests.groups.work')}</option>
+                              <option value="other">{t('guests.groups.other')}</option>
+                              <option value="custom">{t('import.googleInstructions.customGroup')}</option>
+                            </select>
+                            
+                            {(contact.group === contact.customGroup || contact.group === 'custom') && (
+                              <input
+                                type="text"
+                                value={contact.customGroup || ''}
+                                onChange={(e) => handleVcfContactGroupChange(contact.id, 'custom', e.target.value)}
+                                placeholder={t('guests.form.customGroupPlaceholder')}
+                                className="contact-custom-group-input"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="group-editor-footer">
+                    <button 
+                      onClick={() => setShowVcfGroupEditor(false)}
+                      className="cancel-selection-button"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button 
+                      onClick={handleConfirmVcfGroupEditor}
+                      className="confirm-selection-button"
+                    >
+                      {t('import.googleInstructions.continueToPreview')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Preview */}
-          {previewData.length > 0 && (
+          {previewData.length > 0 && !showVcfGroupEditor && !showVcfContactSelection && (
             <div className="import-preview">
               <h4>{t('import.preview')} ({previewData.length} {t('import.contacts')})</h4>
               <div className="import-preview-table">
@@ -758,7 +1271,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
             {t('common.cancel')}
           </button>
           
-          {previewData.length > 0 && (
+          {previewData.length > 0 && !showVcfGroupEditor && !showVcfContactSelection && (
             <button 
               onClick={handleImport}
               className="import-confirm-button"

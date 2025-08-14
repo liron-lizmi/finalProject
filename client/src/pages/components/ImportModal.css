@@ -204,8 +204,7 @@
   cursor: not-allowed;
 }
 
-.import-google-button,
-.import-whatsapp-button {
+.import-google-button{
   background-color: #007bff;
   color: white;
   border: none;
@@ -217,8 +216,7 @@
   align-self: center;
 }
 
-.import-google-button:hover,
-.import-whatsapp-button:hover {
+.import-google-button:hover{
   background-color: #0056b3;
 }
 
@@ -1195,6 +1193,14 @@
 
 .guest-delete-button:hover {
   background-color: #f8d7da;
+}
+
+.vcf-group-editor {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
 }
 
 /* Responsive Design */
