@@ -108,6 +108,46 @@
   background-color: #0056b3;
 }
 
+.guests-bulk-select-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.guests-bulk-select-button:hover {
+  background-color: #545b62;
+}
+
+.guests-bulk-select-button.active {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.guests-bulk-select-button.active:hover {
+  background-color: #e0a800;
+}
+
+.guests-bulk-delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.guests-bulk-delete-button:hover {
+  background-color: #c82333;
+}
+
 .guests-search-input {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -121,6 +161,47 @@
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
+}
+
+.guests-selection-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.guests-select-all-button,
+.guests-deselect-all-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.guests-select-all-button:hover {
+  background-color: #1e7e34;
+}
+
+.guests-deselect-all-button {
+  background-color: #6c757d;
+}
+
+.guests-deselect-all-button:hover {
+  background-color: #545b62;
+}
+
+.guests-selected-count {
+  font-weight: 500;
+  color: #495057;
+  margin-left: auto;
 }
 
 .guests-form {
@@ -149,6 +230,11 @@
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
+}
+
+.guests-form-input.error {
+  border-color: #dc3545;
+  background-color: #fff5f5;
 }
 
 .guests-form-actions {
@@ -202,11 +288,17 @@
 
 .guests-table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 120px 100px 80px;
+  grid-template-columns: 2fr 1fr 120px 100px 100px;
   gap: 15px;
   padding: 15px;
   border-bottom: 1px solid #e9ecef;
   align-items: center;
+  transition: all 0.2s;
+}
+
+.guests-table-row.selected {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
 }
 
 .guests-table-row:last-child {
@@ -215,6 +307,31 @@
 
 .guests-table-row:hover {
   background-color: #f8f9fa;
+}
+
+.guests-table-row.selected:hover {
+  background-color: #bbdefb;
+}
+
+.guest-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guest-selection-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2196f3;
+}
+
+.guests-table-row.selected .guests-table-row,
+.guests-table-row.selected .guest-info,
+.guests-table-row.selected .guest-group,
+.guests-table-row.selected .guest-rsvp-status,
+.guests-table-row.selected .guest-invitation-status {
+  grid-template-columns: 40px 2fr 1fr 120px 100px 100px;
 }
 
 .guest-info {
@@ -280,21 +397,187 @@
 
 .guest-actions {
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  justify-content: center;
+}
+
+.guest-edit-button {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.guest-edit-button:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
 }
 
 .guest-delete-button {
   background-color: #dc3545;
   color: white;
   border: none;
-  border-radius: 3px;
-  padding: 5px 8px;
+  border-radius: 4px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
 }
 
 .guest-delete-button:hover {
   background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Duplicates Warning Styles */
+.guests-duplicates-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+}
+
+.duplicates-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.warning-icon {
+  font-size: 24px;
+  color: #856404;
+}
+
+.warning-text {
+  flex: 1;
+  font-weight: 600;
+  color: #856404;
+  font-size: 16px;
+}
+
+.duplicates-toggle-button {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.duplicates-toggle-button:hover {
+  background-color: #e0a800;
+  transform: translateY(-1px);
+}
+
+.duplicates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.duplicate-group {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.duplicate-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.duplicate-type {
+  background-color: #dc3545;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.duplicate-value {
+  font-weight: 600;
+  color: #495057;
+  font-size: 16px;
+}
+
+.duplicate-guests {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.duplicate-guest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #dc3545;
+  transition: all 0.2s;
+}
+
+.duplicate-guest:hover {
+  background-color: #e9ecef;
+}
+
+.duplicate-guest-group {
+  color: #6c757d;
+  font-size: 14px;
+  padding: 4px 8px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.duplicate-delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.duplicate-delete-button:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
 /* התאמה למסכים קטנים */
@@ -316,6 +599,17 @@
   .guests-search-input {
     min-width: auto;
     width: 100%;
+  }
+
+  .guests-selection-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .guests-selected-count {
+    margin-left: 0;
+    text-align: center;
   }
 
   .guests-form-grid {
@@ -349,6 +643,43 @@
     order: 5;
     justify-self: start;
   }
+
+  .guest-selection {
+    order: 0;
+    justify-self: start;
+    margin-bottom: 10px;
+  }
+
+  .duplicates-warning-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .warning-text {
+    text-align: center;
+  }
+
+  .duplicate-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .duplicate-guest {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .duplicate-guest-phone,
+  .duplicate-guest-group {
+    flex: none;
+  }
+
+  .duplicate-delete-button {
+    align-self: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -374,5 +705,66 @@
 
   .guests-table-row {
     padding: 8px;
+  }
+
+  .guest-actions {
+    gap: 5px;
+  }
+
+  .guest-edit-button,
+  .guest-delete-button {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .guests-selection-controls {
+    padding: 10px;
+  }
+
+  .guests-select-all-button,
+  .guests-deselect-all-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .guests-duplicates-warning {
+    padding: 12px;
+  }
+
+  .warning-icon {
+    font-size: 20px;
+  }
+
+  .warning-text {
+    font-size: 14px;
+  }
+
+  .duplicates-toggle-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .duplicate-group {
+    padding: 12px;
+  }
+
+  .duplicate-type {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .duplicate-value {
+    font-size: 14px;
+  }
+
+  .duplicate-guest {
+    padding: 8px;
+  }
+
+  .duplicate-delete-button {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
 }

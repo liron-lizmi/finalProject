@@ -16,6 +16,11 @@ const EventGuestsPage = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingGuest, setEditingGuest] = useState(null);
+  const [selectedGuests, setSelectedGuests] = useState(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [duplicates, setDuplicates] = useState({ phone: [] });
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   const [guestForm, setGuestForm] = useState({
     firstName: '',
@@ -87,6 +92,61 @@ const EventGuestsPage = () => {
     return true;
   };
 
+  const detectDuplicates = useCallback(() => {
+    const phoneDuplicates = [];
+    
+    const phoneMap = new Map();
+
+    guests.forEach(guest => {
+      if (guest.phone && guest.phone.trim()) {
+        const phone = guest.phone.trim();
+        if (phoneMap.has(phone)) {
+          const existingGuests = phoneMap.get(phone);
+          if (existingGuests.length === 1) {
+            phoneDuplicates.push({
+              type: 'phone',
+              value: phone,
+              guests: [...existingGuests, guest]
+            });
+          } else {
+            const duplicateGroup = phoneDuplicates.find(d => d.value === phone);
+            if (duplicateGroup) {
+              duplicateGroup.guests.push(guest);
+            }
+          }
+          phoneMap.set(phone, [...existingGuests, guest]);
+        } else {
+          phoneMap.set(phone, [guest]);
+        }
+      }
+    });
+
+    setDuplicates({ phone: phoneDuplicates });
+  }, [guests]);
+
+  const handleDeleteDuplicate = async (guestId, duplicateType, duplicateValue) => {
+    if (!window.confirm(t('guests.confirmDeleteDuplicate'))) return;
+
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response) return;
+
+      if (response.ok) {
+        setGuests(prevGuests => prevGuests.filter(guest => guest._id !== guestId));
+        setError('');
+        
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('errors.deleteGuest'));
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+    }
+  };
+
   const getGroupDisplayName = (guest) => {
     if (guest.customGroup) {
       return guest.customGroup;
@@ -111,6 +171,87 @@ const EventGuestsPage = () => {
       }
     });
     return Array.from(groups);
+  };
+
+  const handleGuestSelection = (guestId, isSelected) => {
+    setSelectedGuests(prev => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(guestId);
+      } else {
+        newSet.delete(guestId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllGuests = (selectAll) => {
+    if (selectAll) {
+      setSelectedGuests(new Set(filteredGuests.map(guest => guest._id)));
+    } else {
+      setSelectedGuests(new Set());
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedGuests(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedGuests.size === 0) return;
+
+    const confirmMessage = t('guests.confirmBulkDelete', { count: selectedGuests.size });
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      setLoading(true);
+      const guestIds = Array.from(selectedGuests);
+      const deletePromises = guestIds.map(guestId =>
+        makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
+          method: 'DELETE'
+        })
+      );
+
+      const results = await Promise.allSettled(deletePromises);
+      
+      let successCount = 0;
+      let failedCount = 0;
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value && result.value.ok) {
+          successCount++;
+        } else {
+          failedCount++;
+          console.error(`Failed to delete guest ${guestIds[index]}:`, result.reason);
+        }
+      });
+
+      if (successCount > 0) {
+        setGuests(prevGuests => 
+          prevGuests.filter(guest => !selectedGuests.has(guest._id))
+        );
+      }
+
+      if (successCount === selectedGuests.size) {
+        setError('');
+      } else if (successCount > 0) {
+        setError(t('guests.partialBulkDeleteSuccess', { 
+          success: successCount, 
+          failed: failedCount 
+        }));
+      } else {
+        setError(t('guests.bulkDeleteFailed'));
+      }
+
+      setSelectedGuests(new Set());
+      setIsSelectionMode(false);
+
+    } catch (err) {
+      setError(t('errors.networkError'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getAuthToken = useCallback(() => {
@@ -266,6 +407,84 @@ const EventGuestsPage = () => {
     }
   };
 
+  const handleEditGuest = (guest) => {
+    setEditingGuest(guest._id);
+    setGuestForm({
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      phone: guest.phone,
+      group: guest.customGroup ? 'other' : guest.group,
+      customGroup: guest.customGroup || ''
+    });
+    setError('');
+  };
+
+  const handleUpdateGuest = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      let finalGroup = guestForm.group;
+      let finalCustomGroup = undefined;
+
+      if (guestForm.group === 'other' && guestForm.customGroup.trim()) {
+        finalGroup = guestForm.customGroup.trim();
+        finalCustomGroup = guestForm.customGroup.trim();
+      }
+
+      const guestData = {
+        firstName: guestForm.firstName,
+        lastName: guestForm.lastName,
+        phone: guestForm.phone,
+        group: finalGroup,
+        customGroup: finalCustomGroup
+      };
+
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/${editingGuest}`, {
+        method: 'PUT',
+        body: JSON.stringify(guestData)
+      });
+
+      if (!response) return;
+
+      if (response.ok) {
+        const updatedGuest = await response.json();
+        setGuests(guests.map(guest => 
+          guest._id === editingGuest ? updatedGuest : guest
+        ));
+        setEditingGuest(null);
+        setGuestForm({
+          firstName: '',
+          lastName: '',
+          phone: '',
+          group: 'other',
+          customGroup: ''
+        });
+        setError('');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('import.errors.updateGuest'));
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingGuest(null);
+    setGuestForm({
+      firstName: '',
+      lastName: '',
+      phone: '',
+      group: 'other',
+      customGroup: ''
+    });
+    setError('');
+  };
+
   const handleImportGuests = async (importedGuests) => {
     try {
       const results = [];
@@ -298,7 +517,7 @@ const EventGuestsPage = () => {
             if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
               validatedGuest.phone = `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`;
             } else {
-              errors.push(`${t('guests.errors.invalidPhone')}: ${validatedGuest.firstName} ${validatedGuest.lastName}`);
+              errors.push(`${t('import.errors.invalidPhone')}: ${validatedGuest.firstName} ${validatedGuest.lastName}`);
               continue;
             }
           }
@@ -334,12 +553,12 @@ const EventGuestsPage = () => {
       } else if (results.length > 0 && errors.length > 0) {
         setError(`${t('import.partialSuccess')}: ${results.length} ${t('import.imported')}, ${errors.length} ${t('import.failed')}. ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`);
       } else if (errors.length > 0) {
-        setError(`${t('guests.errors.importFailed')}: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`);
+        setError(`${t('import.errors.importFailed')}: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`);
       }
 
     } catch (err) {
       console.error('Import error:', err);
-      setError(t('errors.importFailed'));
+      setError(t('import.errors.importFailed'));
     } finally {
       setLoading(false);
     }
@@ -389,8 +608,14 @@ const EventGuestsPage = () => {
   };
 
   useEffect(() => {
+    detectDuplicates();
+  }, [detectDuplicates]);
+
+  useEffect(() => {
     fetchGuests();
   }, [fetchGuests]);
+
+  const totalDuplicates = duplicates.phone.length;
 
   if (loading) {
     return (
@@ -416,6 +641,55 @@ const EventGuestsPage = () => {
         {error && (
           <div className="guests-error-message">
             {error}
+          </div>
+        )}
+
+        {totalDuplicates > 0 && (
+          <div className="guests-duplicates-warning">
+            <div className="duplicates-warning-header">
+              <span className="warning-icon">⚠️</span>
+              <span className="warning-text">
+                {t('guests.duplicatesFound', { count: totalDuplicates })}
+              </span>
+              <button
+                className="duplicates-toggle-button"
+                onClick={() => setShowDuplicates(!showDuplicates)}
+              >
+                {showDuplicates ? t('guests.hideDuplicates') : t('guests.showDuplicates')}
+              </button>
+            </div>
+            
+            {showDuplicates && (
+              <div className="duplicates-list">
+                {duplicates.phone.map((duplicate, index) => (
+                  <div key={`phone-${index}`} className="duplicate-group">
+                    <div className="duplicate-header">
+                      <span className="duplicate-type">{t('guests.duplicatePhone')}</span>
+                      <span className="duplicate-value">{duplicate.value}</span>
+                    </div>
+                    <div className="duplicate-guests">
+                      {duplicate.guests.map(guest => (
+                        <div key={guest._id} className="duplicate-guest">
+                          <span className="duplicate-guest-name">
+                            {guest.firstName} {guest.lastName}
+                          </span>
+                          <span className="duplicate-guest-group">
+                            {getGroupDisplayName(guest)}
+                          </span>
+                          <button
+                            className="duplicate-delete-button"
+                            onClick={() => handleDeleteDuplicate(guest._id, 'phone', duplicate.value)}
+                            title={t('guests.deleteDuplicate')}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -459,6 +733,22 @@ const EventGuestsPage = () => {
             {t('import.importGuests')}
           </button>
 
+          <button
+            className={`guests-bulk-select-button ${isSelectionMode ? 'active' : ''}`}
+            onClick={toggleSelectionMode}
+          >
+            {isSelectionMode ? t('guests.cancelSelection') : t('guests.selectMultiple')}
+          </button>
+
+          {isSelectionMode && selectedGuests.size > 0 && (
+            <button
+              className="guests-bulk-delete-button"
+              onClick={handleBulkDelete}
+            >
+              {t('guests.deleteSelected')} ({selectedGuests.size})
+            </button>
+          )}
+
           <input
             type="text"
             className="guests-search-input"
@@ -476,16 +766,37 @@ const EventGuestsPage = () => {
             <option value="family">{t('guests.groups.family')}</option>
             <option value="friends">{t('guests.groups.friends')}</option>
             <option value="work">{t('guests.groups.work')}</option>
-            {getUniqueGroups().filter(group => !['family', 'friends', 'work'].includes(group)).map(group => (
+            <option value="other">{t('guests.groups.other')}</option>
+            {getUniqueGroups().filter(group => !['family', 'friends', 'work', 'other'].includes(group)).map(group => (
               <option key={group} value={group}>{group}</option>
             ))}
           </select>
         </div>
 
-        {showAddForm && (
+        {isSelectionMode && (
+          <div className="guests-selection-controls">
+            <button
+              className="guests-select-all-button"
+              onClick={() => handleSelectAllGuests(true)}
+            >
+              {t('guests.selectAll')}
+            </button>
+            <button
+              className="guests-deselect-all-button"
+              onClick={() => handleSelectAllGuests(false)}
+            >
+              {t('guests.deselectAll')}
+            </button>
+            <span className="guests-selected-count">
+              {t('guests.selectedCount', { count: selectedGuests.size })}
+            </span>
+          </div>
+        )}
+
+        {(showAddForm || editingGuest) && (
           <div className="guests-form">
-            <h3>{t('guests.addNewGuest')}</h3>
-            <form onSubmit={handleAddGuest}>
+            <h3>{editingGuest ? t('guests.editGuest') : t('guests.addNewGuest')}</h3>
+            <form onSubmit={editingGuest ? handleUpdateGuest : handleAddGuest}>
               <div className="guests-form-grid">
                 <input
                   type="text"
@@ -561,12 +872,12 @@ const EventGuestsPage = () => {
                   type="submit"
                   className="guests-form-submit"
                 >
-                  {t('common.add')}
+                  {editingGuest ? t('guests.updateGuest') : t('common.add')}
                 </button>
                 <button
                   type="button"
                   className="guests-form-cancel"
-                  onClick={() => {
+                  onClick={editingGuest ? handleCancelEdit : () => {
                     setShowAddForm(false);
                     setGuestForm({
                       firstName: '',
@@ -593,7 +904,18 @@ const EventGuestsPage = () => {
           ) : (
             <div className="guests-table">
               {filteredGuests.map((guest) => (
-                <div key={guest._id} className="guests-table-row">
+                <div key={guest._id} className={`guests-table-row ${selectedGuests.has(guest._id) ? 'selected' : ''}`}>
+                  {isSelectionMode && (
+                    <div className="guest-selection">
+                      <input
+                        type="checkbox"
+                        checked={selectedGuests.has(guest._id)}
+                        onChange={(e) => handleGuestSelection(guest._id, e.target.checked)}
+                        className="guest-selection-checkbox"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="guest-info">
                     <div className="guest-name">
                       {guest.firstName} {guest.lastName}
@@ -620,15 +942,24 @@ const EventGuestsPage = () => {
                     {guest.invitationSent ? t('guests.invitationSent') : t('guests.invitationNotSent')}
                   </div>
                   
-                  <div className="guest-actions">
-                    <button
-                      onClick={() => handleDeleteGuest(guest._id)}
-                      className="guest-delete-button"
-                      title={t('common.delete')}
-                    >
-                      🗑️
-                    </button>
-                  </div>
+                  {!isSelectionMode && (
+                    <div className="guest-actions">
+                      <button
+                        onClick={() => handleEditGuest(guest)}
+                        className="guest-edit-button"
+                        title={t('guests.editGuest')}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGuest(guest._id)}
+                        className="guest-delete-button"
+                        title={t('common.delete')}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
