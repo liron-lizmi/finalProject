@@ -807,7 +807,8 @@
       "total": "Total Guests",
       "confirmed": "Confirmed",
       "declined": "Declined",
-      "pending": "Pending"
+      "pending": "Pending",
+      "totalAttending": "Total Attending"
     },
     "groups": {
       "all": "All Groups",
@@ -816,12 +817,6 @@
       "work": "Work",
       "other": "Other"
     },
-    "rsvp": {
-      "pending": "Pending",
-      "confirmed": "Confirmed",
-      "declined": "Declined",
-      "no_response": "No Response"
-    },
     "form": {
       "firstName": "First Name",
       "lastName": "Last Name",
@@ -829,6 +824,61 @@
       "group": "Group",
       "customGroup": "Group Name",
       "customGroupPlaceholder": "e.g: Studies, Neighbors, Community..."
+    },
+    "rsvp": {
+      "manageRSVP": "Manage RSVPs",
+      "shareLink": "Share RSVP Link",
+      "shareLinkDescription": "Send this link to your guests so they can confirm their attendance",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied successfully!",
+      "manualUpdate": "Manual RSVP Update",
+      "manualUpdateDescription": "Manually update RSVP status for guests",
+      "manualUpdateTitle": "Manual RSVP Update",
+      "updateManually": "Update Manually",
+      "selectGuest": "Select Guest",
+      "selectGuestPlaceholder": "Select a guest from the list",
+      "selectGuestError": "Please select a guest",
+      "guestNotFoundError": "Guest not found",
+      "status": "RSVP Status",
+      "updateRSVP": "Update RSVP",
+      "howManyAttending": "How many people will attend?",
+      "attendingCount": "Number attending",
+      "notes": "Notes",
+      "optional": "Optional",
+      "notesPlaceholder": "Additional notes from guest...",
+      "filters": {
+        "all": "All Statuses"
+      },
+      "pending": "Pending Response",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "no_response": "No Response",
+      "yesAttending": "Yes, I'm attending",
+      "notAttending": "No, I'm not attending",
+      "person": "person",
+      "people": "people",
+      "enterPhone": "Enter Phone Number",
+      "enterPhoneDescription": "Enter your phone number to find your invitation",
+      "continue": "Continue",
+      "welcomeBack": "Hello {{name}}!",
+      "willYouAttend": "Will you attend the event?",
+      "additionalNotes": "Additional Notes",
+      "submitResponse": "Submit Response",
+      "back": "Back",
+      "thankYou": "Thank You!",
+      "confirmationSuccess": "{{name}}, thanks for confirming! We've registered {{count}} attendees.",
+      "declineSuccess": "{{name}}, thanks for letting us know. We hope to see you at future events!",
+      "eventReminder": "Event Reminder",
+      "respondForAnother": "Respond for another guest",
+      "phoneNotFound": "Phone number not found in guest list",
+      "statusRequired": "Please select an RSVP status",
+      "updateFailed": "Error updating RSVP",
+      "eventNotFound": "Event not found",
+      "editRSVP": "Edit RSVP",
+      "editRSVPFor": "Edit RSVP for {{name}}"
+    },
+    "errors": {
+      "phoneNotFound": "Phone number not found in guest list"
     }
   },
   "common": {

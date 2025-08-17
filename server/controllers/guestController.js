@@ -266,6 +266,121 @@ const getGuestStats = async (req, res) => {
   }
 };
 
+const updateGuestRSVPPublic = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { phone, rsvpStatus, guestNotes, attendingCount } = req.body;
+    
+    // Find the guest by phone number and event
+    const guest = await Guest.findOne({ 
+      phone: phone.trim(), 
+      event: eventId 
+    });
+    
+    if (!guest) {
+      return res.status(404).json({ 
+        message: req.t('guests.errors.phoneNotFound') 
+      });
+    }
+
+    // Update RSVP information
+    guest.rsvpStatus = rsvpStatus;
+    guest.rsvpReceivedAt = Date.now();
+    
+    if (guestNotes !== undefined) {
+      guest.guestNotes = guestNotes;
+    }
+    
+    if (attendingCount !== undefined && attendingCount > 0) {
+      guest.attendingCount = attendingCount;
+    }
+
+    const updatedGuest = await guest.save();
+    
+    res.json({
+      message: req.t('guests.rsvpUpdateSuccess'),
+      guest: {
+        firstName: updatedGuest.firstName,
+        lastName: updatedGuest.lastName,
+        rsvpStatus: updatedGuest.rsvpStatus,
+        attendingCount: updatedGuest.attendingCount
+      }
+    });
+  } catch (err) {
+    console.error('Error updating guest RSVP (public):', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const getEventForRSVP = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const event = await Event.findById(eventId, 'eventName eventDate eventLocation');
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    res.json(event);
+  } catch (err) {
+    console.error('Error fetching event for RSVP:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const checkGuestByPhone = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { phone } = req.body;
+    
+    const guest = await Guest.findOne({ 
+      phone: phone.trim(), 
+      event: eventId 
+    }, 'firstName lastName rsvpStatus attendingCount guestNotes');
+    
+    if (!guest) {
+      return res.status(404).json({ 
+        message: req.t('guests.errors.phoneNotFound') 
+      });
+    }
+
+    res.json({
+      guest: {
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        rsvpStatus: guest.rsvpStatus,
+        attendingCount: guest.attendingCount || 1,
+        guestNotes: guest.guestNotes || ''
+      }
+    });
+  } catch (err) {
+    console.error('Error checking guest by phone:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const generateRSVPLink = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    // Verify event exists and belongs to user
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const rsvpLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/rsvp/${eventId}`;
+    
+    res.json({ 
+      rsvpLink,
+      eventName: event.eventName 
+    });
+  } catch (err) {
+    console.error('Error generating RSVP link:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = {
   getEventGuests,
   addGuest,
@@ -273,5 +388,9 @@ module.exports = {
   deleteGuest,
   updateGuestRSVP,
   getEventGroups,
-  getGuestStats
+  getGuestStats,
+  updateGuestRSVPPublic,
+  getEventForRSVP,
+  checkGuestByPhone,
+  generateRSVPLink
 };

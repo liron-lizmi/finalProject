@@ -7,24 +7,34 @@ const {
   deleteGuest,
   updateGuestRSVP,
   getEventGroups,
-  getGuestStats
+  getGuestStats,
+  updateGuestRSVPPublic,
+  getEventForRSVP,
+  checkGuestByPhone,
+  generateRSVPLink
 } = require('../controllers/guestController');
 const auth = require('../middleware/auth');
 
-// Enabling authentication middleware for all routes
+// Public RSVP routes (no authentication required)
+router.get('/:eventId/rsvp-info', getEventForRSVP);         
+router.post('/:eventId/check-phone', checkGuestByPhone);    
+router.put('/:eventId/rsvp-public', updateGuestRSVPPublic); 
+
+// Protected routes (require authentication)
 router.use(auth);
 
 // Guest management routes
-router.get('/', getEventGuests);                    // GET /api/events/:eventId/guests
-router.post('/', addGuest);                         // POST /api/events/:eventId/guests
-router.put('/:guestId', updateGuest);               // PUT /api/events/:eventId/guests/:guestId
-router.delete('/:guestId', deleteGuest);            // DELETE /api/events/:eventId/guests/:guestId
+router.get('/', getEventGuests);               
+router.post('/', addGuest);                        
+router.put('/:guestId', updateGuest);               
+router.delete('/:guestId', deleteGuest);            
 
 // RSVP routes
-router.put('/:guestId/rsvp', updateGuestRSVP);      // PUT /api/events/:eventId/guests/:guestId/rsvp
+router.put('/:guestId/rsvp', updateGuestRSVP);      
+router.get('/rsvp-link', generateRSVPLink);    
 
 // Statistics and groups routes
-router.get('/groups', getEventGroups);              // GET /api/events/:eventId/guests/groups
-router.get('/stats', getGuestStats);                // GET /api/events/:eventId/guests/stats
+router.get('/groups', getEventGroups);              
+router.get('/stats', getGuestStats);               
 
 module.exports = router;

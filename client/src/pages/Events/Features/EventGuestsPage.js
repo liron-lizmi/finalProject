@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import ImportModal from '../../components/ImportModal';
+import RSVPManualModal from './components/RSVPManualModal';
 import '../../../styles/EventGuestsPage.css';
 
 const EventGuestsPage = () => {
@@ -14,13 +15,17 @@ const EventGuestsPage = () => {
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showRSVPModal, setShowRSVPModal] = useState(false);
+  const [editingRSVPGuest, setEditingRSVPGuest] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState('all');
+  const [selectedRSVPStatus, setSelectedRSVPStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingGuest, setEditingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [duplicates, setDuplicates] = useState({ phone: [] });
   const [showDuplicates, setShowDuplicates] = useState(false);
+  const [rsvpLink, setRsvpLink] = useState('');
 
   const [guestForm, setGuestForm] = useState({
     firstName: '',
@@ -90,6 +95,27 @@ const EventGuestsPage = () => {
       return false;
     }
     return true;
+  };
+
+  const generateRSVPLink = async () => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/rsvp-link`);
+      if (response && response.ok) {
+        const data = await response.json();
+        setRsvpLink(data.rsvpLink);
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+    }
+  };
+
+  const copyRSVPLink = async () => {
+    try {
+      await navigator.clipboard.writeText(rsvpLink);
+      alert(t('guests.rsvp.linkCopied'));
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
   };
 
   const detectDuplicates = useCallback(() => {
@@ -355,6 +381,49 @@ const EventGuestsPage = () => {
     }
   }, [getAuthToken, handleAuthError]);
 
+  const handleManualRSVPUpdate = async (guestData) => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestData.guestId}/rsvp`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          rsvpStatus: guestData.rsvpStatus,
+          guestNotes: guestData.guestNotes,
+          attendingCount: guestData.attendingCount
+        })
+      });
+
+      if (!response) return;
+
+      if (response.ok) {
+        const updatedGuest = await response.json();
+        setGuests(prevGuests => 
+          prevGuests.map(guest => 
+            guest._id === guestData.guestId ? { 
+              ...guest, 
+              rsvpStatus: guestData.rsvpStatus,
+              guestNotes: guestData.guestNotes,
+              attendingCount: guestData.attendingCount,
+              rsvpReceivedAt: Date.now()
+            } : guest
+          )
+        );
+        setError('');
+        setShowRSVPModal(false);
+        setEditingRSVPGuest(null);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('errors.updateGuest'));
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+    }
+  };
+
+  const handleEditRSVP = (guest) => {
+    setEditingRSVPGuest(guest);
+    setShowRSVPModal(true);
+  };
+
   const handleAddGuest = async (e) => {
     e.preventDefault();
 
@@ -592,19 +661,24 @@ const EventGuestsPage = () => {
     const matchesGroup = selectedGroup === 'all' || 
       guestGroupName === selectedGroup;
     
+    const matchesRSVP = selectedRSVPStatus === 'all' || 
+      guest.rsvpStatus === selectedRSVPStatus;
+    
     const matchesSearch = searchTerm === '' || 
       guest.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       guest.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       guest.phone.includes(searchTerm);
     
-    return matchesGroup && matchesSearch;
+    return matchesGroup && matchesRSVP && matchesSearch;
   });
 
   const stats = {
     total: guests.length,
     confirmed: guests.filter(g => g.rsvpStatus === 'confirmed').length,
     declined: guests.filter(g => g.rsvpStatus === 'declined').length,
-    pending: guests.filter(g => g.rsvpStatus === 'pending').length
+    pending: guests.filter(g => g.rsvpStatus === 'pending').length,
+    totalAttending: guests.filter(g => g.rsvpStatus === 'confirmed')
+                          .reduce((sum, guest) => sum + (guest.attendingCount || 1), 0)
   };
 
   useEffect(() => {
@@ -614,6 +688,12 @@ const EventGuestsPage = () => {
   useEffect(() => {
     fetchGuests();
   }, [fetchGuests]);
+
+  useEffect(() => {
+    if (eventId) {
+      generateRSVPLink();
+    }
+  }, [eventId]);
 
   const totalDuplicates = duplicates.phone.length;
 
@@ -643,6 +723,26 @@ const EventGuestsPage = () => {
             {error}
           </div>
         )}
+
+        {/* RSVP Link Section */}
+        <div className="guests-rsvp-link-section">
+          <h3>📨 {t('guests.rsvp.shareLink')}</h3>
+          <p>{t('guests.rsvp.shareLinkDescription')}</p>
+          <div className="rsvp-link-container">
+            <input
+              type="text"
+              className="rsvp-link-input"
+              value={rsvpLink}
+              readOnly
+            />
+            <button
+              className="rsvp-copy-button"
+              onClick={copyRSVPLink}
+            >
+              📋 {t('guests.rsvp.copyLink')}
+            </button>
+          </div>
+        </div>
 
         {totalDuplicates > 0 && (
           <div className="guests-duplicates-warning">
@@ -701,6 +801,10 @@ const EventGuestsPage = () => {
           <div className="guests-stat-card confirmed">
             <div className="guests-stat-number">{stats.confirmed}</div>
             <div className="guests-stat-label">{t('guests.stats.confirmed')}</div>
+          </div>
+          <div className="guests-stat-card attending">
+            <div className="guests-stat-number">{stats.totalAttending}</div>
+            <div className="guests-stat-label">{t('guests.stats.totalAttending')}</div>
           </div>
           <div className="guests-stat-card declined">
             <div className="guests-stat-number">{stats.declined}</div>
@@ -770,6 +874,17 @@ const EventGuestsPage = () => {
             {getUniqueGroups().filter(group => !['family', 'friends', 'work', 'other'].includes(group)).map(group => (
               <option key={group} value={group}>{group}</option>
             ))}
+          </select>
+
+          <select
+            className="guests-filter-select"
+            value={selectedRSVPStatus}
+            onChange={(e) => setSelectedRSVPStatus(e.target.value)}
+          >
+            <option value="all">{t('guests.rsvp.filters.all')}</option>
+            <option value="confirmed">{t('guests.rsvp.confirmed')}</option>
+            <option value="declined">{t('guests.rsvp.declined')}</option>
+            <option value="pending">{t('guests.rsvp.pending')}</option>
           </select>
         </div>
 
@@ -928,6 +1043,11 @@ const EventGuestsPage = () => {
                         {t('guests.guestNote')}: {guest.guestNotes}
                       </div>
                     )}
+                    {guest.rsvpStatus === 'confirmed' && guest.attendingCount > 1 && (
+                      <div className="guest-attending-count">
+                        {t('guests.rsvp.attendingCount')}: {guest.attendingCount}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="guest-group">
@@ -952,6 +1072,13 @@ const EventGuestsPage = () => {
                         ✏️
                       </button>
                       <button
+                        onClick={() => handleEditRSVP(guest)}
+                        className="guest-rsvp-edit-button"
+                        title={t('guests.rsvp.editRSVP')}
+                      >
+                        📝
+                      </button>
+                      <button
                         onClick={() => handleDeleteGuest(guest._id)}
                         className="guest-delete-button"
                         title={t('common.delete')}
@@ -971,6 +1098,16 @@ const EventGuestsPage = () => {
           onClose={() => setShowImportModal(false)}
           onImport={handleImportGuests}
           eventId={eventId}
+        />
+
+        <RSVPManualModal
+          isOpen={showRSVPModal}
+          onClose={() => {
+            setShowRSVPModal(false);
+            setEditingRSVPGuest(null);
+          }}
+          guest={editingRSVPGuest}
+          onUpdateRSVP={handleManualRSVPUpdate}
         />
       </div>
     </FeaturePageTemplate>

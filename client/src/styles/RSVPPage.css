@@ -1,0 +1,408 @@
+/* styles/RSVPPage.css */
+
+.rsvp-page {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.rsvp-container {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rsvp-header {
+  background: #000000;
+  color: white;
+  padding: 30px;
+  text-align: center;
+}
+
+.rsvp-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.rsvp-date,
+.rsvp-location {
+  margin: 8px 0;
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+.rsvp-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+.rsvp-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 30px;
+  color: #c00;
+  text-align: center;
+  font-size: 14px;
+}
+
+.rsvp-step {
+  padding: 30px;
+}
+
+.rsvp-step h2 {
+  color: #333;
+  margin: 0 0 15px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.rsvp-description {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.rsvp-guest-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  text-align: center;
+  font-weight: 500;
+  color: #495057;
+}
+
+.rsvp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rsvp-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.rsvp-form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.rsvp-form-input,
+.rsvp-form-textarea {
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+}
+
+.rsvp-form-input:focus,
+.rsvp-form-textarea:focus {
+  outline: none;
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.rsvp-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.character-count {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #6c757d;
+  text-align: right;
+}
+
+/* Count Input Container */
+.count-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.count-button {
+  background: #000000;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.count-button:hover {
+  background: #333333;
+}
+
+.count-button.decrease {
+  border-right: 1px solid #e9ecef;
+}
+
+.count-button.increase {
+  border-left: 1px solid #e9ecef;
+}
+
+.count-input {
+  border: none;
+  padding: 12px 16px;
+  font-size: 16px;
+  text-align: center;
+  min-width: 80px;
+  background: white;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.count-input::-webkit-outer-spin-button,
+.count-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.rsvp-status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.rsvp-radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  transition: all 0.3s;
+  background-color: #fff;
+}
+
+.rsvp-radio-option:hover {
+  border-color: #000000;
+  background-color: #f8f9ff;
+}
+
+.rsvp-radio-option input[type="radio"] {
+  margin-right: 12px;
+  margin-left: 0;
+}
+
+.rsvp-radio-option input[type="radio"]:checked + .rsvp-radio-label.confirmed {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.rsvp-radio-option input[type="radio"]:checked + .rsvp-radio-label.declined {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.rsvp-radio-option:has(input:checked) {
+  border-color: #000000;
+  background-color: #f8f9ff;
+}
+
+.rsvp-radio-label {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.rsvp-submit-button {
+  background: #000000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rsvp-submit-button:hover:not(:disabled) {
+  background: #333333;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.rsvp-submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rsvp-form-actions {
+  display: flex;
+  gap: 15px;
+  flex-direction: column;
+}
+
+.rsvp-back-button {
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.rsvp-back-button:hover {
+  border-color: #6c757d;
+  color: #495057;
+}
+
+.rsvp-success {
+  text-align: center;
+}
+
+.rsvp-success-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 1s ease-out;
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+.rsvp-success h2 {
+  color: #28a745;
+  margin-bottom: 20px;
+}
+
+.rsvp-success-message {
+  font-size: 18px;
+  color: #495057;
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .rsvp-page {
+    padding: 10px;
+  }
+  
+  .rsvp-container {
+    margin: 10px;
+  }
+  
+  .rsvp-header {
+    padding: 20px;
+  }
+  
+  .rsvp-title {
+    font-size: 24px;
+  }
+  
+  .rsvp-step {
+    padding: 20px;
+  }
+  
+  .rsvp-step h2 {
+    font-size: 20px;
+  }
+  
+  .rsvp-form-actions {
+    gap: 10px;
+  }
+  
+  .rsvp-status-options {
+    gap: 8px;
+  }
+  
+  .rsvp-radio-option {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rsvp-header {
+    padding: 15px;
+  }
+  
+  .rsvp-title {
+    font-size: 20px;
+  }
+  
+  .rsvp-date,
+  .rsvp-location {
+    font-size: 14px;
+  }
+  
+  .rsvp-step {
+    padding: 15px;
+  }
+  
+  .rsvp-step h2 {
+    font-size: 18px;
+  }
+  
+  .rsvp-success-icon {
+    font-size: 48px;
+  }
+  
+  .rsvp-success-message {
+    font-size: 16px;
+  }
+}

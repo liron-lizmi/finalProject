@@ -137,7 +137,7 @@
       "googleNotConnected": "Not connected to Google Contacts",
       "googleTokenExpired": "Google connection expired, reconnection required",
       "googleContactsFailed": "Failed to retrieve contacts from Google",
-      "googleDisconnectFailed": "Error disconnecting from Google Contacts"
+      "googleDisconnectFailed": "Error disconnecting from Google Contacts"    
     }
   }
 }

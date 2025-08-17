@@ -21,6 +21,8 @@ import EventSharePage from './pages/Events/Features/EventSharePage';
 import TaskManager from './pages/Events/Features/components/TaskManager';
 import GoogleAuthCallback from './pages/Events/Features/components/GoogleAuthCallback';
 import GoogleContactsCallback from './pages/components/GoogleContactsCallback';
+import RSVPPage from './pages/Events/Features/RSVPPage';
+
 
 
 const App = () => {
@@ -51,6 +53,8 @@ const App = () => {
 
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
         <Route path="/auth/google/contacts/callback" element={<GoogleContactsCallback />} />
+
+        <Route path="/rsvp/:eventId" element={<RSVPPage />} />
       </Routes>
     </Router>
   );

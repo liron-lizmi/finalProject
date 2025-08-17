@@ -768,3 +768,151 @@
     font-size: 12px;
   }
 }
+
+.guests-rsvp-link-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.guests-rsvp-link-section h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.guests-rsvp-link-section p {
+  margin: 0 0 15px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rsvp-link-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.rsvp-link-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.rsvp-copy-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.rsvp-copy-button:hover {
+  background-color: #218838;
+}
+
+/* RSVP Edit Button */
+.guest-rsvp-edit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.guest-rsvp-edit-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Guest Info Display in Modal */
+.guest-info-display {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.guest-info-display p {
+  margin: 5px 0;
+  color: #495057;
+}
+
+.guest-info-display strong {
+  color: #333;
+  font-size: 16px;
+}
+
+/* Updated Stats Section */
+.guests-stat-card.attending {
+  background-color: #e8f5e8;
+  border-color: #c3e6cb;
+}
+
+.guests-stat-card.attending .guests-stat-number {
+  color: #155724;
+}
+
+.guests-stat-card.attending .guests-stat-label {
+  color: #155724;
+}
+
+/* Updated Guest Table Styles */
+.guest-attending-count {
+  font-size: 12px;
+  color: #28a745;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Responsive Design for RSVP Section */
+@media (max-width: 768px) {
+  .rsvp-link-container {
+    flex-direction: column;
+  }
+  
+  .rsvp-copy-button {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .guests-rsvp-link-section {
+    padding: 15px;
+  }
+  
+  .guests-rsvp-link-section h3 {
+    font-size: 16px;
+  }
+  
+  .guests-rsvp-link-section p {
+    font-size: 13px;
+  }
+  
+  .rsvp-copy-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}

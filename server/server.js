@@ -1,4 +1,3 @@
-// server/server.js
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
@@ -34,6 +33,7 @@ i18next
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes'); 
 const taskRoutes = require('./routes/taskRoutes');
+const rsvpRoutes = require('./routes/rsvpRoutes'); 
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -50,6 +50,7 @@ app.use(middleware.handle(i18next));
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/rsvp', rsvpRoutes); 
 
 app.get('/api/health', (req, res) => {
   res.json({ 

@@ -807,7 +807,8 @@
       "total": "סה״כ מוזמנים",
       "confirmed": "אישרו הגעה",
       "declined": "סירבו",
-      "pending": "ממתינים"
+      "pending": "ממתינים",
+      "totalAttending": "סה״כ מגיעים"
     },
     "groups": {
       "all": "כל הקבוצות",
@@ -816,12 +817,6 @@
       "work": "עבודה",
       "other": "אחר"
     },
-    "rsvp": {
-      "pending": "ממתין",
-      "confirmed": "אישר",
-      "declined": "סירב",
-      "no_response": "לא הגיב"
-    },
     "form": {
       "firstName": "שם פרטי",
       "lastName": "שם משפחה",
@@ -829,6 +824,61 @@
       "group": "קבוצה",
       "customGroup": "שם הקבוצה",
       "customGroupPlaceholder": "לדוגמה: לימודים, שכנים, קהילה..."
+    },
+    "rsvp": {
+      "manageRSVP": "ניהול אישורי הגעה",
+      "shareLink": "שיתוף קישור אישור הגעה",
+      "shareLinkDescription": "שלח את הקישור הזה למוזמנים שלך כדי שיוכלו לאשר את הגעתם",
+      "copyLink": "העתק קישור",
+      "linkCopied": "הקישור הועתק בהצלחה!",
+      "manualUpdate": "עדכון ידני של אישורי הגעה",
+      "manualUpdateDescription": "עדכן ידנית את סטטוס אישור ההגעה עבור מוזמנים",
+      "manualUpdateTitle": "עדכון ידני של אישור הגעה",
+      "updateManually": "עדכן ידנית",
+      "selectGuest": "בחר מוזמן",
+      "selectGuestPlaceholder": "בחר מוזמן מהרשימה",
+      "selectGuestError": "אנא בחר מוזמן",
+      "guestNotFoundError": "המוזמן לא נמצא",
+      "status": "סטטוס אישור הגעה",
+      "updateRSVP": "עדכן אישור הגעה",
+      "howManyAttending": "כמה אנשים יגיעו?",
+      "attendingCount": "מספר מגיעים",
+      "notes": "הערות",
+      "optional": "אופציונלי",
+      "notesPlaceholder": "הערות נוספות מהמוזמן...",
+      "filters": {
+        "all": "כל הסטטוסים"
+      },
+      "pending": "ממתין לתשובה",
+      "confirmed": "אישר הגעה",
+      "declined": "לא יגיע",
+      "no_response": "לא הגיב",
+      "yesAttending": "כן, אני מגיע/ה",
+      "notAttending": "לא, אני לא מגיע/ה",
+      "person": "אדם",
+      "people": "אנשים",
+      "enterPhone": "הזן מספר טלפון",
+      "enterPhoneDescription": "הזן את מספר הטלפון שלך כדי למצוא את הזמנתך",
+      "continue": "המשך",
+      "welcomeBack": "שלום {{name}}!",
+      "willYouAttend": "האם תגיע/י לאירוע?",
+      "additionalNotes": "הערות נוספות",
+      "submitResponse": "שלח תשובה",
+      "back": "חזרה",
+      "thankYou": "תודה רבה!",
+      "confirmationSuccess": "{{name}}, תודה שאישרת הגעה! רשמנו {{count}} משתתפים.",
+      "declineSuccess": "{{name}}, תודה על ההודעה. נשמח לראות אותך באירועים הבאים!",
+      "eventReminder": "תזכורת לאירוע",
+      "respondForAnother": "מלא עבור מוזמן נוסף",
+      "phoneNotFound": "מספר הטלפון לא נמצא ברשימת המוזמנים",
+      "statusRequired": "אנא בחר סטטוס אישור הגעה",
+      "updateFailed": "שגיאה בעדכון אישור ההגעה",
+      "eventNotFound": "האירוע לא נמצא",
+      "editRSVP": "ערוך אישור הגעה",
+      "editRSVPFor": "עריכת אישור הגעה עבור {{name}}"
+    },
+    "errors": {
+      "phoneNotFound": "מספר הטלפון לא נמצא ברשימת המוזמנים"
     }
   },
   "common": {
