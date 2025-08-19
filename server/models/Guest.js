@@ -51,7 +51,7 @@ const GuestSchema = new mongoose.Schema({
     type: Number,
     default: 1,
     min: 0,
-    max: 10 // Maximum 10 people per RSVP
+    max: 20
   },
   invitationSent: {
     type: Boolean,
@@ -66,7 +66,7 @@ const GuestSchema = new mongoose.Schema({
   guestNotes: {
     type: String,
     trim: true,
-    maxlength: 500 // Limit notes to 500 characters
+    maxlength: 500 
   },
   gifts: [{
     description: {
@@ -106,9 +106,21 @@ const GuestSchema = new mongoose.Schema({
   }
 });
 
-// Update the updatedAt field before saving
 GuestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  
+  if (typeof this.attendingCount !== 'number' || isNaN(this.attendingCount)) {
+    this.attendingCount = 1;
+  }
+  
+  if (this.rsvpStatus === 'declined') {
+    this.attendingCount = 0;
+  }
+  
+  if (this.rsvpStatus === 'confirmed' && (!this.attendingCount || this.attendingCount < 1)) {
+    this.attendingCount = 1;
+  }
+  
   next();
 });
 

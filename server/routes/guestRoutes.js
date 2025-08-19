@@ -3,6 +3,7 @@ const router = express.Router({ mergeParams: true });
 const {
   getEventGuests,
   addGuest,
+  bulkImportGuests,
   updateGuest,
   deleteGuest,
   updateGuestRSVP,
@@ -15,17 +16,18 @@ const {
 } = require('../controllers/guestController');
 const auth = require('../middleware/auth');
 
-// Public RSVP routes (no authentication required)
+// Public RSVP routes
 router.get('/:eventId/rsvp-info', getEventForRSVP);         
 router.post('/:eventId/check-phone', checkGuestByPhone);    
 router.put('/:eventId/rsvp-public', updateGuestRSVPPublic); 
 
-// Protected routes (require authentication)
+// Protected routes
 router.use(auth);
 
 // Guest management routes
 router.get('/', getEventGuests);               
-router.post('/', addGuest);                        
+router.post('/', addGuest);
+router.post('/bulk-import', bulkImportGuests);                      
 router.put('/:guestId', updateGuest);               
 router.delete('/:guestId', deleteGuest);            
 

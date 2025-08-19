@@ -419,10 +419,12 @@ const EventGuestsPage = () => {
     }
   };
 
-  const handleEditRSVP = (guest) => {
+  // תיקון הפונקציה שמטפלת בעריכת RSVP
+  const handleEditRSVP = useCallback((guest) => {
+    console.log('Opening RSVP modal for guest:', guest.firstName, guest.lastName);
     setEditingRSVPGuest(guest);
     setShowRSVPModal(true);
-  };
+  }, []);
 
   const handleAddGuest = async (e) => {
     e.preventDefault();
@@ -554,79 +556,75 @@ const EventGuestsPage = () => {
     setError('');
   };
 
+  // פונקציה מותאמת לייבוא מהיר - בקשה אחת לכל המוזמנים
   const handleImportGuests = async (importedGuests) => {
     try {
-      const results = [];
-      const errors = [];
-
       if (!importedGuests || importedGuests.length === 0) {
         setError(t('guest.errors.noData'));
         return;
       }
 
       setLoading(true);
+      console.log(`Starting bulk import of ${importedGuests.length} guests...`);
 
-      for (const guest of importedGuests) {
-        try {
-          const validatedGuest = {
-            firstName: guest.firstName?.trim() || t('import.unknownContact'),
-            lastName: guest.lastName?.trim() || '',
-            phone: guest.phone?.trim() || '',
-            group: guest.group || 'other',
-            customGroup: undefined
-          };
+      // הכנת הנתונים לייבוא
+      const guestsToImport = importedGuests.map(guest => {
+        const validatedGuest = {
+          firstName: guest.firstName?.trim() || t('import.unknownContact'),
+          lastName: guest.lastName?.trim() || '',
+          phone: guest.phone?.trim() || '',
+          group: guest.group || 'other',
+          customGroup: undefined
+        };
 
-          if (!['family', 'friends', 'work', 'other'].includes(guest.group)) {
-            validatedGuest.group = guest.group;
-            validatedGuest.customGroup = guest.group;
-          }
-
-          if (validatedGuest.phone && !/^05\d-\d{7}$/.test(validatedGuest.phone)) {
-            const cleanPhone = validatedGuest.phone.replace(/\D/g, '');
-            if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
-              validatedGuest.phone = `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`;
-            } else {
-              errors.push(`${t('import.errors.invalidPhone')}: ${validatedGuest.firstName} ${validatedGuest.lastName}`);
-              continue;
-            }
-          }
-
-          console.log('Sending guest data:', validatedGuest);
-
-          const response = await makeApiRequest(`/api/events/${eventId}/guests`, {
-            method: 'POST',
-            body: JSON.stringify(validatedGuest)
-          });
-
-          if (response && response.ok) {
-            const newGuest = await response.json();
-            results.push(newGuest);
-          } else {
-            const errorData = await response?.json().catch(() => ({}));
-            const errorMessage = errorData.message || t('errors.addGuest');
-            errors.push(`${validatedGuest.firstName} ${validatedGuest.lastName}: ${errorMessage}`);
-          }
-        } catch (err) {
-          console.error('Error importing guest:', err);
-          errors.push(`${guest.firstName || 'Unknown'} ${guest.lastName || ''}: ${t('errors.networkError')}`);
+        if (!['family', 'friends', 'work', 'other'].includes(guest.group)) {
+          validatedGuest.group = guest.group;
+          validatedGuest.customGroup = guest.group;
         }
-      }
 
-      if (results.length > 0) {
-        setGuests(prevGuests => [...prevGuests, ...results]);
-      }
+        // תיקון פורמט טלפון
+        if (validatedGuest.phone && !/^05\d-\d{7}$/.test(validatedGuest.phone)) {
+          const cleanPhone = validatedGuest.phone.replace(/\D/g, '');
+          if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
+            validatedGuest.phone = `${cleanPhone.slice(0, 3)}-${cleanPhone.slice(3)}`;
+          }
+        }
 
-      if (results.length > 0 && errors.length === 0) {
-        setError(''); 
-        console.log(`Successfully imported ${results.length} guests`);
-      } else if (results.length > 0 && errors.length > 0) {
-        setError(`${t('import.partialSuccess')}: ${results.length} ${t('import.imported')}, ${errors.length} ${t('import.failed')}. ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`);
-      } else if (errors.length > 0) {
-        setError(`${t('import.errors.importFailed')}: ${errors.slice(0, 2).join(', ')}${errors.length > 2 ? '...' : ''}`);
+        return validatedGuest;
+      });
+
+      console.log('Sending bulk import request...');
+
+      // שליחת בקשה אחת לייבוא כל המוזמנים
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/bulk-import`, {
+        method: 'POST',
+        body: JSON.stringify({ guests: guestsToImport })
+      });
+
+      if (response && response.ok) {
+        const result = await response.json();
+        console.log(`Bulk import completed: ${result.imported} imported, ${result.failed} failed`);
+
+        if (result.imported > 0) {
+          // רענון רשימת המוזמנים
+          await fetchGuests();
+        }
+
+        if (result.imported > 0 && result.failed === 0) {
+          setError('');
+          console.log(`Successfully imported ${result.imported} guests`);
+        } else if (result.imported > 0 && result.failed > 0) {
+          setError(`${t('import.partialSuccess')}: ${result.imported} ${t('import.imported')}, ${result.failed} ${t('import.failed')}. ${result.errors?.slice(0, 3).join(', ')}${result.errors?.length > 3 ? '...' : ''}`);
+        } else if (result.failed > 0) {
+          setError(`${t('import.errors.importFailed')}: ${result.errors?.slice(0, 2).join(', ')}${result.errors?.length > 2 ? '...' : ''}`);
+        }
+      } else {
+        const errorData = await response?.json().catch(() => ({}));
+        setError(errorData.message || t('import.errors.importFailed'));
       }
 
     } catch (err) {
-      console.error('Import error:', err);
+      console.error('Bulk import error:', err);
       setError(t('import.errors.importFailed'));
     } finally {
       setLoading(false);
@@ -1068,13 +1066,20 @@ const EventGuestsPage = () => {
                         onClick={() => handleEditGuest(guest)}
                         className="guest-edit-button"
                         title={t('guests.editGuest')}
+                        type="button"
                       >
                         ✏️
                       </button>
                       <button
-                        onClick={() => handleEditRSVP(guest)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('RSVP button clicked for guest:', guest.firstName, guest.lastName);
+                          handleEditRSVP(guest);
+                        }}
                         className="guest-rsvp-edit-button"
                         title={t('guests.rsvp.editRSVP')}
+                        type="button"
                       >
                         📝
                       </button>
@@ -1082,6 +1087,7 @@ const EventGuestsPage = () => {
                         onClick={() => handleDeleteGuest(guest._id)}
                         className="guest-delete-button"
                         title={t('common.delete')}
+                        type="button"
                       >
                         🗑️
                       </button>
@@ -1103,6 +1109,7 @@ const EventGuestsPage = () => {
         <RSVPManualModal
           isOpen={showRSVPModal}
           onClose={() => {
+            console.log('Closing RSVP modal');
             setShowRSVPModal(false);
             setEditingRSVPGuest(null);
           }}

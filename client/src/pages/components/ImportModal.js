@@ -11,6 +11,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewData, setPreviewData] = useState([]);
+  const [allImportData, setAllImportData] = useState([]); // נתונים מלאים לייבוא
   
   // Google Contacts states
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -193,6 +194,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setShowContactSelection(false);
       setShowGroupEditor(false);
       setPreviewData([]);
+      setAllImportData([]);
       setError('');
     } catch (error) {
       console.error('Google disconnect error:', error);
@@ -289,7 +291,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   const handleConfirmGroupEditor = () => {
     const selectedContacts = googleContacts.filter(contact => contact.selected);
-    setPreviewData(selectedContacts);
+    setAllImportData(selectedContacts); // שמירת כל הנתונים
+    setPreviewData(selectedContacts.slice(0, 10)); // תצוגה מקדימה של 10 הראשונים
     setShowGroupEditor(false);
   };
 
@@ -333,7 +336,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   const handleConfirmVcfGroupEditor = () => {
     const selectedContacts = vcfContacts.filter(contact => contact.selected);
-    setPreviewData(selectedContacts);
+    setAllImportData(selectedContacts); // שמירת כל הנתונים
+    setPreviewData(selectedContacts.slice(0, 10)); // תצוגה מקדימה של 10 הראשונים
     setShowVcfGroupEditor(false);
   };
 
@@ -584,6 +588,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       return;
     }
 
+    // שמירת כל הנתונים וגם תצוגה מקדימה
+    setAllImportData(data);
     setPreviewData(data.slice(0, 10));
   };
 
@@ -652,14 +658,17 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   };
 
   const handleImport = async () => {
-    if (previewData.length === 0) {
+    // שימוש ב-allImportData במקום previewData
+    const dataToImport = allImportData.length > 0 ? allImportData : previewData;
+    
+    if (dataToImport.length === 0) {
       setError(t('guests.errors.noData'));
       return;
     }
 
     setLoading(true);
     try {
-      await onImport(previewData);
+      await onImport(dataToImport);
       resetModal();
       onClose();
     } catch (err) {
@@ -674,6 +683,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     setCsvData('');
     setFile(null);
     setPreviewData([]);
+    setAllImportData([]); // איפוס גם של הנתונים המלאים
     setError('');
     setLoading(false);
     setGoogleConnected(false);
@@ -698,6 +708,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   };
 
   if (!isOpen) return null;
+
+  // חישוב המספר הכולל לייבוא
+  const totalImportCount = allImportData.length > 0 ? allImportData.length : previewData.length;
 
   return (
     <div className="import-modal-overlay" onClick={onClose}>
@@ -776,6 +789,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                         parseCSVData(e.target.value);
                       } else {
                         setPreviewData([]);
+                        setAllImportData([]);
                       }
                     }}
                     placeholder={t('import.csvPlaceholder')}
@@ -1232,9 +1246,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
           )}
 
           {/* Preview */}
-          {previewData.length > 0 && !showVcfGroupEditor && !showVcfContactSelection && (
+          {previewData.length > 0 && !showVcfGroupEditor && !showVcfContactSelection && !showGroupEditor && !showContactSelection && (
             <div className="import-preview">
-              <h4>{t('import.preview')} ({previewData.length} {t('import.contacts')})</h4>
+              <h4>{t('import.preview')} ({totalImportCount} {t('import.contacts')})</h4>
               <div className="import-preview-table">
                 <div className="import-preview-header">
                   <span>{t('guests.form.firstName')}</span>
@@ -1250,9 +1264,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                     <span>{getGroupDisplayName(guest.customGroup || guest.group)}</span>
                   </div>
                 ))}
-                {previewData.length > 10 && (
+                {totalImportCount > 10 && (
                   <div className="import-preview-more">
-                    {t('import.andMore', { count: previewData.length - 10 })}
+                    {t('import.andMore', { count: totalImportCount - 10 })}
                   </div>
                 )}
               </div>
@@ -1271,13 +1285,13 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
             {t('common.cancel')}
           </button>
           
-          {previewData.length > 0 && !showVcfGroupEditor && !showVcfContactSelection && (
+          {totalImportCount > 0 && !showVcfGroupEditor && !showVcfContactSelection && !showGroupEditor && !showContactSelection && (
             <button 
               onClick={handleImport}
               className="import-confirm-button"
               disabled={loading}
             >
-              {loading ? t('common.loading') : `${t('import.importButton')} ${previewData.length} ${t('import.contacts')}`}
+              {loading ? t('common.loading') : `${t('import.importButton')} ${totalImportCount} ${t('import.contacts')}`}
             </button>
           )}
         </div>
