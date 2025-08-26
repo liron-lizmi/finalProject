@@ -131,13 +131,17 @@
     "rsvpUpdateSuccess": "Guest response updated successfully",
     "googleConnectionSuccess": "Connected to Google Contacts successfully",
     "googleDisconnectSuccess": "Disconnected from Google Contacts successfully",
+    "gifts": {
+      "eventNotPassed": "Gifts can only be added after the event has passed"
+    },
     "errors": {
       "missingCode": "Missing Google authorization code",
       "googleConnectionError": "Error connecting to Google Contacts",
       "googleNotConnected": "Not connected to Google Contacts",
       "googleTokenExpired": "Google connection expired, reconnection required",
       "googleContactsFailed": "Failed to retrieve contacts from Google",
-      "googleDisconnectFailed": "Error disconnecting from Google Contacts"    
+      "googleDisconnectFailed": "Error disconnecting from Google Contacts",
+      "phoneNotFound": "Phone number not found in guest list"    
     }
   }
 }

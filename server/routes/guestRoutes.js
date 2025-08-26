@@ -12,8 +12,10 @@ const {
   updateGuestRSVPPublic,
   getEventForRSVP,
   checkGuestByPhone,
-  generateRSVPLink
+  generateRSVPLink,
+  updateGuestGift
 } = require('../controllers/guestController');
+
 const auth = require('../middleware/auth');
 
 // Public RSVP routes
@@ -37,6 +39,8 @@ router.get('/rsvp-link', generateRSVPLink);
 
 // Statistics and groups routes
 router.get('/groups', getEventGroups);              
-router.get('/stats', getGuestStats);               
+router.get('/stats', getGuestStats);    
+
+router.put('/:guestId/gift', updateGuestGift);
 
 module.exports = router;

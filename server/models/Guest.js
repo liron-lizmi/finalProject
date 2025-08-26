@@ -53,13 +53,6 @@ const GuestSchema = new mongoose.Schema({
     min: 0,
     max: 20
   },
-  invitationSent: {
-    type: Boolean,
-    default: false
-  },
-  invitationSentAt: {
-    type: Date
-  },
   rsvpReceivedAt: {
     type: Date
   },
@@ -68,20 +61,23 @@ const GuestSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500 
   },
-  gifts: [{
+  gift: {
+    hasGift: {
+      type: Boolean,
+      default: false
+    },
     description: {
       type: String,
-      trim: true
+      trim: true,
+      maxlength: 200,
+      default: ''
     },
     value: {
       type: Number,
-      min: 0
-    },
-    addedAt: {
-      type: Date,
-      default: Date.now
+      min: 0,
+      default: 0
     }
-  }],
+  },
   event: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
@@ -124,7 +120,6 @@ GuestSchema.pre('save', function(next) {
   next();
 });
 
-// Create index for better performance
 GuestSchema.index({ event: 1, user: 1 });
 GuestSchema.index({ phone: 1, event: 1 });
 

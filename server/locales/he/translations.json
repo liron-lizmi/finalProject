@@ -135,13 +135,17 @@
     "rsvpUpdateSuccess": "תגובת המוזמן עודכנה בהצלחה",
     "googleConnectionSuccess": "החיבור ל-Google Contacts בוצע בהצלחה",
     "googleDisconnectSuccess": "ההתנתקות מ-Google Contacts בוצעה בהצלחה",
+    "gifts": {
+     "eventNotPassed": "ניתן להוסיף מתנות רק לאחר שהאירוע עבר"
+    },
       "errors": {
         "missingCode": "חסר קוד אישור מ-Google",
         "googleConnectionError": "שגיאה בחיבור ל-Google Contacts",
         "googleNotConnected": "לא מחובר ל-Google Contacts",
         "googleTokenExpired": "פג תוקף החיבור ל-Google, נדרש חיבור מחדש",
         "googleContactsFailed": "שגיאה בקבלת אנשי קשר מ-Google",
-        "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts"
+        "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts",
+        "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים"
       }
     }
 }

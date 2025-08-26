@@ -780,8 +780,6 @@
     "noGuests": "אין מוזמנים עדיין. הוסף את המוזמן הראשון!",
     "noFilteredGuests": "לא נמצאו מוזמנים בסינון הנוכחי",
     "confirmDelete": "האם אתה בטוח שברצונך למחוק מוזמן זה?",
-    "invitationSent": "הזמנה נשלחה",
-    "invitationNotSent": "הזמנה לא נשלחה",
     "guestNote": "הערת המוזמן",
     "googleConnected": "מחובר לגוגל אנשי קשר בהצלחה",
     "editGuest": "ערוך פרטי מוזמן",
@@ -876,6 +874,17 @@
       "eventNotFound": "האירוע לא נמצא",
       "editRSVP": "ערוך אישור הגעה",
       "editRSVPFor": "עריכת אישור הגעה עבור {{name}}"
+    },
+    "gifts": {
+      "editGifts": "עריכת מתנות", 
+      "availableAfterEvent": "ניתן להוסיף מתנות רק לאחר שהאירוע התקיים",
+      "giftReceived": "מתנה התקבלה",
+      "hasGift": "הביא מתנה",
+      "noGift": "לא הביא מתנה", 
+      "giftDescription": "תיאור המתנה",
+      "giftValue": "ערך המתנה",
+      "optional": "אופציונלי",
+      "giftInfo": "מידע על המתנה"
     },
     "errors": {
       "phoneNotFound": "מספר הטלפון לא נמצא ברשימת המוזמנים"

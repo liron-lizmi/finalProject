@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import ImportModal from '../../components/ImportModal';
 import RSVPManualModal from './components/RSVPManualModal';
+import GiftsModal from './components/GiftsModal';
 import '../../../styles/EventGuestsPage.css';
 
 const EventGuestsPage = () => {
@@ -26,6 +27,9 @@ const EventGuestsPage = () => {
   const [duplicates, setDuplicates] = useState({ phone: [] });
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [rsvpLink, setRsvpLink] = useState('');
+  const [showGiftsModal, setShowGiftsModal] = useState(false);
+  const [editingGiftsGuest, setEditingGiftsGuest] = useState(null);
+  const [eventDate, setEventDate] = useState(null);
 
   const [guestForm, setGuestForm] = useState({
     firstName: '',
@@ -57,10 +61,6 @@ const EventGuestsPage = () => {
     return value.slice(0, -1); 
   };
 
-  const handlePhoneChange = (e) => {
-    const formattedPhone = formatPhoneNumber(e.target.value);
-    setGuestForm({...guestForm, phone: formattedPhone});
-  };
 
   const handleGroupChange = (e) => {
     const selectedGroup = e.target.value;
@@ -381,6 +381,65 @@ const EventGuestsPage = () => {
     }
   }, [getAuthToken, handleAuthError]);
 
+const fetchEventDate = useCallback(async () => {
+  try {
+    const response = await makeApiRequest(`/api/events/${eventId}`);
+    if (response && response.ok) {
+      const event = await response.json();
+      setEventDate(new Date(event.date)); // שנה מ-eventDate ל-date
+    }
+  } catch (err) {
+    console.error('Error fetching event date:', err);
+  }
+}, [eventId, makeApiRequest]);
+
+const hasEventPassed = () => {
+  if (!eventDate) return false;
+  return new Date() > eventDate;
+};
+
+const handleGiftUpdate = async (guestId, giftData) => {
+  try {
+    const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}/gift`, {
+      method: 'PUT',
+      body: JSON.stringify(giftData)
+    });
+
+    if (!response) return;
+
+    if (response.ok) {
+      const updatedGuest = await response.json();
+      setGuests(prevGuests => 
+        prevGuests.map(guest => 
+          guest._id === guestId ? updatedGuest : guest
+        )
+      );
+      setError('');
+      setShowGiftsModal(false);
+      setEditingGiftsGuest(null);
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      setError(errorData.message || t('errors.updateGuest'));
+    }
+  } catch (err) {
+    setError(t('errors.networkError'));
+  }
+};
+
+const handleEditGifts = useCallback((guest) => {
+  if (!hasEventPassed()) {
+    return;
+  }
+  setEditingGiftsGuest(guest);
+  setShowGiftsModal(true);
+}, [hasEventPassed]);
+
+const handlePhoneChange = (e) => {
+  const formattedPhone = formatPhoneNumber(e.target.value);
+  setGuestForm({...guestForm, phone: formattedPhone});
+};
+
+
   const handleManualRSVPUpdate = async (guestData) => {
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestData.guestId}/rsvp`, {
@@ -556,7 +615,6 @@ const EventGuestsPage = () => {
     setError('');
   };
 
-  // פונקציה מותאמת לייבוא מהיר - בקשה אחת לכל המוזמנים
   const handleImportGuests = async (importedGuests) => {
     try {
       if (!importedGuests || importedGuests.length === 0) {
@@ -595,7 +653,6 @@ const EventGuestsPage = () => {
 
       console.log('Sending bulk import request...');
 
-      // שליחת בקשה אחת לייבוא כל המוזמנים
       const response = await makeApiRequest(`/api/events/${eventId}/guests/bulk-import`, {
         method: 'POST',
         body: JSON.stringify({ guests: guestsToImport })
@@ -603,20 +660,26 @@ const EventGuestsPage = () => {
 
       if (response && response.ok) {
         const result = await response.json();
-        console.log(`Bulk import completed: ${result.imported} imported, ${result.failed} failed`);
+        console.log(`Bulk import completed: ${result.imported} imported, ${result.duplicates} duplicates`);
+
+        await fetchGuests();
 
         if (result.imported > 0) {
-          // רענון רשימת המוזמנים
-          await fetchGuests();
-        }
-
-        if (result.imported > 0 && result.failed === 0) {
           setError('');
           console.log(`Successfully imported ${result.imported} guests`);
-        } else if (result.imported > 0 && result.failed > 0) {
-          setError(`${t('import.partialSuccess')}: ${result.imported} ${t('import.imported')}, ${result.failed} ${t('import.failed')}. ${result.errors?.slice(0, 3).join(', ')}${result.errors?.length > 3 ? '...' : ''}`);
+          
+          if (result.duplicates > 0) {
+            console.log(`${result.duplicates} duplicates found - will show in duplicates warning`);
+          }
+          
+        } else if (result.duplicates > 0 && result.imported === 0) {
+          setError('');
+          console.log(`All guests were duplicates - duplicate warning will appear`);
+          
         } else if (result.failed > 0) {
           setError(`${t('import.errors.importFailed')}: ${result.errors?.slice(0, 2).join(', ')}${result.errors?.length > 2 ? '...' : ''}`);
+        } else {
+          setError('');
         }
       } else {
         const errorData = await response?.json().catch(() => ({}));
@@ -629,7 +692,7 @@ const EventGuestsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+};
 
   const handleDeleteGuest = async (guestId) => {
     if (!window.confirm(t('guests.confirmDelete'))) return;
@@ -692,6 +755,10 @@ const EventGuestsPage = () => {
       generateRSVPLink();
     }
   }, [eventId]);
+
+  useEffect(() => {
+  fetchEventDate();
+}, [fetchEventDate]);
 
   const totalDuplicates = duplicates.phone.length;
 
@@ -1056,10 +1123,6 @@ const EventGuestsPage = () => {
                     {t(`guests.rsvp.${guest.rsvpStatus}`)}
                   </div>
                   
-                  <div className="guest-invitation-status">
-                    {guest.invitationSent ? t('guests.invitationSent') : t('guests.invitationNotSent')}
-                  </div>
-                  
                   {!isSelectionMode && (
                     <div className="guest-actions">
                       <button
@@ -1082,6 +1145,26 @@ const EventGuestsPage = () => {
                         type="button"
                       >
                         📝
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (hasEventPassed()) {
+                            handleEditGifts(guest);
+                          }
+                        }}
+                        className={`guest-gifts-button ${!hasEventPassed() ? 'disabled' : ''}`}
+                        title={hasEventPassed() ? t('guests.gifts.editGifts') : t('guests.gifts.availableAfterEvent')}
+                        type="button"
+                        disabled={!hasEventPassed()}
+                      >
+                        🎁
+                        {hasEventPassed() && (
+                          <span className={`gift-status-indicator ${guest.gift?.hasGift ? 'has-gift' : 'no-gift'}`}>
+                            {guest.gift?.hasGift ? '✓' : '✗'}
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={() => handleDeleteGuest(guest._id)}
@@ -1107,6 +1190,7 @@ const EventGuestsPage = () => {
         />
 
         <RSVPManualModal
+        
           isOpen={showRSVPModal}
           onClose={() => {
             console.log('Closing RSVP modal');
@@ -1115,6 +1199,15 @@ const EventGuestsPage = () => {
           }}
           guest={editingRSVPGuest}
           onUpdateRSVP={handleManualRSVPUpdate}
+        />
+        <GiftsModal
+          isOpen={showGiftsModal}
+          onClose={() => {
+            setShowGiftsModal(false);
+            setEditingGiftsGuest(null);
+          }}
+          guest={editingGiftsGuest}
+          onUpdateGift={handleGiftUpdate}
         />
       </div>
     </FeaturePageTemplate>

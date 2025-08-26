@@ -52,7 +52,7 @@ const addGuest = async (req, res) => {
       group: finalGroup,
       event: eventId,
       user: req.userId,
-      attendingCount: 1 // ברירת מחדל של 1
+      attendingCount: 1 
     };
 
     if (finalCustomGroup) {
@@ -83,51 +83,42 @@ const addGuest = async (req, res) => {
   }
 };
 
-// פונקציה מואצת לייבוא כמויות גדולות
 const bulkImportGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { guests } = req.body;
     
-    // בדיקת תקינות
     if (!guests || !Array.isArray(guests) || guests.length === 0) {
       return res.status(400).json({ 
-        message: req.t('import.errors.noData') || 'אין נתונים לייבוא',
+        message: req.t('import.errors.noData'),
         imported: 0,
         failed: 0,
         errors: []
       });
     }
 
-    // בדיקה שהאירוע קיים
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event) {
       return res.status(404).json({ 
-        message: req.t('events.notFound') || 'אירוע לא נמצא',
+        message: req.t('events.notFound'),
         imported: 0,
         failed: 0,
         errors: []
       });
     }
-
-    console.log(`Starting optimized bulk import of ${guests.length} guests for event ${eventId}`);
 
     const results = {
       imported: 0,
       failed: 0,
-      errors: [],
-      duplicates: 0
+      errors: []
     };
 
     const guestsToInsert = [];
     const errors = [];
-    const phoneNumbers = [];
 
-    // 1. וולידציה ראשונית וחילוץ מספרי טלפון
     for (let i = 0; i < guests.length; i++) {
       const guest = guests[i];
       
-      // ולידציה בסיסית
       if (!guest.firstName || !guest.firstName.trim()) {
         errors.push(`שם פרטי נדרש - שורה ${i + 1}`);
         continue;
@@ -138,19 +129,14 @@ const bulkImportGuests = async (req, res) => {
         continue;
       }
 
-      // בדיקת פורמט טלפון
       if (guest.phone && guest.phone.trim()) {
         const phoneToCheck = guest.phone.trim();
         if (!/^05\d-\d{7}$/.test(phoneToCheck)) {
           errors.push(`פורמט טלפון לא תקין - ${guest.firstName} ${guest.lastName}`);
           continue;
         }
-        phoneNumbers.push(phoneToCheck);
-      } else {
-        phoneNumbers.push(null);
       }
 
-      // הכנת נתוני המוזמן
       let finalGroup = guest.group || 'other';
       let finalCustomGroup = undefined;
 
@@ -171,75 +157,31 @@ const bulkImportGuests = async (req, res) => {
         rsvpStatus: 'pending',
         invitationSent: false,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        originalIndex: i // לצורך מעקב אחר שגיאות
+        updatedAt: new Date()
       };
 
       guestsToInsert.push(guestData);
     }
 
-    // 2. בדיקת כפילויות בבקשה אחת (רק עבור מי שיש לו טלפון)
-    const validPhones = phoneNumbers.filter(phone => phone !== null);
-    let existingGuests = [];
-    
-    if (validPhones.length > 0) {
-      console.log(`Checking duplicates for ${validPhones.length} phone numbers...`);
-      existingGuests = await Guest.find({
-        phone: { $in: validPhones },
-        event: eventId,
-        user: req.userId
-      }, 'phone');
-    }
-
-    const existingPhoneSet = new Set(existingGuests.map(g => g.phone));
-
-    // 3. סינון מוזמנים שאינם כפילויות
-    const finalGuestsToInsert = guestsToInsert.filter(guest => {
-      if (guest.phone && existingPhoneSet.has(guest.phone)) {
-        results.duplicates++;
-        console.log(`Duplicate found: ${guest.firstName} ${guest.lastName} - ${guest.phone}`);
-        return false;
-      }
-      return true;
-    });
-
-    // 4. ייבוא המוזמנים באצווה
-    if (finalGuestsToInsert.length > 0) {
+    if (guestsToInsert.length > 0) {
       try {
-        console.log(`Inserting ${finalGuestsToInsert.length} guests into database...`);
         
-        // הסרת שדה originalIndex לפני ההכנסה למסד הנתונים
-        const cleanGuestsData = finalGuestsToInsert.map(guest => {
-          const { originalIndex, ...cleanGuest } = guest;
-          return cleanGuest;
-        });
-
-        const insertResult = await Guest.insertMany(cleanGuestsData, { 
-          ordered: false // ממשיך גם אם יש שגיאות
+        const insertResult = await Guest.insertMany(guestsToInsert, { 
+          ordered: false 
         });
 
         results.imported = insertResult.length;
-        console.log(`Successfully bulk inserted ${results.imported} guests`);
 
       } catch (insertError) {
         console.error('Bulk insert error:', insertError);
         
-        // אם יש שגיאות MongoDB, נטפל בהן
         if (insertError.insertedDocs) {
           results.imported = insertError.insertedDocs.length;
-          console.log(`Partially successful: ${results.imported} guests inserted`);
         }
 
-        // במקרה של כישלון מוחלט, fallback ל-individual inserts
         if (results.imported === 0) {
-          console.log('Falling back to individual inserts...');
           
-          const cleanGuestsData = finalGuestsToInsert.map(guest => {
-            const { originalIndex, ...cleanGuest } = guest;
-            return cleanGuest;
-          });
-
-          for (const guestData of cleanGuestsData) {
+          for (const guestData of guestsToInsert) {
             try {
               const newGuest = new Guest(guestData);
               await newGuest.save();
@@ -254,32 +196,22 @@ const bulkImportGuests = async (req, res) => {
       }
     }
 
-    // 5. חישוב תוצאות סופיות
-    results.failed = guests.length - results.imported - results.duplicates - errors.length;
+    results.failed += errors.length;
     results.errors = errors;
 
-    console.log(`Optimized bulk import completed in record time:`, {
-      total: guests.length,
-      imported: results.imported,
-      duplicates: results.duplicates,
-      failed: results.failed,
-      errors: errors.length
-    });
-
-    // החזרת תוצאה
     const statusCode = results.imported > 0 ? 200 : 400;
     
     res.status(statusCode).json({
       message: results.imported > 0 
-        ? `בוצע ייבוא מהיר של ${results.imported} מוזמנים בהצלחה!`
+        ? `יובאו בהצלחה ${results.imported} מוזמנים`
         : 'הייבוא נכשל',
       ...results
     });
 
   } catch (err) {
-    console.error('Optimized bulk import error:', err);
+    console.error('Bulk import error:', err);
     res.status(500).json({ 
-      message: req.t('errors.serverError') || 'שגיאת שרת',
+      message: req.t('errors.serverError'),
       imported: 0,
       failed: 0,
       errors: [err.message]
@@ -388,14 +320,11 @@ const updateGuestRSVP = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
 
-    // עדכון attendingCount
     if (attendingCount !== undefined) {
       guest.attendingCount = attendingCount;
     } else if (rsvpStatus === 'confirmed' && !guest.attendingCount) {
-      // אם לא הוגדר attendingCount אבל סטטוס הוא confirmed, קבע 1
       guest.attendingCount = 1;
     } else if (rsvpStatus === 'declined') {
-      // אם סטטוס הוא declined, קבע 0
       guest.attendingCount = 0;
     }
 
@@ -456,7 +385,6 @@ const getGuestStats = async (req, res) => {
       declined: guests.filter(g => g.rsvpStatus === 'declined').length,
       pending: guests.filter(g => g.rsvpStatus === 'pending').length,
       no_response: guests.filter(g => g.rsvpStatus === 'no_response').length,
-      invitationsSent: guests.filter(g => g.invitationSent).length,
       totalAttending: guests.filter(g => g.rsvpStatus === 'confirmed')
                           .reduce((sum, guest) => sum + (guest.attendingCount || 1), 0),
       byGroup: {}
@@ -489,7 +417,6 @@ const updateGuestRSVPPublic = async (req, res) => {
     const { eventId } = req.params;
     const { phone, rsvpStatus, guestNotes, attendingCount } = req.body;
     
-    // Find the guest by phone number and event
     const guest = await Guest.findOne({ 
       phone: phone.trim(), 
       event: eventId 
@@ -497,11 +424,10 @@ const updateGuestRSVPPublic = async (req, res) => {
     
     if (!guest) {
       return res.status(404).json({ 
-        message: req.t('guests.errors.phoneNotFound') || 'מספר טלפון לא נמצא'
+        message: req.t('guests.errors.phoneNotFound')
       });
     }
 
-    // Update RSVP information
     guest.rsvpStatus = rsvpStatus;
     guest.rsvpReceivedAt = Date.now();
     
@@ -509,21 +435,18 @@ const updateGuestRSVPPublic = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
     
-    // עדכון attendingCount
     if (attendingCount !== undefined && attendingCount >= 0) {
       guest.attendingCount = attendingCount;
     } else if (rsvpStatus === 'confirmed' && attendingCount === undefined) {
-      // אם אישר הגעה אבל לא ציין כמות, השתמש בכמות הקיימת או 1
       guest.attendingCount = guest.attendingCount || 1;
     } else if (rsvpStatus === 'declined') {
-      // אם סירב, קבע 0
       guest.attendingCount = 0;
     }
 
     const updatedGuest = await guest.save();
     
     res.json({
-      message: req.t('guests.rsvpUpdateSuccess') || 'אישור הגעה עודכן בהצלחה',
+      message: req.t('guests.rsvpUpdateSuccess'),
       guest: {
         firstName: updatedGuest.firstName,
         lastName: updatedGuest.lastName,
@@ -533,7 +456,7 @@ const updateGuestRSVPPublic = async (req, res) => {
     });
   } catch (err) {
     console.error('Error updating guest RSVP (public):', err);
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
 
@@ -541,15 +464,15 @@ const getEventForRSVP = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    const event = await Event.findById(eventId, 'eventName eventDate eventLocation');
+    const event = await Event.findById(eventId, 'title date');
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound')});
     }
 
     res.json(event);
   } catch (err) {
     console.error('Error fetching event for RSVP:', err);
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
 
@@ -565,7 +488,7 @@ const checkGuestByPhone = async (req, res) => {
     
     if (!guest) {
       return res.status(404).json({ 
-        message: req.t('guests.errors.phoneNotFound') || 'מספר טלפון לא נמצא'
+        message: req.t('guests.errors.phoneNotFound') 
       });
     }
 
@@ -588,7 +511,6 @@ const generateRSVPLink = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    // Verify event exists and belongs to user
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
@@ -606,6 +528,46 @@ const generateRSVPLink = async (req, res) => {
   }
 };
 
+const updateGuestGift = async (req, res) => {
+  try {
+    const { eventId, guestId } = req.params;
+    const { hasGift, giftDescription, giftValue } = req.body;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    if (new Date() <= new Date(event.date)) {
+      return res.status(400).json({ 
+        message: req.t('guests.gifts.eventNotPassed') 
+      });
+    }
+    
+    const guest = await Guest.findOne({ 
+      _id: guestId, 
+      event: eventId, 
+      user: req.userId 
+    });
+    
+    if (!guest) {
+      return res.status(404).json({ message: req.t('guests.notFound') });
+    }
+
+    guest.gift = {
+      hasGift: hasGift,
+      description: hasGift ? (giftDescription || '') : '',
+      value: hasGift ? (giftValue || 0) : 0
+    };
+
+    const updatedGuest = await guest.save();
+    res.json(updatedGuest);
+  } catch (err) {
+    console.error('Error updating guest gift:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = {
   getEventGuests,
   addGuest,
@@ -618,5 +580,6 @@ module.exports = {
   updateGuestRSVPPublic,
   getEventForRSVP,
   checkGuestByPhone,
-  generateRSVPLink
+  generateRSVPLink,
+  updateGuestGift
 };

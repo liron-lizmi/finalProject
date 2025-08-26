@@ -780,8 +780,6 @@
     "noGuests": "No guests yet. Add your first guest!",
     "noFilteredGuests": "No guests found with current filters",
     "confirmDelete": "Are you sure you want to delete this guest?",
-    "invitationSent": "Invitation sent",
-    "invitationNotSent": "Invitation not sent",
     "guestNote": "Guest note",
     "editGuest": "Edit Guest",
     "googleConnected": "Google Contacts connected",
@@ -876,6 +874,17 @@
       "eventNotFound": "Event not found",
       "editRSVP": "Edit RSVP",
       "editRSVPFor": "Edit RSVP for {{name}}"
+    },
+    "gifts": {
+      "editGifts": "Edit Gifts",
+      "availableAfterEvent": "Gifts can only be added after the event",
+      "giftReceived": "Gift Received",
+      "hasGift": "Has Gift",
+      "noGift": "No Gift",
+      "giftDescription": "Gift Description",
+      "giftValue": "Gift Value",
+      "optional": "Optional",
+      "giftInfo": "Gift Information"
     },
     "errors": {
       "phoneNotFound": "Phone number not found in guest list"
