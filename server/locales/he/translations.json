@@ -124,7 +124,13 @@
     "generalError": "אירעה שגיאה. אנא נסה שוב מאוחר יותר",
     "invalidDateFormat": "פורמט תאריך לא תקין",
     "invalidReminderDateFormat": "פורמט תאריך תזכורת לא תקין",
-    "reminderBeforeDue": "תאריך התזכורת חייב להיות לפני תאריך היעד"
+    "reminderBeforeDue": "תאריך התזכורת חייב להיות לפני תאריך היעד",
+    "budgetCategoryRequired": "קטגוריית תקציב נדרשת",
+    "budgetDescriptionRequired": "תיאור ההוצאה נדרש",
+    "budgetAmountRequired": "סכום ההוצאה נדרש",
+    "budgetAmountPositive": "סכום ההוצאה חייב להיות חיובי",
+    "totalBudgetRequired": "תקציב כולל נדרש",
+    "totalBudgetPositive": "תקציב כולל חייב להיות חיובי"
   },  
   "guests": {
     "notFound": "מוזמן לא נמצא",
@@ -138,7 +144,7 @@
     "gifts": {
      "eventNotPassed": "ניתן להוסיף מתנות רק לאחר שהאירוע עבר"
     },
-      "errors": {
+    "errors": {
         "missingCode": "חסר קוד אישור מ-Google",
         "googleConnectionError": "שגיאה בחיבור ל-Google Contacts",
         "googleNotConnected": "לא מחובר ל-Google Contacts",
@@ -147,5 +153,12 @@
         "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts",
         "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים"
       }
+    },
+    "budget": {
+      "notFound": "תקציב לא נמצא",
+      "alreadyExists": "תקציב כבר קיים לאירוע זה",
+      "expenseNotFound": "הוצאה לא נמצאה",
+      "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
     }
+
 }

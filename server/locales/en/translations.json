@@ -120,7 +120,13 @@
     "generalError": "An error occurred. Please try again later",
     "invalidDateFormat": "Invalid date format",
     "invalidReminderDateFormat": "Invalid reminder date format", 
-    "reminderBeforeDue": "Reminder date must be before due date"
+    "reminderBeforeDue": "Reminder date must be before due date",
+    "budgetCategoryRequired": "Budget category is required",
+    "budgetDescriptionRequired": "Expense description is required",
+    "budgetAmountRequired": "Expense amount is required",
+    "budgetAmountPositive": "Expense amount must be positive",
+    "totalBudgetRequired": "Total budget is required",
+    "totalBudgetPositive": "Total budget must be positive"
   },
   "guests": {
     "notFound": "Guest not found",
@@ -143,5 +149,11 @@
       "googleDisconnectFailed": "Error disconnecting from Google Contacts",
       "phoneNotFound": "Phone number not found in guest list"    
     }
+  },
+  "budget": {
+    "notFound": "Budget not found",
+    "alreadyExists": "A budget already exists for this event",
+    "expenseNotFound": "Expense not found",
+    "expenseDeleteSuccess": "Expense deleted successfully"
   }
 }

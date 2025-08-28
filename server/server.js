@@ -34,6 +34,7 @@ const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes'); 
 const taskRoutes = require('./routes/taskRoutes');
 const rsvpRoutes = require('./routes/rsvpRoutes'); 
+const budgetRoutes = require('./routes/budgetRoutes');
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -51,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/rsvp', rsvpRoutes); 
+app.use('/api/events/:eventId/budget', budgetRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
