@@ -8,7 +8,7 @@ const {
   getSeatingStatistics,
   deleteSeatingArrangement,
   validateSeatingArrangement,
-  getSeatingSubgestions,
+  getSeatingSubjestions,
   cloneSeatingArrangement
 } = require('../controllers/seatingController');
 const auth = require('../middleware/auth');
@@ -17,24 +17,24 @@ const auth = require('../middleware/auth');
 router.use(auth);
 
 // Main seating routes
-router.get('/', getSeatingArrangement);                    // GET /api/events/:eventId/seating
-router.post('/', saveSeatingArrangement);                  // POST /api/events/:eventId/seating
-router.delete('/', deleteSeatingArrangement);              // DELETE /api/events/:eventId/seating
+router.get('/', getSeatingArrangement); 
+router.post('/', saveSeatingArrangement); 
+router.delete('/', deleteSeatingArrangement); 
 
 // AI seating generation
-router.post('/ai-generate', generateAISeating);            // POST /api/events/:eventId/seating/ai-generate
+router.post('/ai-generate', generateAISeating); 
 
 // Export functionality
-router.post('/export', exportSeatingChart);                // POST /api/events/:eventId/seating/export?format=pdf|excel|png
+router.post('/export', exportSeatingChart); 
 
 // Statistics and validation
-router.get('/statistics', getSeatingStatistics);           // GET /api/events/:eventId/seating/statistics
-router.post('/validate', validateSeatingArrangement);      // POST /api/events/:eventId/seating/validate
+router.get('/statistics', getSeatingStatistics); 
+router.post('/validate', validateSeatingArrangement); 
 
 // Guest suggestions
-router.get('/suggestions', getSeatingSubgestions);         // GET /api/events/:eventId/seating/suggestions?guestId=...
+router.get('/suggestions', getSeatingSubjestions); 
 
 // Clone seating arrangement
-router.post('/clone', cloneSeatingArrangement);            // POST /api/events/:eventId/seating/clone
+router.post('/clone', cloneSeatingArrangement); 
 
 module.exports = router;

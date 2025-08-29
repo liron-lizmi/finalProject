@@ -8,14 +8,18 @@ const {
   getEventById
 } = require('../controllers/eventController');
 const auth = require('../middleware/auth');
-
 const guestRoutes = require('./guestRoutes');
+const seatingRoutes = require('./seatingRoutes');
 
+// Mount sub-routes BEFORE authentication middleware
 router.use('/:eventId/guests', (req, res, next) => {
-  req.eventId = req.params.eventId;
-  next();
+    req.eventId = req.params.eventId;
+    next();
 }, guestRoutes);
 
+router.use('/:eventId/seating', seatingRoutes);
+
+// Apply authentication to all event routes
 router.use(auth);
 
 // Event routes

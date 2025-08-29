@@ -19,7 +19,10 @@
     "googleInitError": "שגיאה באתחול Google",
     "googleClientIdNotConfigured": "Google Client ID לא מוגדר במשתני הסביבה",
     "unknownError": "שגיאה לא ידועה",
-    "googleNotConnected": "לא מחובר לגוגל"
+    "googleNotConnected": "לא מחובר לגוגל",
+    "validationError": "שגיאת ולידציה",
+    "missingParameters": "חסרים פרמטרים נדרשים",
+    "databaseError": "שגיאת מסד נתונים"
   },
   "success": {
     "passwordReset": "הסיסמה עודכנה בהצלחה",
@@ -130,8 +133,11 @@
     "budgetAmountRequired": "סכום ההוצאה נדרש",
     "budgetAmountPositive": "סכום ההוצאה חייב להיות חיובי",
     "totalBudgetRequired": "תקציב כולל נדרש",
-    "totalBudgetPositive": "תקציב כולל חייב להיות חיובי"
-  },  
+    "totalBudgetPositive": "תקציב כולל חייב להיות חיובי",
+    "tableNotFound": "שולחן {{tableId}} לא נמצא",
+    "tableOvercapacity": "שולחן {{tableName}} מעל הקיבולת: {{occupancy}}/{{capacity}}",
+    "duplicateGuest": "אורח {{guestId}} שובץ למספר שולחנות"
+  },
   "guests": {
     "notFound": "מוזמן לא נמצא",
     "accessDenied": "אין הרשאה לגשת למוזמן זה",
@@ -142,23 +148,48 @@
     "googleConnectionSuccess": "החיבור ל-Google Contacts בוצע בהצלחה",
     "googleDisconnectSuccess": "ההתנתקות מ-Google Contacts בוצעה בהצלחה",
     "gifts": {
-     "eventNotPassed": "ניתן להוסיף מתנות רק לאחר שהאירוע עבר"
+      "eventNotPassed": "ניתן להוסיף מתנות רק לאחר שהאירוע עבר"
     },
     "errors": {
-        "missingCode": "חסר קוד אישור מ-Google",
-        "googleConnectionError": "שגיאה בחיבור ל-Google Contacts",
-        "googleNotConnected": "לא מחובר ל-Google Contacts",
-        "googleTokenExpired": "פג תוקף החיבור ל-Google, נדרש חיבור מחדש",
-        "googleContactsFailed": "שגיאה בקבלת אנשי קשר מ-Google",
-        "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts",
-        "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים"
-      }
-    },
-    "budget": {
-      "notFound": "תקציב לא נמצא",
-      "alreadyExists": "תקציב כבר קיים לאירוע זה",
-      "expenseNotFound": "הוצאה לא נמצאה",
-      "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
+      "missingCode": "חסר קוד אישור מ-Google",
+      "googleConnectionError": "שגיאה בחיבור ל-Google Contacts",
+      "googleNotConnected": "לא מחובר ל-Google Contacts",
+      "googleTokenExpired": "פג תוקף החיבור ל-Google, נדרש חיבור מחדש",
+      "googleContactsFailed": "שגיאה בקבלת אנשי קשר מ-Google",
+      "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts",
+      "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים"
     }
-
+  },
+  "budget": {
+    "notFound": "תקציב לא נמצא",
+    "alreadyExists": "תקציב כבר קיים לאירוע זה",
+    "expenseNotFound": "הוצאה לא נמצאה",
+    "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
+  },
+  "seating": {
+    "table": "שולחן {{number}}",
+    "saveSuccess": "סידור המקומות נשמר בהצלחה",
+    "deleteSuccess": "סידור המקומות נמחק בהצלחה",
+    "cloneSuccess": "סידור המקומות הועתק בהצלחה",
+    "notFound": "סידור מקומות לא נמצא",
+    "errors": {
+      "fetchFailed": "שגיאה בטעינת סידור המקומות",
+      "saveFailed": "שגיאה בשמירת סידור המקומות",
+      "validationFailed": "אימות נכשל",
+      "validationError": "שגיאת אימות",
+      "noConfirmedGuests": "אין אורחים מאושרים",
+      "noTables": "אין שולחנות",
+      "aiGenerationFailed": "יצירת סידור אוטומטי נכשלה",
+      "invalidFormat": "פורמט לא חוקי",
+      "exportFailed": "יצוא נכשל",
+      "targetAlreadyHasSeating": "האירוע היעד כבר יש לו סידור מקומות"
+    },
+    "ai": {
+      "generationSuccess": "סידור המקומות נוצר בהצלחה על ידי הבינה המלאכותית"
+    },
+    "export": {
+      "title": "תרשים סידור מקומות",
+      "seatingChart": "תרשים סידור מקומות"
+    }
+  }
 }
