@@ -24,8 +24,11 @@
   "license": "ISC",
   "dependencies": {
     "appwrite": "^17.0.1",
+    "canvas": "^3.2.0",
     "concurrently": "^8.2.2",
     "emailjs-com": "^3.2.0",
+    "exceljs": "^4.4.0",
+    "pdfkit": "^0.17.1",
     "react-router": "^7.5.2"
   },
   "devDependencies": {
