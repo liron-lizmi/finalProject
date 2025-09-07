@@ -78,6 +78,62 @@ const GuestSchema = new mongoose.Schema({
       default: 0
     }
   },
+  rideInfo: {
+    status: {
+      type: String,
+      enum: ['offering', 'seeking', 'not_set'],
+      default: 'not_set'
+    },
+    address: {
+      type: String,
+      trim: true,
+      maxlength: 200
+    },
+    availableSeats: {
+      type: Number,
+      min: 1,
+      max: 8,
+      default: 1
+    },
+    requiredSeats: {
+      type: Number,
+      min: 1,
+      max: 8,
+      default: 1
+    },
+    departureTime: {
+      type: String,
+      trim: true,
+      maxlength: 50
+    },
+    contactStatus: {
+      type: String,
+      enum: ['taken', 'not_relevant', 'in_process'],
+      default: undefined
+    },
+    contactHistory: [{
+      contactedGuestId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Guest'
+      },
+      contactedGuestName: {
+        type: String,
+        trim: true
+      },
+      action: {
+        type: String,
+        enum: ['arranged_ride', 'not_relevant', 'no_response']
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    }
+  },
   event: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
@@ -102,24 +158,47 @@ const GuestSchema = new mongoose.Schema({
   }
 });
 
+/**
+ * Pre-save middleware to update timestamps and validate ride info
+ */
 GuestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   
+  // Ensure attendingCount is a valid number
   if (typeof this.attendingCount !== 'number' || isNaN(this.attendingCount)) {
     this.attendingCount = 1;
   }
   
+  // Set attendingCount to 0 for declined guests
   if (this.rsvpStatus === 'declined') {
     this.attendingCount = 0;
   }
   
+  // Ensure confirmed guests have at least 1 attendingCount
   if (this.rsvpStatus === 'confirmed' && (!this.attendingCount || this.attendingCount < 1)) {
     this.attendingCount = 1;
+  }
+
+  // Clean up ride info fields based on status
+  if (this.rideInfo) {
+    if (this.rideInfo.status !== 'offering') {
+      this.rideInfo.availableSeats = undefined;
+    }
+    
+    if (this.rideInfo.status !== 'seeking') {
+      this.rideInfo.requiredSeats = undefined;
+    }
+
+    // Update ride info timestamp when modified
+    if (this.rideInfo.lastUpdated) {
+      this.rideInfo.lastUpdated = Date.now();
+    }
   }
   
   next();
 });
 
+// Create indexes for better query performance
 GuestSchema.index({ event: 1, user: 1 });
 GuestSchema.index({ phone: 1, event: 1 });
 

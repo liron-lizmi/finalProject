@@ -22,7 +22,7 @@ import TaskManager from './pages/Events/Features/components/TaskManager';
 import GoogleAuthCallback from './pages/Events/Features/components/GoogleAuthCallback';
 import GoogleContactsCallback from './pages/components/GoogleContactsCallback';
 import RSVPPage from './pages/Events/Features/RSVPPage';
-
+import PublicRidesPage from './pages/Events/Features/PublicRidesPage';
 
 
 const App = () => {
@@ -55,6 +55,9 @@ const App = () => {
         <Route path="/auth/google/contacts/callback" element={<GoogleContactsCallback />} />
 
         <Route path="/rsvp/:eventId" element={<RSVPPage />} />
+
+        <Route path="/rides/:eventId" element={<PublicRidesPage />} />
+        
       </Routes>
     </Router>
   );
