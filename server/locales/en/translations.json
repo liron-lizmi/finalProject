@@ -75,12 +75,36 @@
         }
       }
     },
+    "rides": {
+      "updateSuccess": "Ride information updated successfully",
+      "contactRecorded": "Contact details recorded successfully",
+      "notFound": "Ride information not found",
+      "accessDenied": "Access to this ride information is denied",
+      "eventNotFound": "Event not found",
+      "phoneNotFound": "Phone number not found in the guest list",
+      "guestNotFound": "Guest not found",
+      "validation": {
+        "phoneRequired": "Phone number is required",
+        "missingParameters": "Required parameters are missing"
+      },
+      "errors": {
+        "serverError": "Server error"
+      }
+    },
     "validation": {
       "taskTitleRequired": "Task title is required",
       "taskDueDateRequired": "Due date is required",
       "taskEventRequired": "Event ID is required",
       "taskUserRequired": "User ID is required",
-      "invalidTimeFormat": "Invalid time format"
+      "invalidTimeFormat": "Invalid time format",
+      "rideStatusRequired": "Ride status is required",
+      "rideAddressRequired": "Departure address is required",
+      "availableSeatsRequired": "Number of available seats is required",
+      "availableSeatsRange": "Number of available seats must be between 1 and 8",
+      "departureTimeRequired": "Departure time is required",
+      "rideNotesMax": "Notes can contain up to 300 characters",
+      "contactActionRequired": "Contact action is required",
+      "contactedGuestRequired": "Guest ID that was contacted is required"
     }
   },
   "auth": {

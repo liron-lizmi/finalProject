@@ -240,45 +240,95 @@ const BudgetCharts = ({ budget, eventId, chartColors }) => {
     }
 
     return (
-      <div className="bar-chart-container">
-        <div className="bar-chart">
-          {summary.categoryBreakdown.map((cat, index) => {
-            const allocatedHeight = (cat.allocated / maxValue) * 100;
-            const spentHeight = (cat.spent / maxValue) * 100;
-            
-            return (
-              <div key={cat.category} className="bar-group">
-                <div className="bars">
-                  <div 
-                    className="bar allocated"
-                    style={{ height: `${allocatedHeight}%` }}
-                    title={`${t('events.features.budget.allocated')}: ₪${cat.allocated.toLocaleString()}`}
-                  ></div>
-                  <div 
-                    className="bar spent"
-                    style={{ 
-                      height: `${spentHeight}%`,
-                      backgroundColor: colors[index % colors.length]
-                    }}
-                    title={`${t('events.features.budget.spent')}: ₪${cat.spent.toLocaleString()}`}
-                  ></div>
-                </div>
-                <div className="bar-label">
-                  {t(`events.features.budget.categories.${cat.category}`)}
-                </div>
-                <div className="bar-values">
-                  <div className="allocated-value">₪{cat.allocated.toLocaleString()}</div>
-                  <div className="spent-value">₪{cat.spent.toLocaleString()}</div>
-                </div>
-              </div>
-            );
-          })}
+      <div className="improved-bar-chart-container">
+        <div className="bar-chart-header">
+          <div className="chart-legend-horizontal">
+            <div className="legend-item">
+              <div className="legend-color allocated"></div>
+              <span>{t('events.features.budget.allocated')}</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-color spent"></div>
+              <span>{t('events.features.budget.spent')}</span>
+            </div>
+          </div>
         </div>
-        
-        <div className="bar-chart-legend">
-          <div className="legend-item">
-            <div className="legend-color spent"></div>
-            <span>{t('events.features.budget.spent')}</span>
+
+        <div className="improved-bar-chart">
+          <div className="y-axis">
+            <div className="y-axis-label">₪{maxValue.toLocaleString()}</div>
+            <div className="y-axis-label">₪{(maxValue * 0.75).toLocaleString()}</div>
+            <div className="y-axis-label">₪{(maxValue * 0.5).toLocaleString()}</div>
+            <div className="y-axis-label">₪{(maxValue * 0.25).toLocaleString()}</div>
+            <div className="y-axis-label">₪0</div>
+          </div>
+
+          <div className="chart-bars-container">
+            {summary.categoryBreakdown.map((cat, index) => {
+              const allocatedHeight = (cat.allocated / maxValue) * 100;
+              const spentHeight = (cat.spent / maxValue) * 100;
+              
+              return (
+                <div key={cat.category} className="improved-bar-group">
+                  <div className="bar-container">
+                    <div className="grid-lines">
+                      <div className="grid-line"></div>
+                      <div className="grid-line"></div>
+                      <div className="grid-line"></div>
+                      <div className="grid-line"></div>
+                    </div>
+                    
+                    <div className="bars-wrapper">
+                      <div className="bar-pair">
+                        <div 
+                          className="improved-bar allocated"
+                          style={{ height: `${allocatedHeight}%` }}
+                          title={`${t('events.features.budget.allocated')}: ₪${cat.allocated.toLocaleString()}`}
+                        >
+                          <div className="bar-value allocated">₪{cat.allocated.toLocaleString()}</div>
+                        </div>
+                        <div 
+                          className="improved-bar spent"
+                          style={{ 
+                            height: `${spentHeight}%`,
+                            backgroundColor: colors[index % colors.length]
+                          }}
+                          title={`${t('events.features.budget.spent')}: ₪${cat.spent.toLocaleString()}`}
+                        >
+                          <div className="bar-value spent">₪{cat.spent.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="improved-bar-label">
+                    <div className="category-name">
+                      {t(`events.features.budget.categories.${cat.category}`)}
+                    </div>
+                    <div className="percentage-indicator">
+                      {cat.percentage.toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="chart-summary">
+          <div className="summary-stats">
+            <div className="stat">
+              <span className="stat-label">{t('events.features.budget.totalAllocated')}</span>
+              <span className="stat-value">₪{summary.categoryBreakdown.reduce((sum, cat) => sum + cat.allocated, 0).toLocaleString()}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">{t('events.features.budget.totalSpent')}</span>
+              <span className="stat-value">₪{summary.totalSpent.toLocaleString()}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-label">{t('events.features.budget.efficiency')}</span>
+              <span className="stat-value">{((summary.totalSpent / summary.totalBudget) * 100).toFixed(1)}%</span>
+            </div>
           </div>
         </div>
       </div>

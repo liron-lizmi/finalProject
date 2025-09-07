@@ -398,7 +398,76 @@
       },
       "rides": {
         "title": "Rides",
-        "description": "Coordinating rides between event participants"
+        "description": "Coordinating rides between event participants",
+        "shareLink": "Share Link",
+        "linkCopied": "Link copied successfully!",
+        "enterPhone": "Enter phone number",
+        "enterPhoneDescription": "Enter your phone number to access ride information",
+        "continue": "Continue",
+        "welcome": "Hello {{name}}!",
+        "myRideInfo": "My Information",
+        "updateInfo": "Update Information",
+        "availableRides": "Available Rides",
+        "seekingRides": "Seeking Rides",
+        "noOffering": "No rides available at the moment",
+        "noSeeking": "No one is seeking a ride at the moment",
+        "contactInfo": "Contact Information",
+        "offeringRides": "Offering Rides",
+        "loading": "Loading...",
+        "backToEventDetails": "Back to Event Details",
+        "appLogo": "PlanIt Logo",
+        "eventNotFound": "Event not found",
+        "phoneNotFound": "Phone number not found in the guest list",
+        "stats": {
+          "offering": "Ride Offers",
+          "seeking": "Ride Seekers"
+        },
+        "status": {
+          "offering": "I am offering a ride",
+          "seeking": "I am seeking a ride",
+          "arranged_separately": "Not interested in Trumps",
+          "not_set": "Not set",
+          "in_process": "In Process",
+          "taken": "Ride Taken",
+          "label": "Status"
+        },
+        "form": {
+          "status": "Ride Status",
+          "address": "Departure Address",
+          "addressPlaceholder": "For example: Tel Aviv, Herzl Street 123",
+          "availableSeats": "Number of Available Seats",
+          "departureTime": "Preferred Departure Time",
+          "departureTimePlaceholder": "For example: 17:00",
+          "notes": "Additional Notes",
+          "notesPlaceholder": "For example: willing to make slight detours, music preferences...",
+          "phone": "Phone",
+          "requiredSeats": "Number of Required Seats"
+        },
+        "actions": {
+          "contacted": "Contacted",
+          "arrangedRide": "Arranged a ride",
+          "notRelevant": "Contacted but not relevant",
+          "noResponse": "Tried to contact but no response"
+        },
+        "tabs": {
+          "overview": "Overview",
+          "offering": "Offering",
+          "seeking": "Seeking",
+          "myInfo": "My Info"
+        },
+        "updateSuccess": "Information updated successfully",
+        "contactRecorded": "Action recorded successfully",
+        "validation": {
+        "phoneRequired": "Phone number is required",
+        "invalidPhoneFormat": "Invalid phone format (required: 05X-XXXXXXX)"
+      },
+        "errors": {
+          "updateFailed": "Failed to update information",
+          "eventLoadFailed": "An error occurred while loading event details",
+          "fetchGuests": "Error loading guest list",
+          "updateGuest": "Error updating guest",
+          "networkError": "Network error - please check your internet connection"
+        }
       },
       "weather": {
         "title": "Weather Forecast",
@@ -437,6 +506,7 @@
         "budgetSummary": "Budget Summary",
         "alertOverBudget": "Alert: {category} has exceeded the budget by {percentage}%",
         "alertNearLimit": "Alert: {category} has reached {percentage}% of the budget (Alert threshold: {threshold}%)",
+        "efficiency": "Budget Efficiency",
         "categories": {
           "venue": "Venue/Hall",
           "catering": "Catering",
@@ -457,7 +527,7 @@
         },
         "settings": {
           "title": "Budget Settings",
-          "alertSettings": "Alert Settings",
+          "alertSettings": "Alert Setting",
           "alertThreshold": "Alert Threshold",
           "alertThresholdDescription": "Receive an alert when spending in a category reaches this percentage of the allocated budget",
           "displaySettings": "Display Settings",

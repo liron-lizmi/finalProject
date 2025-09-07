@@ -75,12 +75,36 @@
         }
       }
     },
+    "rides": {
+        "updateSuccess": "מידע הסעות עודכן בהצלחה",
+        "contactRecorded": "פרטי יצירת הקשר נרשמו בהצלחה",
+        "notFound": "מידע הסעות לא נמצא",
+        "accessDenied": "אין הרשאה לגישה למידע הסעות זה",
+        "eventNotFound": "אירוע לא נמצא",
+        "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים",
+        "guestNotFound": "מוזמן לא נמצא",
+        "validation": {
+          "phoneRequired": "מספר טלפון נדרש",
+          "missingParameters": "חסרים פרמטרים נדרשים"
+        },
+        "errors": {
+          "serverError": "שגיאת שרת"
+        }
+    },
     "validation": {
       "taskTitleRequired": "כותרת המשימה נדרשת",
       "taskDueDateRequired": "תאריך יעד נדרש",
       "taskEventRequired": "מזהה אירוע נדרש",
       "taskUserRequired": "מזהה משתמש נדרש",
-      "invalidTimeFormat": "פורמט השעה לא תקין"
+      "invalidTimeFormat": "פורמט השעה לא תקין",
+      "rideStatusRequired": "סטטוס הסעה נדרש",
+      "rideAddressRequired": "כתובת יציאה נדרשת",
+      "availableSeatsRequired": "מספר מקומות פנויים נדרש",
+      "availableSeatsRange": "מספר מקומות פנויים חייב להיות בין 1 ל-8",
+      "departureTimeRequired": "שעת יציאה נדרשת",
+      "rideNotesMax": "הערות יכולות להכיל עד 300 תווים",
+      "contactActionRequired": "פעולת קשר נדרשת",
+      "contactedGuestRequired": "מזהה מוזמן שנוצר איתו קשר נדרש"
     }
   },
   "auth": {

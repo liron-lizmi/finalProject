@@ -21,17 +21,15 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isFieldsDisabled, setIsFieldsDisabled] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (existingBudget) {
       setTotalBudget(existingBudget.totalBudget.toString());
       setCategories([...existingBudget.categories]);
       setIsEditing(true);
-      setIsFieldsDisabled(true);
     } else {
       initializeCategories();
-      setIsFieldsDisabled(false);
     }
   }, [existingBudget]);
 
@@ -111,7 +109,7 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
 
       const budgetData = await response.json();
       onBudgetCreated(budgetData);
-      setIsFieldsDisabled(true);
+      setShowEditModal(false);
       
     } catch (err) {
       console.error('Error saving budget:', err);
@@ -121,9 +119,18 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
     }
   };
 
-  const enableEditing = (e) => {
-    e.preventDefault();
-    setIsFieldsDisabled(false);
+  const openEditModal = () => {
+    setShowEditModal(true);
+    setError(null);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setError(null);
+    if (existingBudget) {
+      setTotalBudget(existingBudget.totalBudget.toString());
+      setCategories([...existingBudget.categories]);
+    }
   };
 
   const resetToDefaults = () => {
@@ -134,118 +141,247 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
   const remaining = getRemainingBudget();
   const isValid = remaining >= 0 && parseFloat(totalBudget) > 0;
 
-  return (
-    <div className="budget-setup">
-      <div className="budget-setup-header">
-        <h3>{isEditing ? t('events.features.budget.editBudget') : t('events.features.budget.setupBudget')}</h3>
-        <p>{t('events.features.budget.setupDescription')}</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="budget-setup-form">
-        <div className="total-budget-section">
-          <label className="budget-label">
-            {t('events.features.budget.totalBudget')}
-            <input
-              type="number"
-              value={totalBudget}
-              onChange={handleTotalBudgetChange}
-              placeholder={t('events.features.budget.totalBudgetPlaceholder')}
-              className="budget-input"
-              min="0"
-              step="1"
-              disabled={isFieldsDisabled}
-            />
-          </label>
+  // If no existing budget, show the simple form
+  if (!isEditing) {
+    return (
+      <div className="budget-setup">
+        <div className="budget-setup-header">
+          <h3>{t('events.features.budget.setupBudget')}</h3>
+          <p>{t('events.features.budget.setupDescription')}</p>
         </div>
 
-        {totalBudget && (
-          <div className="categories-section">
-            <div className="categories-header">
-              <h4>{t('events.features.budget.categoriesAllocation')}</h4>
+        <form onSubmit={handleSubmit} className="budget-setup-form">
+          <div className="total-budget-section">
+            <label className="budget-label">
+              {t('events.features.budget.totalBudget')}
+              <input
+                type="number"
+                value={totalBudget}
+                onChange={handleTotalBudgetChange}
+                placeholder={t('events.features.budget.totalBudgetPlaceholder')}
+                className="budget-input"
+                min="0"
+                step="1"
+              />
+            </label>
+          </div>
+
+          {totalBudget && (
+            <>
+              <div className="categories-section">
+                <div className="categories-header">
+                  <h4>{t('events.features.budget.categoriesAllocation')}</h4>
+                  <button
+                    type="button"
+                    onClick={resetToDefaults}
+                    className="reset-button"
+                  >
+                    {t('events.features.budget.useDefaults')}
+                  </button>
+                </div>
+
+                <div className="categories-grid">
+                  {categories.map(cat => {
+                    const percentage = totalBudget > 0 
+                      ? Math.round((cat.allocated / parseFloat(totalBudget)) * 100)
+                      : 0;
+
+                    return (
+                      <div key={cat.category} className="category-item">
+                        <div className="category-header">
+                          <span className="category-name">
+                            {t(`events.features.budget.categories.${cat.category}`)}
+                          </span>
+                          <span className="category-percentage">{percentage}%</span>
+                        </div>
+                        <input
+                          type="number"
+                          value={cat.allocated}
+                          onChange={(e) => handleCategoryChange(cat.category, e.target.value)}
+                          className="category-input"
+                          min="0"
+                          step="1"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="budget-summary">
+                  <div className="summary-row">
+                    <span>{t('events.features.budget.totalBudget')}</span>
+                    <span>₪{parseFloat(totalBudget).toLocaleString()}</span>
+                  </div>
+                  <div className="summary-row">
+                    <span>{t('events.features.budget.totalAllocated')}</span>
+                    <span>₪{getTotalAllocated().toLocaleString()}</span>
+                  </div>
+                  <div className={`summary-row ${remaining < 0 ? 'negative' : ''}`}>
+                    <span>{t('events.features.budget.remaining')}</span>
+                    <span>₪{remaining.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {remaining < 0 && (
+                  <div className="budget-warning">
+                    {t('events.features.budget.overAllocatedWarning')}
+                  </div>
+                )}
+              </div>
+
+              {error && <div className="budget-error">{error}</div>}
+
+              <div className="budget-actions">
+                <button
+                  type="submit"
+                  disabled={loading || !isValid}
+                  className="save-budget-button"
+                >
+                  {loading ? t('general.loading') : t('events.features.budget.createBudget')}
+                </button>
+              </div>
+            </>
+          )}
+        </form>
+      </div>
+    );
+  }
+
+  // If existing budget, show the compact view with edit button
+  return (
+    <>
+      <div className="budget-setup-compact">
+        <div className="budget-summary-compact">
+          <div className="budget-total-display">
+            <span className="budget-label-compact">{t('events.features.budget.totalBudget')}</span>
+            <span className="budget-amount-compact">₪{parseFloat(totalBudget).toLocaleString()}</span>
+          </div>
+          
+          <button
+            type="button"
+            onClick={openEditModal}
+            className="edit-budget-button"
+          >
+            {t('events.features.budget.editBudget')}
+          </button>
+        </div>
+      </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="budget-edit-overlay">
+          <div className="budget-edit-modal">
+            <div className="budget-edit-header">
+              <h3>{t('events.features.budget.editBudget')}</h3>
               <button
                 type="button"
-                onClick={resetToDefaults}
-                className="reset-button"
-                disabled={isFieldsDisabled}
+                onClick={closeEditModal}
+                className="close-modal-button"
               >
-                {t('events.features.budget.useDefaults')}
+                ×
               </button>
             </div>
 
-            <div className="categories-grid">
-              {categories.map(cat => {
-                const percentage = totalBudget > 0 
-                  ? Math.round((cat.allocated / parseFloat(totalBudget)) * 100)
-                  : 0;
+            <form onSubmit={handleSubmit} className="budget-edit-form">
+              <div className="total-budget-section">
+                <label className="budget-label">
+                  {t('events.features.budget.totalBudget')}
+                  <input
+                    type="number"
+                    value={totalBudget}
+                    onChange={handleTotalBudgetChange}
+                    placeholder={t('events.features.budget.totalBudgetPlaceholder')}
+                    className="budget-input"
+                    min="0"
+                    step="1"
+                  />
+                </label>
+              </div>
 
-                return (
-                  <div key={cat.category} className="category-item">
-                    <div className="category-header">
-                      <span className="category-name">
-                        {t(`events.features.budget.categories.${cat.category}`)}
-                      </span>
-                      <span className="category-percentage">{percentage}%</span>
-                    </div>
-                    <input
-                      type="number"
-                      value={cat.allocated}
-                      onChange={(e) => handleCategoryChange(cat.category, e.target.value)}
-                      className="category-input"
-                      min="0"
-                      step="1"
-                      disabled={isFieldsDisabled}
-                    />
+              <div className="categories-section">
+                <div className="categories-header">
+                  <h4>{t('events.features.budget.categoriesAllocation')}</h4>
+                  <button
+                    type="button"
+                    onClick={resetToDefaults}
+                    className="reset-button"
+                  >
+                    {t('events.features.budget.useDefaults')}
+                  </button>
+                </div>
+
+                <div className="categories-grid">
+                  {categories.map(cat => {
+                    const percentage = totalBudget > 0 
+                      ? Math.round((cat.allocated / parseFloat(totalBudget)) * 100)
+                      : 0;
+
+                    return (
+                      <div key={cat.category} className="category-item">
+                        <div className="category-header">
+                          <span className="category-name">
+                            {t(`events.features.budget.categories.${cat.category}`)}
+                          </span>
+                          <span className="category-percentage">{percentage}%</span>
+                        </div>
+                        <input
+                          type="number"
+                          value={cat.allocated}
+                          onChange={(e) => handleCategoryChange(cat.category, e.target.value)}
+                          className="category-input"
+                          min="0"
+                          step="1"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="budget-summary">
+                  <div className="summary-row">
+                    <span>{t('events.features.budget.totalBudget')}</span>
+                    <span>₪{parseFloat(totalBudget).toLocaleString()}</span>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="summary-row">
+                    <span>{t('events.features.budget.totalAllocated')}</span>
+                    <span>₪{getTotalAllocated().toLocaleString()}</span>
+                  </div>
+                  <div className={`summary-row ${remaining < 0 ? 'negative' : ''}`}>
+                    <span>{t('events.features.budget.remaining')}</span>
+                    <span>₪{remaining.toLocaleString()}</span>
+                  </div>
+                </div>
 
-            <div className="budget-summary">
-              <div className="summary-row">
-                <span>{t('events.features.budget.totalBudget')}</span>
-                <span>₪{parseFloat(totalBudget).toLocaleString()}</span>
+                {remaining < 0 && (
+                  <div className="budget-warning">
+                    {t('events.features.budget.overAllocatedWarning')}
+                  </div>
+                )}
               </div>
-              <div className="summary-row">
-                <span>{t('events.features.budget.totalAllocated')}</span>
-                <span>₪{getTotalAllocated().toLocaleString()}</span>
-              </div>
-              <div className={`summary-row ${remaining < 0 ? 'negative' : ''}`}>
-                <span>{t('events.features.budget.remaining')}</span>
-                <span>₪{remaining.toLocaleString()}</span>
-              </div>
-            </div>
 
-            {remaining < 0 && (
-              <div className="budget-warning">
-                {t('events.features.budget.overAllocatedWarning')}
+              {error && <div className="budget-error">{error}</div>}
+
+              <div className="budget-actions">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="cancel-button"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !isValid}
+                  className="save-budget-button"
+                >
+                  {loading ? t('general.loading') : t('events.features.budget.updateBudget')}
+                </button>
               </div>
-            )}
+            </form>
           </div>
-        )}
-
-        {error && <div className="budget-error">{error}</div>}
-
-        <div className="budget-actions">
-          {isFieldsDisabled ? (
-            <button
-              type="button"
-              onClick={enableEditing}
-              className="edit-budget-button"
-            >
-              {t('events.features.budget.editBudget')}
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={loading || !isValid}
-              className="save-budget-button"
-            >
-              {loading ? t('general.loading') : (isEditing ? t('events.features.budget.updateBudget') : t('events.features.budget.createBudget'))}
-            </button>
-          )}
         </div>
-      </form>
-    </div>
+      )}
+    </>
   );
 };
 

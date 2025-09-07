@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const BudgetOverview = ({ budget, eventId, onBudgetUpdated }) => {
+const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAlertThresholdChange }) => {
   const { t } = useTranslation();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated }) => {
 
   const getStatusColor = (percentage) => {
     if (percentage <= 50) return 'safe';
-    if (percentage <= 80) return 'warning';
+    if (percentage <= alertThreshold) return 'warning';
     return 'danger';
   };
 
@@ -64,6 +64,27 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated }) => {
 
   return (
     <div className="budget-overview">
+      {/* Alert Threshold Setting */}
+      <div className="alert-threshold-section">
+        <h4>{t('events.features.budget.settings.alertSettings')}</h4>
+        <div className="threshold-setting">
+          <label>
+            {t('events.features.budget.settings.alertThreshold')}: <span className="threshold-value">{alertThreshold}%</span>
+            <input
+              type="range"
+              min="50"
+              max="100"
+              value={alertThreshold}
+              onChange={(e) => onAlertThresholdChange(parseInt(e.target.value))}
+              className="threshold-slider"
+            />
+          </label>
+          <p className="setting-description">
+            {t('events.features.budget.settings.alertThresholdDescription')}
+          </p>
+        </div>
+      </div>
+
       <div className="budget-summary-cards">
         <div className="summary-card total">
           <div className="card-icon">💰</div>
@@ -177,12 +198,12 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated }) => {
         </div>
       )}
 
-      {summary.categoryBreakdown.some(cat => cat.percentage > 80 && cat.percentage <= 100) && (
+      {summary.categoryBreakdown.some(cat => cat.percentage > alertThreshold && cat.percentage <= 100) && (
         <div className="budget-warnings">
           <h4>{t('events.features.budget.warnings')}</h4>
           <div className="warning-list">
             {summary.categoryBreakdown
-              .filter(cat => cat.percentage > 80 && cat.percentage <= 100)
+              .filter(cat => cat.percentage > alertThreshold && cat.percentage <= 100)
               .map(cat => (
                 <div key={cat.category} className="warning-item">
                   <span className="warning-icon">⚡</span>

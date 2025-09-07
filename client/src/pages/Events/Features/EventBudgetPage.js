@@ -6,7 +6,6 @@ import BudgetOverview from './components/budget/BudgetOverview';
 import BudgetSetup from './components/budget/BudgetSetup';
 import ExpenseManager from './components/budget/ExpenseManager';
 import BudgetCharts from './components/budget/BudgetCharts';
-import BudgetSettings from './components/budget/BudgetSettings';
 import '../../../styles/EventBudgetPage.css';
 
 const EventBudgetPage = () => {
@@ -16,10 +15,8 @@ const EventBudgetPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [budgetSettings, setBudgetSettings] = useState({
-    alertThreshold: 80,
-    chartColors: 'default'
-  });
+  const [alertThreshold, setAlertThreshold] = useState(80);
+  const [chartColors] = useState('default');
   const [alerts, setAlerts] = useState([]);
 
   useEffect(() => {
@@ -31,7 +28,7 @@ const EventBudgetPage = () => {
     if (budget) {
       checkForAlerts();
     }
-  }, [budget, budgetSettings.alertThreshold]);
+  }, [budget, alertThreshold]);
 
   const fetchBudget = async () => {
     try {
@@ -61,15 +58,15 @@ const EventBudgetPage = () => {
   };
 
   const loadSettings = () => {
-    const savedSettings = localStorage.getItem(`budget_settings_${id}`);
-    if (savedSettings) {
-      setBudgetSettings(JSON.parse(savedSettings));
+    const savedThreshold = localStorage.getItem(`alert_threshold_${id}`);
+    if (savedThreshold) {
+      setAlertThreshold(parseInt(savedThreshold));
     }
   };
 
-  const saveSettings = (newSettings) => {
-    setBudgetSettings(newSettings);
-    localStorage.setItem(`budget_settings_${id}`, JSON.stringify(newSettings));
+  const handleAlertThresholdChange = (newThreshold) => {
+    setAlertThreshold(newThreshold);
+    localStorage.setItem(`alert_threshold_${id}`, newThreshold.toString());
   };
 
   const checkForAlerts = async () => {
@@ -89,7 +86,7 @@ const EventBudgetPage = () => {
         const newAlerts = [];
 
         summary.categoryBreakdown.forEach(cat => {
-          if (cat.percentage >= budgetSettings.alertThreshold) {
+          if (cat.percentage >= alertThreshold) {
             const categoryName = t(`events.features.budget.categories.${cat.category}`);
             newAlerts.push({
               id: `${cat.category}-${Date.now()}`,
@@ -97,9 +94,17 @@ const EventBudgetPage = () => {
               category: cat.category,
               percentage: cat.percentage,
               message: cat.percentage > 100 
-                ? `התראה: ${categoryName} חרגה מהתקציב ב-${cat.percentage.toFixed(1)}%`
-                : `התראה: ${categoryName} הגיעה ל-${cat.percentage.toFixed(1)}% מהתקציב (סף התראה: ${budgetSettings.alertThreshold}%)`
-            });
+                // ? `התראה: ${categoryName} חרגה מהתקציב ב-${cat.percentage.toFixed(1)}%`
+                // : `התראה: ${categoryName} הגיעה ל-${cat.percentage.toFixed(1)}% מהתקציב (סף התראה: ${alertThreshold}%)`
+                ? t('events.features.budget.categoryOverBudget', {
+                  category: categoryName,
+                  amount: Math.abs(cat.remaining).toLocaleString()
+                })
+              : t('events.features.budget.categoryNearLimit', {
+                  category: categoryName,
+                  percentage: cat.percentage.toFixed(0)
+                })
+              });
           }
         });
 
@@ -121,7 +126,7 @@ const EventBudgetPage = () => {
       pastel: ['#FFB3BA', '#BAFFC9', '#BAE1FF', '#FFFFBA', '#FFD3BA', '#E1BAFF', '#C9FFBA', '#BABCFF', '#FFBAE1', '#BAF0FF'],
       professional: ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#5E8B73', '#8B5A2B', '#4B0082', '#2F4F4F', '#B22222', '#008B8B']
     };
-    return colorSchemes[budgetSettings.chartColors] || colorSchemes.default;
+    return colorSchemes[chartColors] || colorSchemes.default;
   };
 
   const handleBudgetCreated = (newBudget) => {
@@ -220,12 +225,6 @@ const EventBudgetPage = () => {
             >
               {t('events.features.budget.tabs.charts')}
             </button>
-            <button 
-              className={`budget-tab ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              {t('events.features.budget.tabs.settings')}
-            </button>
           </div>
 
           <div className="budget-content">
@@ -234,6 +233,8 @@ const EventBudgetPage = () => {
                 budget={budget}
                 eventId={id}
                 onBudgetUpdated={handleBudgetUpdated}
+                alertThreshold={alertThreshold}
+                onAlertThresholdChange={handleAlertThresholdChange}
               />
             )}
             
@@ -250,15 +251,6 @@ const EventBudgetPage = () => {
                 budget={budget}
                 eventId={id}
                 chartColors={getChartColors()}
-              />
-            )}
-
-            {activeTab === 'settings' && (
-              <BudgetSettings 
-                budgetSettings={budgetSettings}
-                onSettingsChange={saveSettings}
-                alerts={alerts}
-                onDismissAlert={dismissAlert}
               />
             )}
           </div>

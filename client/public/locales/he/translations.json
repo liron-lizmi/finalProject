@@ -397,7 +397,76 @@
       },
       "rides": {
         "title": "טרמפים",
-        "description": "תיאום טרמפים בין משתתפי האירוע"
+        "description": "תיאום טרמפים בין משתתפי האירוע",
+        "shareLink": "שיתוף קישור",
+        "linkCopied": "הקישור הועתק בהצלחה!",
+        "enterPhone": "הזן מספר טלפון",
+        "enterPhoneDescription": "הזן את מספר הטלפון שלך כדי לגשת למידע הטרמפים",
+        "continue": "המשך",
+        "welcome": "שלום {{name}}!",
+        "myRideInfo": "המידע שלי",
+        "updateInfo": "עדכן מידע",
+        "availableRides": "טרמפים זמינים",
+        "seekingRides": "מחפשים טרמפ",
+        "noOffering": "אין טרמפים זמינים כרגע",
+        "noSeeking": "אין מחפשי טרמפ כרגע",
+        "contactInfo": "פרטי קשר",
+        "offeringRides": "מציעי טרמפ",
+        "loading": "טוען...",
+        "backToEventDetails": "חזרה לפרטי האירוע",
+        "appLogo": "לוגו PlanIt",
+        "eventNotFound": "האירוע לא נמצא",
+        "phoneNotFound": "מספר הטלפון לא נמצא ברשימת המוזמנים",
+        "stats": {
+          "offering": "מציעי טרמפ",
+          "seeking": "מחפשי טרמפ"
+        },
+        "status": {
+          "offering": "אני מציע טרמפ",
+          "seeking": "אני מחפש טרמפ",
+          "arranged_separately": "לא מעוניין בטרמפ",
+          "not_set": "לא הוגדר",
+          "in_process": "בתהליך",
+          "taken": "טרמפ נתפס",
+          "label": "סטטוס"
+        },
+        "form": {
+          "status": "סטטוס הסעה",
+          "address": "כתובת יציאה",
+          "addressPlaceholder": "למשל: תל אביב, רחוב הרצל 123",
+          "availableSeats": "מספר מקומות פנויים",
+          "departureTime": "שעת יציאה מועדפת",
+          "departureTimePlaceholder": "למשל: 17:00",
+          "notes": "הערות נוספות",
+          "notesPlaceholder": "למשל: נכונות לסטיות קלות, העדפות מוזיקה...",
+          "phone": "טלפון",
+          "requiredSeats" : "מספר מקומות נדרשים"
+        },
+        "actions": {
+          "contacted": "יצרתי קשר",
+          "arrangedRide": "קבעתי איתו טרמפ",
+          "notRelevant": "יצרתי קשר אך לא רלוונטי",
+          "noResponse": "ניסיתי ליצור קשר ללא מענה"
+        },
+        "tabs": {
+          "overview": "סקירה",
+          "offering": "מציעים",
+          "seeking": "מחפשים",
+          "myInfo": "המידע שלי"
+        },
+        "updateSuccess": "המידע עודכן בהצלחה",
+        "contactRecorded": "הפעולה נרשמה בהצלחה",
+        "validation": {
+          "phoneRequired": "מספר טלפון נדרש",
+          "invalidPhoneFormat": "פורמט טלפון לא תקין (נדרש: 05X-XXXXXXX)"
+        },
+        "errors": {
+          "updateFailed": "עדכון המידע נכשל",
+          "eventLoadFailed": "אירעה שגיאה בטעינת פרטי האירוע",
+          "fetchGuests": "שגיאה בטעינת רשימת המוזמנים",
+          "updateGuest": "שגיאה בעדכון המוזמן",
+          "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט"
+        }
       },
       "weather": {
         "title": "תחזית מזג אוויר",
@@ -436,6 +505,7 @@
         "budgetSummary": "סיכום תקציב",
         "alertOverBudget": "התראה: {category} חרגה מהתקציב ב-{percentage}%",
         "alertNearLimit": "התראה: {category} הגיעה ל-{percentage}% מהתקציב (סף התראה: {threshold}%)",
+        "efficiency": "יעילות תקציב",
         "categories": {
           "venue": "מקום/אולם",
           "catering": "קייטרינג",
@@ -456,7 +526,7 @@
         },
         "settings": {
           "title": "הגדרות תקציב",
-          "alertSettings": "הגדרות התראות",
+          "alertSettings": "הגדרת התראה",
           "alertThreshold": "סף התראה",
           "alertThresholdDescription": "קבלת התראה כאשר ההוצאה בקטגוריה מגיעה לאחוז זה מהתקציב המוקצב",
           "displaySettings": "הגדרות תצוגה",
