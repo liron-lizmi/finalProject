@@ -17,6 +17,7 @@ const EventSeatingPage = () => {
   const [guests, setGuests] = useState([]);
   const [confirmedGuests, setConfirmedGuests] = useState([]);
   const [tables, setTables] = useState([]);
+  const [manuallyEditedTableNames, setManuallyEditedTableNames] = useState(new Set());
   const [selectedTable, setSelectedTable] = useState(null);
   const [seatingArrangement, setSeatingArrangement] = useState({});
   const [loading, setLoading] = useState(true);
@@ -196,6 +197,76 @@ const EventSeatingPage = () => {
     [saveSeatingArrangement]
   );
 
+  const getNextTableNumber = useCallback(() => {
+    if (tables.length === 0) return 1;
+    
+    const tableNumbers = tables.map(table => {
+      const match = table.name.match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    });
+    
+    return Math.max(...tableNumbers) + 1;
+  }, [tables]);
+
+  const isTableNameManuallyEdited = useCallback((tableId, currentName) => {
+    if (manuallyEditedTableNames.has(tableId)) {
+      return true;
+    }
+    
+    const basicPattern = new RegExp(`^${t('seating.tableName')} \\d+$`);
+    const groupPattern = new RegExp(`^${t('seating.tableName')} \\d+ - .+$`);
+    
+    return !basicPattern.test(currentName) && !groupPattern.test(currentName);
+  }, [manuallyEditedTableNames, t]);
+
+  const generateTableNameWithGroup = useCallback((tableNumber, tableId, arrangement) => {
+    const baseName = `${t('seating.tableName')} ${tableNumber}`;
+    
+    if (!arrangement || !arrangement[tableId] || arrangement[tableId].length === 0) {
+      return baseName;
+    }
+    
+    const seatedGuestIds = arrangement[tableId] || [];
+    const tableGuests = seatedGuestIds.map(guestId => 
+      confirmedGuests.find(g => g._id === guestId)
+    ).filter(Boolean);
+    
+    if (tableGuests.length === 0) {
+      return baseName;
+    }
+    
+    const groupCounts = {};
+    tableGuests.forEach(guest => {
+      const group = guest.customGroup || guest.group || 'other';
+      const guestCount = guest.attendingCount || 1;
+      groupCounts[group] = (groupCounts[group] || 0) + guestCount;
+    });
+    
+    const dominantGroup = Object.keys(groupCounts).reduce((a, b) => 
+      groupCounts[a] > groupCounts[b] ? a : b
+    );
+    
+    const groupName = ['family', 'friends', 'work', 'other'].includes(dominantGroup) 
+      ? t(`guests.groups.${dominantGroup}`) 
+      : dominantGroup;
+    
+    return `${baseName} - ${groupName}`;
+  }, [confirmedGuests, t]);
+
+  const updateTableNamesWithGroups = useCallback((currentTables, arrangement) => {
+    return currentTables.map(table => {
+      if (isTableNameManuallyEdited(table.id, table.name)) {
+        return table;
+      }
+      
+      const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
+      return {
+        ...table,
+        name: generateTableNameWithGroup(tableNumber, table.id, arrangement)
+      };
+    });
+  }, [generateTableNameWithGroup, isTableNameManuallyEdited]);
+
   const generateAISeating = useCallback(async (aiPreferences) => {
     try {
       setLoading(true);
@@ -221,12 +292,17 @@ const EventSeatingPage = () => {
         const data = await response.json();
         
         setSeatingArrangement(data.arrangement);
-        if (data.tables && data.tables.length > 0) {
-          setTables(data.tables);
+        
+        let finalTables = data.tables || tables;
+        
+        if (data.arrangement && Object.keys(data.arrangement).length > 0) {
+          finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
         }
         
+        setTables(finalTables);
+        
         const layoutData = {
-          tables: data.tables || tables,
+          tables: finalTables,
           arrangement: data.arrangement,
           preferences,
           layoutSettings: {
@@ -238,7 +314,10 @@ const EventSeatingPage = () => {
         autoSave(layoutData);
         
         setError('');
-        return true;
+        
+        setIsAIModalOpen(false);
+        
+        return { arrangement: data.arrangement, tables: finalTables };
       } else {
         const errorData = await response.json().catch(() => ({}));
         setError(errorData.message || t('seating.errors.aiGeneration'));
@@ -250,7 +329,7 @@ const EventSeatingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, makeApiRequest, tables, preferences, confirmedGuests, seatingArrangement, canvasScale, canvasOffset, autoSave, t]);
+  }, [eventId, makeApiRequest, tables, preferences, confirmedGuests, seatingArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups]);
 
   const calculateTableSize = (type, capacity) => {
     const baseSize = Math.max(80, Math.min(200, 60 + (capacity * 8)));
@@ -278,9 +357,11 @@ const EventSeatingPage = () => {
       position = { x: 300, y: 300 };
     }
 
+    const nextTableNumber = getNextTableNumber();
+
     const newTable = {
       id: `table_${Date.now()}`,
-      name: `${t('seating.tableName')} ${tables.length + 1}`,
+      name: `${t('seating.tableName')} ${nextTableNumber}`,
       type,
       capacity,
       position,
@@ -305,7 +386,7 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize, getNextTableNumber]);
 
   const handleAddTablesFromAI = useCallback(async (tablesToAdd) => {
     try {
@@ -338,11 +419,17 @@ const EventSeatingPage = () => {
   }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t]);
 
   const handleAddTableFromView = useCallback((newTable) => {
-    const newTables = [...tables, newTable];
+    const nextTableNumber = getNextTableNumber();
+    const tableWithCorrectName = {
+      ...newTable,
+      name: `${t('seating.tableName')} ${nextTableNumber}`
+    };
+    
+    const newTables = [...tables, tableWithCorrectName];
     setTables(newTables);
     
-    setSelectedTable(newTable);
-    setEditingTable(newTable);
+    setSelectedTable(tableWithCorrectName);
+    setEditingTable(tableWithCorrectName);
     setIsTableModalOpen(true);
     
     autoSave({
@@ -354,7 +441,7 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, getNextTableNumber]);
 
   const updateTable = useCallback((tableId, updates) => {
     let newTables;
@@ -364,7 +451,24 @@ const EventSeatingPage = () => {
       newTables = tables.filter(table => table.id !== tableId);
       delete newArrangement[tableId];
       setSelectedTable(null);
+      
+      const newEditedNames = new Set(manuallyEditedTableNames);
+      newEditedNames.delete(tableId);
+      setManuallyEditedTableNames(newEditedNames);
     } else {
+      const currentTable = tables.find(t => t.id === tableId);
+      
+      if (updates.name && currentTable && updates.name !== currentTable.name) {
+        const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
+        const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, seatingArrangement);
+        
+        if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
+          const newEditedNames = new Set(manuallyEditedTableNames);
+          newEditedNames.add(tableId);
+          setManuallyEditedTableNames(newEditedNames);
+        }
+      }
+      
       newTables = tables.map(table => 
         table.id === tableId ? { ...table, ...updates } : table
       );
@@ -382,12 +486,16 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, generateTableNameWithGroup]);
 
   const deleteTable = useCallback((tableId) => {
     const newTables = tables.filter(table => table.id !== tableId);
     const newArrangement = { ...seatingArrangement };
     delete newArrangement[tableId];
+    
+    const newEditedNames = new Set(manuallyEditedTableNames);
+    newEditedNames.delete(tableId);
+    setManuallyEditedTableNames(newEditedNames);
     
     setTables(newTables);
     setSeatingArrangement(newArrangement);
@@ -401,7 +509,7 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames]);
 
   const seatGuest = useCallback((guestId, tableId) => {
     const table = tables.find(t => t.id === tableId);
@@ -444,18 +552,23 @@ const EventSeatingPage = () => {
     setSeatingArrangement(newArrangement);
     setError('');
     
-    autoSave({
-      tables,
-      arrangement: newArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
+    setTimeout(() => {
+      const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
+      setTables(updatedTables);
+      
+      autoSave({
+        tables: updatedTables,
+        arrangement: newArrangement,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
+    }, 100);
     
     return true;
-  }, [tables, seatingArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t]);
+  }, [tables, seatingArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups]);
 
   const unseatGuest = useCallback((guestId) => {
     const newArrangement = { ...seatingArrangement };
@@ -468,16 +581,21 @@ const EventSeatingPage = () => {
     
     setSeatingArrangement(newArrangement);
     
-    autoSave({
-      tables,
-      arrangement: newArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
-  }, [seatingArrangement, tables, preferences, canvasScale, canvasOffset, autoSave]);
+    setTimeout(() => {
+      const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
+      setTables(updatedTables);
+      
+      autoSave({
+        tables: updatedTables,
+        arrangement: newArrangement,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
+    }, 100);
+  }, [seatingArrangement, tables, preferences, canvasScale, canvasOffset, autoSave, updateTableNamesWithGroups]);
 
   const clearAllSeating = useCallback(() => {
     if (window.confirm(t('seating.confirmClearAll'))) {
@@ -489,6 +607,8 @@ const EventSeatingPage = () => {
       setSelectedTable(null);
       setEditingTable(null);
       setError('');
+      
+      setManuallyEditedTableNames(new Set());
       
       autoSave({
         tables: newTables,
@@ -837,6 +957,7 @@ const EventSeatingPage = () => {
           onClose={() => setIsAIModalOpen(false)}
           onGenerate={generateAISeating}
           onAddTables={handleAddTablesFromAI}
+          getNextTableNumber={getNextTableNumber}
         />
       </div>
     </FeaturePageTemplate>

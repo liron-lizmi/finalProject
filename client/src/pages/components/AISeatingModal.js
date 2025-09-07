@@ -9,7 +9,8 @@ const AISeatingModal = ({
   seatingArrangement,
   onClose,
   onGenerate,
-  onAddTables
+  onAddTables,
+  getNextTableNumber
 }) => {
   const { t } = useTranslation();
   const [aiPreferences, setAiPreferences] = useState({
@@ -38,6 +39,40 @@ const AISeatingModal = ({
   const [initialLoad, setInitialLoad] = useState(true);
 
   const hasExistingArrangement = seatingArrangement && Object.keys(seatingArrangement).length > 0 && Object.values(seatingArrangement).some(arr => arr.length > 0);
+
+  const generateTableNameWithGroup = (tableNumber, tableId, arrangement, guestsList) => {
+    const baseName = `${t('seating.tableName')} ${tableNumber}`;
+    
+    if (!arrangement || !arrangement[tableId] || arrangement[tableId].length === 0) {
+      return baseName;
+    }
+    
+    const seatedGuestIds = arrangement[tableId] || [];
+    const tableGuests = seatedGuestIds.map(guestId => 
+      guestsList.find(g => g._id === guestId)
+    ).filter(Boolean);
+    
+    if (tableGuests.length === 0) {
+      return baseName;
+    }
+    
+    const groupCounts = {};
+    tableGuests.forEach(guest => {
+      const group = guest.customGroup || guest.group || 'other';
+      const guestCount = guest.attendingCount || 1;
+      groupCounts[group] = (groupCounts[group] || 0) + guestCount;
+    });
+    
+    const dominantGroup = Object.keys(groupCounts).reduce((a, b) => 
+      groupCounts[a] > groupCounts[b] ? a : b
+    );
+    
+    const groupName = ['family', 'friends', 'work', 'other'].includes(dominantGroup) 
+      ? t(`guests.groups.${dominantGroup}`) 
+      : dominantGroup;
+    
+    return `${baseName} - ${groupName}`;
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -122,6 +157,15 @@ const AISeatingModal = ({
     setTableSettings(newTableSettings);
   };
 
+  const getSeatedGuestsCount = () => {
+    if (!hasExistingArrangement) return 0;
+    
+    return Object.values(seatingArrangement).flat().reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+  };
+
   if (!isOpen) return null;
 
   const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
@@ -190,9 +234,33 @@ const AISeatingModal = ({
     setCustomTableSettings(prev => prev.filter(setting => setting.id !== id));
   };
 
+  const handleGenerate = async (customPreferences = null) => {
+    setIsGenerating(true);
+    
+    try {
+      const generationOptions = customPreferences || {
+        ...aiPreferences,
+        preserveExisting: existingArrangementAction === 'continue',
+        clearExisting: existingArrangementAction === 'clear'
+      };
+      
+      const result = await onGenerate(generationOptions);
+      
+      if (!customPreferences) {
+        onClose(); 
+      }
+      
+      return result;
+    } catch (error) {
+      return false;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleCreateTables = async () => {
     const tablesToCreate = [];
-    let tableCounter = tables.length + 1;
+    let tableCounter = getNextTableNumber ? getNextTableNumber() : tables.length + 1;
     
     const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) + 
                        customTableSettings.reduce((sum, s) => sum + s.count, 0);
@@ -211,7 +279,7 @@ const AISeatingModal = ({
         
         const table = {
           id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
-          name: `${t('seating.table')} ${tableCounter}`,
+          name: `${t('seating.tableName')} ${tableCounter}`,
           type: setting.type,
           capacity: setting.capacity,
           position: {
@@ -236,7 +304,7 @@ const AISeatingModal = ({
         
         const table = {
           id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
-          name: `${t('seating.table')} ${tableCounter}`,
+          name: `${t('seating.tableName')} ${tableCounter}`,
           type: setting.type,
           capacity: setting.capacity,
           position: {
@@ -271,7 +339,22 @@ const AISeatingModal = ({
           allTables: allTablesForGeneration
         };
         
-        await handleGenerate(aiPreferencesWithExisting);
+        const result = await handleGenerate(aiPreferencesWithExisting);
+        
+        if (result && result.arrangement) {
+          const updatedTables = tablesToCreate.map(table => {
+            const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
+            return {
+              ...table,
+              name: generateTableNameWithGroup(tableNumber, table.id, result.arrangement, guests)
+            };
+          });
+          
+          if (updatedTables.length > 0) {
+            await onAddTables(updatedTables);
+          }
+        }
+        
         onClose();
       } catch (error) {
         setIsGenerating(false);
@@ -288,25 +371,6 @@ const AISeatingModal = ({
     }
   };
 
-  const handleGenerate = async (customPreferences = null) => {
-    setIsGenerating(true);
-    
-    try {
-      const generationOptions = customPreferences || {
-        ...aiPreferences,
-        preserveExisting: existingArrangementAction === 'continue',
-        clearExisting: existingArrangementAction === 'clear'
-      };
-      
-      await onGenerate(generationOptions);
-      onClose(); 
-    } catch (error) {
-      // Error handling
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handlePreferenceChange = (key, value) => {
     setAiPreferences(prev => ({
       ...prev,
@@ -318,15 +382,6 @@ const AISeatingModal = ({
     const newSettings = [...tableSettings];
     newSettings[index][field] = parseInt(value) || 0;
     setTableSettings(newSettings);
-  };
-
-  const getSeatedGuestsCount = () => {
-    if (!hasExistingArrangement) return 0;
-    
-    return Object.values(seatingArrangement).flat().reduce((sum, guestId) => {
-      const guest = guests.find(g => g._id === guestId);
-      return sum + (guest?.attendingCount || 1);
-    }, 0);
   };
 
   const seatedGuestsCount = getSeatedGuestsCount();
@@ -591,6 +646,14 @@ const AISeatingModal = ({
                               +
                             </button>
                           </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => removeCustomTableSetting(setting.id)}
+                            className="remove-custom-table-btn"
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -782,7 +845,9 @@ const AISeatingModal = ({
             ) : (
               <button 
                 className="generate-button" 
-                onClick={handleGenerate}
+                onClick={async () => {
+                  await handleGenerate();
+                }}
                 disabled={isGenerating || tables.length === 0 || guests.length === 0}
               >
                 {isGenerating ? (

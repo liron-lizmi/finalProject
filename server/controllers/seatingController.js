@@ -434,7 +434,7 @@ function createAdditionalTables(additionalCapacityNeeded, existingTablesCount, r
     
     const newTable = {
       id: `auto_table_${Date.now()}_${tableCounter}_${Math.random().toString(36).substr(2, 9)}`,
-      name: req.t('seating.table', { number: tableCounter }),
+      name: req.t('seating.tableName', { number: tableCounter }),
       type: tableCapacity <= 10 ? 'round' : 'rectangular',
       capacity: tableCapacity,
       position: {
