@@ -737,9 +737,7 @@ const handlePhoneChange = (e) => {
     total: guests.length,
     confirmed: guests.filter(g => g.rsvpStatus === 'confirmed').length,
     declined: guests.filter(g => g.rsvpStatus === 'declined').length,
-    pending: guests.filter(g => g.rsvpStatus === 'pending').length,
-    totalAttending: guests.filter(g => g.rsvpStatus === 'confirmed')
-                          .reduce((sum, guest) => sum + (guest.attendingCount || 1), 0)
+    pending: guests.filter(g => g.rsvpStatus === 'pending').length
   };
 
   useEffect(() => {
@@ -866,10 +864,6 @@ const handlePhoneChange = (e) => {
           <div className="guests-stat-card confirmed">
             <div className="guests-stat-number">{stats.confirmed}</div>
             <div className="guests-stat-label">{t('guests.stats.confirmed')}</div>
-          </div>
-          <div className="guests-stat-card attending">
-            <div className="guests-stat-number">{stats.totalAttending}</div>
-            <div className="guests-stat-label">{t('guests.stats.totalAttending')}</div>
           </div>
           <div className="guests-stat-card declined">
             <div className="guests-stat-number">{stats.declined}</div>

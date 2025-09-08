@@ -284,6 +284,35 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.guests-table::-webkit-scrollbar {
+  width: 8px;
+}
+
+.guests-table::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.guests-table::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.guests-table::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.guests-container .guests-table {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.guests-container .guests-table-row {
+  flex-shrink: 0;
 }
 
 .guests-table-row {
@@ -703,28 +732,12 @@
   font-size: 16px;
 }
 
-/* Updated Stats Section */
-.guests-stat-card.attending {
-  background-color: #e8f5e8;
-  border-color: #c3e6cb;
-}
-
-.guests-stat-card.attending .guests-stat-number {
-  color: #155724;
-}
-
-.guests-stat-card.attending .guests-stat-label {
-  color: #155724;
-}
-
-/* Updated Guest Table Styles */
 .guest-attending-count {
   font-size: 12px;
   color: #28a745;
   font-weight: 500;
   margin-top: 4px;
 }
-
 
 /* Gifts Modal Styles */
 .gifts-modal {
@@ -1040,6 +1053,10 @@
   .modal-actions {
     flex-direction: column;
   }
+
+  .guests-container .guests-table {
+    max-height: 60vh;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1156,5 +1173,9 @@
   
   .modal-header h2 {
     font-size: 16px;
+  }
+
+  .guests-container .guests-table {
+    max-height: 50vh;
   }
 }

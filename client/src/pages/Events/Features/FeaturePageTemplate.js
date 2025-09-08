@@ -11,31 +11,29 @@ const FeaturePageTemplate = ({
   description,
   children
 }) => {
-
   const navigate = useNavigate();
   const { id } = useParams();
   const { t, i18n } = useTranslation();
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [event, setEvent] = useState({
+    title: '',
+    date: new Date()
+  });
 
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
-
     document.documentElement.lang = isRTL ? 'he' : 'en';
 
+    // טוען פרטי אירוע ברקע ללא הצגת מצב טעינה
     const fetchEventDetails = async () => {
-          try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-              setError(t('errors.notLoggedIn'));
-              navigate('/login');
-              return;
-            }
-
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
 
         const response = await axios.get(`/api/events/${id}`, {
           headers: {
@@ -44,11 +42,12 @@ const FeaturePageTemplate = ({
         });
 
         setEvent(response.data);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
-        setError(t('errors.eventLoadFailed'));
-        setLoading(false);
+        setEvent({
+          title: t('events.eventNotFound'),
+          date: new Date()
+        });
       }
     };
 
@@ -58,70 +57,6 @@ const FeaturePageTemplate = ({
   const handleBack = () => {
     navigate(`/event/${id}`);
   };
-
-  if (loading) {
-    return (
-      <div>
-        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="header-content">
-            <button className="back-button" onClick={handleBack}>
-              {t('general.backToEventDetails')}
-            </button>
-            <div className="header-logo">
-              <img src="/images.png" alt="Logo" className="logo-image" />
-            </div>
-          </div>
-        </div>
-        
-        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    );
-  }
-
- 
-  if (error) {
-    return (
-      <div>
-        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="header-content">
-            <button className="back-button" onClick={handleBack}>
-              {t('general.back')}
-            </button>
-            <div className="header-logo">
-              <img src="/images/logo.png" alt="Logo" className="logo-image" />
-            </div>
-          </div>
-        </div>
-        
-        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="error-message">{error}</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div>
-        <div className={`main-header ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="header-content">
-            <button className="back-button" onClick={handleBack}>
-              {t('general.back')}
-            </button>
-            <div className="header-logo">
-              <img src="/images/logo.png" alt="Logo" className="logo-image" />
-            </div>
-          </div>
-        </div>
-        
-        <div className={`feature-page-container ${isRTL ? 'rtl' : 'ltr'}`}>
-          <div className="error-message">{t('errors.eventNotFound')}</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -151,18 +86,18 @@ const FeaturePageTemplate = ({
           <div className="event-info-panel">
             <h2>{event.title}</h2>
             <p className="event-date">
-            {isRTL 
-              ? new Date(event.date).toLocaleDateString('he-IL', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
-              : new Date(event.date).toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric'
-                }).toUpperCase()
-            }
+              {isRTL 
+                ? new Date(event.date).toLocaleDateString('he-IL', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })
+                : new Date(event.date).toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  }).toUpperCase()
+              }
             </p>
           </div>
          

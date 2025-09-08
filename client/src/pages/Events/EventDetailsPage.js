@@ -8,8 +8,12 @@ const EventDetailsPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
-  const [event, setEvent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [event, setEvent] = useState({
+    title: '',
+    date: new Date(),
+    time: '18:00',
+    guestCount: 0
+  });
   const [error, setError] = useState(null);
   
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
@@ -34,11 +38,9 @@ const EventDetailsPage = () => {
         });
 
         setEvent(response.data);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
         setError(t('errors.eventLoadFailed'));
-        setLoading(false);
       }
     };
 
@@ -83,19 +85,6 @@ const EventDetailsPage = () => {
     navigate('/dashboard');
   };
 
-  if (loading) {
-    return (
-      <div className="event-page-wrapper">
-        <div className="event-details-container">
-          <div className="event-loader">
-            <div className="loading-spinner"></div>
-            <p>{t('general.loading')}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="event-page-wrapper">
@@ -109,34 +98,6 @@ const EventDetailsPage = () => {
               </svg>
             </div>
             <div className="error-message">{error}</div>
-            <button className="back-button" onClick={handleBack}>
-              <span className="back-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </span>
-              {t('dashboard.backToDashboard')}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className="event-page-wrapper">
-        <div className="event-details-container">
-          <div className="error-container">
-            <div className="error-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-            </div>
-            <div className="error-message">{t('events.eventNotFound')}</div>
             <button className="back-button" onClick={handleBack}>
               <span className="back-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
