@@ -8,10 +8,12 @@ const EventRidesPage = () => {
   const { t } = useTranslation();
   const { id: eventId } = useParams();
   const navigate = useNavigate();
-  const [event, setEvent] = useState(null);
+  const [event, setEvent] = useState({
+    title: '',
+    date: new Date()
+  });
   const [guests, setGuests] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     offering: 0,
@@ -25,9 +27,7 @@ const EventRidesPage = () => {
     fetchRidesData();
   }, [eventId]);
 
-  /**
-   * Fetches event data from the API
-   */
+  // Fetches event data from the API
   const fetchEventData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -40,9 +40,7 @@ const EventRidesPage = () => {
     }
   };
 
-  /**
-   * Fetches rides data and calculates statistics
-   */
+  // Fetches rides data and calculates statistics
   const fetchRidesData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -59,16 +57,12 @@ const EventRidesPage = () => {
       const notSet = guestsData.filter(g => !g.rideInfo?.status || g.rideInfo?.status === 'not_set').length;
       
       setStats({ offering, seeking, arrangedSeparately, notSet });
-      setLoading(false);
     } catch (err) {
       setError(t('events.features.rides.errors.fetchGuests'));
-      setLoading(false);
     }
   };
 
-  /**
-   * Updates guest ride information
-   */
+  // Updates guest ride information
   const updateGuestRideInfo = async (guestId, rideInfo) => {
     try {
       const token = localStorage.getItem('token');
@@ -81,9 +75,7 @@ const EventRidesPage = () => {
     }
   };
 
-  /**
-   * Copies ride link to clipboard
-   */
+  // Copies ride link to clipboard
   const copyRideLink = () => {
     const rideLink = `${window.location.origin}/rides/${eventId}`;
     navigator.clipboard.writeText(rideLink).then(() => {
@@ -91,18 +83,13 @@ const EventRidesPage = () => {
     });
   };
 
-  /**
-   * Navigates back to event details page
-   */
+  // Navigates back to event details page
   const handleBack = () => {
     navigate(`/event/${eventId}`);
   };
 
-  /**
-   * Gets status display text based on ride status and contact history
-   */
+  // Gets status display text based on ride status and contact history
   const getStatusDisplay = (guest) => {
-    // Check if this guest has been contacted and what the status is
     const contactStatus = guest.rideInfo?.contactStatus;
     
     switch (contactStatus) {
@@ -117,18 +104,7 @@ const EventRidesPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="rides-page-wrapper">
-        <div className="rides-container">
-          <div className="loading-spinner">
-            {t('events.features.rides.loading')}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // הוסרת כל בלוק הטעינה - הדף מוצג מיד
   if (error) {
     return (
       <div className="rides-page-wrapper">
@@ -178,6 +154,14 @@ const EventRidesPage = () => {
           </div>
         </div>
 
+        <div className="rides-note">
+          <div className="note-content">
+            <span className="note-icon">ℹ️</span>
+            <span className="note-text">
+              {t('events.features.rides.rsvpNote')}
+            </span>
+          </div>
+        </div>
         <nav className="rides-tabs">
           <button
             className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}

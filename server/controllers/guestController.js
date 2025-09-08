@@ -320,12 +320,16 @@ const updateGuestRSVP = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
 
+    // Handle attendingCount properly
     if (attendingCount !== undefined) {
-      guest.attendingCount = attendingCount;
-    } else if (rsvpStatus === 'confirmed' && !guest.attendingCount) {
-      guest.attendingCount = 1;
+      const count = parseInt(attendingCount);
+      if (!isNaN(count) && count >= 0) {
+        guest.attendingCount = count;
+      }
     } else if (rsvpStatus === 'declined') {
       guest.attendingCount = 0;
+    } else if (rsvpStatus === 'confirmed' && (!guest.attendingCount || guest.attendingCount < 1)) {
+      guest.attendingCount = 1;
     }
 
     const updatedGuest = await guest.save();
@@ -385,8 +389,6 @@ const getGuestStats = async (req, res) => {
       declined: guests.filter(g => g.rsvpStatus === 'declined').length,
       pending: guests.filter(g => g.rsvpStatus === 'pending').length,
       no_response: guests.filter(g => g.rsvpStatus === 'no_response').length,
-      totalAttending: guests.filter(g => g.rsvpStatus === 'confirmed')
-                          .reduce((sum, guest) => sum + (guest.attendingCount || 1), 0),
       byGroup: {}
     };
 

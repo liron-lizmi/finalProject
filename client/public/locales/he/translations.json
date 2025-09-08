@@ -417,6 +417,13 @@
         "appLogo": "לוגו PlanIt",
         "eventNotFound": "האירוע לא נמצא",
         "phoneNotFound": "מספר הטלפון לא נמצא ברשימת המוזמנים",
+        "suggestedRides": "הצעות טרמפ מומלצות",
+        "allAvailableRides": "כל הטרמפים הזמינים",
+        "distance": "מרחק",
+        "rideCancelled": "הטרמפ בוטל בהצלחה",
+        "notAvailable": "לא זמין",
+        "rsvpNote": "אם מופיעים בדף זה משתתפים שאינם נמצאים בדף החיצוני של המוזמנים, כנראה שהם לא אישרו הגעה",
+        "rsvpWarning": "עדיין לא אישרת הגעה לאירוע, אנא אשר וחזור לדף זה",
         "stats": {
           "offering": "מציעי טרמפ",
           "seeking": "מחפשי טרמפ"
@@ -428,7 +435,8 @@
           "not_set": "לא הוגדר",
           "in_process": "בתהליך",
           "taken": "טרמפ נתפס",
-          "label": "סטטוס"
+          "label": "סטטוס",
+          "not_relevant": "לא רלוונטי"
         },
         "form": {
           "status": "סטטוס הסעה",
@@ -446,7 +454,8 @@
           "contacted": "יצרתי קשר",
           "arrangedRide": "קבעתי איתו טרמפ",
           "notRelevant": "יצרתי קשר אך לא רלוונטי",
-          "noResponse": "ניסיתי ליצור קשר ללא מענה"
+          "noResponse": "ניסיתי ליצור קשר ללא מענה",
+          "cancelRide": "בטל טרמפ"
         },
         "tabs": {
           "overview": "סקירה",
@@ -458,7 +467,8 @@
         "contactRecorded": "הפעולה נרשמה בהצלחה",
         "validation": {
           "phoneRequired": "מספר טלפון נדרש",
-          "invalidPhoneFormat": "פורמט טלפון לא תקין (נדרש: 05X-XXXXXXX)"
+          "invalidPhoneFormat": "פורמט טלפון לא תקין (נדרש: 05X-XXXXXXX)",
+          "fillRequired": "נא למלא את כל השדות הנדרשים"
         },
         "errors": {
           "updateFailed": "עדכון המידע נכשל",

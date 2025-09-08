@@ -83,6 +83,7 @@
       "eventNotFound": "Event not found",
       "phoneNotFound": "Phone number not found in the guest list",
       "guestNotFound": "Guest not found",
+      "rideCancelled": "Ride cancelled successfully",
       "validation": {
         "phoneRequired": "Phone number is required",
         "missingParameters": "Required parameters are missing"

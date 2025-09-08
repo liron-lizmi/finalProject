@@ -18,24 +18,34 @@ const PublicRidesPage = () => {
     departureTime: ''
   });
   const [otherGuests, setOtherGuests] = useState([]);
+  const [suggestedRides, setSuggestedRides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('my_info');
+  const [pendingRideInfo, setPendingRideInfo] = useState(null);
   const [contactHistory, setContactHistory] = useState([]);
+  const [hasConfirmedRSVP, setHasConfirmedRSVP] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState('not_set');
 
   useEffect(() => {
     fetchEventInfo();
   }, [eventId]);
+
   // Refresh other guests data when switching tabs
-    useEffect(() => {
+  useEffect(() => {
     if (step === 2 && (activeTab === 'offering' || activeTab === 'seeking')) {
         fetchOtherGuests();
     }
-    }, [activeTab, step]);
+  }, [activeTab, step]);
 
-  /**
-   * Formats phone number input to Israeli format (05X-XXXXXXX)
-   */
+  // Fetch suggested rides when user info is updated
+  useEffect(() => {
+    if (step === 2 && guest && rideInfo.status === 'seeking' && rideInfo.address) {
+      fetchSuggestedRides();
+    }
+  }, [step, guest, rideInfo.status, rideInfo.address]);
+
+  // Formats phone number input to Israeli format (05X-XXXXXXX)
   const formatPhoneNumber = (value) => {
     const cleanedValue = value.replace(/\D/g, '');
     
@@ -58,17 +68,13 @@ const PublicRidesPage = () => {
     return value.slice(0, -1);
   };
 
-  /**
-   * Handles phone number input change with formatting
-   */
+  // Handles phone number input change with formatting
   const handlePhoneChange = (e) => {
     const formattedPhone = formatPhoneNumber(e.target.value);
     setPhone(formattedPhone);
   };
 
-  /**
-   * Fetches event information from the API
-   */
+  // Fetches event information from the API
   const fetchEventInfo = async () => {
     try {
       const response = await fetch(`/api/rides/${eventId}/info`);
@@ -83,9 +89,8 @@ const PublicRidesPage = () => {
     }
   };
 
-  /**
-   * Handles phone number submission and verification
-   */
+
+  // Handles phone number submission and verification
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
     
@@ -113,24 +118,34 @@ const PublicRidesPage = () => {
         const data = await response.json();
         setGuest(data.guest);
         
+        // Check if guest has confirmed RSVP
+        const isConfirmed = data.guest.rsvpStatus === 'confirmed';
+        setHasConfirmedRSVP(isConfirmed);
+        
         // Set ride info with default values and preserve existing data
         const existingRideInfo = data.guest.rideInfo || {};
+        const status = existingRideInfo.status || 'not_set';
         setRideInfo({
-          status: existingRideInfo.status || 'not_set',
-          address: existingRideInfo.address || '',
-          availableSeats: existingRideInfo.availableSeats || 1,
-          requiredSeats: existingRideInfo.requiredSeats || 1,
-          departureTime: existingRideInfo.departureTime || ''
+        status: status,
+        address: existingRideInfo.address || '',
+        availableSeats: existingRideInfo.availableSeats || 1,
+        requiredSeats: existingRideInfo.requiredSeats || 1,
+        departureTime: existingRideInfo.departureTime || ''
         });
+
+        // Set current status for tab display
+        setCurrentStatus(status);
         
         // Store contact history
         if (existingRideInfo.contactHistory) {
-          setContactHistory(existingRideInfo.contactHistory);
+            setContactHistory(existingRideInfo.contactHistory);
         }
         
         setStep(2);
-        await fetchOtherGuests();
-      } else {
+        if (isConfirmed) {
+            await fetchOtherGuests();
+        }
+    }  else {
         const errorData = await response.json();
         setError(errorData.message || t('events.features.rides.phoneNotFound'));
       }
@@ -141,11 +156,8 @@ const PublicRidesPage = () => {
     }
   };
 
-  /**
-   * Fetches other guests' ride information
-   */
- const fetchOtherGuests = async () => {
-    console.log('Fetching guests for event:', eventId);
+//  Fetches other guests' ride information
+const fetchOtherGuests = async () => {
   try {
     // Add cache buster to ensure fresh data
     const timestamp = new Date().getTime();
@@ -159,30 +171,54 @@ const PublicRidesPage = () => {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('Raw data from API:', data);
+      
       // Filter out current user's phone number from the list
       const filteredGuests = data.filter(guest => 
         guest && 
         guest.phone && 
         guest.phone !== phone &&
         guest.rideInfo &&
-        (guest.rideInfo.status === 'offering' || guest.rideInfo.status === 'seeking')
+        guest.rideInfo.status &&
+        (guest.rideInfo.status === 'offering' || guest.rideInfo.status === 'seeking') &&
+        guest.rideInfo.address &&
+        guest.rideInfo.address.trim() !== ''
       );
-      console.log('Filtered guests:', filteredGuests);
+      
       setOtherGuests(filteredGuests);
     } else {
-      console.error('Failed to fetch guests');
       setOtherGuests([]);
     }
   } catch (err) {
-    console.error('Error fetching other guests:', err);
     setOtherGuests([]);
   }
 };
 
-  /**
-   * Validates ride information form based on status
-   */
+
+ // Fetches suggested rides based on location proximity
+ const fetchSuggestedRides = async () => {
+  try {
+    const response = await fetch(`/api/rides/${eventId}/suggestions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        phone,
+        userAddress: rideInfo.address 
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      setSuggestedRides(data.suggestions || []);
+    } else {
+      setSuggestedRides([]);
+    }
+  } catch (err) {
+    setSuggestedRides([]);
+  }
+};
+
+
+  //  Validates ride information form based on status
   const isFormValid = () => {
     if (!rideInfo.status || rideInfo.status === 'not_set' || rideInfo.status === '') {
       return false;
@@ -209,54 +245,62 @@ const PublicRidesPage = () => {
     return true;
   };
 
-  /**
-   * Submits ride information update to the API
-   */
-  const handleRideInfoSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!isFormValid()) {
-      setError(t('events.features.rides.validation.fillRequired'));
-      return;
-    }
-    
-    setLoading(true);
-    setError('');
+//  Submits ride information update to the API
+const handleRideInfoSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!isFormValid()) {
+    setError(t('events.features.rides.validation.fillRequired'));
+    return;
+  }
+  
+  setLoading(true);
+  setError('');
 
-    try {
-      const response = await fetch(`/api/rides/${eventId}/update`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, rideInfo })
-      });
+  try {
+    const response = await fetch(`/api/rides/${eventId}/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, rideInfo })
+    });
 
-      if (response.ok) {
-        const result = await response.json();
-        
-        // Update guest data with the response
-        if (result.guest) {
-            setGuest(result.guest);
-        }
-        
-        // Refresh other guests data to get latest information
-        await fetchOtherGuests();
-        
-        // Switch to appropriate tab based on status
-        alert(t('events.features.rides.updateSuccess'));
-        } else {
-        const errorData = await response.json();
-        setError(errorData.message || t('events.features.rides.errors.updateFailed'));
+    if (response.ok) {
+      const result = await response.json();
+      
+      // Update guest data with the response
+      if (result.guest) {
+          setGuest(result.guest);
       }
-    } catch (err) {
-      setError(t('events.features.rides.errors.networkError'));
-    } finally {
-      setLoading(false);
+      
+      // Refresh other guests data to get latest information
+      await fetchOtherGuests();
+      
+      // If user is seeking, fetch suggested rides
+      if (rideInfo.status === 'seeking' && rideInfo.address) {
+        await fetchSuggestedRides();
+      }
+      
+      // Update current status and switch to relevant tab ONLY after successful update
+      setCurrentStatus(rideInfo.status);
+      if (rideInfo.status === 'seeking') {
+        setActiveTab('offering');
+      } else if (rideInfo.status === 'offering') {
+        setActiveTab('seeking');
+      }
+      
+      alert(t('events.features.rides.updateSuccess'));
+      } else {
+      const errorData = await response.json();
+      setError(errorData.message || t('events.features.rides.errors.updateFailed'));
     }
-  };
+  } catch (err) {
+    setError(t('events.features.rides.errors.networkError'));
+  } finally {
+    setLoading(false);
+  }
+};
 
-  /**
-   * Records contact action and updates status
-   */
+ //  Records contact action and updates status
   const handleContactAction = async (contactedGuestId, action) => {
     try {
       const response = await fetch(`/api/rides/${eventId}/contact`, {
@@ -277,23 +321,59 @@ const PublicRidesPage = () => {
         }
         // Refresh guests data to show updated statuses
         await fetchOtherGuests();
+        
+        // Refresh suggested rides if applicable
+        if (rideInfo.status === 'seeking' && rideInfo.address) {
+          await fetchSuggestedRides();
+        }
       }
     } catch (err) {
       console.error('Error recording contact:', err);
     }
   };
 
-  /**
-   * Gets contact status for a specific guest
-   */
+
+  //  Cancels an arranged ride
+  const handleCancelRide = async (contactedGuestId) => {
+    try {
+      const response = await fetch(`/api/rides/${eventId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          contactedGuestId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update contact history
+        if (data.contactHistory) {
+            setContactHistory(data.contactHistory);
+        }
+        // Refresh guests data to show updated statuses
+        await fetchOtherGuests();
+        
+        // Refresh suggested rides if applicable
+        if (rideInfo.status === 'seeking' && rideInfo.address) {
+          await fetchSuggestedRides();
+        }
+        
+        alert(t('events.features.rides.rideCancelled'));
+      }
+    } catch (err) {
+      console.error('Error cancelling ride:', err);
+    }
+  };
+
+
+ // Gets contact status for a specific guest
   const getContactStatus = (guestId) => {
     const contact = contactHistory.find(c => c.contactedGuestId === guestId);
     return contact ? contact.action : null;
   };
 
-  /**
-   * Gets display status based on contact action
-   */
+//  Gets display status based on contact action
   const getContactStatusText = (status) => {
     switch (status) {
       case 'arranged_ride':
@@ -307,9 +387,7 @@ const PublicRidesPage = () => {
     }
   };
 
-  /**
-   * Formats event date to Hebrew locale
-   */
+//    Formats event date to Hebrew locale
   const formatEventDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -321,9 +399,7 @@ const PublicRidesPage = () => {
     });
   };
 
-  /**
-   * Filters guests offering rides
-   */
+    // Filters guests offering rides
   const getOfferingGuests = () => {
     if (!Array.isArray(otherGuests)) return [];
     return otherGuests.filter(g => {
@@ -335,9 +411,7 @@ const PublicRidesPage = () => {
     });
   };
 
-  /**
-   * Filters guests seeking rides
-   */
+//   Filters guests seeking rides
   const getSeekingGuests = () => {
     if (!Array.isArray(otherGuests)) return [];
     return otherGuests.filter(g => {
@@ -424,30 +498,44 @@ const PublicRidesPage = () => {
             </div>
 
             <nav className="rides-tabs">
-              <button
-                className={`tab-button ${activeTab === 'my_info' ? 'active' : ''}`}
-                onClick={() => setActiveTab('my_info')}
-              >
-                {t('events.features.rides.tabs.myInfo')}
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'offering' ? 'active' : ''}`}
-                onClick={() => setActiveTab('offering')}
-              >
-                {t('events.features.rides.tabs.offering')}
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'seeking' ? 'active' : ''}`}
-                onClick={() => setActiveTab('seeking')}
-              >
-                {t('events.features.rides.tabs.seeking')}
-              </button>
+                <button
+                    className={`tab-button ${activeTab === 'my_info' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('my_info')}
+                >
+                    {t('events.features.rides.tabs.myInfo')}
+                </button>
+                {hasConfirmedRSVP && currentStatus === 'seeking' && (
+                    <button
+                    className={`tab-button ${activeTab === 'offering' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('offering')}
+                    >
+                    {t('events.features.rides.tabs.offering')}
+                    </button>
+                )}
+                {hasConfirmedRSVP && currentStatus === 'offering' && (
+                    <button
+                    className={`tab-button ${activeTab === 'seeking' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('seeking')}
+                    >
+                    {t('events.features.rides.tabs.seeking')}
+                    </button>
+                )}
             </nav>
 
             <div className="tab-content">
               {activeTab === 'my_info' && (
                 <div className="my-info-tab">
                   <h4>{t('events.features.rides.myRideInfo')}</h4>
+                  {!hasConfirmedRSVP && (
+                    <div className="rsvp-warning">
+                        <div className="warning-content">
+                        <span className="warning-icon">⚠️</span>
+                        <span className="warning-text">
+                            {t('events.features.rides.rsvpWarning')}
+                        </span>
+                        </div>
+                    </div>
+                    )}
                   <form onSubmit={handleRideInfoSubmit} className="ride-form">
                     <div className="form-group">
                       <label>{t('events.features.rides.form.status')} *</label>
@@ -459,6 +547,7 @@ const PublicRidesPage = () => {
                             value="offering"
                             checked={rideInfo.status === 'offering'}
                             onChange={(e) => setRideInfo({...rideInfo, status: e.target.value})}
+                            disabled={!hasConfirmedRSVP}
                             required
                           />
                           <span className="radio-label offering">
@@ -473,6 +562,7 @@ const PublicRidesPage = () => {
                             value="seeking"
                             checked={rideInfo.status === 'seeking'}
                             onChange={(e) => setRideInfo({...rideInfo, status: e.target.value})}
+                            disabled={!hasConfirmedRSVP}
                             required
                           />
                           <span className="radio-label seeking">
@@ -567,62 +657,157 @@ const PublicRidesPage = () => {
               {activeTab === 'offering' && (
                 <div className="offering-tab">
                   <h4>{t('events.features.rides.availableRides')}</h4>
-                  <div className="guests-list">
-                    {getOfferingGuests().length === 0 ? (
-                      <p className="no-guests">{t('events.features.rides.noOffering')}</p>
-                    ) : (
-                      getOfferingGuests().map(otherGuest => {
-                        const contactStatus = getContactStatus(otherGuest._id);
-                        const statusText = getContactStatusText(contactStatus);
-                        
-                        return (
-                          <div key={otherGuest._id} className="guest-item offering">
-                            <div className="guest-info">
-                              <h5 className="guest-name">{otherGuest.firstName} {otherGuest.lastName}</h5>
-                              <div className="guest-details">
-                                {otherGuest.rideInfo && otherGuest.rideInfo.address && (
-                                  <p><strong>{t('events.features.rides.form.address')}:</strong> {otherGuest.rideInfo.address}</p>
-                                )}
-                                {otherGuest.rideInfo && otherGuest.rideInfo.availableSeats && (
-                                  <p><strong>{t('events.features.rides.form.availableSeats')}:</strong> {otherGuest.rideInfo.availableSeats}</p>
-                                )}
-                                {otherGuest.rideInfo && otherGuest.rideInfo.departureTime && (
-                                  <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {otherGuest.rideInfo.departureTime}</p>
-                                )}
-                              </div>
-                              <div className="contact-info">
-                                <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
-                              </div>
-                              {statusText && (
-                                <div className="status-display">
-                                  <strong>{t('events.features.rides.status.label')}:</strong> {statusText}
+                  
+                  {/* Suggested rides section for seekers */}
+                  {rideInfo.status === 'seeking' && suggestedRides.length > 0 && (
+                    <div className="suggested-rides-section">
+                      <h5 className="suggested-rides-title">{t('events.features.rides.suggestedRides')}</h5>
+                      <div className="guests-list">
+                        {suggestedRides.map(otherGuest => {
+                          const contactStatus = getContactStatus(otherGuest._id);
+                          const statusText = getContactStatusText(contactStatus);
+                          const isArranged = contactStatus === 'arranged_ride';
+                          
+                          return (
+                            <div key={otherGuest._id} className="guest-item offering suggested">
+                              <div className="guest-info">
+                                <h5 className="guest-name">{otherGuest.firstName} {otherGuest.lastName}</h5>
+                                <div className="guest-details">
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.address && (
+                                    <p><strong>{t('events.features.rides.form.address')}:</strong> {otherGuest.rideInfo.address}</p>
+                                  )}
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.availableSeats && (
+                                    <p><strong>{t('events.features.rides.form.availableSeats')}:</strong> {otherGuest.rideInfo.availableSeats}</p>
+                                  )}
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.departureTime && (
+                                    <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {otherGuest.rideInfo.departureTime}</p>
+                                  )}
+                                  {otherGuest.distance && (
+                                    <p className="distance-info"><strong>{t('events.features.rides.distance')}:</strong> {otherGuest.distance}</p>
+                                  )}
                                 </div>
-                              )}
+                                <div className="contact-info">
+                                  <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
+                                </div>
+                                {statusText && (
+                                  <div className="status-display">
+                                    <strong>{t('events.features.rides.status.label')}:</strong> {statusText}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="contact-actions">
+                                <button
+                                  className="contact-action arranged"
+                                  onClick={() => handleContactAction(otherGuest._id, 'arranged_ride')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.arrangedRide')}
+                                </button>
+                                <button
+                                  className="contact-action not-relevant"
+                                  onClick={() => handleContactAction(otherGuest._id, 'not_relevant')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.notRelevant')}
+                                </button>
+                                <button
+                                  className="contact-action no-response"
+                                  onClick={() => handleContactAction(otherGuest._id, 'no_response')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.noResponse')}
+                                </button>
+                                {isArranged && (
+                                  <button
+                                    className="contact-action cancel-ride"
+                                    onClick={() => handleCancelRide(otherGuest._id)}
+                                  >
+                                    {t('events.features.rides.actions.cancelRide')}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div className="contact-actions">
-                              <button
-                                className="contact-action arranged"
-                                onClick={() => handleContactAction(otherGuest._id, 'arranged_ride')}
-                              >
-                                {t('events.features.rides.actions.arrangedRide')}
-                              </button>
-                              <button
-                                className="contact-action not-relevant"
-                                onClick={() => handleContactAction(otherGuest._id, 'not_relevant')}
-                              >
-                                {t('events.features.rides.actions.notRelevant')}
-                              </button>
-                              <button
-                                className="contact-action no-response"
-                                onClick={() => handleContactAction(otherGuest._id, 'no_response')}
-                              >
-                                {t('events.features.rides.actions.noResponse')}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All offering rides */}
+                  <div className="all-rides-section">
+                    {rideInfo.status === 'seeking' && suggestedRides.length > 0 && (
+                      <h5 className="all-rides-title">{t('events.features.rides.allAvailableRides')}</h5>
                     )}
+                    <div className="guests-list">
+                      {getOfferingGuests().length === 0 ? (
+                        <p className="no-guests">{t('events.features.rides.noOffering')}</p>
+                      ) : (
+                        getOfferingGuests().map(otherGuest => {
+                          const contactStatus = getContactStatus(otherGuest._id);
+                          const statusText = getContactStatusText(contactStatus);
+                          const isArranged = contactStatus === 'arranged_ride';
+                          const isSuggested = suggestedRides.some(sg => sg._id === otherGuest._id);
+                          
+                          return (
+                            <div key={otherGuest._id} className={`guest-item offering ${isSuggested ? 'already-suggested' : ''}`}>
+                              <div className="guest-info">
+                                <h5 className="guest-name">{otherGuest.firstName} {otherGuest.lastName}</h5>
+                                <div className="guest-details">
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.address && (
+                                    <p><strong>{t('events.features.rides.form.address')}:</strong> {otherGuest.rideInfo.address}</p>
+                                  )}
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.availableSeats && (
+                                    <p><strong>{t('events.features.rides.form.availableSeats')}:</strong> {otherGuest.rideInfo.availableSeats}</p>
+                                  )}
+                                  {otherGuest.rideInfo && otherGuest.rideInfo.departureTime && (
+                                    <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {otherGuest.rideInfo.departureTime}</p>
+                                  )}
+                                </div>
+                                <div className="contact-info">
+                                  <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
+                                </div>
+                                {statusText && (
+                                  <div className="status-display">
+                                    <strong>{t('events.features.rides.status.label')}:</strong> {statusText}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="contact-actions">
+                                <button
+                                  className="contact-action arranged"
+                                  onClick={() => handleContactAction(otherGuest._id, 'arranged_ride')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.arrangedRide')}
+                                </button>
+                                <button
+                                  className="contact-action not-relevant"
+                                  onClick={() => handleContactAction(otherGuest._id, 'not_relevant')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.notRelevant')}
+                                </button>
+                                <button
+                                  className="contact-action no-response"
+                                  onClick={() => handleContactAction(otherGuest._id, 'no_response')}
+                                  disabled={isArranged}
+                                >
+                                  {t('events.features.rides.actions.noResponse')}
+                                </button>
+                                {isArranged && (
+                                  <button
+                                    className="contact-action cancel-ride"
+                                    onClick={() => handleCancelRide(otherGuest._id)}
+                                  >
+                                    {t('events.features.rides.actions.cancelRide')}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -635,9 +820,6 @@ const PublicRidesPage = () => {
                       <p className="no-guests">{t('events.features.rides.noSeeking')}</p>
                     ) : (
                       getSeekingGuests().map(otherGuest => {
-                        const contactStatus = getContactStatus(otherGuest._id);
-                        const statusText = getContactStatusText(contactStatus);
-                        
                         return (
                           <div key={otherGuest._id} className="guest-item seeking">
                             <div className="guest-info">
@@ -656,31 +838,6 @@ const PublicRidesPage = () => {
                               <div className="contact-info">
                                 <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
                               </div>
-                              {statusText && (
-                                <div className="status-display">
-                                  <strong>{t('events.features.rides.status.label')}:</strong> {statusText}
-                                </div>
-                              )}
-                            </div>
-                            <div className="contact-actions">
-                              <button
-                                className="contact-action arranged"
-                                onClick={() => handleContactAction(otherGuest._id, 'arranged_ride')}
-                              >
-                                {t('events.features.rides.actions.arrangedRide')}
-                              </button>
-                              <button
-                                className="contact-action not-relevant"
-                                onClick={() => handleContactAction(otherGuest._id, 'not_relevant')}
-                              >
-                                {t('events.features.rides.actions.notRelevant')}
-                              </button>
-                              <button
-                                className="contact-action no-response"
-                                onClick={() => handleContactAction(otherGuest._id, 'no_response')}
-                              >
-                                {t('events.features.rides.actions.noResponse')}
-                              </button>
                             </div>
                           </div>
                         );

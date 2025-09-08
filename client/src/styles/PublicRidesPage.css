@@ -298,36 +298,66 @@
   margin: 0 0 1.5rem 0;
 }
 
+/* Suggested Rides Section */
+.suggested-rides-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.suggested-rides-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #007bff;
+  margin: 0 0 1rem 0;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.all-rides-section {
+  margin-top: 1rem;
+}
+
+.all-rides-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0 0 1rem 0;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #6c757d;
+}
+
 .guests-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
   padding-right: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f1f1f1;
 }
 
 .guests-list::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .guests-list::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .guests-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  background: #007bff;
+  border-radius: 4px;
 }
 
 .guests-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-.guests-list {
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
+   background: #0056b3;
 }
 
 .no-guests {
@@ -357,6 +387,19 @@
   border-left: 4px solid #007bff;
 }
 
+/* Suggested ride styling */
+.guest-item.suggested {
+  background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+  border: 2px solid #28a745;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+/* Already suggested in main list */
+.guest-item.already-suggested {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
 .guest-name {
   font-size: 1.1rem;
   font-weight: 600;
@@ -376,6 +419,11 @@
 
 .guest-details strong {
   color: #212529;
+}
+
+.distance-info {
+  color: #007bff;
+  font-weight: 500;
 }
 
 .contact-info {
@@ -415,12 +463,17 @@
   white-space: nowrap;
 }
 
+.contact-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .contact-action.arranged {
   background-color: #28a745;
   color: white;
 }
 
-.contact-action.arranged:hover {
+.contact-action.arranged:hover:not(:disabled) {
   background-color: #218838;
 }
 
@@ -429,7 +482,7 @@
   color: white;
 }
 
-.contact-action.not-relevant:hover {
+.contact-action.not-relevant:hover:not(:disabled) {
   background-color: #e8610e;
 }
 
@@ -438,8 +491,126 @@
   color: white;
 }
 
-.contact-action.no-response:hover {
+.contact-action.no-response:hover:not(:disabled) {
   background-color: #c82333;
+}
+
+.contact-action.cancel-ride {
+  background-color: #6c757d;
+  color: white;
+}
+
+.contact-action.cancel-ride:hover {
+  background-color: #5a6268;
+}
+
+/* RSVP Warning */
+.rsvp-warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+  border: 1px solid #ffcc02;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.warning-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.warning-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  color: #e65100;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* Fix overlapping cards issue */
+.guest-item {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #ffffff;
+  transition: box-shadow 0.2s ease;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  clear: both;
+  overflow: hidden;
+}
+
+.guest-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.guest-info {
+  margin-bottom: 1rem;
+}
+
+.contact-info {
+  color: #495057;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.status-display {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+  margin-bottom: 1rem;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.contact-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  clear: both;
+}
+
+.guest-details {
+  color: #495057;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.guest-details p {
+  margin: 0 0 0.5rem 0;
+  word-wrap: break-word;
+}
+
+/* Ensure proper spacing between sections */
+.suggested-rides-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.all-rides-section {
+  margin-top: 1rem;
 }
 
 /* Mobile Responsive */
@@ -509,6 +680,31 @@
     max-height: 50vh;
     padding-right: 0.25rem;
   }
+
+  .suggested-rides-title,
+  .all-rides-title {
+    font-size: 1rem;
+    padding: 0.4rem;
+  }
+
+  .guest-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .contact-info {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .rsvp-warning {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .warning-text {
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -550,5 +746,16 @@
 
   .guests-list {
     max-height: 45vh;
+  }
+
+  .suggested-rides-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .suggested-rides-title,
+  .all-rides-title {
+    font-size: 0.95rem;
+    padding: 0.3rem;
   }
 }

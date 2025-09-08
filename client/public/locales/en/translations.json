@@ -418,6 +418,13 @@
         "appLogo": "PlanIt Logo",
         "eventNotFound": "Event not found",
         "phoneNotFound": "Phone number not found in the guest list",
+        "suggestedRides": "Recommended ride offers",
+        "allAvailableRides": "All available rides",
+        "distance": "Distance",
+        "rideCancelled": "Ride successfully canceled",
+        "notAvailable": "Not available",
+        "rsvpNote": "If participants appear on this page who are not on the external guest page, they probably have not RSVP'd",
+        "rsvpWarning": "You have not yet confirmed attendance to the event, please confirm and return to this page",
         "stats": {
           "offering": "Ride Offers",
           "seeking": "Ride Seekers"
@@ -429,7 +436,8 @@
           "not_set": "Not set",
           "in_process": "In Process",
           "taken": "Ride Taken",
-          "label": "Status"
+          "label": "Status",
+          "not_relevant": "Not Relevant"
         },
         "form": {
           "status": "Ride Status",
@@ -447,7 +455,8 @@
           "contacted": "Contacted",
           "arrangedRide": "Arranged a ride",
           "notRelevant": "Contacted but not relevant",
-          "noResponse": "Tried to contact but no response"
+          "noResponse": "Tried to contact but no response",
+          "cancelRide": "Cancel Ride"
         },
         "tabs": {
           "overview": "Overview",
@@ -459,7 +468,8 @@
         "contactRecorded": "Action recorded successfully",
         "validation": {
         "phoneRequired": "Phone number is required",
-        "invalidPhoneFormat": "Invalid phone format (required: 05X-XXXXXXX)"
+        "invalidPhoneFormat": "Invalid phone format (required: 05X-XXXXXXX)",
+        "fillRequired": "Please fill in all required fields"
       },
         "errors": {
           "updateFailed": "Failed to update information",

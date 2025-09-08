@@ -158,25 +158,18 @@ const GuestSchema = new mongoose.Schema({
   }
 });
 
-/**
- * Pre-save middleware to update timestamps and validate ride info
- */
+  // Pre-save middleware to update timestamps and validate ride info
 GuestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   
-  // Ensure attendingCount is a valid number
-  if (typeof this.attendingCount !== 'number' || isNaN(this.attendingCount)) {
-    this.attendingCount = 1;
-  }
-  
-  // Set attendingCount to 0 for declined guests
+  // Handle attendingCount based on RSVP status
   if (this.rsvpStatus === 'declined') {
     this.attendingCount = 0;
-  }
-  
-  // Ensure confirmed guests have at least 1 attendingCount
-  if (this.rsvpStatus === 'confirmed' && (!this.attendingCount || this.attendingCount < 1)) {
-    this.attendingCount = 1;
+  } else if (this.rsvpStatus === 'confirmed') {
+    // Only set to 1 if attendingCount is not already set or is invalid
+    if (!this.attendingCount || this.attendingCount < 1 || isNaN(this.attendingCount)) {
+      this.attendingCount = 1;
+    }
   }
 
   // Clean up ride info fields based on status

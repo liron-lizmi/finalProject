@@ -83,6 +83,7 @@
         "eventNotFound": "אירוע לא נמצא",
         "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים",
         "guestNotFound": "מוזמן לא נמצא",
+        "rideCancelled": "הטרמפ בוטל בהצלחה",
         "validation": {
           "phoneRequired": "מספר טלפון נדרש",
           "missingParameters": "חסרים פרמטרים נדרשים"

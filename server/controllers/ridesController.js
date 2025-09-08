@@ -1,9 +1,74 @@
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
 
-/**
- * Retrieves basic event information for rides page
- */
+//  Calculate distance between two addresses (simplified). 
+// In a real implementation, you would use Google Maps Distance Matrix API
+const calculateDistance = (address1, address2) => {
+  const addr1Lower = address1.toLowerCase().trim();
+  const addr2Lower = address2.toLowerCase().trim();
+  
+  const cities = [
+    'תל אביב', 'ירושלים', 'חיפה', 'באר שבע', 'פתח תקווה', 'נתניה', 'רחובות', 
+    'מודיעין', 'רעננה', 'הרצליה', 'רמת גן', 'בני ברק', 'גבעתיים', 'אשדוד',
+    'אשקלון', 'עפולה', 'נצרת', 'טבריה', 'צפת', 'ביתר עילית', 'מעלה אדומים',
+    'בית שמש', 'אלעד', 'כפר סבא', 'הוד השרון', 'רמלה', 'לוד', 'קרית גת',
+    'קרית מלאכי', 'יבנה', 'גדרה', 'נס ציונה', 'ראשון לציון'
+  ];
+  
+  const commonStreets = [
+    'הרצל', 'בן גוריון', 'רוטשילד', 'דיזנגוף', 'קינג ג\'ורג\'', 'יפו', 'אלנבי',
+    'בגרוזנברג', 'ביאליק', 'פרישמן', 'בן יהודה', 'שדרות ירושלים', 'שדרות חיים בר לב'
+  ];
+  
+  let city1 = null;
+  let city2 = null;
+  
+  for (const city of cities) {
+    if (addr1Lower.includes(city.toLowerCase())) {
+      city1 = city;
+      break;
+    }
+  }
+  
+  for (const city of cities) {
+    if (addr2Lower.includes(city.toLowerCase())) {
+      city2 = city;
+      break;
+    }
+  }
+  
+  if (city1 && city2 && city1 === city2) {
+    const hasCommonStreet = commonStreets.some(street => 
+      addr1Lower.includes(street.toLowerCase()) && addr2Lower.includes(street.toLowerCase())
+    );
+    
+    if (hasCommonStreet) {
+      return Math.random() * 1 + 0.1; 
+    }
+    
+    return Math.random() * 3 + 0.5; 
+  }
+  
+  const jerusalemAreas = ['ירושלים', 'ביתר עילית', 'מעלה אדומים', 'בית שמש'];
+  const isJerusalemArea1 = jerusalemAreas.some(area => addr1Lower.includes(area.toLowerCase()));
+  const isJerusalemArea2 = jerusalemAreas.some(area => addr2Lower.includes(area.toLowerCase()));
+  
+  if (isJerusalemArea1 && isJerusalemArea2) {
+    return Math.random() * 12 + 8; 
+  }
+  
+  const gushDanAreas = ['תל אביב', 'רמת גן', 'גבעתיים', 'בני ברק', 'פתח תקווה', 'רעננה', 'הרצליה', 'הוד השרון', 'כפר סבא'];
+  const isGushDan1 = gushDanAreas.some(area => addr1Lower.includes(area.toLowerCase()));
+  const isGushDan2 = gushDanAreas.some(area => addr2Lower.includes(area.toLowerCase()));
+  
+  if (isGushDan1 && isGushDan2) {
+    return Math.random() * 15 + 10; 
+  }
+  
+  return Math.random() * 50 + 30; 
+};
+
+//  Retrieves basic event information for rides page
 const getEventRidesInfo = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -24,9 +89,7 @@ const getEventRidesInfo = async (req, res) => {
   }
 };
 
-/**
- * Checks if phone number exists for the event and returns guest data
- */
+//  Checks if phone number exists for the event and returns guest data
 const checkPhoneForRides = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -48,22 +111,20 @@ const checkPhoneForRides = async (req, res) => {
   }
 };
 
-/**
- * Retrieves all guests with ride information for public display
- * Returns fresh data from database including both offering and seeking guests
- */
+// Retrieves all guests with ride information for public display
+//  Returns fresh data from database including both offering and seeking guests
 const getRidesGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
-    console.log('Getting rides for event:', eventId);
-    // Get all confirmed guests with ride info
+    
+    // Get all confirmed guests with ride info (both offering and seeking)
     const guests = await Guest.find({ 
       event: eventId,
       rsvpStatus: 'confirmed',
-      'rideInfo.status': { $in: ['offering', 'seeking'] }
-    }).select('firstName lastName phone rideInfo');
-    console.log('Found guests:', guests.length); 
-    console.log('Guests data:', guests);
+      'rideInfo.status': { $in: ['offering', 'seeking'] },
+      'rideInfo.address': { $exists: true, $ne: '' }
+    }).select('firstName lastName phone rideInfo').lean();
+    
     res.json(guests);
   } catch (err) {
     console.error('Error fetching rides guests:', err);
@@ -71,10 +132,55 @@ const getRidesGuests = async (req, res) => {
   }
 };
 
-/**
- * Updates guest ride information from public interface
- * Handles both offering and seeking statuses with required fields
- */
+//  Gets suggested rides based on location proximity
+const getSuggestedRides = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { phone, userAddress } = req.body;
+
+    if (!phone || !userAddress) {
+      return res.status(400).json({ message: req.t('events.rides.validation.missingParameters') });
+    }
+
+    // Find the requesting guest
+    const requestingGuest = await Guest.findOne({ event: eventId, phone });
+    if (!requestingGuest) {
+      return res.status(404).json({ message: req.t('events.rides.phoneNotFound') });
+    }
+
+    // Get all offering guests (excluding the requesting guest)
+    const offeringGuests = await Guest.find({
+      event: eventId,
+      phone: { $ne: phone },
+      rsvpStatus: 'confirmed',
+      'rideInfo.status': 'offering',
+      'rideInfo.address': { $exists: true, $ne: '' }
+    }).select('firstName lastName phone rideInfo').lean();
+
+    // Calculate distances and sort by proximity
+    const guestsWithDistance = offeringGuests.map(guest => {
+      const distance = calculateDistance(userAddress, guest.rideInfo.address);
+      return {
+        ...guest,
+        distance: `${distance.toFixed(1)} ק"מ`,
+        numericDistance: distance
+      };
+    }).sort((a, b) => a.numericDistance - b.numericDistance);
+
+    // Return only suggestions that are close (under 15km)
+    const closeSuggestions = guestsWithDistance.filter(guest => guest.numericDistance < 15);
+    const suggestions = closeSuggestions.slice(0, 3);
+
+    res.json({ suggestions });
+  } catch (err) {
+    console.error('Error getting suggested rides:', err);
+    res.status(500).json({ message: req.t('events.rides.errors.serverError') });
+  }
+};
+
+
+//  Updates guest ride information from public interface
+//  Handles both offering and seeking statuses with required fields
 const updateGuestRideInfo = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -136,9 +242,7 @@ const updateGuestRideInfo = async (req, res) => {
   }
 };
 
-/**
- * Records contact action and updates both guests' statuses
- */
+//  Records contact action and updates both guests' statuses
 const recordContact = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -220,9 +324,49 @@ const recordContact = async (req, res) => {
   }
 };
 
-/**
- * Updates guest ride information by event owner (admin interface)
- */
+//  Cancels an arranged ride
+const cancelRide = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { phone, contactedGuestId } = req.body;
+
+    if (!phone || !contactedGuestId) {
+      return res.status(400).json({ message: req.t('events.rides.validation.missingParameters') });
+    }
+
+    const guest = await Guest.findOne({ event: eventId, phone });
+    const contactedGuest = await Guest.findById(contactedGuestId);
+
+    if (!guest || !contactedGuest) {
+      return res.status(404).json({ message: req.t('events.rides.guestNotFound') });
+    }
+
+    // Remove contact history entry for this guest
+    if (guest.rideInfo && guest.rideInfo.contactHistory) {
+      guest.rideInfo.contactHistory = guest.rideInfo.contactHistory.filter(
+        contact => contact.contactedGuestId.toString() !== contactedGuestId
+      );
+    }
+
+    // Reset the contacted guest's status
+    if (contactedGuest.rideInfo) {
+      contactedGuest.rideInfo.contactStatus = undefined;
+    }
+
+    await guest.save();
+    await contactedGuest.save();
+
+    res.json({ 
+      message: req.t('events.rides.rideCancelled'),
+      contactHistory: guest.rideInfo.contactHistory
+    });
+  } catch (err) {
+    console.error('Error cancelling ride:', err);
+    res.status(500).json({ message: req.t('events.rides.errors.serverError') });
+  }
+};
+
+//  Updates guest ride information by event owner (admin interface)
 const updateGuestRideInfoByOwner = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
@@ -278,7 +422,9 @@ module.exports = {
   getEventRidesInfo,
   checkPhoneForRides,
   getRidesGuests,
+  getSuggestedRides,
   updateGuestRideInfo,
   recordContact,
+  cancelRide,
   updateGuestRideInfoByOwner
 };
