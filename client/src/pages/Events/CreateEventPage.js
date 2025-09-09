@@ -479,7 +479,7 @@ const CreateEventPage = () => {
     <div className={`auth-logo-container ${isRTL ? 'rtl' : 'ltr'}`}>
       <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" />
     </div>
-    <div className={`create-event-container ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div className={`create-event-container ${isRTL ? 'rtl' : 'ltr'}`}>
 
       <div className="create-event-header">
         <h1>{t('events.createEvent')}</h1>

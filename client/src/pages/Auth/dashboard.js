@@ -249,7 +249,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="auth-container">
-        <div className="auth-box" style={{ textAlign: 'center' }}>
+        <div className="auth-box loading-center">
           <h2>{t('general.loading')}</h2>
           <div className="loading-spinner"></div>
         </div>
@@ -258,7 +258,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className={`dashboard-wrapper ${isRTL ? 'rtl' : 'ltr'}`} style={{ direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div className={`dashboard-wrapper ${isRTL ? 'rtl' : 'ltr'}`}>
       <header className="dashboard-header">
         <div className="header-container">
           <div className={`header-${isRTL ? 'right' : 'left'}`}>

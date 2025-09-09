@@ -5,6 +5,38 @@ import '../../styles/VendorsPage.css';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
+const getMapStyles = () => {
+  // Get CSS variables for map styling
+  const root = document.documentElement;
+  const styles = getComputedStyle(root);
+  
+  return [
+    { 
+      elementType: "geometry", 
+      stylers: [{ color: styles.getPropertyValue('--map-geometry-color').trim() || "#f5f5f5" }] 
+    },
+    { 
+      elementType: "labels.text.fill", 
+      stylers: [{ color: styles.getPropertyValue('--map-text-color').trim() || "#333333" }] 
+    },
+    { 
+      featureType: "road", 
+      elementType: "geometry", 
+      stylers: [{ color: styles.getPropertyValue('--map-road-color').trim() || "#ffffff" }] 
+    },
+    { 
+      featureType: "road", 
+      elementType: "geometry.stroke", 
+      stylers: [{ color: styles.getPropertyValue('--map-road-stroke-color').trim() || "#dddddd" }] 
+    },
+    { 
+      featureType: "water", 
+      elementType: "geometry", 
+      stylers: [{ color: styles.getPropertyValue('--map-water-color').trim() || "#e0e0e0" }] 
+    }
+  ];
+};
+
 const VendorsPage = ({ onSelectVendor }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -690,13 +722,7 @@ const VendorsPage = ({ onSelectVendor }) => {
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        styles: [
-          { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-          { elementType: "labels.text.fill", stylers: [{ color: "#333333" }] },
-          { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-          { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#dddddd" }] },
-          { featureType: "water", elementType: "geometry", stylers: [{ color: "#e0e0e0" }] }
-        ]
+        styles: getMapStyles()
       };
      
       const newMap = new window.google.maps.Map(mapRef.current, mapOptions);

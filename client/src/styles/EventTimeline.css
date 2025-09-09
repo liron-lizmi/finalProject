@@ -8,6 +8,32 @@
   direction: inherit;
 }
 
+/* Modal Close Button for Delete Modal */
+.modal-close-delete {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1001;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close-delete:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 /* Reminder Toast Styles */
 .reminder-toasts-container {
   position: fixed;

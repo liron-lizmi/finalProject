@@ -8,10 +8,9 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
@@ -45,32 +44,36 @@
   }
 }
 
+.rsvp-modal {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .rsvp-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 25px;
-  border-bottom: 1px solid #e9ecef;
-  background: #000000;
-  color: white;
-  border-radius: 12px 12px 0 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
 }
 
 .rsvp-modal-header h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+   margin: 0;
 }
 
 .rsvp-modal-close {
-  background: transparent;
+  background: none;
   border: none;
-  color: white;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   padding: 5px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
 }
 
 .rsvp-modal-close:hover {
@@ -98,10 +101,8 @@
 
 .rsvp-form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
 .rsvp-form-input,
@@ -124,15 +125,27 @@
 }
 
 .rsvp-form-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   resize: vertical;
   font-family: inherit;
 }
 
 .character-count {
-  margin-top: 5px;
+  color: #666;
   font-size: 12px;
-  color: #6c757d;
-  text-align: right;
+  float: right;
+}
+
+.rsvp-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 }
 
 .rsvp-modal-actions {
@@ -144,16 +157,14 @@
 }
 
 .rsvp-submit-button {
-  flex: 1;
-  background: #000000;
-  color: white;
+  padding: 12px 24px;
   border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 600;
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .rsvp-submit-button:hover {
@@ -163,15 +174,14 @@
 }
 
 .rsvp-cancel-button {
-  flex: 1;
-  background: transparent;
-  color: #6c757d;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-size: 14px;
+  padding: 12px 24px;
+  border: 1px solid #6c757d;
+  background-color: #f8f9fa;
+  color: #495057;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .rsvp-cancel-button:hover {
@@ -179,7 +189,44 @@
   color: #495057;
 }
 
+.rsvp-status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rsvp-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.rsvp-radio-label.confirmed {
+  color: #28a745;
+}
+
+.rsvp-radio-label.declined {
+  color: #dc3545;
+}
+
+.rsvp-radio-label.pending {
+  color: #ffc107;
+}
+
 /* Guest Info Display in Modal */
+
+.guest-info {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.guest-info h4 {
+  margin: 0 0 5px 0;
+}
+
 .guest-info-display {
   background: #f8f9fa;
   padding: 15px;
@@ -189,8 +236,8 @@
 }
 
 .guest-info-display p {
-  margin: 5px 0;
-  color: #495057;
+  margin: 0;
+  color: #666;
 }
 
 .guest-info-display strong {
@@ -202,28 +249,36 @@
 .count-input-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
+  gap: 10px;
+  margin-bottom: 5px;
 }
 
 .count-button {
-  background: #000000;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 50px;
+  width: 50px;
   height: 50px;
+  border: 2px solid #007bff;
+  background-color: #ffffff;
+  color: #007bff;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.count-button:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.count-button:not(:disabled):hover {
+  background-color: #007bff;
+  color: white;
 }
 
 .count-button:hover {
@@ -239,15 +294,14 @@
 }
 
 .count-input {
-  border: none;
-  padding: 12px 16px;
-  font-size: 16px;
+  width: 80px;
+  height: 50px;
   text-align: center;
-  min-width: 80px;
-  background: white;
-  outline: none;
-  appearance: textfield;
-  -moz-appearance: textfield;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #ffffff;
 }
 
 .count-input::-webkit-outer-spin-button,

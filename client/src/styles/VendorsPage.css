@@ -214,6 +214,14 @@
     overflow: hidden;
     border: 1px solid #ddd;
   }
+
+  :root {
+    --map-geometry-color: #f5f5f5;
+    --map-text-color: #333333;
+    --map-road-color: #ffffff;
+    --map-road-stroke-color: #dddddd;
+    --map-water-color: #e0e0e0;
+  }
  
   @media (min-width: 768px) {
     .vendors-map {

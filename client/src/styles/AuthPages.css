@@ -453,6 +453,18 @@ body {
   content: "✗";
 }
 
+.loading-center {
+  text-align: center;
+}
+
+.dashboard-wrapper.rtl {
+  direction: rtl;
+}
+
+.dashboard-wrapper.ltr {
+  direction: ltr;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

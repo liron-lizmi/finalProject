@@ -509,7 +509,7 @@ const TaskManager = ({ eventId }) => {
       {showDeleteModal && (
         <div className="modal-overlay" onClick={cancelDeleteTask}>
           <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={cancelDeleteTask} style={{position: 'absolute', top: '10px', left: '10px', zIndex: 1001}}>
+            <button className="modal-close-delete" onClick={cancelDeleteTask}>
               ✕
             </button>
             

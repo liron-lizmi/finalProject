@@ -15,7 +15,6 @@ import EventVendorsPage from './pages/Events/Features/EventVendorsPage';
 import EventGuestsPage from './pages/Events/Features/EventGuestsPage';
 import EventSeatingPage from './pages/Events/Features/EventSeatingPage';
 import EventRidesPage from './pages/Events/Features/EventRidesPage';
-import EventWeatherPage from './pages/Events/Features/EventWeatherPage';
 import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
 import EventSharePage from './pages/Events/Features/EventSharePage';
 import TaskManager from './pages/Events/Features/components/TaskManager';
@@ -47,7 +46,6 @@ const App = () => {
         <Route path="/event/:id/seating" element={<EventSeatingPage />} />
         <Route path="/event/:id/timeline" element={<TaskManager />} />
         <Route path="/event/:id/rides" element={<EventRidesPage />} />
-        <Route path="/event/:id/weather" element={<EventWeatherPage />} />
         <Route path="/event/:id/budget" element={<EventBudgetPage />} />
         <Route path="/event/:id/share" element={<EventSharePage />} />
 

@@ -67,14 +67,8 @@ const EventDetailsPage = () => {
       case 'rides':
         navigate(`/event/${id}/rides`);
         break;
-      case 'weather':
-        navigate(`/event/${id}/weather`);
-        break;
       case 'budget':
         navigate(`/event/${id}/budget`);
-        break;
-      case 'share':
-        navigate(`/event/${id}/share`);
         break;
       default:
         break;
@@ -83,6 +77,10 @@ const EventDetailsPage = () => {
 
   const handleBack = () => {
     navigate('/dashboard');
+  };
+
+  const handleShare = () => {
+    navigate(`/event/${id}/share`);
   };
 
   if (error) {
@@ -124,8 +122,6 @@ const EventDetailsPage = () => {
   
   const today = new Date();
   const daysRemaining = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
-
-  const progress = calculateProgress(event);
 
   return (
     <div className="event-page-wrapper">
@@ -178,22 +174,18 @@ const EventDetailsPage = () => {
               </span>
             </div>
           </div>
-          
-          <div className="progress-container">
-            <div className="progress-info">
-              <h3>{t('events.planningProgress')}</h3>
-              <span className="progress-percentage">{progress}%</span>
-            </div>
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${progress}%` }}
-                data-progress={`${progress}%`}>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
+
+      <div className="share-section">
+        <button className="share-event-button" onClick={handleShare}>
+          <span className="share-icon">🔗</span>
+          <span>{t('events.features.share.title')}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
 
         <section className="event-features-section">
           <div className="features-grid">
@@ -279,19 +271,6 @@ const EventDetailsPage = () => {
               </div>
             </div>
 
-            <div className="feature-card" onClick={() => handleFeatureClick('weather')}>
-              <div className="feature-emoji">☀️</div>
-              <div className="feature-content">
-                <h3>{t('events.features.weather.title')}</h3>
-                <p>{t('events.features.weather.description')}</p>
-              </div>
-              <div className="feature-action">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
-
             <div className="feature-card" onClick={() => handleFeatureClick('budget')}>
               <div className="feature-emoji">💰</div>
               <div className="feature-content">
@@ -304,39 +283,11 @@ const EventDetailsPage = () => {
                 </svg>
               </div>
             </div>
-
-            <div className="feature-card" onClick={() => handleFeatureClick('share')}>
-              <div className="feature-emoji">🔗</div>
-              <div className="feature-content">
-                <h3>{t('events.features.share.title')}</h3>
-                <p>{t('events.features.share.description')}</p>
-              </div>
-              <div className="feature-action">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </div>
-            </div>
           </div>
         </section>
       </div>
     </div>
   );
-};
-
-const calculateProgress = (event) => {
-  let completedSteps = 0;
-  let totalSteps = 9; 
-
-  if (event.venue && event.venue.name) {
-    completedSteps += 1;
-  }
-
-  if (event.guestCount > 0) {
-    completedSteps += 1;
-  }
-  
-  return Math.round((completedSteps / totalSteps) * 100);
 };
 
 export default EventDetailsPage;

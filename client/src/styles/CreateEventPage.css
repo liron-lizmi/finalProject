@@ -731,6 +731,13 @@ html, body {
   margin-top: 50px; 
 }
 
+.create-event-container.rtl {
+  direction: rtl;
+}
+
+.create-event-container.ltr {
+  direction: ltr;
+}
 
 @keyframes spin {
   to {
