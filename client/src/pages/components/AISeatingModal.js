@@ -20,12 +20,16 @@ const AISeatingModal = ({
     mixGroups: false,
     separateAgeGroups: false,
     prioritizeVIPs: false,
-    customInstructions: ''
+    customInstructions: '',
+    allowGroupMixing: false,
+    preferredTableSize: 12,
+    groupMixingRules: []
   });
   
   const [tableSettings, setTableSettings] = useState([
     { type: 'round', capacity: 8, count: 0 },
     { type: 'round', capacity: 10, count: 0 },
+    { type: 'round', capacity: 12, count: 0 },
     { type: 'rectangular', capacity: 12, count: 0 },
     { type: 'rectangular', capacity: 16, count: 0 }
   ]);
@@ -37,6 +41,31 @@ const AISeatingModal = ({
   const [showExistingArrangementWarning, setShowExistingArrangementWarning] = useState(false);
   const [existingArrangementAction, setExistingArrangementAction] = useState('');
   const [initialLoad, setInitialLoad] = useState(true);
+
+  // Group mixing management
+  const [showGroupMixingConfig, setShowGroupMixingConfig] = useState(false);
+  const [newGroupMixRule, setNewGroupMixRule] = useState({
+    group1: '',
+    group2: '',
+    priority: 'medium'
+  });
+
+  // Separation and together rules
+  const [showSeatingRules, setShowSeatingRules] = useState(false);
+  const [seatingRules, setSeatingRules] = useState({
+    mustSitTogether: [],
+    cannotSitTogether: []
+  });
+  const [newMustSitRule, setNewMustSitRule] = useState({
+    guest1Id: '',
+    guest2Id: '',
+    reason: ''
+  });
+  const [newCannotSitRule, setNewCannotSitRule] = useState({
+    guest1Id: '',
+    guest2Id: '',
+    reason: ''
+  });
 
   const hasExistingArrangement = seatingArrangement && Object.keys(seatingArrangement).length > 0 && Object.values(seatingArrangement).some(arr => arr.length > 0);
 
@@ -74,6 +103,16 @@ const AISeatingModal = ({
     return `${baseName} - ${groupName}`;
   };
 
+  // Get available groups for mixing rules
+  const availableGroups = React.useMemo(() => {
+    const groups = new Set();
+    guests.forEach(guest => {
+      const group = guest.customGroup || guest.group;
+      if (group) groups.add(group);
+    });
+    return Array.from(groups);
+  }, [guests]);
+
   useEffect(() => {
     if (!isOpen) {
       setIsGenerating(false);
@@ -81,8 +120,18 @@ const AISeatingModal = ({
       setShowExistingArrangementWarning(false);
       setExistingArrangementAction('');
       setInitialLoad(true);
+      setShowGroupMixingConfig(false);
+      setShowSeatingRules(false);
     } else if (initialLoad) {
       setInitialLoad(false);
+      
+      // Initialize seating rules from preferences
+      if (preferences) {
+        setSeatingRules({
+          mustSitTogether: preferences.groupTogether || [],
+          cannotSitTogether: preferences.keepSeparate || []
+        });
+      }
       
       const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
       const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
@@ -101,7 +150,7 @@ const AISeatingModal = ({
         setShowTableCreation(false);
       }
     }
-  }, [isOpen, initialLoad, tables.length, guests, tables, hasExistingArrangement, seatingArrangement]);
+  }, [isOpen, initialLoad, tables.length, guests, tables, hasExistingArrangement, seatingArrangement, preferences]);
 
   const autoSuggestTables = (guestsNeedingSeats) => {
     if (guestsNeedingSeats === 0) return;
@@ -126,31 +175,34 @@ const AISeatingModal = ({
     
     let remainingGuests = guestsNeedingNewTables;
     
+    // Prefer 12-person tables as specified
     while (remainingGuests > 0) {
-      if (remainingGuests <= 6) {
-        newTableSettings[0].count += 1;
-        remainingGuests = 0;
-      } else if (remainingGuests <= 8) {
-        newTableSettings[0].count += 1;
-        remainingGuests = 0;
-      } else if (remainingGuests <= 10) {
-        newTableSettings[1].count += 1;
-        remainingGuests = 0;
-      } else if (remainingGuests <= 16) {
-        newTableSettings[0].count += 2;
-        remainingGuests = 0;
-      } else if (remainingGuests <= 18) {
-        newTableSettings[0].count += 1;
-        newTableSettings[1].count += 1;
-        remainingGuests = 0;
-      } else {
-        if (remainingGuests % 10 <= 2 && remainingGuests >= 20) {
-          newTableSettings[1].count += 1;
-          remainingGuests -= 10;
-        } else {
-          newTableSettings[0].count += 1;
-          remainingGuests -= 8;
+      if (remainingGuests >= 10 && remainingGuests <= 14) {
+        const table12Index = newTableSettings.findIndex(s => s.capacity === 12);
+        if (table12Index !== -1) {
+          newTableSettings[table12Index].count += 1;
         }
+        remainingGuests = 0;
+      } else if (remainingGuests >= 12) {
+        const table12Index = newTableSettings.findIndex(s => s.capacity === 12);
+        if (table12Index !== -1) {
+          newTableSettings[table12Index].count += 1;
+        }
+        remainingGuests -= 12;
+      } else if (remainingGuests >= 8) {
+        const table10Index = newTableSettings.findIndex(s => s.capacity === 10);
+        if (table10Index !== -1) {
+          newTableSettings[table10Index].count += 1;
+        }
+        remainingGuests -= 10;
+      } else if (remainingGuests >= 6) {
+        const table8Index = newTableSettings.findIndex(s => s.capacity === 8);
+        if (table8Index !== -1) {
+          newTableSettings[table8Index].count += 1;
+        }
+        remainingGuests -= 8;
+      } else {
+        remainingGuests = 0;
       }
     }
     
@@ -214,7 +266,7 @@ const AISeatingModal = ({
     const newCustomTable = {
       id: `custom_${Date.now()}`,
       type: 'round',
-      capacity: 6,
+      capacity: 12,
       count: 1
     };
     setCustomTableSettings(prev => [...prev, newCustomTable]);
@@ -234,6 +286,86 @@ const AISeatingModal = ({
     setCustomTableSettings(prev => prev.filter(setting => setting.id !== id));
   };
 
+  // Group mixing functions
+  const addGroupMixRule = () => {
+    if (newGroupMixRule.group1 && newGroupMixRule.group2 && newGroupMixRule.group1 !== newGroupMixRule.group2) {
+      setAiPreferences(prev => ({
+        ...prev,
+        groupMixingRules: [...prev.groupMixingRules, {
+          id: Date.now().toString(),
+          group1: newGroupMixRule.group1,
+          group2: newGroupMixRule.group2,
+          priority: newGroupMixRule.priority
+        }]
+      }));
+      setNewGroupMixRule({ group1: '', group2: '', priority: 'medium' });
+    }
+  };
+
+  const removeGroupMixRule = (ruleId) => {
+    setAiPreferences(prev => ({
+      ...prev,
+      groupMixingRules: prev.groupMixingRules.filter(rule => rule.id !== ruleId)
+    }));
+  };
+
+  // Seating rules functions
+  const addMustSitRule = () => {
+    if (newMustSitRule.guest1Id && newMustSitRule.guest2Id && newMustSitRule.guest1Id !== newMustSitRule.guest2Id) {
+      setSeatingRules(prev => ({
+        ...prev,
+        mustSitTogether: [...prev.mustSitTogether, {
+          id: Date.now().toString(),
+          guest1Id: newMustSitRule.guest1Id,
+          guest2Id: newMustSitRule.guest2Id,
+          reason: newMustSitRule.reason
+        }]
+      }));
+      setNewMustSitRule({ guest1Id: '', guest2Id: '', reason: '' });
+    }
+  };
+
+  const removeMustSitRule = (ruleId) => {
+    setSeatingRules(prev => ({
+      ...prev,
+      mustSitTogether: prev.mustSitTogether.filter(rule => rule.id !== ruleId)
+    }));
+  };
+
+  const addCannotSitRule = () => {
+    if (newCannotSitRule.guest1Id && newCannotSitRule.guest2Id && newCannotSitRule.guest1Id !== newCannotSitRule.guest2Id) {
+      setSeatingRules(prev => ({
+        ...prev,
+        cannotSitTogether: [...prev.cannotSitTogether, {
+          id: Date.now().toString(),
+          guest1Id: newCannotSitRule.guest1Id,
+          guest2Id: newCannotSitRule.guest2Id,
+          reason: newCannotSitRule.reason
+        }]
+      }));
+      setNewCannotSitRule({ guest1Id: '', guest2Id: '', reason: '' });
+    }
+  };
+
+  const removeCannotSitRule = (ruleId) => {
+    setSeatingRules(prev => ({
+      ...prev,
+      cannotSitTogether: prev.cannotSitTogether.filter(rule => rule.id !== ruleId)
+    }));
+  };
+
+  const getGuestName = (guestId) => {
+    const guest = guests.find(g => g._id === guestId);
+    return guest ? `${guest.firstName} ${guest.lastName}` : t('seating.ai.unknownGuest');
+  };
+
+  const getGroupDisplayName = (groupName) => {
+    if (['family', 'friends', 'work', 'other'].includes(groupName)) {
+      return t(`guests.groups.${groupName}`);
+    }
+    return groupName;
+  };
+
   const handleGenerate = async (customPreferences = null) => {
     setIsGenerating(true);
     
@@ -241,7 +373,9 @@ const AISeatingModal = ({
       const generationOptions = customPreferences || {
         ...aiPreferences,
         preserveExisting: existingArrangementAction === 'continue',
-        clearExisting: existingArrangementAction === 'clear'
+        clearExisting: existingArrangementAction === 'clear',
+        seatingRules,
+        groupMixingRules: aiPreferences.groupMixingRules
       };
       
       const result = await onGenerate(generationOptions);
@@ -336,7 +470,9 @@ const AISeatingModal = ({
           ...aiPreferences,
           preserveExisting: existingArrangementAction === 'continue',
           clearExisting: existingArrangementAction === 'clear',
-          allTables: allTablesForGeneration
+          allTables: allTablesForGeneration,
+          seatingRules,
+          groupMixingRules: aiPreferences.groupMixingRules
         };
         
         const result = await handleGenerate(aiPreferencesWithExisting);
@@ -364,7 +500,9 @@ const AISeatingModal = ({
         ...aiPreferences,
         preserveExisting: existingArrangementAction === 'continue',
         clearExisting: existingArrangementAction === 'clear',
-        allTables: tables
+        allTables: tables,
+        seatingRules,
+        groupMixingRules: aiPreferences.groupMixingRules
       };
       
       await handleGenerate(aiPreferencesWithExisting);
@@ -492,7 +630,9 @@ const AISeatingModal = ({
                           const directOptions = {
                             ...aiPreferences,
                             preserveExisting: true,
-                            clearExisting: false
+                            clearExisting: false,
+                            seatingRules,
+                            groupMixingRules: aiPreferences.groupMixingRules
                           };
                           await handleGenerate(directOptions);
                         }}
@@ -686,62 +826,225 @@ const AISeatingModal = ({
             </div>
           )}
 
-          {!showTableCreation && !showExistingArrangementWarning && (
+          {!showExistingArrangementWarning && (
             <>
-              <div className="ai-overview">
-                <h4>{t('seating.ai.overview')}</h4>
-                <div className="overview-stats">
-                  <div className="stat-item">
-                    <span className="stat-label">{t('seating.ai.totalGuests')}</span>
-                    <span className="stat-value">{totalGuests}</span>
+              {!showTableCreation && (
+                <>
+                  <div className="ai-overview">
+                    <h4>{t('seating.ai.overview')}</h4>
+                    <div className="overview-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">{t('seating.ai.totalGuests')}</span>
+                        <span className="stat-value">{totalGuests}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">{t('seating.ai.totalTables')}</span>
+                        <span className="stat-value">{tables.length}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">{t('seating.ai.totalCapacity')}</span>
+                        <span className="stat-value">{totalCapacity}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">{t('seating.ai.utilization')}</span>
+                        <span className={`stat-value ${utilizationRate > 100 ? 'overcapacity' : utilizationRate > 90 ? 'warning' : 'good'}`}>
+                          {utilizationRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {utilizationRate > 100 && (
+                      <div className="capacity-warning">
+                        {t('seating.ai.capacityWarning')}
+                        <button 
+                          onClick={() => setShowTableCreation(true)}
+                          className="add-tables-warning-button"
+                        >
+                          {t('seating.ai.addTablesButton')}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-label">{t('seating.ai.totalTables')}</span>
-                    <span className="stat-value">{tables.length}</span>
+
+                  <div className="group-stats">
+                    <h4>{t('seating.ai.groupBreakdown')}</h4>
+                    <div className="groups-grid">
+                      {Object.entries(groupStats).map(([group, stats]) => (
+                        <div key={group} className="group-stat-item">
+                          <div className="group-name">
+                            {getGroupDisplayName(group)}
+                          </div>
+                          <div className="group-numbers">
+                            {stats.count} {t('seating.ai.guests')} ({stats.people} {t('seating.ai.people')})
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-label">{t('seating.ai.totalCapacity')}</span>
-                    <span className="stat-value">{totalCapacity}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">{t('seating.ai.utilization')}</span>
-                    <span className={`stat-value ${utilizationRate > 100 ? 'overcapacity' : utilizationRate > 90 ? 'warning' : 'good'}`}>
-                      {utilizationRate.toFixed(1)}%
-                    </span>
-                  </div>
+                </>
+              )}
+
+              {/* Seating Rules Section - Always show */}
+              <div className="seating-rules-section">
+                <div className="section-header">
+                  <h4>{t('seating.ai.seatingRules')}</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowSeatingRules(!showSeatingRules)}
+                    className="toggle-section-btn"
+                  >
+                    {showSeatingRules ? t('seating.ai.hideRules') : t('seating.ai.showRules')}
+                  </button>
                 </div>
 
-                {utilizationRate > 100 && (
-                  <div className="capacity-warning">
-                    {t('seating.ai.capacityWarning')}
-                    <button 
-                      onClick={() => setShowTableCreation(true)}
-                      className="add-tables-warning-button"
-                    >
-                      {t('seating.ai.addTablesButton')}
-                    </button>
+                {showSeatingRules && (
+                  <div className="seating-rules-config">
+                    {/* Must Sit Together Rules */}
+                    <div className="rule-group">
+                      <h5>{t('seating.ai.mustSitTogether')}</h5>
+                      <div className="add-rule-form">
+                        <select
+                          value={newMustSitRule.guest1Id}
+                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest1Id: e.target.value }))}
+                          className="guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectFirstGuest')}</option>
+                          {guests.map(guest => (
+                            <option key={guest._id} value={guest._id}>
+                              {guest.firstName} {guest.lastName}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <select
+                          value={newMustSitRule.guest2Id}
+                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest2Id: e.target.value }))}
+                          className="guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectSecondGuest')}</option>
+                          {guests.filter(guest => guest._id !== newMustSitRule.guest1Id).map(guest => (
+                            <option key={guest._id} value={guest._id}>
+                              {guest.firstName} {guest.lastName}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <input
+                          type="text"
+                          value={newMustSitRule.reason}
+                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, reason: e.target.value }))}
+                          placeholder={t('seating.ai.reasonOptional')}
+                          className="reason-input"
+                        />
+                        
+                        <button
+                          type="button"
+                          onClick={addMustSitRule}
+                          disabled={!newMustSitRule.guest1Id || !newMustSitRule.guest2Id}
+                          className="add-rule-btn"
+                        >
+                          {t('seating.ai.addRule')}
+                        </button>
+                      </div>
+                      
+                      {seatingRules.mustSitTogether.length > 0 && (
+                        <div className="rules-list">
+                          {seatingRules.mustSitTogether.map(rule => (
+                            <div key={rule.id} className="rule-item must-sit">
+                              <div className="rule-content">
+                                <span className="rule-guests">
+                                  {getGuestName(rule.guest1Id)} ↔ {getGuestName(rule.guest2Id)}
+                                </span>
+                                {rule.reason && <span className="rule-reason">{rule.reason}</span>}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeMustSitRule(rule.id)}
+                                className="remove-rule-btn"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cannot Sit Together Rules */}
+                    <div className="rule-group">
+                      <h5>{t('seating.ai.cannotSitTogether')}</h5>
+                      <div className="add-rule-form">
+                        <select
+                          value={newCannotSitRule.guest1Id}
+                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, guest1Id: e.target.value }))}
+                          className="guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectFirstGuest')}</option>
+                          {guests.map(guest => (
+                            <option key={guest._id} value={guest._id}>
+                              {guest.firstName} {guest.lastName}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <select
+                          value={newCannotSitRule.guest2Id}
+                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, guest2Id: e.target.value }))}
+                          className="guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectSecondGuest')}</option>
+                          {guests.filter(guest => guest._id !== newCannotSitRule.guest1Id).map(guest => (
+                            <option key={guest._id} value={guest._id}>
+                              {guest.firstName} {guest.lastName}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        <input
+                          type="text"
+                          value={newCannotSitRule.reason}
+                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, reason: e.target.value }))}
+                          placeholder={t('seating.ai.reasonOptional')}
+                          className="reason-input"
+                        />
+                        
+                        <button
+                          type="button"
+                          onClick={addCannotSitRule}
+                          disabled={!newCannotSitRule.guest1Id || !newCannotSitRule.guest2Id}
+                          className="add-rule-btn"
+                        >
+                          {t('seating.ai.addRule')}
+                        </button>
+                      </div>
+                      
+                      {seatingRules.cannotSitTogether.length > 0 && (
+                        <div className="rules-list">
+                          {seatingRules.cannotSitTogether.map(rule => (
+                            <div key={rule.id} className="rule-item cannot-sit">
+                              <div className="rule-content">
+                                <span className="rule-guests">
+                                  {getGuestName(rule.guest1Id)} ⚠️ {getGuestName(rule.guest2Id)}
+                                </span>
+                                {rule.reason && <span className="rule-reason">{rule.reason}</span>}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeCannotSitRule(rule.id)}
+                                className="remove-rule-btn"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="group-stats">
-                <h4>{t('seating.ai.groupBreakdown')}</h4>
-                <div className="groups-grid">
-                  {Object.entries(groupStats).map(([group, stats]) => (
-                    <div key={group} className="group-stat-item">
-                      <div className="group-name">
-                        {['family', 'friends', 'work', 'other'].includes(group) 
-                          ? t(`guests.groups.${group}`) 
-                          : group}
-                      </div>
-                      <div className="group-numbers">
-                        {stats.count} {t('seating.ai.guests')} ({stats.people} {t('seating.ai.people')})
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
+              {/* AI Preferences - Always show */}
               <div className="ai-preferences">
                 <h4>{t('seating.ai.preferences')}</h4>
                 <div className="preferences-grid">
@@ -772,38 +1075,106 @@ const AISeatingModal = ({
                   <label className="preference-item">
                     <input
                       type="checkbox"
-                      checked={aiPreferences.considerSpecialNeeds}
-                      onChange={(e) => handlePreferenceChange('considerSpecialNeeds', e.target.checked)}
+                      checked={aiPreferences.allowGroupMixing}
+                      onChange={(e) => handlePreferenceChange('allowGroupMixing', e.target.checked)}
                     />
                     <div className="preference-content">
-                      <div className="preference-title">{t('seating.ai.considerSpecialNeedsTitle')}</div>
-                      <div className="preference-description">{t('seating.ai.considerSpecialNeedsDescription')}</div>
-                    </div>
-                  </label>
-
-                  <label className="preference-item">
-                    <input
-                      type="checkbox"
-                      checked={aiPreferences.mixGroups}
-                      onChange={(e) => handlePreferenceChange('mixGroups', e.target.checked)}
-                    />
-                    <div className="preference-content">
-                      <div className="preference-title">{t('seating.ai.mixGroupsTitle')}</div>
-                      <div className="preference-description">{t('seating.ai.mixGroupsDescription')}</div>
+                      <div className="preference-title">{t('seating.ai.allowGroupMixingTitle')}</div>
+                      <div className="preference-description">{t('seating.ai.allowGroupMixingDescription')}</div>
                     </div>
                   </label>
                 </div>
-              </div>
 
-              <div className="custom-instructions">
-                <h4>{t('seating.ai.additionalInstructions')}</h4>
-                <textarea
-                  value={aiPreferences.customInstructions}
-                  onChange={(e) => handlePreferenceChange('customInstructions', e.target.value)}
-                  placeholder={t('seating.ai.customInstructionsPlaceholder')}
-                  className="custom-instructions-textarea"
-                  rows="4"
-                />
+                {/* Group Mixing Configuration - Always show when enabled */}
+                {aiPreferences.allowGroupMixing && (
+                  <div className="group-mixing-section">
+                    <div className="section-header">
+                      <h5>{t('seating.ai.groupMixingRules')}</h5>
+                      <button
+                        type="button"
+                        onClick={() => setShowGroupMixingConfig(!showGroupMixingConfig)}
+                        className="toggle-section-btn"
+                      >
+                        {showGroupMixingConfig ? t('seating.ai.hideMixing') : t('seating.ai.showMixing')}
+                      </button>
+                    </div>
+
+                    {showGroupMixingConfig && (
+                      <div className="group-mixing-config">
+                        <div className="add-mix-rule-form">
+                          <select
+                            value={newGroupMixRule.group1}
+                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group1: e.target.value }))}
+                            className="group-select"
+                          >
+                            <option value="">{t('seating.ai.selectFirstGroup')}</option>
+                            {availableGroups.map(group => (
+                              <option key={group} value={group}>
+                                {getGroupDisplayName(group)}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          <select
+                            value={newGroupMixRule.group2}
+                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group2: e.target.value }))}
+                            className="group-select"
+                          >
+                            <option value="">{t('seating.ai.selectSecondGroup')}</option>
+                            {availableGroups.filter(group => group !== newGroupMixRule.group1).map(group => (
+                              <option key={group} value={group}>
+                                {getGroupDisplayName(group)}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          <select
+                            value={newGroupMixRule.priority}
+                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, priority: e.target.value }))}
+                            className="priority-select"
+                          >
+                            <option value="low">{t('seating.ai.priorityLow')}</option>
+                            <option value="medium">{t('seating.ai.priorityMedium')}</option>
+                            <option value="high">{t('seating.ai.priorityHigh')}</option>
+                          </select>
+                          
+                          <button
+                            type="button"
+                            onClick={addGroupMixRule}
+                            disabled={!newGroupMixRule.group1 || !newGroupMixRule.group2}
+                            className="add-rule-btn"
+                          >
+                            {t('seating.ai.addMixRule')}
+                          </button>
+                        </div>
+                        
+                        {aiPreferences.groupMixingRules.length > 0 && (
+                          <div className="mix-rules-list">
+                            {aiPreferences.groupMixingRules.map(rule => (
+                              <div key={rule.id} className="mix-rule-item">
+                                <div className="mix-rule-content">
+                                  <span className="mix-rule-groups">
+                                    {getGroupDisplayName(rule.group1)} + {getGroupDisplayName(rule.group2)}
+                                  </span>
+                                  <span className={`priority-badge ${rule.priority}`}>
+                                    {t(`seating.ai.priority${rule.priority.charAt(0).toUpperCase() + rule.priority.slice(1)}`)}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeGroupMixRule(rule.id)}
+                                  className="remove-rule-btn"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
