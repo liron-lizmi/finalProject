@@ -1421,6 +1421,7 @@
   min-height: 110px;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .field-error-container {
@@ -1428,7 +1429,22 @@
   margin-top: 4px;
   display: flex;
   align-items: flex-start;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
 }
+
+
+.task-date-input-container {
+  position: relative;
+  width: 100%;
+  min-height: 40px;
+  flex: 1;
+  margin-bottom: 25px;
+}
+
 
 .form-label {
   display: block;

@@ -12,66 +12,68 @@ const ReminderToast = ({ tasks, onTaskClick }) => {
     checkForReminders();
   }, [tasks]);
 
-  const checkForReminders = () => {
-    if (!tasks || tasks.length === 0) return;
+ const checkForReminders = () => {
+  if (!tasks || tasks.length === 0) return;
 
-    const now = new Date();
-    const today = now.toDateString();
+  const now = new Date();
+  const today = now.toDateString();
 
-    const shownTodayFromStorage = JSON.parse(
-      localStorage.getItem(`reminders_shown_${today}`) || '[]'
-    );
-    setShownToday(new Set(shownTodayFromStorage));
+  const shownTodayFromStorage = JSON.parse(
+    localStorage.getItem(`reminders_shown_${today}`) || '[]'
+  );
+  setShownToday(new Set(shownTodayFromStorage));
 
-    const reminderTasks = [];
+  const reminderTasks = [];
 
-    tasks.forEach(task => {
-      if (task.status === 'completed') return;
+  tasks.forEach(task => {
+    if (task.status === 'completed') return;
 
-      const taskId = task._id;
-      const dueDate = new Date(task.dueDate);
+    const taskId = task._id;
+    const dueDate = new Date(task.dueDate);
+    const dueDateString = dueDate.toDateString();
 
-      if (dueDate < now && !shownTodayFromStorage.includes(`${taskId}_overdue`)) {
+    // בדוק אם המשימה עברה זמן והתריעה טרם הוצגה
+    if (dueDate < now && !shownTodayFromStorage.includes(`${taskId}_overdue_${dueDateString}`)) {
+      reminderTasks.push({
+        ...task,
+        reminderType: 'overdue',
+        reminderKey: `${taskId}_overdue_${dueDateString}`
+      });
+    }
+
+    if (task.reminderDate && !shownTodayFromStorage.includes(`${taskId}_original`)) {
+      const reminderDateTime = new Date(task.reminderDate);
+
+      if (task.reminderTime) {
+        const [hours, minutes] = task.reminderTime.split(':');
+        reminderDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      }
+
+      const timeDiff = now - reminderDateTime;
+
+      if (timeDiff >= 0 && timeDiff <= 24 * 60 * 60 * 1000) {
         reminderTasks.push({
           ...task,
-          reminderType: 'overdue',
-          reminderKey: `${taskId}_overdue`
+          reminderType: 'original',
+          reminderKey: `${taskId}_original`
         });
       }
-
-      if (task.reminderDate && !shownTodayFromStorage.includes(`${taskId}_original`)) {
-        const reminderDateTime = new Date(task.reminderDate);
-
-        if (task.reminderTime) {
-          const [hours, minutes] = task.reminderTime.split(':');
-          reminderDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        }
-
-        const timeDiff = now - reminderDateTime;
-
-        if (timeDiff >= 0 && timeDiff <= 24 * 60 * 60 * 1000) {
-          reminderTasks.push({
-            ...task,
-            reminderType: 'original',
-            reminderKey: `${taskId}_original`
-          });
-        }
-      }
-
-      if (task.reminderRecurrence && task.reminderRecurrence !== 'none' && task.reminderDate) {
-        const recurringReminders = getRecurringReminders(task, now, shownTodayFromStorage);
-        reminderTasks.push(...recurringReminders);
-      }
-    });
-
-    if (reminderTasks.length > 0) {
-      setActiveReminders(reminderTasks);
-
-      const newShownToday = [...shownTodayFromStorage, ...reminderTasks.map(t => t.reminderKey)];
-      localStorage.setItem(`reminders_shown_${today}`, JSON.stringify(newShownToday));
-      setShownToday(new Set(newShownToday));
     }
-  };
+
+    if (task.reminderRecurrence && task.reminderRecurrence !== 'none' && task.reminderDate) {
+      const recurringReminders = getRecurringReminders(task, now, shownTodayFromStorage);
+      reminderTasks.push(...recurringReminders);
+    }
+  });
+
+  if (reminderTasks.length > 0) {
+    setActiveReminders(reminderTasks);
+
+    const newShownToday = [...shownTodayFromStorage, ...reminderTasks.map(t => t.reminderKey)];
+    localStorage.setItem(`reminders_shown_${today}`, JSON.stringify(newShownToday));
+    setShownToday(new Set(newShownToday));
+  }
+};
 
   const getRecurringReminders = (task, now, shownToday) => {
     const reminders = [];
