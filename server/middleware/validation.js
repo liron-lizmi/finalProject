@@ -2,19 +2,21 @@ const validateRegistration = (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
   const errors = [];
 
-  if (!firstName) {
-    errors.push(req.t('validation.firstNameRequired'));
-  } else if (firstName.length < 2) {
+  // *** עדכון: לפחות שם פרטי או משפחה נדרש, לא חובה שניהם ***
+  if (!firstName && !lastName) {
+    errors.push(req.t('validation.nameRequired') || 'Either first name or last name is required');
+  }
+
+  // בדיקת אורך שמות (אם קיימים)
+  if (firstName && firstName.length < 2) {
     errors.push(req.t('validation.firstNameMin'));
-  } else if (firstName.length > 50) {
+  } else if (firstName && firstName.length > 50) {
     errors.push(req.t('validation.firstNameMax'));
   }
 
-  if (!lastName) {
-    errors.push(req.t('validation.lastNameRequired'));
-  } else if (lastName.length < 2) {
+  if (lastName && lastName.length < 2) {
     errors.push(req.t('validation.lastNameMin'));
-  } else if (lastName.length > 50) {
+  } else if (lastName && lastName.length > 50) {
     errors.push(req.t('validation.lastNameMax'));
   }
 

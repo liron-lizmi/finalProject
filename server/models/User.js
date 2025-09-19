@@ -1,3 +1,4 @@
+// server/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const i18next = require('i18next');
@@ -5,15 +6,15 @@ const i18next = require('i18next');
 const UserSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: function() {
-      return i18next.t('validation.firstNameRequired');
-    }
+    required: false, 
+    trim: true,
+    default: ''
   },
   lastName: {
     type: String,
-    required: function() {
-      return i18next.t('validation.lastNameRequired');
-    }
+    required: false, 
+    trim: true,
+    default: ''
   },
   email: {
     type: String,
@@ -34,7 +35,10 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
   oauth: {
     provider: String,
-    providerId: String
+    providerId: {
+      type: String,
+      sparse: true 
+    }
   },
   googleTokens: {
     access_token: String,
@@ -43,9 +47,52 @@ const UserSchema = new mongoose.Schema({
     token_type: String,
     expiry_date: Number
   },
+  notifications: [{
+    type: {
+      type: String,
+      enum: ['event_shared'],
+      required: true
+    },
+    message: {
+      type: String,
+      required: true
+    },
+    eventId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event'
+    },
+    sharedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    read: {
+      type: Boolean,
+      default: false
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+UserSchema.pre('validate', function(next) {
+  if (!this.firstName && !this.lastName && !this.oauth) {
+    this.invalidate('firstName', 'Either firstName or lastName is required');
+    this.invalidate('lastName', 'Either firstName or lastName is required');
+  }
+  next();
+});
+
+UserSchema.index({ 'oauth.provider': 1, 'oauth.providerId': 1 }, { 
+  unique: true, 
+  sparse: true, 
+  partialFilterExpression: { 
+    'oauth.providerId': { $ne: null, $exists: true } 
   }
 });
 

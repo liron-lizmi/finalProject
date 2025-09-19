@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// client/src/pages/Auth/LoginPage.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import '../../styles/AuthPages.css';
-import { createOAuth2Session } from '../../appwrite'; 
+import { createOAuth2Session, account } from '../../appwrite'; 
 import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he'; 
   const navigate = useNavigate();
+  const location = useLocation();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -17,6 +20,20 @@ const LoginPage = () => {
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const authFailed = params.get('auth') === 'failed';
+    const error = params.get('error');
+    
+    if (authFailed) {
+      setServerError(t('auth.googleLoginError'));
+    }
+    
+    if (error === 'session_expired') {
+      setServerError(t('auth.sessionExpired'));
+    }
+  }, [location.search, t]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,22 +96,40 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+ const handleGoogleLogin = async () => {
+  try {
+    console.log('Starting Google login process...');
+    
+    // נקה נתונים קיימים
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
     try {
-
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      await createOAuth2Session(
-        'google', 
-        window.location.origin + '/dashboard?auth=google&direct=true', 
-        window.location.origin + '/login?auth=failed' 
-      );
-    } catch (error) {
-      console.error('Google login error:', error);
-      setServerError(t('auth.googleLoginError'));
+      const sessions = await account.listSessions();
+      for (const session of sessions.sessions) {
+        try {
+          await account.deleteSession(session.$id);
+        } catch (deleteError) {
+          console.log('Failed to delete session:', deleteError);
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (sessionError) {
+      console.log('No sessions to delete');
     }
-  };
+    
+    console.log('Creating OAuth session...');
+    
+    await createOAuth2Session(
+      'google', 
+      `${window.location.origin}/dashboard?auth=google&direct=true&t=${Date.now()}`, 
+      `${window.location.origin}/login?auth=failed&t=${Date.now()}`
+    );
+  } catch (error) {
+    console.error('Google login error:', error);
+    setServerError(t('auth.googleLoginError'));
+  }
+};
 
   const renderEyeIcon = (isVisible) => {
     return isVisible ? (

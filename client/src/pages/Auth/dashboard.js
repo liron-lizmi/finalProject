@@ -1,3 +1,4 @@
+// client//src//pages//Auth//dashboard.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +14,8 @@ const Dashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const isRTL = i18n.language === 'he'; 
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -26,64 +29,116 @@ const Dashboard = () => {
     
     const checkUserSession = async () => {
       try {
-        const isGoogleAuth = new URLSearchParams(location.search).get('auth') === 'google';
+        const urlParams = new URLSearchParams(location.search);
+        const isGoogleAuth = urlParams.get('auth') === 'google';
+        const isDirect = urlParams.get('direct') === 'true';
+        const fresh = urlParams.get('fresh');
 
-        if (isGoogleAuth) {
+        console.log('Dashboard parameters:', { isGoogleAuth, isDirect, fresh, url: location.search });
+
+        if (isGoogleAuth && isDirect) {
           setLoading(false);
-        }
-        
-        if (isGoogleAuth) {
-          console.log("Google authentication redirect detected");
           
           try {
-            const userData = await account.get();
-            console.log("Appwrite user data:", userData);
+            await new Promise(resolve => setTimeout(resolve, 500));
             
-            const checkResponse = await axios.post('/api/auth/check-user-exists', { 
-              email: userData.email 
+            const session = await account.getSession('current');
+            console.log("Current session details:", {
+              provider: session.provider,
+              userId: session.userId,
+              providerUid: session.providerUid,
+              expire: session.expire
             });
             
-            if (!checkResponse.data.exists) {
-              const names = userData.name ? userData.name.split(' ') : ['', ''];
-              const firstName = names[0] || '';
-              const lastName = names.slice(1).join(' ') || '';
+            const userData = await account.get();
+            console.log("Full OAuth user data:", {
+              id: userData.$id,
+              email: userData.email,
+              name: userData.name,
+              provider: userData.provider,
+              providerUid: userData.providerUid
+            });
+            
+            if (session && session.provider === 'google' && userData.email) {
+              const actualUserEmail = userData.email.toLowerCase().trim();
               
-              const registerResponse = await axios.post('/api/auth/register-oauth', {
-                email: userData.email,
-                firstName: firstName,
-                lastName: lastName,
-                provider: 'google',
-                providerId: userData.$id
+              console.log("Processing OAuth for actual user email:", actualUserEmail);
+              
+              const checkResponse = await axios.post('/api/auth/check-user-exists', { 
+                email: actualUserEmail 
               });
               
-              if (registerResponse.data.token) {
-                localStorage.setItem('token', registerResponse.data.token);
-                localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
-                setUser(registerResponse.data.user);
-                setLoading(false);
-                await fetchEvents();
-                navigate('/dashboard', { replace: true });
-                return;
+              console.log("Check user exists response:", checkResponse.data);
+              
+              if (!checkResponse.data.exists) {
+                const names = userData.name ? userData.name.split(' ') : ['', ''];
+                const firstName = names[0] || '';
+                const lastName = names.slice(1).join(' ') || '';
+                
+                console.log("Registering new user:", { 
+                  email: actualUserEmail, 
+                  firstName, 
+                  lastName,
+                  providerId: userData.$id 
+                });
+                
+                const registerResponse = await axios.post('/api/auth/register-oauth', {
+                  email: actualUserEmail,
+                  firstName: firstName,
+                  lastName: lastName,
+                  provider: 'google',
+                  providerId: userData.$id 
+                });
+                
+                console.log("Register response:", registerResponse.data);
+                
+                if (registerResponse.data.token) {
+                  localStorage.setItem('token', registerResponse.data.token);
+                  localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
+                  setUser(registerResponse.data.user);
+                  await fetchEvents();
+                  await fetchNotifications();
+                  navigate('/dashboard', { replace: true });
+                  return;
+                }
+              } else {
+                console.log("Logging in existing user:", actualUserEmail);
+                
+                const loginResponse = await axios.post('/api/auth/login-oauth', {
+                  email: actualUserEmail,
+                  provider: 'google',
+                  providerId: userData.$id 
+                });
+                
+                console.log("Login response:", loginResponse.data);
+                
+                if (loginResponse.data.token) {
+                  localStorage.setItem('token', loginResponse.data.token);
+                  localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+                  setUser(loginResponse.data.user);
+                  await fetchEvents();
+                  await fetchNotifications();
+                  navigate('/dashboard', { replace: true });
+                  return;
+                }
               }
             } else {
-              const loginResponse = await axios.post('/api/auth/login-oauth', {
-                email: userData.email,
-                provider: 'google',
-                providerId: userData.$id
-              });
-              
-              if (loginResponse.data.token) {
-                localStorage.setItem('token', loginResponse.data.token);
-                localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
-                setUser(loginResponse.data.user);
-                await fetchEvents();
-                navigate('/dashboard', { replace: true });
-                return;
-              }
+              console.error("Invalid OAuth session or missing user data");
+              throw new Error("Invalid OAuth session");
             }
-          } catch (error) {
-            console.error("Error during Google auth flow:", error);
-            navigate('/login', { replace: true });
+          } catch (oauthError) {
+            console.error("OAuth session error:", oauthError);
+            
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            try {
+              await account.deleteSession('current');
+            } catch (deleteError) {
+              console.log("No session to delete");
+            }
+            
+            navigate('/login?error=session_expired', { replace: true });
             return;
           }
         } else {
@@ -92,31 +147,11 @@ const Dashboard = () => {
           
           if (token && localUser) {
             setUser(JSON.parse(localUser));
-            setLoading(false);
             await fetchEvents();
+            await fetchNotifications();
           } else {
-            try {
-              const userData = await account.get();
-              
-              const loginResponse = await axios.post('/api/auth/login-oauth', {
-                email: userData.email,
-                provider: 'google',
-                providerId: userData.$id
-              });
-              
-              if (loginResponse.data.token) {
-                localStorage.setItem('token', loginResponse.data.token);
-                localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
-                setUser(loginResponse.data.user);
-                setLoading(false);
-                await fetchEvents();
-              } else {
-                navigate('/login', { replace: true });
-              }
-            } catch (err) {
-              console.error("No authenticated session found:", err);
-              navigate('/login', { replace: true });
-            }
+            navigate('/login', { replace: true });
+            return;
           }
         }
       } catch (error) {
@@ -142,11 +177,49 @@ const Dashboard = () => {
           }
         });
         
-        console.log("Events fetched:", response.data.length);
-        setEvents(response.data);
+        // Populate original event owner info for shared events
+        const eventsWithOwnerInfo = await Promise.all(
+          response.data.map(async (event) => {
+            if (event.originalEvent) {
+              try {
+                const originalEventResponse = await axios.get(`/api/events/${event.originalEvent}`, {
+                  headers: { 'x-auth-token': token }
+                });
+                return {
+                  ...event,
+                  originalOwner: originalEventResponse.data.user
+                };
+              } catch (err) {
+                return event;
+              }
+            }
+            return event;
+          })
+        );
+        
+        console.log("Events fetched:", eventsWithOwnerInfo.length);
+        setEvents(eventsWithOwnerInfo);
       } catch (err) {
         console.error('Error fetching events:', err);
         setError(t('errors.loadEventsFailed'));
+      }
+    };
+
+    const fetchNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await axios.get('/api/events/notifications', {
+          headers: { 'x-auth-token': token }
+        });
+        
+        setNotifications(response.data);
+        if (response.data.length > 0) {
+          setShowNotifications(true);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
       }
     };
 
@@ -155,12 +228,14 @@ const Dashboard = () => {
     const shouldRefresh = new URLSearchParams(location.search).get('refresh') === 'true';
     if (shouldRefresh) {
       fetchEvents();
+      fetchNotifications();
       
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
     }
   }, [navigate, location.search, t, i18n.language]);
 
+  // שאר הקוד נשאר זהה...
   if (shouldRedirect) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -214,7 +289,7 @@ const Dashboard = () => {
       setEventToDelete(null);
     } catch (err) {
       console.error('Error deleting event:', err);
-      setError(t('errors.deleteEventFailed',));
+      setError(t('errors.deleteEventFailed'));
       setShowDeleteModal(false);
       setEventToDelete(null);
     }
@@ -223,6 +298,23 @@ const Dashboard = () => {
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setEventToDelete(null);
+  };
+
+  const handleDismissNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      for (const notification of notifications) {
+        await axios.put(`/api/events/notifications/${notification._id}/read`, {}, {
+          headers: { 'x-auth-token': token }
+        });
+      }
+      
+      setNotifications([]);
+      setShowNotifications(false);
+    } catch (err) {
+      console.error('Error dismissing notifications:', err);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -244,6 +336,13 @@ const Dashboard = () => {
 
   const navigateToHome = () => {
     navigate('/');
+  };
+
+  const getEventOwnerName = (event) => {
+    if (event.originalEvent && event.originalOwner) {
+      return `${event.originalOwner.firstName} ${event.originalOwner.lastName}`;
+    }
+    return null;
   };
 
   if (loading) {
@@ -290,6 +389,23 @@ const Dashboard = () => {
 
       <main className="dashboard-main">
         <div className="container">
+          {showNotifications && notifications.length > 0 && (
+            <div className="notifications-banner">
+              <div className="notifications-content">
+                <div className="notifications-icon">🔔</div>
+                <div className="notifications-text">
+                  <h3>{t('dashboard.newNotifications')}</h3>
+                  {notifications.map(notification => (
+                    <p key={notification._id}>{notification.message}</p>
+                  ))}
+                </div>
+              </div>
+              <button className="notifications-dismiss" onClick={handleDismissNotifications}>
+                {t('general.dismiss')}
+              </button>
+            </div>
+          )}
+
           {error && (
             <div className="error-alert">
               <div className="error-icon">
@@ -333,9 +449,20 @@ const Dashboard = () => {
             <div className="events-grid">
               {events.length > 0 ? (
                 events.map(event => (
-                  <div key={event._id} className="event-card">
+                  <div key={event._id} className={`event-card ${event.originalEvent ? 'shared-event' : ''}`}>
+                    {event.originalEvent && (
+                      <div className="shared-badge">
+                        <span className="shared-icon">👥</span>
+                        <span>{t('dashboard.sharedEvent')}</span>
+                      </div>
+                    )}
                     <div className="event-body">
                       <h3>{event.title}</h3>
+                      {event.originalEvent && (
+                        <div className="shared-by">
+                          {t('dashboard.sharedBy')}: {getEventOwnerName(event) || t('dashboard.unknown')}
+                        </div>
+                      )}
                       <div className="event-meta">
                         <div className="event-date">
                           <span className="meta-icon">
@@ -365,12 +492,14 @@ const Dashboard = () => {
                       <button className="event-details-btn" onClick={() => handleEventDetails(event._id)}>
                         {t('dashboard.viewDetails')}
                       </button>
-                      <button className="event-delete-btn" onClick={() => handleDeleteEventClick(event._id, event.title)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                      </button>
+                      {!event.originalEvent && (
+                        <button className="event-delete-btn" onClick={() => handleDeleteEventClick(event._id, event.title)}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
