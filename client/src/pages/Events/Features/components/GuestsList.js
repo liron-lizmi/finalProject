@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const GuestsList = ({
@@ -7,13 +7,71 @@ const GuestsList = ({
   seatingArrangement,
   onDragStart,
   onDragEnd,
-  onUnseatGuest
+  onUnseatGuest,
+  syncNotification = null,
+  onSyncStatusChange = null
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGroup, setFilterGroup] = useState('all');
   const [showSeatedOnly, setShowSeatedOnly] = useState(false);
   const [showUnseatedOnly, setShowUnseatedOnly] = useState(false);
+  const [highlightedGuests, setHighlightedGuests] = useState(new Set());
+  const [syncChanges, setSyncChanges] = useState([]);
+
+  useEffect(() => {
+    if (syncNotification && syncNotification.type === 'success') {
+      // For simple sync notifications, create a basic structure
+      setSyncChanges([]);
+      setHighlightedGuests(new Set());
+      
+      // Only process if there's actual sync data with results
+      if (syncNotification.syncResults || syncNotification.appliedActions) {
+        const changes = syncNotification.syncResults || syncNotification.appliedActions || [];
+        if (changes.length > 0) {
+          const processedChanges = processStructuredSyncChanges(changes);
+          setSyncChanges(processedChanges);
+          const guestIds = new Set(processedChanges.map(change => change.guestId).filter(Boolean));
+          setHighlightedGuests(guestIds);
+          
+          setTimeout(() => {
+            setHighlightedGuests(new Set());
+            setSyncChanges([]);
+          }, 5000);
+        }
+      }
+    }
+  }, [syncNotification]);
+
+  const processStructuredSyncChanges = useCallback((syncResults) => {
+    const changes = [];
+    
+    syncResults.forEach(result => {
+      if (result.actions) {
+        result.actions.forEach(action => {
+          const guestName = action.details?.guestName;
+          if (guestName) {
+            const guest = guests.find(g => 
+              `${g.firstName} ${g.lastName}` === guestName
+            );
+            
+            let actionType = 'updated';
+            if (action.action === 'guest_seated') actionType = 'seated';
+            else if (action.action === 'guest_removed') actionType = 'removed';
+            else if (action.action === 'guest_moved') actionType = 'moved';
+            
+            changes.push({
+              guestId: guest?._id,
+              guestName,
+              action: actionType
+            });
+          }
+        });
+      }
+    });
+    
+    return changes;
+  }, [guests]);
 
   const groups = useMemo(() => {
     const groupSet = new Set();
@@ -107,6 +165,30 @@ const GuestsList = ({
     return guest.group;
   };
 
+  const getGuestSyncStatus = useCallback((guestId) => {
+    const change = syncChanges.find(change => change.guestId === guestId);
+    return change ? change.action : null;
+  }, [syncChanges]);
+
+  const isGuestHighlighted = useCallback((guestId) => {
+    return highlightedGuests.has(guestId);
+  }, [highlightedGuests]);
+
+  const getSyncIndicator = useCallback((action) => {
+    switch (action) {
+      case 'seated':
+        return { icon: '✅', className: 'sync-seated' };
+      case 'removed':
+        return { icon: '❌', className: 'sync-removed' };
+      case 'moved':
+        return { icon: '🔄', className: 'sync-moved' };
+      case 'updated':
+        return { icon: '📝', className: 'sync-updated' };
+      default:
+        return null;
+    }
+  }, []);
+
   const handleDragStart = (e, guest) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', guest._id);
@@ -116,6 +198,14 @@ const GuestsList = ({
   const handleDragEnd = () => {
     onDragEnd();
   };
+
+  const handleUnseatGuest = useCallback((guestId) => {
+    onUnseatGuest(guestId);
+    
+    if (onSyncStatusChange) {
+      onSyncStatusChange('manual_action', { guestId, action: 'unseated' });
+    }
+  }, [onUnseatGuest, onSyncStatusChange]);
 
   const stats = {
     total: guests.length,
@@ -141,6 +231,22 @@ const GuestsList = ({
             {t('seating.guestsList.unseated')}: {stats.unseated} ({stats.unseatedPeople})
           </span>
         </div>
+        
+        {syncNotification && (
+          <div className={`sync-notification-banner ${syncNotification.type}`}>
+            <div className="sync-notification-content">
+              <span className="sync-notification-icon">
+                {syncNotification.type === 'success' ? '🔄' : '⚠️'}
+              </span>
+              <span className="sync-notification-text">
+                {syncNotification.type === 'success' 
+                  ? t('seating.sync.guestsUpdated') 
+                  : t('seating.sync.syncIssue')
+                }
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="guests-list-filters">
@@ -205,44 +311,55 @@ const GuestsList = ({
               🔄 {t('seating.guestsList.unassigned')} ({groupedGuests.unseated.length})
             </h4>
             <div className="guests-list">
-              {groupedGuests.unseated.map(guest => (
-                <div
-                  key={guest._id}
-                  className="guest-item unseated"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, guest)}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="guest-info">
-                    <div className="guest-name">
-                      {guest.firstName} {guest.lastName}
-                      {guest.attendingCount > 1 && (
-                        <span className="attending-count">
-                          +{guest.attendingCount - 1}
-                        </span>
-                      )}
-                    </div>
-                    <div className="guest-details">
-                      <span className="guest-group">
-                        {getGroupDisplayName(guest)}
-                      </span>
-                      {guest.attendingCount > 1 && (
-                        <span className="total-people">
-                          ({guest.attendingCount} {t('seating.guestsList.people')})
-                        </span>
-                      )}
-                    </div>
-                    {guest.guestNotes && (
-                      <div className="guest-notes">
-                        💬 {guest.guestNotes}
+              {groupedGuests.unseated.map(guest => {
+                const syncAction = getGuestSyncStatus(guest._id);
+                const syncIndicator = getSyncIndicator(syncAction);
+                const isHighlighted = isGuestHighlighted(guest._id);
+                
+                return (
+                  <div
+                    key={guest._id}
+                    className={`guest-item unseated ${isHighlighted ? 'sync-highlighted' : ''} ${syncIndicator ? syncIndicator.className : ''}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, guest)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="guest-info">
+                      <div className="guest-name">
+                        {guest.firstName} {guest.lastName}
+                        {guest.attendingCount > 1 && (
+                          <span className="attending-count">
+                            +{guest.attendingCount - 1}
+                          </span>
+                        )}
+                        {syncIndicator && (
+                          <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
+                            {syncIndicator.icon}
+                          </span>
+                        )}
                       </div>
-                    )}
+                      <div className="guest-details">
+                        <span className="guest-group">
+                          {getGroupDisplayName(guest)}
+                        </span>
+                        {guest.attendingCount > 1 && (
+                          <span className="total-people">
+                            ({guest.attendingCount} {t('seating.guestsList.people')})
+                          </span>
+                        )}
+                      </div>
+                      {guest.guestNotes && (
+                        <div className="guest-notes">
+                          💬 {guest.guestNotes}
+                        </div>
+                      )}
+                    </div>
+                    <div className="drag-handle">
+                      ⋮⋮
+                    </div>
                   </div>
-                  <div className="drag-handle">
-                    ⋮⋮
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -255,10 +372,14 @@ const GuestsList = ({
             <div className="guests-list">
               {groupedGuests.seated.map(guest => {
                 const tableId = getGuestTable[guest._id];
+                const syncAction = getGuestSyncStatus(guest._id);
+                const syncIndicator = getSyncIndicator(syncAction);
+                const isHighlighted = isGuestHighlighted(guest._id);
+                
                 return (
                   <div
                     key={guest._id}
-                    className="guest-item seated"
+                    className={`guest-item seated ${isHighlighted ? 'sync-highlighted' : ''} ${syncIndicator ? syncIndicator.className : ''}`}
                     draggable
                     onDragStart={(e) => handleDragStart(e, guest)}
                     onDragEnd={handleDragEnd}
@@ -269,6 +390,11 @@ const GuestsList = ({
                         {guest.attendingCount > 1 && (
                           <span className="attending-count">
                             +{guest.attendingCount - 1}
+                          </span>
+                        )}
+                        {syncIndicator && (
+                          <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
+                            {syncIndicator.icon}
                           </span>
                         )}
                       </div>
@@ -294,7 +420,7 @@ const GuestsList = ({
                     <div className="guest-actions">
                       <button
                         className="unseat-button"
-                        onClick={() => onUnseatGuest(guest._id)}
+                        onClick={() => handleUnseatGuest(guest._id)}
                         title={t('seating.guestsList.removeFromTable')}
                       >
                         ❌
@@ -331,6 +457,26 @@ const GuestsList = ({
                 {t('seating.guestsList.clearFilters')}
               </button>
             )}
+          </div>
+        )}
+
+        {syncChanges.length > 0 && (
+          <div className="sync-changes-summary">
+            <h5 className="sync-changes-title">
+              {t('seating.sync.recentChanges')}
+            </h5>
+            <div className="sync-changes-list">
+              {syncChanges.map((change, index) => (
+                <div key={index} className={`sync-change-item ${change.action}`}>
+                  <span className="sync-change-icon">
+                    {getSyncIndicator(change.action)?.icon || '🔄'}
+                  </span>
+                  <span className="sync-change-text">
+                    {change.guestName} - {t(`seating.sync.actions.${change.action}`)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

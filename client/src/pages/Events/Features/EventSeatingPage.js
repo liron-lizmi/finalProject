@@ -7,6 +7,7 @@ import GuestsList from './components/GuestsList';
 import TableDetailsModal from './components/TableDetailsModal';
 import AISeatingModal from '../../components/AISeatingModal';
 import SeatingTableView from './components/SeatingTableView';
+import SyncOptionsModal from './components/SyncOptionsModal';
 import '../../../styles/EventSeatingPage.css';
 
 const EventSeatingPage = () => {
@@ -39,7 +40,18 @@ const EventSeatingPage = () => {
   const [isAddingTable, setIsAddingTable] = useState(false);
   const [tableType, setTableType] = useState('round');
   
+  const [lastSyncData, setLastSyncData] = useState(null);
+  const [syncInProgress, setSyncInProgress] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const [syncNotification, setSyncNotification] = useState(null);
+
+  const [syncOptions, setSyncOptions] = useState([]);
+  const [affectedGuests, setAffectedGuests] = useState([]);
+  const [pendingSyncTriggers, setPendingSyncTriggers] = useState([]);
+  const [isSyncOptionsModalOpen, setIsSyncOptionsModalOpen] = useState(false);
+  
   const canvasRef = useRef(null);
+  const syncTimeoutRef = useRef(null);
 
   const getAuthToken = useCallback(() => {
     let token = localStorage.getItem('token');
@@ -99,103 +111,10 @@ const EventSeatingPage = () => {
     }
   }, [getAuthToken, handleAuthError]);
 
-  const fetchConfirmedGuests = useCallback(async () => {
-    try {
-      const response = await makeApiRequest(`/api/events/${eventId}/guests`);
-      if (!response) return;
-
-      if (response.ok) {
-        const allGuests = await response.json();
-        const confirmed = allGuests.filter(guest => guest.rsvpStatus === 'confirmed');
-        setGuests(allGuests);
-        setConfirmedGuests(confirmed);
-        setError('');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || t('seating.errors.fetchGuests'));
-      }
-    } catch (err) {
-      setError(t('errors.networkError'));
-    }
-  }, [eventId, makeApiRequest, t]);
-
-  const fetchSeatingArrangement = useCallback(async () => {
-    try {
-      const response = await makeApiRequest(`/api/events/${eventId}/seating`);
-      if (!response) return;
-
-      if (response.ok) {
-        const data = await response.json();
-        setTables(data.tables || []);
-        setSeatingArrangement(data.arrangement || {});
-        setPreferences(data.preferences || {
-          groupTogether: [],
-          keepSeparate: [],
-          specialRequests: []
-        });
-        if (data.layoutSettings) {
-          setCanvasScale(data.layoutSettings.canvasScale || 1);
-          setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
-        }
-      } else if (response.status === 404) {
-        setTables([]);
-        setSeatingArrangement({});
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || t('seating.errors.fetchArrangement'));
-      }
-    } catch (err) {
-      setError(t('errors.networkError'));
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId, makeApiRequest, t]);
-
-  const saveSeatingArrangement = useCallback(async (immediateData = null) => {
-    try {
-      const dataToSave = immediateData || {
-        tables,
-        arrangement: seatingArrangement,
-        preferences,
-        layoutSettings: {
-          canvasScale,
-          canvasOffset
-        }
-      };
-
-      const response = await makeApiRequest(`/api/events/${eventId}/seating`, {
-        method: 'POST',
-        body: JSON.stringify(dataToSave)
-      });
-
-      if (!response) return false;
-
-      if (response.ok) {
-        setError('');
-        return true;
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || t('seating.errors.saveArrangement'));
-        return false;
-      }
-    } catch (err) {
-      setError(t('errors.networkError'));
-      return false;
-    }
-  }, [eventId, makeApiRequest, tables, seatingArrangement, preferences, canvasScale, canvasOffset, t]);
-
-  const autoSave = useCallback(
-    (() => {
-      let timeoutId;
-      return (data = null) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          saveSeatingArrangement(data);
-        }, 3000); 
-      };
-    })(),
-    [saveSeatingArrangement]
-  );
+  const showSyncNotification = useCallback((type, message) => {
+    setSyncNotification({ type, message });
+    setTimeout(() => setSyncNotification(null), 4000);
+  }, []);
 
   const getNextTableNumber = useCallback(() => {
     if (tables.length === 0) return 1;
@@ -267,6 +186,660 @@ const EventSeatingPage = () => {
     });
   }, [generateTableNameWithGroup, isTableNameManuallyEdited]);
 
+  const fetchConfirmedGuests = useCallback(async () => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}/guests`);
+      if (!response) {
+        return;
+      }
+
+      if (response.ok) {
+        const allGuests = await response.json();
+        const confirmed = allGuests.filter(guest => guest.rsvpStatus === 'confirmed');
+        
+        setGuests(allGuests);
+        setConfirmedGuests(confirmed);
+        setError('');
+        return { allGuests, confirmed };
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('seating.errors.fetchGuests'));
+        return null;
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+      return null;
+    }
+  }, [eventId, makeApiRequest, t]);
+
+  const createGuestFingerprint = useCallback((guestsList) => {
+    return guestsList.map(guest => ({
+      id: guest._id,
+      status: guest.rsvpStatus,
+      attendingCount: guest.attendingCount || 1,
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      group: guest.customGroup || guest.group
+    }));
+  }, []);
+
+  const detectGuestChanges = useCallback((newGuests, oldGuests) => {
+    if (!oldGuests || oldGuests.length === 0) {
+      return { hasChanges: false, changes: [] };
+    }
+
+    const changes = [];
+    const oldGuestsMap = new Map(oldGuests.map(g => [g.id, g]));
+    const newGuestsMap = new Map(newGuests.map(g => [g.id, g]));
+
+    newGuests.forEach(newGuest => {
+      const oldGuest = oldGuestsMap.get(newGuest.id);
+      if (!oldGuest) {
+        if (newGuest.status === 'confirmed') {
+          changes.push({
+            type: 'new_confirmed',
+            guestId: newGuest.id,
+            guest: newGuest
+          });
+        }
+      } else {
+        if (oldGuest.status !== newGuest.status) {
+          if (newGuest.status === 'confirmed' && oldGuest.status !== 'confirmed') {
+            changes.push({
+              type: 'became_confirmed',
+              guestId: newGuest.id,
+              guest: newGuest,
+              previousStatus: oldGuest.status
+            });
+          } else if (oldGuest.status === 'confirmed' && newGuest.status !== 'confirmed') {
+            changes.push({
+              type: 'no_longer_confirmed',
+              guestId: newGuest.id,
+              guest: newGuest,
+              previousStatus: oldGuest.status
+            });
+          }
+        }
+
+        if (newGuest.status === 'confirmed' && oldGuest.status === 'confirmed') {
+          const oldCount = oldGuest.attendingCount || 1;
+          const newCount = newGuest.attendingCount || 1;
+          
+          if (oldCount !== newCount) {
+            changes.push({
+              type: 'attending_count_changed',
+              guestId: newGuest.id,
+              guest: newGuest,
+              oldCount,
+              newCount
+            });
+          }
+        }
+      }
+    });
+
+    oldGuests.forEach(oldGuest => {
+      if (!newGuestsMap.has(oldGuest.id) && oldGuest.status === 'confirmed') {
+        changes.push({
+          type: 'guest_removed',
+          guestId: oldGuest.id,
+          guest: oldGuest
+        });
+      }
+    });
+
+    return { hasChanges: changes.length > 0, changes };
+  }, []);
+
+  const checkAndHandlePendingSync = useCallback(async (skipFingerprintUpdate = false) => {
+    if (!autoSyncEnabled) {
+      return;
+    }
+
+    try {
+      const syncResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/status`);
+      if (syncResponse && syncResponse.ok) {
+        const syncStatus = await syncResponse.json();
+        
+        if (syncStatus.syncRequired && syncStatus.pendingTriggers > 0) {
+          
+          const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
+            method: 'POST'
+          });
+          
+          if (processResponse && processResponse.ok) {
+            const processResult = await processResponse.json();
+            
+            if (processResult.requiresUserDecision) {
+              setSyncOptions(processResult.options || []);
+              setAffectedGuests(processResult.affectedGuests || []);
+              setPendingSyncTriggers(processResult.pendingTriggers || []);
+              setIsSyncOptionsModalOpen(true);
+              
+              showSyncNotification('info', t('seating.sync.pendingChangesDetected'));
+            } else if (processResult.hasChanges && processResult.seating) {
+              setTables(processResult.seating.tables || []);
+              setSeatingArrangement(processResult.seating.arrangement || {});
+              
+              if (!skipFingerprintUpdate) {
+                const currentGuestData = await fetchConfirmedGuests();
+                if (currentGuestData) {
+                  const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+                  setLastSyncData(newFingerprint);
+                }
+              }
+              
+              showSyncNotification('success', processResult.message);
+            }
+          }
+        }
+      }
+    } catch (error) {
+    }
+  }, [autoSyncEnabled, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
+
+  const fetchSeatingArrangement = useCallback(async () => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}/seating`);
+      if (!response) {
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        const tablesData = data.tables || [];
+        const arrangementData = data.arrangement || {};
+        
+        const cleanedTables = tablesData.filter(table => {
+          const hasGuests = arrangementData[table.id] && arrangementData[table.id].length > 0;
+          const isManualTable = !table.autoCreated && !table.createdForSync;
+          
+          if (!hasGuests && (table.autoCreated || table.createdForSync)) {
+            delete arrangementData[table.id];
+            return false;
+          }
+          return true;
+        });
+        
+        const cleanedArrangement = {};
+        Object.keys(arrangementData).forEach(tableId => {
+          const tableExists = cleanedTables.some(t => t.id === tableId);
+          if (tableExists) {
+            cleanedArrangement[tableId] = arrangementData[tableId];
+          }
+        });
+        
+        const preferencesData = data.preferences || {
+          groupTogether: [],
+          keepSeparate: [],
+          specialRequests: []
+        };
+        
+        setTables(cleanedTables);
+        setSeatingArrangement(cleanedArrangement);
+        setPreferences(preferencesData);
+        
+        if (data.layoutSettings) {
+          setCanvasScale(data.layoutSettings.canvasScale || 1);
+          setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
+        }
+        
+        const hasExistingArrangement = cleanedTables.length > 0 || Object.keys(cleanedArrangement).length > 0;
+        
+        if (hasExistingArrangement) {
+          await checkAndHandlePendingSync(true);
+        }
+        
+        return data;
+      } else if (response.status === 404) {
+        setTables([]);
+        setSeatingArrangement({});
+        setPreferences({
+          groupTogether: [],
+          keepSeparate: [],
+          specialRequests: []
+        });
+        return { tables: [], arrangement: {} };
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('seating.errors.fetchArrangement'));
+        return null;
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId, makeApiRequest, t, checkAndHandlePendingSync]);
+
+  const saveSeatingArrangement = useCallback(async (immediateData = null) => {
+    try {
+      const dataToSave = immediateData || {
+        tables,
+        arrangement: seatingArrangement,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      };
+
+      const response = await makeApiRequest(`/api/events/${eventId}/seating`, {
+        method: 'POST',
+        body: JSON.stringify(dataToSave)
+      });
+
+      if (!response) {
+        return false;
+      }
+
+      if (response.ok) {
+        setError('');
+        return true;
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('seating.errors.saveArrangement'));
+        return false;
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+      return false;
+    }
+  }, [eventId, makeApiRequest, tables, seatingArrangement, preferences, canvasScale, canvasOffset, t]);
+
+  const autoSave = useCallback(
+    (() => {
+      let timeoutId;
+      return (data = null) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          saveSeatingArrangement(data);
+        }, 3000); 
+      };
+    })(),
+    [saveSeatingArrangement]
+  );
+
+  const findAvailableTable = useCallback((guestSize, currentTables, currentArrangement, excludeTableIds = []) => {
+    return currentTables.find(table => {
+      if (excludeTableIds.includes(table.id)) return false;
+      
+      const tableGuests = currentArrangement[table.id] || [];
+      const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+        const guest = confirmedGuests.find(g => g._id === guestId);
+        return sum + (guest?.attendingCount || 1);
+      }, 0);
+      
+      return (table.capacity - currentOccupancy) >= guestSize;
+    });
+  }, [confirmedGuests]);
+
+  const createNewTable = useCallback((capacity, tableNumber) => {
+    return {
+      id: `auto_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: `${t('seating.tableName')} ${tableNumber}`,
+      type: capacity <= 8 ? 'round' : 'rectangular',
+      capacity: capacity,
+      position: {
+        x: 300 + ((tableNumber - 1) % 3) * 200,
+        y: 300 + Math.floor((tableNumber - 1) / 3) * 200
+      },
+      rotation: 0,
+      size: capacity <= 8 ? 
+        { width: 120, height: 120 } : 
+        { width: 160, height: 100 }
+    };
+  }, [t]);
+
+  const optimizeTableArrangement = useCallback((currentTables, currentArrangement, confirmedGuestsList) => {
+    const optimizedTables = [...currentTables];
+    const optimizedArrangement = { ...currentArrangement };
+    let tablesRemoved = false;
+
+    currentTables.forEach(table => {
+      const tableGuests = optimizedArrangement[table.id] || [];
+      const tableOccupancy = tableGuests.reduce((sum, guestId) => {
+        const guest = confirmedGuestsList.find(g => g._id === guestId);
+        return sum + (guest?.attendingCount || 1);
+      }, 0);
+
+      if (tableOccupancy === 0) {
+        const tableIndex = optimizedTables.findIndex(t => t.id === table.id);
+        if (tableIndex !== -1) {
+          optimizedTables.splice(tableIndex, 1);
+          delete optimizedArrangement[table.id];
+          tablesRemoved = true;
+        }
+      }
+      else if (tableOccupancy <= table.capacity / 3 && optimizedTables.length > 1) {
+        const availableTable = findAvailableTable(
+          tableOccupancy, 
+          optimizedTables, 
+          optimizedArrangement, 
+          [table.id]
+        );
+        
+        if (availableTable) {
+          if (!optimizedArrangement[availableTable.id]) {
+            optimizedArrangement[availableTable.id] = [];
+          }
+          optimizedArrangement[availableTable.id].push(...tableGuests);
+          
+          const tableIndex = optimizedTables.findIndex(t => t.id === table.id);
+          if (tableIndex !== -1) {
+            optimizedTables.splice(tableIndex, 1);
+            delete optimizedArrangement[table.id];
+            tablesRemoved = true;
+          }
+        }
+      }
+    });
+
+    return { 
+      tables: optimizedTables, 
+      arrangement: optimizedArrangement, 
+      wasOptimized: tablesRemoved 
+    };
+  }, [findAvailableTable]);
+
+  const applySyncChanges = useCallback(async (changes, currentTables, currentArrangement, confirmedGuestsList) => {
+    let updatedTables = [...currentTables];
+    let updatedArrangement = { ...currentArrangement };
+    let syncActions = [];
+
+    for (const change of changes) {
+      switch (change.type) {
+        case 'new_confirmed':
+        case 'became_confirmed':
+          const guestSize = change.guest.attendingCount;
+          let availableTable = findAvailableTable(guestSize, updatedTables, updatedArrangement);
+          
+          if (!availableTable) {
+            const newTableNumber = updatedTables.length + 1;
+            const optimalCapacity = Math.max(8, Math.ceil(guestSize * 1.5));
+            const newTable = createNewTable(optimalCapacity, newTableNumber);
+            updatedTables.push(newTable);
+            availableTable = newTable;
+            syncActions.push({
+              action: 'table_created',
+              tableName: newTable.name,
+              capacity: newTable.capacity
+            });
+          }
+          
+          if (!updatedArrangement[availableTable.id]) {
+            updatedArrangement[availableTable.id] = [];
+          }
+          updatedArrangement[availableTable.id].push(change.guestId);
+          
+          syncActions.push({
+            action: 'guest_seated',
+            guestName: `${change.guest.firstName} ${change.guest.lastName}`,
+            tableName: availableTable.name,
+            attendingCount: guestSize
+          });
+          break;
+
+        case 'no_longer_confirmed':
+        case 'guest_removed':
+          Object.keys(updatedArrangement).forEach(tableId => {
+            const guestIndex = updatedArrangement[tableId].indexOf(change.guestId);
+            if (guestIndex !== -1) {
+              updatedArrangement[tableId].splice(guestIndex, 1);
+              if (updatedArrangement[tableId].length === 0) {
+                delete updatedArrangement[tableId];
+              }
+              
+              const table = updatedTables.find(t => t.id === tableId);
+              syncActions.push({
+                action: 'guest_removed',
+                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
+                tableName: table?.name || t('seating.unknownTable')
+              });
+            }
+          });
+          break;
+
+        case 'attending_count_changed':
+          let guestTableId = null;
+          Object.keys(updatedArrangement).forEach(tableId => {
+            if (updatedArrangement[tableId].includes(change.guestId)) {
+              guestTableId = tableId;
+            }
+          });
+
+          if (guestTableId) {
+            const currentTable = updatedTables.find(t => t.id === guestTableId);
+            const tableGuests = updatedArrangement[guestTableId] || [];
+            const otherGuestsSize = tableGuests
+              .filter(id => id !== change.guestId)
+              .reduce((sum, guestId) => {
+                const guest = confirmedGuestsList.find(g => g._id === guestId);
+                return sum + (guest?.attendingCount || 1);
+              }, 0);
+            
+            const newTotalSize = otherGuestsSize + change.newCount;
+            
+            if (newTotalSize <= currentTable.capacity) {
+              syncActions.push({
+                action: 'guest_updated',
+                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
+                tableName: currentTable.name,
+                oldCount: change.oldCount,
+                newCount: change.newCount
+              });
+            } else {
+              const guestIndex = updatedArrangement[guestTableId].indexOf(change.guestId);
+              if (guestIndex !== -1) {
+                updatedArrangement[guestTableId].splice(guestIndex, 1);
+                if (updatedArrangement[guestTableId].length === 0) {
+                  delete updatedArrangement[guestTableId];
+                }
+              }
+
+              let newTable = findAvailableTable(change.newCount, updatedTables, updatedArrangement);
+              
+              if (!newTable) {
+                const newTableNumber = updatedTables.length + 1;
+                const optimalCapacity = Math.max(8, Math.ceil(change.newCount * 1.5));
+                newTable = createNewTable(optimalCapacity, newTableNumber);
+                updatedTables.push(newTable);
+                syncActions.push({
+                  action: 'table_created',
+                  tableName: newTable.name,
+                  capacity: newTable.capacity
+                });
+              }
+
+              if (!updatedArrangement[newTable.id]) {
+                updatedArrangement[newTable.id] = [];
+              }
+              updatedArrangement[newTable.id].push(change.guestId);
+              
+              syncActions.push({
+                action: 'guest_moved',
+                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
+                fromTable: currentTable.name,
+                toTable: newTable.name,
+                oldCount: change.oldCount,
+                newCount: change.newCount
+              });
+            }
+          }
+          break;
+      }
+    }
+
+    const { tables: optimizedTables, arrangement: optimizedArrangement, wasOptimized } = 
+      optimizeTableArrangement(updatedTables, updatedArrangement, confirmedGuestsList);
+
+    if (wasOptimized) {
+      syncActions.push({
+        action: 'arrangement_optimized',
+        message: t('seating.sync.arrangementOptimized')
+      });
+    }
+
+    return {
+      tables: optimizedTables,
+      arrangement: optimizedArrangement,
+      actions: syncActions
+    };
+  }, [findAvailableTable, createNewTable, optimizeTableArrangement, t]);
+
+  const performSync = useCallback(async (newGuestData) => {
+    if (!autoSyncEnabled || syncInProgress) return;
+
+    const { confirmed: newConfirmedGuests } = newGuestData;
+    const newFingerprint = createGuestFingerprint(newConfirmedGuests);
+    
+    if (!lastSyncData) {
+      setLastSyncData(newFingerprint);
+      return;
+    }
+
+    const { hasChanges, changes } = detectGuestChanges(newFingerprint, lastSyncData);
+    
+    if (!hasChanges) {
+      setLastSyncData(newFingerprint);
+      return;
+    }
+
+    setSyncInProgress(true);
+    
+    try {
+      const { tables: updatedTables, arrangement: updatedArrangement, actions } = 
+        await applySyncChanges(changes, tables, seatingArrangement, newConfirmedGuests);
+
+      const tablesWithGroupNames = updateTableNamesWithGroups(updatedTables, updatedArrangement);
+
+      setTables(tablesWithGroupNames);
+      setSeatingArrangement(updatedArrangement);
+
+      const saveData = {
+        tables: tablesWithGroupNames,
+        arrangement: updatedArrangement,
+        preferences,
+        layoutSettings: { canvasScale, canvasOffset }
+      };
+
+      await saveSeatingArrangement(saveData);
+      setLastSyncData(newFingerprint);
+
+      const actionSummary = actions.map(action => {
+        switch (action.action) {
+          case 'guest_seated':
+            return t('seating.sync.guestSeated', { 
+              guestName: action.guestName, 
+              tableName: action.tableName 
+            });
+          case 'guest_removed':
+            return t('seating.sync.guestRemoved', { 
+              guestName: action.guestName, 
+              tableName: action.tableName 
+            });
+          case 'guest_moved':
+            return t('seating.sync.guestMoved', { 
+              guestName: action.guestName, 
+              fromTable: action.fromTable, 
+              toTable: action.toTable 
+            });
+          case 'guest_updated':
+            return t('seating.sync.guestUpdated', { 
+              guestName: action.guestName, 
+              tableName: action.tableName 
+            });
+          case 'table_created':
+            return t('seating.sync.tableCreated', { 
+              tableName: action.tableName 
+            });
+          case 'arrangement_optimized':
+            return action.message;
+          default:
+            return '';
+        }
+      }).filter(Boolean);
+
+      if (actionSummary.length > 0) {
+        showSyncNotification('success', t('seating.sync.changesApplied', { 
+          count: actionSummary.length 
+        }));
+      }
+
+    } catch (error) {
+      showSyncNotification('error', t('seating.sync.syncFailed'));
+      setLastSyncData(newFingerprint);
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [
+    autoSyncEnabled, 
+    syncInProgress, 
+    lastSyncData, 
+    tables, 
+    seatingArrangement, 
+    preferences, 
+    canvasScale, 
+    canvasOffset,
+    createGuestFingerprint,
+    detectGuestChanges,
+    applySyncChanges,
+    updateTableNamesWithGroups,
+    saveSeatingArrangement,
+    showSyncNotification,
+    t
+  ]);
+
+  useEffect(() => {
+    if (!autoSyncEnabled) return;
+
+    const pollForChanges = async () => {
+      if (syncInProgress) return;
+      
+      try {
+        const syncResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/status`);
+        if (syncResponse && syncResponse.ok) {
+          const syncStatus = await syncResponse.json();
+          
+          if (syncStatus.syncRequired && syncStatus.pendingTriggers > 0) {
+            const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
+              method: 'POST'
+            });
+            
+            if (processResponse && processResponse.ok) {
+              const processResult = await processResponse.json();
+              
+              if (processResult.requiresUserDecision) {
+                setSyncOptions(processResult.options || []);
+                setAffectedGuests(processResult.affectedGuests || []);
+                setPendingSyncTriggers(processResult.pendingTriggers || []);
+                setIsSyncOptionsModalOpen(true);
+                
+                showSyncNotification('info', t('seating.sync.newChangesDetected'));
+              } else if (processResult.hasChanges && processResult.seating) {
+                setTables(processResult.seating.tables || []);
+                setSeatingArrangement(processResult.seating.arrangement || {});
+                
+                showSyncNotification('success', processResult.message);
+              }
+            }
+          }
+        }
+      } catch (error) {
+      }
+    };
+
+    syncTimeoutRef.current = setInterval(pollForChanges, 20000);
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearInterval(syncTimeoutRef.current);
+      }
+    };
+  }, [autoSyncEnabled, syncInProgress, makeApiRequest, eventId, showSyncNotification, t]);
+
   const generateAISeating = useCallback(async (aiPreferences) => {
     try {
       setLoading(true);
@@ -317,6 +890,9 @@ const EventSeatingPage = () => {
         
         setIsAIModalOpen(false);
         
+        const newFingerprint = createGuestFingerprint(confirmedGuests);
+        setLastSyncData(newFingerprint);
+        
         return { arrangement: data.arrangement, tables: finalTables };
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -329,7 +905,7 @@ const EventSeatingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, makeApiRequest, tables, preferences, confirmedGuests, seatingArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups]);
+  }, [eventId, makeApiRequest, tables, preferences, confirmedGuests, seatingArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint]);
 
   const calculateTableSize = (type, capacity) => {
     const baseSize = Math.max(80, Math.min(200, 60 + (capacity * 8)));
@@ -565,6 +1141,11 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       });
+
+      if (!lastSyncData) {
+        const newFingerprint = createGuestFingerprint(confirmedGuests);
+        setLastSyncData(newFingerprint);
+      }
     }, 100);
     
     return true;
@@ -594,6 +1175,11 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       });
+
+      if (!lastSyncData) {
+        const newFingerprint = createGuestFingerprint(confirmedGuests);
+        setLastSyncData(newFingerprint);
+      }
     }, 100);
   }, [seatingArrangement, tables, preferences, canvasScale, canvasOffset, autoSave, updateTableNamesWithGroups]);
 
@@ -609,6 +1195,8 @@ const EventSeatingPage = () => {
       setError('');
       
       setManuallyEditedTableNames(new Set());
+      
+      setLastSyncData(null);
       
       autoSave({
         tables: newTables,
@@ -708,20 +1296,171 @@ const EventSeatingPage = () => {
     });
   }, [canvasScale, canvasOffset, tables, seatingArrangement, preferences, autoSave]);
 
+  const toggleAutoSync = useCallback(() => {
+    setAutoSyncEnabled(prev => {
+      const newValue = !prev;
+      if (newValue && confirmedGuests.length > 0) {
+        const newFingerprint = createGuestFingerprint(confirmedGuests);
+        setLastSyncData(newFingerprint);
+      }
+      return newValue;
+    });
+  }, [createGuestFingerprint, confirmedGuests]);
+
+  const manualSync = useCallback(async () => {
+    if (syncInProgress) return;
+    
+    try {
+      setSyncInProgress(true);
+      
+      const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
+        method: 'POST'
+      });
+
+      if (!response) return;
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.requiresUserDecision) {
+          setSyncOptions(result.options);
+          setAffectedGuests(result.affectedGuests);
+          setPendingSyncTriggers(result.pendingTriggers);
+          setIsSyncOptionsModalOpen(true);
+        } else if (result.hasChanges) {
+          setTables(result.seating.tables);
+          setSeatingArrangement(result.seating.arrangement);
+          
+          showSyncNotification('success', result.message);
+          
+          await fetchConfirmedGuests();
+        } else {
+          showSyncNotification('info', result.message);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showSyncNotification('error', errorData.message || t('seating.sync.manualSyncFailed'));
+      }
+    } catch (error) {
+      showSyncNotification('error', t('seating.sync.manualSyncFailed'));
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [syncInProgress, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests]);
+
+const handleApplySyncOption = useCallback(async (optionId, customArrangement = null) => {
+  try {
+    setSyncInProgress(true);
+    
+    const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/apply-option`, {
+      method: 'POST',
+      body: JSON.stringify({
+        optionId,
+        customArrangement
+      })
+    });
+
+    if (!response) return;
+
+    if (response.ok) {
+      const result = await response.json();
+      
+      setTables(result.seating.tables);
+      setSeatingArrangement(result.seating.arrangement);
+      setIsSyncOptionsModalOpen(false);
+      
+      showSyncNotification('success', result.message);
+      
+      const currentGuestData = await fetchConfirmedGuests();
+      if (currentGuestData) {
+        const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+        setLastSyncData(newFingerprint);
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      showSyncNotification('error', errorData.message || t('seating.sync.applyOptionFailed'));
+    }
+  } catch (error) {
+    showSyncNotification('error', t('seating.sync.applyOptionFailed'));
+  } finally {
+    setSyncInProgress(false);
+  }
+}, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
+
+const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds) => {
+  try {
+    setSyncInProgress(true);
+    
+    const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/move-to-unassigned`, {
+      method: 'POST',
+      body: JSON.stringify({
+        affectedGuestIds
+      })
+    });
+
+    if (!response) return;
+
+    if (response.ok) {
+      const result = await response.json();
+      
+      setTables(result.seating.tables);
+      setSeatingArrangement(result.seating.arrangement);
+      setIsSyncOptionsModalOpen(false);
+      
+      showSyncNotification('success', result.message);
+      
+      const currentGuestData = await fetchConfirmedGuests();
+      if (currentGuestData) {
+        const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+        setLastSyncData(newFingerprint);
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      showSyncNotification('error', errorData.message || t('seating.sync.moveGuestsFailed'));
+    }
+  } catch (error) {
+    showSyncNotification('error', t('seating.sync.moveGuestsFailed'));
+  } finally {
+    setSyncInProgress(false);
+  }
+}, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
+
   useEffect(() => {
-    fetchConfirmedGuests();
-    fetchSeatingArrangement();
+    const initializeData = async () => {
+      const guestData = await fetchConfirmedGuests();
+      
+      if (guestData) {
+      } else {
+      }
+      
+      const seatingData = await fetchSeatingArrangement();
+    };
+
+    initializeData();
   }, [fetchConfirmedGuests, fetchSeatingArrangement]);
 
-  const stats = {
-    totalGuests: confirmedGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0),
-    seatedGuests: Object.values(seatingArrangement).flat().reduce((sum, guestId) => {
+  const stats = (() => {
+    const totalGuests = confirmedGuests.reduce((sum, guest) => {
+      const count = guest.attendingCount || 1;
+      return sum + count;
+    }, 0);
+
+    const seatedIds = Object.values(seatingArrangement).flat();
+    const seatedGuests = seatedIds.reduce((sum, guestId) => {
       const guest = confirmedGuests.find(g => g._id === guestId);
-      return sum + (guest?.attendingCount || 1);
-    }, 0),
-    totalTables: tables.length,
-    occupiedTables: Object.keys(seatingArrangement).length
-  };
+      const attendingCount = guest?.attendingCount || 1;
+      return sum + attendingCount;
+    }, 0);
+
+    const result = {
+      totalGuests,
+      seatedGuests,
+      totalTables: tables.length,
+      occupiedTables: Object.keys(seatingArrangement).length
+    };
+
+    return result;
+  })();
 
   if (loading) {
     return (
@@ -750,6 +1489,19 @@ const EventSeatingPage = () => {
           </div>
         )}
 
+        {syncNotification && (
+          <div className={`seating-sync-notification ${syncNotification.type}`}>
+            <div className="sync-notification-content">
+              <span className="sync-notification-icon">
+                {syncNotification.type === 'success' ? '✅' : '❌'}
+              </span>
+              <span className="sync-notification-message">
+                {syncNotification.message}
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="seating-header">
           <div className="seating-mode-selector">
             <button
@@ -763,6 +1515,29 @@ const EventSeatingPage = () => {
               onClick={() => setMode('ai')}
             >
               {t('seating.mode.ai')}
+            </button>
+          </div>
+
+          <div className="seating-sync-controls">
+            <div className="sync-status">
+              <span className={`sync-indicator ${autoSyncEnabled ? 'enabled' : 'disabled'}`}>
+                {autoSyncEnabled ? '🔄' : '⏸️'}
+              </span>
+              <span className="sync-status-text">
+                {t(`seating.sync.status.${autoSyncEnabled ? 'enabled' : 'disabled'}`)}
+              </span>
+              {syncInProgress && (
+                <span className="sync-progress">
+                  {t('seating.sync.inProgress')}
+                </span>
+              )}
+            </div>
+            <button
+              className="sync-toggle-button"
+              onClick={toggleAutoSync}
+              title={t(`seating.sync.${autoSyncEnabled ? 'disable' : 'enable'}`)}
+            >
+              {t(`seating.sync.${autoSyncEnabled ? 'disable' : 'enable'}`)}
             </button>
           </div>
 
@@ -913,6 +1688,7 @@ const EventSeatingPage = () => {
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onUnseatGuest={unseatGuest}
+                  syncNotification={syncNotification}
                 />
               </div>
             </>
@@ -958,6 +1734,16 @@ const EventSeatingPage = () => {
           onGenerate={generateAISeating}
           onAddTables={handleAddTablesFromAI}
           getNextTableNumber={getNextTableNumber}
+        />
+
+        <SyncOptionsModal
+          isOpen={isSyncOptionsModalOpen}
+          onClose={() => setIsSyncOptionsModalOpen(false)}
+          options={syncOptions}
+          affectedGuests={affectedGuests}
+          pendingTriggers={pendingSyncTriggers}
+          onApplyOption={handleApplySyncOption}
+          onMoveToUnassigned={handleMoveAffectedGuestsToUnassigned}
         />
       </div>
     </FeaturePageTemplate>

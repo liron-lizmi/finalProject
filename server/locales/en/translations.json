@@ -172,6 +172,12 @@
     "rsvpUpdateSuccess": "Guest response updated successfully",
     "googleConnectionSuccess": "Connected to Google Contacts successfully",
     "googleDisconnectSuccess": "Disconnected from Google Contacts successfully",
+    "groups": {
+      "family": "family",
+      "friends": "friends",
+      "work": "work",
+      "other": "other"
+    },
     "gifts": {
       "eventNotPassed": "Gifts can only be added after the event has passed"
     },

@@ -172,6 +172,12 @@
     "rsvpUpdateSuccess": "תגובת המוזמן עודכנה בהצלחה",
     "googleConnectionSuccess": "החיבור ל-Google Contacts בוצע בהצלחה",
     "googleDisconnectSuccess": "ההתנתקות מ-Google Contacts בוצעה בהצלחה",
+    "groups": {
+      "family": "משפחה",
+      "friends": "חברים", 
+      "work": "עבודה",
+      "other": "אחר"
+    },
     "gifts": {
       "eventNotPassed": "ניתן להוסיף מתנות רק לאחר שהאירוע עבר"
     },
@@ -191,15 +197,31 @@
     "expenseNotFound": "הוצאה לא נמצאה",
     "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
   },
+  
   "seating": {
+    "tableName": "שולחן",
     "table": "שולחן {{number}}",
     "saveSuccess": "סידור המקומות נשמר בהצלחה",
-    "deleteSuccess": "סידור המקומות נמחק בהצלחה",
+    "deleteSuccess": "סידור המקומות נמחק בהצלחה", 
     "cloneSuccess": "סידור המקומות הועתק בהצלחה",
     "notFound": "סידור מקומות לא נמצא",
+    "unknownTable": "שולחן לא מוכר",
+    "unknownGuest": "אורח לא מוכר",
+    "sync": {
+      "createdForGuest": "נוצר עבור {{guestName}}",
+      "createdForResize": "נוצר עבור שינוי גודל",
+      "movedForResize": "הועבר עקב שינוי גודל",
+      "stayedAtTable": "נשאר באותו שולחן",
+      "noAvailableTable": "אין שולחן זמין",
+      "noTableForResize": "אין שולחן זמין עבור הגודל החדש",
+      "guestNotSeated": "האורח לא היה יושב",
+      "arrangementOptimized": "הסידור בוטל לאופטימיזציה",
+      "keptAtOriginalTable": "נשמר בשולחן המקורי",
+      "optionGenerationError": "שגיאה ביצירת אפשרויות סנכרון"
+    },
     "errors": {
       "fetchFailed": "שגיאה בטעינת סידור המקומות",
-      "saveFailed": "שגיאה בשמירת סידור המקומות",
+      "saveFailed": "שגיאה בשמירת סידור המקומות", 
       "validationFailed": "אימות נכשל",
       "validationError": "שגיאת אימות",
       "noConfirmedGuests": "אין אורחים מאושרים",
@@ -213,7 +235,7 @@
       "generationSuccess": "סידור המקומות נוצר בהצלחה על ידי הבינה המלאכותית"
     },
     "export": {
-      "title": "תרשים סידור מקומות",
+      "title": "תרשים סידור מקומות", 
       "seatingChart": "תרשים סידור מקומות"
     }
   }

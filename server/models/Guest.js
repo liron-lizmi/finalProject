@@ -158,21 +158,17 @@ const GuestSchema = new mongoose.Schema({
   }
 });
 
-  // Pre-save middleware to update timestamps and validate ride info
 GuestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   
-  // Handle attendingCount based on RSVP status
   if (this.rsvpStatus === 'declined') {
     this.attendingCount = 0;
   } else if (this.rsvpStatus === 'confirmed') {
-    // Only set to 1 if attendingCount is not already set or is invalid
     if (!this.attendingCount || this.attendingCount < 1 || isNaN(this.attendingCount)) {
       this.attendingCount = 1;
     }
   }
 
-  // Clean up ride info fields based on status
   if (this.rideInfo) {
     if (this.rideInfo.status !== 'offering') {
       this.rideInfo.availableSeats = undefined;
@@ -182,7 +178,6 @@ GuestSchema.pre('save', function(next) {
       this.rideInfo.requiredSeats = undefined;
     }
 
-    // Update ride info timestamp when modified
     if (this.rideInfo.lastUpdated) {
       this.rideInfo.lastUpdated = Date.now();
     }
@@ -191,7 +186,6 @@ GuestSchema.pre('save', function(next) {
   next();
 });
 
-// Create indexes for better query performance
 GuestSchema.index({ event: 1, user: 1 });
 GuestSchema.index({ phone: 1, event: 1 });
 

@@ -9,7 +9,13 @@ const {
   deleteSeatingArrangement,
   validateSeatingArrangement,
   getSeatingSubjestions,
-  cloneSeatingArrangement
+  cloneSeatingArrangement,
+  processSeatingSync,
+  updateSyncSettings,
+  getSyncStatus,
+  proposeSyncOptions,
+  applySyncOption,
+  moveAffectedGuestsToUnassigned
 } = require('../controllers/seatingController');
 const auth = require('../middleware/auth');
 
@@ -36,5 +42,13 @@ router.get('/suggestions', getSeatingSubjestions);
 
 // Clone seating arrangement
 router.post('/clone', cloneSeatingArrangement); 
+
+// Sync functionality - new routes
+router.post('/sync/process', processSeatingSync);
+router.post('/sync/propose-options', proposeSyncOptions);
+router.post('/sync/apply-option', applySyncOption);
+router.post('/sync/move-to-unassigned', moveAffectedGuestsToUnassigned);
+router.put('/sync/settings', updateSyncSettings);
+router.get('/sync/status', getSyncStatus);
 
 module.exports = router;

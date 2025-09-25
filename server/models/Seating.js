@@ -53,6 +53,14 @@ const TableSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 500
+  },
+  autoCreated: {
+    type: Boolean,
+    default: false
+  },
+  createdForSync: {
+    type: Boolean,
+    default: false
   }
 }, { _id: false });
 
@@ -78,6 +86,49 @@ const PreferenceSchema = new mongoose.Schema({
       default: 'medium'
     }
   }]
+}, { _id: false });
+
+const SyncTriggerSchema = new mongoose.Schema({
+  timestamp: {
+    type: Date,
+    default: Date.now
+  },
+  changeType: {
+    type: String,
+    enum: [
+      'guest_added',
+      'guest_deleted', 
+      'guest_details_updated',
+      'rsvp_updated',
+      'public_rsvp_updated',
+      'bulk_guests_added',
+      'status_became_confirmed',
+      'status_no_longer_confirmed',
+      'attending_count_changed'
+    ],
+    required: true
+  },
+  changeData: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true
+  },
+  processed: {
+    type: Boolean,
+    default: false
+  },
+  processedAt: {
+    type: Date
+  },
+  syncResult: {
+    success: {
+      type: Boolean
+    },
+    actions: [{
+      action: String,
+      details: mongoose.Schema.Types.Mixed
+    }],
+    errorMessage: String
+  }
 }, { _id: false });
 
 const SeatingSchema = new mongoose.Schema({
@@ -157,6 +208,72 @@ const SeatingSchema = new mongoose.Schema({
       maxlength: 1000
     }
   },
+  syncSettings: {
+    autoSyncEnabled: {
+      type: Boolean,
+      default: true
+    },
+    syncOnRsvpChange: {
+      type: Boolean,
+      default: true
+    },
+    syncOnAttendingCountChange: {
+      type: Boolean,
+      default: true
+    },
+    autoCreateTables: {
+      type: Boolean,
+      default: true
+    },
+    autoOptimizeTables: {
+      type: Boolean,
+      default: true
+    },
+    preferredTableSize: {
+      type: Number,
+      default: 12,
+      min: 6,
+      max: 20
+    }
+  },
+  syncTriggers: [SyncTriggerSchema],
+  lastSyncTrigger: {
+    type: Date
+  },
+  lastSyncProcessed: {
+    type: Date
+  },
+  syncStats: {
+    totalSyncs: {
+      type: Number,
+      default: 0
+    },
+    successfulSyncs: {
+      type: Number,
+      default: 0
+    },
+    failedSyncs: {
+      type: Number,
+      default: 0
+    },
+    lastSyncStatus: {
+      type: String,
+      enum: ['success', 'failed', 'partial'],
+      default: 'success'
+    },
+    tablesCreatedBySync: {
+      type: Number,
+      default: 0
+    },
+    tablesRemovedBySync: {
+      type: Number,
+      default: 0
+    },
+    guestsMovedBySync: {
+      type: Number,
+      default: 0
+    }
+  },
   version: {
     type: Number,
     default: 1
@@ -190,6 +307,14 @@ SeatingSchema.virtual('currentOccupancy').get(function() {
     }
   }
   return occupancy;
+});
+
+SeatingSchema.virtual('pendingSyncTriggers').get(function() {
+  return (this.syncTriggers || []).filter(trigger => !trigger.processed);
+});
+
+SeatingSchema.virtual('hasPendingSync').get(function() {
+  return this.pendingSyncTriggers.length > 0;
 });
 
 SeatingSchema.methods.validateArrangement = function(guests) {
@@ -265,7 +390,9 @@ SeatingSchema.methods.getStatistics = function(guests) {
     unseatedGuests: 0,
     unseatedPeople: 0,
     utilizationRate: 0,
-    tableUtilization: []
+    tableUtilization: [],
+    autoCreatedTables: this.tables.filter(t => t.autoCreated).length,
+    syncCreatedTables: this.tables.filter(t => t.createdForSync).length
   };
 
   const seatedGuestIds = new Set();
@@ -303,11 +430,247 @@ SeatingSchema.methods.getStatistics = function(guests) {
       capacity: table.capacity,
       occupancy,
       utilizationRate: (occupancy / table.capacity) * 100,
-      isOvercapacity: occupancy > table.capacity
+      isOvercapacity: occupancy > table.capacity,
+      autoCreated: table.autoCreated || false,
+      createdForSync: table.createdForSync || false
     });
   });
 
   return stats;
+};
+
+SeatingSchema.methods.addSyncTrigger = function(changeType, changeData) {
+  if (!this.syncTriggers) {
+    this.syncTriggers = [];
+  }
+
+  const trigger = {
+    timestamp: new Date(),
+    changeType,
+    changeData,
+    processed: false
+  };
+
+  this.syncTriggers.push(trigger);
+  
+  if (this.syncTriggers.length > 20) {
+    this.syncTriggers = this.syncTriggers.slice(-20);
+  }
+
+  this.lastSyncTrigger = new Date();
+  return trigger;
+};
+
+SeatingSchema.methods.processSyncTrigger = function(trigger, result) {
+  const triggerIndex = this.syncTriggers.findIndex(t => 
+    t.timestamp.getTime() === trigger.timestamp.getTime() && 
+    t.changeType === trigger.changeType
+  );
+
+  if (triggerIndex !== -1) {
+    this.syncTriggers[triggerIndex].processed = true;
+    this.syncTriggers[triggerIndex].processedAt = new Date();
+    this.syncTriggers[triggerIndex].syncResult = result;
+
+    this.syncStats.totalSyncs = (this.syncStats.totalSyncs || 0) + 1;
+    
+    if (result.success) {
+      this.syncStats.successfulSyncs = (this.syncStats.successfulSyncs || 0) + 1;
+      this.syncStats.lastSyncStatus = 'success';
+    } else {
+      this.syncStats.failedSyncs = (this.syncStats.failedSyncs || 0) + 1;
+      this.syncStats.lastSyncStatus = 'failed';
+    }
+
+    if (result.actions) {
+      result.actions.forEach(action => {
+        switch (action.action) {
+          case 'table_created':
+            this.syncStats.tablesCreatedBySync = (this.syncStats.tablesCreatedBySync || 0) + 1;
+            break;
+          case 'table_removed':
+            this.syncStats.tablesRemovedBySync = (this.syncStats.tablesRemovedBySync || 0) + 1;
+            break;
+          case 'guest_moved':
+            this.syncStats.guestsMovedBySync = (this.syncStats.guestsMovedBySync || 0) + 1;
+            break;
+        }
+      });
+    }
+
+    this.lastSyncProcessed = new Date();
+  }
+};
+
+SeatingSchema.methods.findAvailableTable = function(guestSize, guests, excludeTableIds = []) {
+  return this.tables.find(table => {
+    if (excludeTableIds.includes(table.id)) return false;
+    
+    const tableGuests = this.arrangement[table.id] || [];
+    const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+    
+    return (table.capacity - currentOccupancy) >= guestSize;
+  });
+};
+
+
+
+SeatingSchema.methods.createTable = function(capacity, tableNumber, isAutoCreated = false, isCreatedForSync = false, req = null) {
+  if (!req || !req.t) {
+    throw new Error('Translation function (req.t) is required for createTable');
+  }
+  
+  
+  let tableName;
+  try {
+    tableName = req.t('seating.tableName', { number: tableNumber });
+    
+    if (!tableName || tableName === 'seating.tableName' || !tableName.includes(tableNumber.toString())) {      
+      const baseTableName = req.t('seating.tableName');
+
+      if (baseTableName && baseTableName !== 'seating.tableName') {
+        tableName = `${baseTableName} ${tableNumber}`;
+      }
+    }
+  } catch (error) {
+    tableName = `שולחן ${tableNumber}`;
+  }
+    
+  const newTable = {
+    id: `auto_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: tableName,
+    type: capacity <= 8 ? 'round' : 'rectangular',
+    capacity: capacity,
+    position: {
+      x: 300 + ((tableNumber - 1) % 3) * 200,
+      y: 300 + Math.floor((tableNumber - 1) / 3) * 200
+    },
+    rotation: 0,
+    size: capacity <= 8 ? 
+      { width: 120, height: 120 } : 
+      { width: 160, height: 100 },
+    autoCreated: isAutoCreated,
+    createdForSync: isCreatedForSync
+  };
+
+  this.tables.push(newTable);
+  return newTable;
+};
+
+SeatingSchema.methods.optimizeArrangement = function(guests) {
+  
+  let optimized = false;
+  const tablesToRemove = [];
+  const originalTablesCount = this.tables.length;
+  
+  const seatedGuestCounts = {};
+  Object.values(this.arrangement || {}).forEach(guestIds => {
+    if (Array.isArray(guestIds)) {
+      guestIds.forEach(guestId => {
+        seatedGuestCounts[guestId] = (seatedGuestCounts[guestId] || 0) + 1;
+      });
+    }
+  });
+  
+  const duplicateGuests = Object.keys(seatedGuestCounts).filter(guestId => 
+    seatedGuestCounts[guestId] > 1
+  );
+  
+  duplicateGuests.forEach(guestId => {
+    let foundFirst = false;
+    Object.keys(this.arrangement).forEach(tableId => {
+      const guestIndex = this.arrangement[tableId].indexOf(guestId);
+      if (guestIndex !== -1) {
+        if (foundFirst) {
+          this.arrangement[tableId].splice(guestIndex, 1);
+          if (this.arrangement[tableId].length === 0) {
+            delete this.arrangement[tableId];
+          }
+          optimized = true;
+        } else {
+          foundFirst = true;
+        }
+      }
+    });
+  });
+
+  this.tables.forEach(table => {
+    const tableGuests = this.arrangement[table.id] || [];
+    if (tableGuests.length === 0) {
+      tablesToRemove.push(table.id);
+    }
+  });
+
+  if (this.tables.length > 1) {
+    const underUtilizedTables = this.tables.filter(table => {
+      if (tablesToRemove.includes(table.id)) return false;
+      
+      const tableGuests = this.arrangement[table.id] || [];
+      const tableOccupancy = tableGuests.reduce((sum, guestId) => {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest?.attendingCount || 1);
+      }, 0);
+
+      return tableOccupancy > 0 && tableOccupancy <= table.capacity / 3;
+    });
+
+    for (const underTable of underUtilizedTables) {
+      const tableGuests = this.arrangement[underTable.id] || [];
+      const tableOccupancy = tableGuests.reduce((sum, guestId) => {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest?.attendingCount || 1);
+      }, 0);
+
+      const availableTable = this.tables.find(targetTable => {
+        if (targetTable.id === underTable.id) return false;
+        if (tablesToRemove.includes(targetTable.id)) return false;
+        
+        const targetGuests = this.arrangement[targetTable.id] || [];
+        const targetOccupancy = targetGuests.reduce((sum, guestId) => {
+          const guest = guests.find(g => g._id.toString() === guestId);
+          return sum + (guest?.attendingCount || 1);
+        }, 0);
+        
+        return (targetTable.capacity - targetOccupancy) >= tableOccupancy;
+      });
+      
+      if (availableTable) {
+        
+        if (!this.arrangement[availableTable.id]) {
+          this.arrangement[availableTable.id] = [];
+        }
+        
+        const newGuests = tableGuests.filter(guestId => 
+          !this.arrangement[availableTable.id].includes(guestId)
+        );
+        
+        this.arrangement[availableTable.id].push(...newGuests);
+        tablesToRemove.push(underTable.id);
+        optimized = true;
+      }
+    }
+  }
+
+  tablesToRemove.forEach(tableId => {
+    this.tables = this.tables.filter(t => t.id !== tableId);
+    delete this.arrangement[tableId];
+    optimized = true;
+  });
+
+  const validTableIds = new Set(this.tables.map(t => t.id));
+  Object.keys(this.arrangement).forEach(tableId => {
+    if (!validTableIds.has(tableId)) {
+      delete this.arrangement[tableId];
+      optimized = true;
+    }
+  });
+
+  const finalTablesCount = this.tables.length;
+    
+  return optimized;
 };
 
 SeatingSchema.methods.exportData = function(guests) {
@@ -328,10 +691,38 @@ SeatingSchema.methods.exportData = function(guests) {
     })),
     statistics: this.getStatistics(guests),
     preferences: this.preferences,
+    syncSettings: this.syncSettings,
+    syncStats: this.syncStats,
+    hasPendingSync: this.hasPendingSync,
     generatedAt: new Date().toISOString()
   };
 
   return exportData;
+};
+
+SeatingSchema.methods.getSyncSummary = function() {
+  const pendingTriggers = (this.syncTriggers || []).filter(trigger => !trigger.processed);
+  
+  return {
+    autoSyncEnabled: this.syncSettings?.autoSyncEnabled !== false,
+    pendingTriggers: pendingTriggers.length,
+    lastSyncTrigger: this.lastSyncTrigger,
+    lastSyncProcessed: this.lastSyncProcessed,
+    syncStats: this.syncStats || {
+      totalSyncs: 0,
+      successfulSyncs: 0,
+      failedSyncs: 0,
+      lastSyncStatus: 'success'
+    },
+    recentTriggers: (this.syncTriggers || [])
+      .slice(-5)
+      .map(trigger => ({
+        timestamp: trigger.timestamp,
+        changeType: trigger.changeType,
+        processed: trigger.processed,
+        success: trigger.syncResult?.success
+      }))
+  };
 };
 
 module.exports = mongoose.model('Seating', SeatingSchema);

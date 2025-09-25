@@ -14,7 +14,7 @@ const getSeatingArrangement = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    const seating = await Seating.findOne({ event: eventId, user: req.userId }).lean();
     
     if (!seating) {
       return res.json({
@@ -29,27 +29,95 @@ const getSeatingArrangement = async (req, res) => {
           canvasScale: 1,
           canvasOffset: { x: 0, y: 0 }
         },
+        syncSettings: {
+          autoSyncEnabled: true,
+          syncOnRsvpChange: true,
+          syncOnAttendingCountChange: true,
+          autoCreateTables: true,
+          autoOptimizeTables: true,
+          preferredTableSize: 12
+        },
         generatedBy: 'manual',
         version: 1,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        syncSummary: {
+          autoSyncEnabled: true,
+          pendingTriggers: 0,
+          lastSyncTrigger: null,
+          lastSyncProcessed: null,
+          syncStats: {
+            totalSyncs: 0,
+            successfulSyncs: 0,
+            failedSyncs: 0,
+            lastSyncStatus: 'success'
+          },
+          recentTriggers: []
+        }
       });
     }
 
+    const freshSeating = new Seating(seating);
+    
+    const guests = await Guest.find({ 
+      event: eventId, 
+      user: req.userId, 
+      rsvpStatus: 'confirmed' 
+    });
+
+    const cleanupResult = await cleanupEmptyTables(freshSeating, guests, req);
+    
+    if (cleanupResult.hasChanges) {
+      await Seating.findByIdAndUpdate(
+        seating._id, 
+        {
+          tables: freshSeating.tables,
+          arrangement: freshSeating.arrangement,
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+    }
+
+    const syncSummary = {
+      autoSyncEnabled: freshSeating.syncSettings?.autoSyncEnabled !== false,
+      pendingTriggers: freshSeating.syncTriggers?.filter(t => !t.processed).length || 0,
+      lastSyncTrigger: freshSeating.syncTriggers?.length > 0 ? 
+        freshSeating.syncTriggers[freshSeating.syncTriggers.length - 1].timestamp : null,
+      lastSyncProcessed: freshSeating.lastSyncProcessed || null,
+      syncStats: freshSeating.syncStats || {
+        totalSyncs: 0,
+        successfulSyncs: 0,
+        failedSyncs: 0,
+        lastSyncStatus: 'success'
+      },
+      recentTriggers: freshSeating.syncTriggers?.slice(-5) || []
+    };
+
     res.json({
-      tables: seating.tables || [],
-      arrangement: seating.arrangement || {},
-      preferences: seating.preferences || {
+      tables: freshSeating.tables || [],
+      arrangement: freshSeating.arrangement || {},
+      preferences: freshSeating.preferences || {
         groupTogether: [],
         keepSeparate: [],
         specialRequests: []
       },
-      layoutSettings: seating.layoutSettings || {
+      layoutSettings: freshSeating.layoutSettings || {
         canvasScale: 1,
         canvasOffset: { x: 0, y: 0 }
       },
-      generatedBy: seating.generatedBy || 'manual',
-      version: seating.version || 1,
-      updatedAt: seating.updatedAt || new Date()
+      syncSettings: freshSeating.syncSettings || {
+        autoSyncEnabled: true,
+        syncOnRsvpChange: true,
+        syncOnAttendingCountChange: true,
+        autoCreateTables: true,
+        autoOptimizeTables: true,
+        preferredTableSize: 12
+      },
+      generatedBy: freshSeating.generatedBy || 'manual',
+      version: freshSeating.version || 1,
+      updatedAt: freshSeating.updatedAt || new Date(),
+      syncSummary,
+      cleanupSummary: cleanupResult.hasChanges ? cleanupResult.cleanupSummary : null
     });
   } catch (err) {
     res.status(500).json({ 
@@ -62,7 +130,7 @@ const getSeatingArrangement = async (req, res) => {
 const saveSeatingArrangement = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { tables, arrangement, preferences, layoutSettings } = req.body;
+    const { tables, arrangement, preferences, layoutSettings, syncSettings } = req.body;
         
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event) {
@@ -77,17 +145,43 @@ const saveSeatingArrangement = async (req, res) => {
 
     const arrangementObj = arrangement && typeof arrangement === 'object' ? arrangement : {};
 
-    const errors = [];
-    if (tables && arrangementObj) {
-      for (const [tableId, guestIds] of Object.entries(arrangementObj)) {
-        if (!Array.isArray(guestIds)) continue;
+    const cleanedTables = [];
+    const cleanedArrangement = {};
+    
+    if (tables) {
+      tables.forEach(table => {
+        const hasGuests = arrangementObj[table.id] && 
+                         Array.isArray(arrangementObj[table.id]) && 
+                         arrangementObj[table.id].length > 0;
+        const isManualTable = !table.autoCreated && !table.createdForSync;
         
-        const table = tables.find(t => t.id === tableId);
-        if (!table) continue;
+        if (hasGuests || isManualTable) {
+          cleanedTables.push(table);
+          if (hasGuests) {
+            cleanedArrangement[table.id] = arrangementObj[table.id];
+          }
+        }
+      });
+    }
+
+    const errors = [];
+    if (cleanedTables && cleanedArrangement) {
+      for (const [tableId, guestIds] of Object.entries(cleanedArrangement)) {
+        if (!Array.isArray(guestIds)) {
+          continue;
+        }
+        
+        const table = cleanedTables.find(t => t.id === tableId);
+        if (!table) {
+          continue;
+        }
         
         const totalPeople = guestIds.reduce((sum, guestId) => {
           const guest = guests.find(g => g._id.toString() === guestId);
-          return sum + (guest ? (guest.attendingCount || 1) : 0);
+          if (!guest) {
+            return sum;
+          }
+          return sum + (guest.attendingCount || 1);
         }, 0);
 
         if (totalPeople > table.capacity) {
@@ -108,8 +202,8 @@ const saveSeatingArrangement = async (req, res) => {
     }
 
     const updateData = {
-      tables: tables || [],
-      arrangement: arrangementObj,
+      tables: cleanedTables,
+      arrangement: cleanedArrangement,
       preferences: preferences || {
         groupTogether: [],
         keepSeparate: [],
@@ -118,6 +212,14 @@ const saveSeatingArrangement = async (req, res) => {
       layoutSettings: layoutSettings || {
         canvasScale: 1,
         canvasOffset: { x: 0, y: 0 }
+      },
+      syncSettings: syncSettings || {
+        autoSyncEnabled: true,
+        syncOnRsvpChange: true,
+        syncOnAttendingCountChange: true,
+        autoCreateTables: true,
+        autoOptimizeTables: true,
+        preferredTableSize: 12
       },
       generatedBy: 'manual',
       updatedAt: new Date()
@@ -144,8 +246,10 @@ const saveSeatingArrangement = async (req, res) => {
         arrangement: seating.arrangement,
         preferences: seating.preferences,
         layoutSettings: seating.layoutSettings,
+        syncSettings: seating.syncSettings,
         version: seating.version,
-        updatedAt: seating.updatedAt
+        updatedAt: seating.updatedAt,
+        syncSummary: seating.getSyncSummary()
       }
     });
   } catch (err) {
@@ -159,6 +263,2193 @@ const saveSeatingArrangement = async (req, res) => {
     
     res.status(500).json({ 
       message: req.t('seating.errors.saveFailed'),
+      error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
+    });
+  }
+};
+
+const syncLocks = new Map();
+
+const processSeatingSync = async (req, res) => {
+  const { eventId } = req.params;
+  const lockKey = `sync_${eventId}_${req.userId}`;
+  
+  if (syncLocks.has(lockKey)) {
+    return res.json({
+      message: req.t('seating.sync.alreadyInProgress'),
+      hasChanges: false,
+      requiresUserDecision: false,
+      syncSummary: {
+        autoSyncEnabled: true,
+        pendingTriggers: 0,
+        lastSyncTrigger: null,
+        lastSyncProcessed: null,
+        syncStats: {
+          totalSyncs: 0,
+          successfulSyncs: 0,
+          failedSyncs: 0,
+          lastSyncStatus: 'success'
+        },
+        recentTriggers: []
+      }
+    });
+  }
+
+  syncLocks.set(lockKey, true);
+  
+  try {
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    let seating;
+    let retryCount = 0;
+    const maxRetries = 5;
+    
+    while (retryCount < maxRetries) {
+      try {
+        seating = await Seating.findOne({ event: eventId, user: req.userId });
+        if (seating) {
+          break;
+        }
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 200 * retryCount));
+      }
+    }
+
+    if (!seating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
+    }
+
+    const guests = await Guest.find({ 
+      event: eventId, 
+      user: req.userId, 
+      rsvpStatus: 'confirmed' 
+    });
+
+    const pendingTriggers = seating.pendingSyncTriggers;
+
+    if (pendingTriggers.length === 0) {
+      const cleanupResult = await cleanupEmptyTables(seating, guests, req);
+      
+      if (cleanupResult.hasChanges) {
+        const saveResult = await saveSeatingWithRetryAndValidation(seating, guests, maxRetries);
+        if (!saveResult.success) {
+          throw new Error(`Failed to save after cleanup: ${saveResult.error}`);
+        }
+        
+        return res.json({
+          message: req.t('seating.sync.arrangementOptimized'),
+          hasChanges: true,
+          requiresUserDecision: false,
+          seating: {
+            tables: seating.tables,
+            arrangement: seating.arrangement,
+            syncSummary: seating.getSyncSummary()
+          },
+          cleanupActions: cleanupResult.actions
+        });
+      }
+      
+      return res.json({
+        message: req.t('seating.sync.noChangesToProcess'),
+        hasChanges: false,
+        requiresUserDecision: false,
+        syncSummary: seating.getSyncSummary()
+      });
+    }
+
+    const hasConflictingChanges = await checkForConflictingChanges(seating, pendingTriggers, guests);
+    
+    if (hasConflictingChanges) {
+      const option1 = await generateSyncOption(seating, pendingTriggers, guests, req, 'conservative');
+      const option2 = await generateSyncOption(seating, pendingTriggers, guests, req, 'optimal');
+      const affectedGuests = extractAffectedGuests(pendingTriggers, guests);
+
+      return res.json({
+        message: req.t('seating.sync.userApprovalRequired'),
+        hasChanges: true,
+        requiresUserDecision: true,
+        options: [option1, option2],
+        affectedGuests,
+        pendingTriggers: pendingTriggers.map(trigger => ({
+          id: trigger.timestamp.getTime(),
+          changeType: trigger.changeType,
+          changeData: trigger.changeData,
+          timestamp: trigger.timestamp
+        }))
+      });
+    }
+
+    let syncResults = [];
+    let hasChanges = false;
+    let hasGuestRemovalOrUpdate = false;
+
+    for (const trigger of pendingTriggers) {
+      try {
+        const result = await processSingleTrigger(seating, trigger, guests, req);
+        seating.processSyncTrigger(trigger, result);
+        syncResults.push(result);
+        
+        if (result.success && result.actions?.length > 0) {
+          hasChanges = true;
+          
+          if (trigger.changeData?.type === 'status_no_longer_confirmed' || 
+              trigger.changeData?.type === 'attending_count_changed') {
+            hasGuestRemovalOrUpdate = true;
+          }
+        }
+      } catch (error) {
+        const errorResult = {
+          success: false,
+          actions: [],
+          errorMessage: error.message
+        };
+        seating.processSyncTrigger(trigger, errorResult);
+        syncResults.push(errorResult);
+      }
+    }
+
+    if (hasGuestRemovalOrUpdate && seating.syncSettings?.autoOptimizeTables) {
+      const optimized = seating.optimizeArrangement(guests);
+      if (optimized) {
+        hasChanges = true;
+        syncResults.push({
+          success: true,
+          actions: [{
+            action: 'arrangement_optimized',
+            details: { message: req.t('seating.sync.arrangementOptimized') }
+          }]
+        });
+      }
+    }
+
+    const cleanupResult = await cleanupEmptyTables(seating, guests, req);
+    if (cleanupResult.hasChanges) {
+      hasChanges = true;
+      syncResults.push({
+        success: true,
+        actions: cleanupResult.actions
+      });
+    }
+
+    const saveResult = await saveSeatingWithRetryAndValidation(seating, guests, maxRetries);
+    if (!saveResult.success) {
+      throw new Error(`Failed to save seating after sync: ${saveResult.error}`);
+    }
+
+    const savedSeating = saveResult.savedSeating || await Seating.findOne({ event: eventId, user: req.userId });
+
+    const totalActions = syncResults.reduce((sum, result) => 
+      sum + (result.actions?.length || 0), 0
+    );
+
+    res.json({
+      message: hasChanges 
+        ? req.t('seating.sync.changesProcessed', { count: totalActions })
+        : req.t('seating.sync.noChangesNeeded'),
+      syncResults,
+      hasChanges,
+      requiresUserDecision: false,
+      seating: {
+        tables: savedSeating.tables,
+        arrangement: savedSeating.arrangement,
+        syncSummary: savedSeating.getSyncSummary()
+      }
+    });
+
+  } catch (err) {    
+    if (err.name === 'VersionError') {
+      try {
+        const currentSeating = await Seating.findOne({ event: eventId, user: req.userId });
+        if (currentSeating) {
+          return res.json({
+            message: req.t('seating.sync.versionConflictResolved'),
+            hasChanges: false,
+            requiresUserDecision: false,
+            seating: {
+              tables: currentSeating.tables,
+              arrangement: currentSeating.arrangement,
+              syncSummary: currentSeating.getSyncSummary()
+            }
+          });
+        }
+      } catch (retryError) {
+        // Continue to the error response below
+      }
+    }
+    
+    res.status(500).json({ 
+      message: req.t('seating.sync.processingFailed'),
+      error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
+    });
+  } finally {
+    syncLocks.delete(lockKey);
+  }
+};
+
+const saveSeatingWithRetryAndValidation = async (seating, guests, maxRetries = 5) => {
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const validationErrors = validateArrangementCapacity(seating.tables, seating.arrangement, guests, { t: (key) => key });
+      if (validationErrors.length > 0) {
+        return { success: false, error: `Validation failed: ${validationErrors.map(e => e.message || e).join(', ')}` };
+      }
+      
+      seating.markModified('tables');
+      seating.markModified('arrangement');
+      seating.updatedAt = new Date();
+      
+      const savedSeating = await seating.save();
+      
+      const verificationSeating = await seating.constructor.findById(seating._id);
+      
+      const arrangementKeysOriginal = Object.keys(seating.arrangement || {}).sort();
+      const arrangementKeysVerified = Object.keys(verificationSeating.arrangement || {}).sort();
+      
+      if (JSON.stringify(arrangementKeysOriginal) !== JSON.stringify(arrangementKeysVerified)) {
+        return { success: false, error: 'Data corruption detected after save' };
+      }
+      
+      let dataMismatch = false;
+      for (const tableId of arrangementKeysOriginal) {
+        const originalGuests = (seating.arrangement[tableId] || []).sort();
+        const verifiedGuests = (verificationSeating.arrangement[tableId] || []).sort();
+        
+        if (JSON.stringify(originalGuests) !== JSON.stringify(verifiedGuests)) {
+          dataMismatch = true;
+        }
+      }
+      
+      if (dataMismatch) {
+        return { success: false, error: 'Guest arrangement corruption detected after save' };
+      }
+      
+      return { success: true, savedSeating: verificationSeating };
+      
+    } catch (error) {
+      retryCount++;
+      
+      if (error.name === 'VersionError' && retryCount < maxRetries) {
+        try {
+          const latestSeating = await seating.constructor.findById(seating._id);
+          if (latestSeating) {
+            latestSeating.tables = seating.tables;
+            latestSeating.arrangement = seating.arrangement;
+            latestSeating.syncTriggers = seating.syncTriggers;
+            latestSeating.syncStats = seating.syncStats;
+            latestSeating.lastSyncProcessed = seating.lastSyncProcessed;
+            latestSeating.updatedAt = new Date();
+            
+            seating = latestSeating;
+            continue;
+          }
+        } catch (refreshError) {
+          // Continue with error handling below
+        }
+      }
+      
+      if (retryCount >= maxRetries) {
+        return { success: false, error: `Failed after ${maxRetries} attempts: ${error.message}` };
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 300 * retryCount));
+    }
+  }
+  
+  return { success: false, error: 'Unexpected end of retry loop' };
+};
+
+const saveSeatingWithRetry = async (seating, maxRetries = 3) => {
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      await seating.save();
+      return;
+    } catch (error) {
+      retryCount++;
+      
+      if (error.name === 'VersionError' && retryCount < maxRetries) {
+        const latestSeating = await Seating.findById(seating._id);
+        if (latestSeating) {
+          latestSeating.tables = seating.tables;
+          latestSeating.arrangement = seating.arrangement;
+          latestSeating.syncTriggers = seating.syncTriggers;
+          latestSeating.syncStats = seating.syncStats;
+          latestSeating.lastSyncProcessed = seating.lastSyncProcessed;
+          latestSeating.updatedAt = new Date();
+          
+          seating = latestSeating;
+          continue;
+        }
+      }
+      
+      if (retryCount >= maxRetries) {
+        throw error;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+    }
+  }
+};
+
+const cleanupEmptyTables = async (seating, guests, req) => {
+  const actions = [];
+  const originalTablesCount = seating.tables.length;
+  const originalArrangementKeys = Object.keys(seating.arrangement || {});
+
+  const seatedGuestCounts = {};
+  Object.values(seating.arrangement || {}).forEach(guestIds => {
+    if (Array.isArray(guestIds)) {
+      guestIds.forEach(guestId => {
+        seatedGuestCounts[guestId] = (seatedGuestCounts[guestId] || 0) + 1;
+      });
+    }
+  });
+  
+  const duplicateGuests = Object.keys(seatedGuestCounts).filter(guestId => 
+    seatedGuestCounts[guestId] > 1
+  );
+  
+  if (duplicateGuests.length > 0) {
+    duplicateGuests.forEach(guestId => {
+      let foundFirst = false;
+      Object.keys(seating.arrangement).forEach(tableId => {
+        const guestIndex = seating.arrangement[tableId].indexOf(guestId);
+        if (guestIndex !== -1) {
+          if (foundFirst) {
+            seating.arrangement[tableId].splice(guestIndex, 1);
+            if (seating.arrangement[tableId].length === 0) {
+              delete seating.arrangement[tableId];
+            }
+          } else {
+            foundFirst = true;
+          }
+        }
+      });
+    });
+  }
+
+  const validTableIds = new Set(seating.tables.map(t => t.id));
+  const orphanedArrangements = Object.keys(seating.arrangement || {}).filter(tableId => 
+    !validTableIds.has(tableId)
+  );
+
+  if (orphanedArrangements.length > 0) {
+    for (const tableId of orphanedArrangements) {
+      const orphanedGuests = seating.arrangement[tableId] || [];
+      
+      for (const guestId of orphanedGuests) {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        
+        if (!guest) {
+          continue;
+        }
+        
+        if (guest.rsvpStatus !== 'confirmed') {
+          continue;
+        }
+        
+        let alreadySeatedAt = null;
+        validTableIds.forEach(validTableId => {
+          if (validTableId !== tableId && seating.arrangement[validTableId] && seating.arrangement[validTableId].includes(guestId)) {
+            alreadySeatedAt = validTableId;
+          }
+        });
+        
+        if (alreadySeatedAt) {
+          continue;
+        }
+        
+        const guestSize = guest.attendingCount || 1;
+        
+        const suitableTable = seating.tables.find(table => {
+          const currentGuests = seating.arrangement[table.id] || [];
+          const currentOccupancy = currentGuests.reduce((sum, gId) => {
+            const g = guests.find(g => g._id.toString() === gId);
+            return sum + (g?.attendingCount || 1);
+          }, 0);
+          
+          const availableSpace = table.capacity - currentOccupancy;
+          return availableSpace >= guestSize;
+        });
+        
+        if (suitableTable) {
+          if (!seating.arrangement[suitableTable.id]) {
+            seating.arrangement[suitableTable.id] = [];
+          }
+          
+          if (!seating.arrangement[suitableTable.id].includes(guestId)) {
+            seating.arrangement[suitableTable.id].push(guestId);
+            
+            actions.push({
+              action: 'guest_rescued_to_existing_table',
+              details: { 
+                guestName: `${guest.firstName} ${guest.lastName}`,
+                tableName: suitableTable.name,
+                reason: req.t('seating.sync.guestRescuedToExistingTable')
+              }
+            });
+          }
+        } else {
+          const tableNumber = seating.tables.length + 1;
+          const optimalCapacity = Math.max(12, Math.ceil(guestSize * 1.5));
+          
+          const newTable = seating.createTable(optimalCapacity, tableNumber, true, true, req);
+          
+          if (!seating.arrangement[newTable.id]) {
+            seating.arrangement[newTable.id] = [];
+          }
+          seating.arrangement[newTable.id].push(guestId);
+          
+          actions.push({
+            action: 'table_created_for_rescue',
+            details: { 
+              tableName: newTable.name,
+              guestName: `${guest.firstName} ${guest.lastName}`,
+              capacity: newTable.capacity,
+              reason: req.t('seating.sync.tableCreatedForRescue')
+            }
+          });
+        }
+      }
+      
+      delete seating.arrangement[tableId];
+      
+      actions.push({
+        action: 'orphaned_arrangement_removed',
+        details: { 
+          tableId, 
+          guestsCount: orphanedGuests.length
+        }
+      });
+    }
+  }
+
+  const emptyTables = seating.tables.filter(table => {
+    const hasGuests = seating.arrangement[table.id] && seating.arrangement[table.id].length > 0;
+    const isAutoCreated = table.autoCreated || table.createdForSync;
+    
+    if (!hasGuests && isAutoCreated) {
+      return true;
+    }
+    return false;
+  });
+
+  emptyTables.forEach(table => {
+    seating.tables = seating.tables.filter(t => t.id !== table.id);
+    
+    if (seating.arrangement[table.id]) {
+      delete seating.arrangement[table.id];
+    }
+    
+    actions.push({
+      action: 'empty_table_removed',
+      details: { tableName: table.name, tableId: table.id }
+    });
+  });
+
+  const tablesWithOverflow = [];
+  
+  for (const table of seating.tables) {
+    const tableGuests = seating.arrangement[table.id] || [];
+    const actualOccupancy = tableGuests.reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      if (!guest) {
+        return sum;
+      }
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+    
+    if (actualOccupancy > table.capacity) {
+      tablesWithOverflow.push({ table, actualOccupancy });
+    }
+  }
+  
+  for (const { table, actualOccupancy } of tablesWithOverflow) {
+    const excess = actualOccupancy - table.capacity;
+    const tableGuests = seating.arrangement[table.id] || [];
+    const guestsToMove = [];
+    let capacityToMove = 0;
+    
+    for (let i = tableGuests.length - 1; i >= 0 && capacityToMove < excess; i--) {
+      const guestId = tableGuests[i];
+      const guest = guests.find(g => g._id.toString() === guestId);
+      const guestSize = guest?.attendingCount || 1;
+      
+      guestsToMove.push({ guestId, guest, guestSize });
+      capacityToMove += guestSize;
+    }
+    
+    let targetTable = null;
+    
+    for (const candidateTable of seating.tables) {
+      if (candidateTable.id === table.id) continue;
+      
+      const candidateGuests = seating.arrangement[candidateTable.id] || [];
+      const candidateOccupancy = candidateGuests.reduce((sum, gId) => {
+        const g = guests.find(guest => guest._id.toString() === gId);
+        return sum + (g?.attendingCount || 1);
+      }, 0);
+      
+      const availableSpace = candidateTable.capacity - candidateOccupancy;
+      
+      if (availableSpace >= capacityToMove) {
+        targetTable = candidateTable;
+        break;
+      }
+    }
+    
+    if (!targetTable) {
+      const tableNumber = seating.tables.length + 1;
+      const optimalCapacity = Math.max(12, capacityToMove);
+      
+      targetTable = seating.createTable(optimalCapacity, tableNumber, true, true, req);
+      
+      actions.push({
+        action: 'table_created_for_overflow',
+        details: { 
+          tableName: targetTable.name,
+          fromTable: table.name,
+          capacity: targetTable.capacity,
+          reason: req.t('seating.sync.tableCreatedForOverflow')
+        }
+      });
+    }
+    
+    if (!seating.arrangement[targetTable.id]) {
+      seating.arrangement[targetTable.id] = [];
+    }
+    
+    guestsToMove.forEach(({ guestId, guest }) => {
+      const guestIndex = seating.arrangement[table.id].indexOf(guestId);
+      if (guestIndex !== -1) {
+        seating.arrangement[table.id].splice(guestIndex, 1);
+        seating.arrangement[targetTable.id].push(guestId);
+      }
+    });
+    
+    const newOccupancy = (seating.arrangement[table.id] || []).reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+    
+    if (newOccupancy > table.capacity) {
+      // Still overcapacity after move - should not happen but handle gracefully
+    }
+    
+    actions.push({
+      action: 'guests_moved_for_capacity',
+      details: { 
+        fromTable: table.name,
+        toTable: targetTable.name,
+        guestsCount: guestsToMove.length,
+        reason: req.t('seating.sync.guestsMovedForCapacity')
+      }
+    });
+  }
+
+  const finalTablesCount = seating.tables.length;
+  const finalArrangementKeys = Object.keys(seating.arrangement);
+  const hasChanges = originalTablesCount !== finalTablesCount || 
+                     originalArrangementKeys.length !== finalArrangementKeys.length ||
+                     !originalArrangementKeys.every(key => finalArrangementKeys.includes(key)) ||
+                     actions.length > 0;
+  
+  return {
+    hasChanges,
+    actions,
+    tablesRemoved: originalTablesCount - finalTablesCount,
+    cleanupSummary: {
+      emptyTablesRemoved: emptyTables.length,
+      orphanedEntriesRemoved: orphanedArrangements.length,
+      guestsRescued: actions.filter(a => a.action === 'guest_rescued_to_existing_table' || a.action === 'table_created_for_rescue').length,
+      overflowTablesCreated: actions.filter(a => a.action === 'table_created_for_overflow').length
+    }
+  };
+};
+
+const checkForConflictingChanges = async (seating, triggers, guests) => {
+  for (const trigger of triggers) {
+    const { changeType, changeData } = trigger;
+    
+    if (changeType === 'guest_deleted' || 
+        (changeType === 'rsvp_updated' && changeData.type === 'status_no_longer_confirmed')) {
+      continue;
+    }
+    
+    if (changeType === 'rsvp_updated' && changeData.type === 'attending_count_changed') {
+      const { guestId, newCount, oldCount } = changeData;
+      
+      const changeAmount = newCount - oldCount;
+      
+      if (changeAmount >= 2) {
+        return true;
+      }
+      
+      if (changeAmount === 1) {
+        const isGuestSeated = Object.values(seating.arrangement || {}).some(guestIds => 
+          Array.isArray(guestIds) && guestIds.includes(guestId)
+        );
+        
+        if (isGuestSeated) {
+          let guestTableId = null;
+          Object.keys(seating.arrangement).forEach(tableId => {
+            if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
+              guestTableId = tableId;
+            }
+          });
+
+          if (guestTableId) {
+            const currentTable = seating.tables.find(t => t.id === guestTableId);
+            if (currentTable) {
+              const tableGuests = seating.arrangement[guestTableId] || [];
+              const otherGuestsSize = tableGuests
+                .filter(id => id !== guestId)
+                .reduce((sum, gId) => {
+                  const guest = guests.find(g => g._id.toString() === gId);
+                  return sum + (guest?.attendingCount || 1);
+                }, 0);
+              
+              const newTotalSize = otherGuestsSize + newCount;
+              
+              if (newTotalSize > currentTable.capacity) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+            
+      const isGuestSeated = Object.values(seating.arrangement || {}).some(guestIds => 
+        Array.isArray(guestIds) && guestIds.includes(guestId)
+      );
+      
+      if (isGuestSeated) {
+        let guestTableId = null;
+        Object.keys(seating.arrangement).forEach(tableId => {
+          if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
+            guestTableId = tableId;
+          }
+        });
+
+        if (guestTableId) {
+          const currentTable = seating.tables.find(t => t.id === guestTableId);
+          if (currentTable) {
+            const tableGuests = seating.arrangement[guestTableId] || [];
+            const otherGuestsSize = tableGuests
+              .filter(id => id !== guestId)
+              .reduce((sum, gId) => {
+                const guest = guests.find(g => g._id.toString() === gId);
+                return sum + (guest?.attendingCount || 1);
+              }, 0);
+            
+            const newTotalSize = otherGuestsSize + newCount;
+            
+            if (newTotalSize > currentTable.capacity) {
+              return true;
+            }
+          }
+        }
+      } else {
+        const hasAvailableSpace = seating.tables.some(table => {
+          const tableGuests = seating.arrangement[table.id] || [];
+          const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+            const guest = guests.find(g => g._id.toString() === guestId);
+            return sum + (guest?.attendingCount || 1);
+          }, 0);
+          
+          return (table.capacity - currentOccupancy) >= newCount;
+        });
+        
+        if (!hasAvailableSpace) {
+          return true;
+        }
+      }
+    }
+    
+    if ((changeType === 'rsvp_updated' && changeData.type === 'status_became_confirmed') ||
+        changeType === 'guest_added') {
+      const guest = changeData.guest;
+      const guestSize = guest.attendingCount || 1;
+      
+      const hasAvailableSpace = seating.tables.some(table => {
+        const tableGuests = seating.arrangement[table.id] || [];
+        const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+          const g = guests.find(guest => guest._id.toString() === guestId);
+          return sum + (g?.attendingCount || 1);
+        }, 0);
+        
+        return (table.capacity - currentOccupancy) >= guestSize;
+      });
+      
+      if (!hasAvailableSpace) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
+const processSingleTrigger = async (seating, trigger, guests, req) => {
+  const { changeType, changeData } = trigger;
+  const actions = [];
+  let success = true;
+
+  try {
+    switch (changeType) {
+      case 'guest_added':
+      case 'rsvp_updated':
+        if (changeData.type === 'status_became_confirmed') {
+          const result = await seatNewGuest(seating, changeData.guest, guests, req);
+          actions.push(...result.actions);
+        } else if (changeData.type === 'status_no_longer_confirmed') {
+          const result = await unseatGuest(seating, changeData.guestId, guests, req);
+          actions.push(...result.actions);
+        } else if (changeData.type === 'attending_count_changed') {
+          const result = await handleAttendingCountChangeOnly(seating, changeData, guests, req);
+          actions.push(...result.actions);
+        }
+        break;
+
+      case 'guest_deleted':
+        const deleteResult = await unseatGuest(seating, changeData.guestId, guests, req);
+        actions.push(...deleteResult.actions);
+        break;
+
+      default:
+        success = false;
+    }
+
+  } catch (error) {
+    success = false;
+    return {
+      success: false,
+      actions: [],
+      errorMessage: error.message
+    };
+  }
+
+  return {
+    success,
+    actions
+  };
+};
+
+const handleAttendingCountChangeOnly = async (seating, changeData, allGuests, req) => {
+  const actions = [];
+  const { guestId, guest, oldCount, newCount } = changeData;
+  
+  let guestTableId = null;
+  Object.keys(seating.arrangement || {}).forEach(tableId => {
+    if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
+      guestTableId = tableId;
+    }
+  });
+
+  if (!guestTableId) {
+    const result = await seatNewGuest(seating, guest, allGuests, req);
+    return result;
+  }
+
+  const currentTable = seating.tables.find(t => t.id === guestTableId);
+  if (!currentTable) {
+    return { actions: [] };
+  }
+
+  const tableGuests = seating.arrangement[guestTableId] || [];
+  const otherGuestsSize = tableGuests
+    .filter(id => id !== guestId)
+    .reduce((sum, gId) => {
+      const g = allGuests.find(guest => guest._id.toString() === gId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+  
+  const newTotalSize = otherGuestsSize + newCount;
+  
+  if (newTotalSize <= currentTable.capacity) {
+    actions.push({
+      action: 'guest_updated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: currentTable.name,
+        oldCount,
+        newCount
+      }
+    });
+  } else {
+    const guestIndex = seating.arrangement[guestTableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      seating.arrangement[guestTableId].splice(guestIndex, 1);
+      if (seating.arrangement[guestTableId].length === 0) {
+        delete seating.arrangement[guestTableId];
+      }
+    }
+
+    let newTable = seating.findAvailableTable(newCount, allGuests);
+    
+    if (!newTable) {
+      const tableNumber = seating.tables.length + 1;
+      const optimalCapacity = Math.max(
+        seating.syncSettings?.preferredTableSize || 12,
+        Math.ceil(newCount * 1.5)
+      );
+      
+      newTable = seating.createTable(optimalCapacity, tableNumber, true, true, req);
+            
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity
+        }
+      });
+    }
+
+    if (!seating.arrangement[newTable.id]) {
+      seating.arrangement[newTable.id] = [];
+    }
+    
+    if (!seating.arrangement[newTable.id].includes(guestId)) {
+      seating.arrangement[newTable.id].push(guestId);
+      
+      const finalOccupancy = seating.arrangement[newTable.id].reduce((sum, gId) => {
+        const g = allGuests.find(guest => guest._id.toString() === gId);
+        return sum + (g?.attendingCount || 1);
+      }, 0);
+      
+      if (finalOccupancy > newTable.capacity) {
+        // Handle overcapacity gracefully
+      }
+      
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          oldCount,
+          newCount
+        }
+      });
+    }
+  }
+
+  return { actions };
+};
+
+const seatNewGuest = async (seating, guest, allGuests, req) => {
+  const actions = [];
+  const guestSize = guest.attendingCount || 1;
+  
+  let availableTable = seating.findAvailableTable(guestSize, allGuests);
+  
+  if (!availableTable) {
+    const tableNumber = seating.tables.length + 1;
+    const optimalCapacity = Math.max(
+      seating.syncSettings.preferredTableSize || 12, 
+      Math.ceil(guestSize * 1.5)
+    );
+    
+    availableTable = seating.createTable(optimalCapacity, tableNumber, true, true, req);
+        
+    actions.push({
+      action: 'table_created',
+      details: {
+        tableName: availableTable.name,
+        capacity: availableTable.capacity,
+        reason: req.t('seating.sync.createdForGuest', { 
+          guestName: `${guest.firstName} ${guest.lastName}` 
+        })
+      }
+    });
+  }
+  
+  if (!seating.arrangement[availableTable.id]) {
+    seating.arrangement[availableTable.id] = [];
+  }
+  
+  if (!seating.arrangement[availableTable.id].includes(guest._id.toString())) {
+    seating.arrangement[availableTable.id].push(guest._id.toString());
+    
+    const finalOccupancy = seating.arrangement[availableTable.id].reduce((sum, guestId) => {
+      const g = allGuests.find(guest => guest._id.toString() === guestId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+    
+    if (finalOccupancy > availableTable.capacity) {
+      // Handle overcapacity gracefully
+    }
+    
+    actions.push({
+      action: 'guest_seated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: availableTable.name,
+        attendingCount: guestSize
+      }
+    });
+  }
+  
+  return { actions };
+};
+
+const unseatGuest = async (seating, guestId, allGuests, req) => {
+  const actions = [];
+  let guestName = req.t('seating.unknownGuest');
+  
+  const guest = allGuests.find(g => g._id.toString() === guestId) ||
+               allGuests.find(g => g._id === guestId);
+  if (guest) {
+    guestName = `${guest.firstName} ${guest.lastName}`;
+  }
+  
+  let wasSeated = false;
+  Object.keys(seating.arrangement).forEach(tableId => {
+    const guestIndex = seating.arrangement[tableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      seating.arrangement[tableId].splice(guestIndex, 1);
+      if (seating.arrangement[tableId].length === 0) {
+        delete seating.arrangement[tableId];
+      }
+      
+      const table = seating.tables.find(t => t.id === tableId);
+      actions.push({
+        action: 'guest_removed',
+        details: {
+          guestName,
+          tableName: table?.name || req.t('seating.unknownTable')
+        }
+      });
+      wasSeated = true;
+    }
+  });
+  
+  if (!wasSeated) {
+    actions.push({
+      action: 'guest_not_seated',
+      details: {
+        guestName,
+        reason: req.t('seating.sync.guestNotSeated')
+      }
+    });
+  }
+  
+  return { actions };
+};
+
+const handleAttendingCountChange = async (seating, changeData, allGuests, req) => {
+  const actions = [];
+  const { guestId, guest, oldCount, newCount } = changeData;
+  
+  let guestTableId = null;
+  Object.keys(seating.arrangement).forEach(tableId => {
+    if (seating.arrangement[tableId].includes(guestId)) {
+      guestTableId = tableId;
+    }
+  });
+
+  if (!guestTableId) {
+    const result = await seatNewGuest(seating, guest, allGuests, req);
+    return result;
+  }
+
+  const currentTable = seating.tables.find(t => t.id === guestTableId);
+  if (!currentTable) {
+    return { actions: [] };
+  }
+
+  const tableGuests = seating.arrangement[guestTableId] || [];
+  const otherGuestsSize = tableGuests
+    .filter(id => id !== guestId)
+    .reduce((sum, gId) => {
+      const g = allGuests.find(guest => guest._id.toString() === gId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+  
+  const newTotalSize = otherGuestsSize + newCount;
+  
+  const shouldOptimize = newCount < oldCount && newTotalSize <= (currentTable.capacity / 3);
+  
+  if (newTotalSize <= currentTable.capacity) {
+    actions.push({
+      action: 'guest_updated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: currentTable.name,
+        oldCount,
+        newCount,
+        reason: req.t('seating.sync.stayedAtTable')
+      }
+    });
+
+    if (shouldOptimize && seating.tables.length > 1) {
+      const guestGroup = guest.customGroup || guest.group;
+      const betterTable = seating.tables.find(table => {
+        if (table.id === guestTableId) return false;
+        
+        const targetGuests = seating.arrangement[table.id] || [];
+        if (targetGuests.length === 0) return false;
+        
+        const targetOccupancy = targetGuests.reduce((sum, guestId) => {
+          const g = allGuests.find(guest => guest._id.toString() === guestId);
+          return sum + (g?.attendingCount || 1);
+        }, 0);
+        
+        const hasSpace = (table.capacity - targetOccupancy) >= newCount;
+        
+        const hasSameGroup = targetGuests.some(guestId => {
+          const tableGuest = allGuests.find(g => g._id.toString() === guestId);
+          return tableGuest && (tableGuest.customGroup || tableGuest.group) === guestGroup;
+        });
+        
+        return hasSpace && hasSameGroup;
+      });
+
+      if (betterTable) {
+        const guestIndex = seating.arrangement[guestTableId].indexOf(guestId);
+        if (guestIndex !== -1) {
+          seating.arrangement[guestTableId].splice(guestIndex, 1);
+          if (seating.arrangement[guestTableId].length === 0) {
+            delete seating.arrangement[guestTableId];
+          }
+        }
+
+        if (!seating.arrangement[betterTable.id]) {
+          seating.arrangement[betterTable.id] = [];
+        }
+        seating.arrangement[betterTable.id].push(guestId);
+        
+        actions[actions.length - 1] = {
+          action: 'guest_moved_for_optimization',
+          details: {
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            fromTable: currentTable.name,
+            toTable: betterTable.name,
+            oldCount,
+            newCount,
+            reason: req.t('seating.sync.movedForOptimization')
+          }
+        };
+
+        if (seating.arrangement[guestTableId] === undefined || seating.arrangement[guestTableId].length === 0) {
+          const wasAutoCreated = currentTable.autoCreated || currentTable.createdForSync;
+          if (wasAutoCreated) {
+            seating.tables = seating.tables.filter(t => t.id !== guestTableId);
+            delete seating.arrangement[guestTableId];
+            
+            actions.push({
+              action: 'empty_table_removed',
+              details: {
+                tableName: currentTable.name,
+                reason: req.t('seating.sync.emptyTableRemovedAfterMove')
+              }
+            });
+          }
+        }
+      }
+    }
+  } else {
+    const guestIndex = seating.arrangement[guestTableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      seating.arrangement[guestTableId].splice(guestIndex, 1);
+      if (seating.arrangement[guestTableId].length === 0) {
+        delete seating.arrangement[guestTableId];
+      }
+    }
+
+    let newTable = seating.findAvailableTable(newCount, allGuests);
+    
+    if (!newTable && seating.syncSettings?.autoCreateTables) {
+      const tableNumber = seating.tables.length + 1;
+      const optimalCapacity = Math.max(
+        seating.syncSettings.preferredTableSize || 12,
+        Math.ceil(newCount * 1.2)
+      );
+      
+      newTable = seating.createTable(optimalCapacity, tableNumber, true, true, req);
+      
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          reason: req.t('seating.sync.createdForResize')
+        }
+      });
+    }
+
+    if (newTable) {
+      if (!seating.arrangement[newTable.id]) {
+        seating.arrangement[newTable.id] = [];
+      }
+      seating.arrangement[newTable.id].push(guestId);
+      
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.movedForResize')
+        }
+      });
+    } else {
+      if (!seating.arrangement[guestTableId]) {
+        seating.arrangement[guestTableId] = [];
+      }
+      seating.arrangement[guestTableId].push(guestId);
+      
+      actions.push({
+        action: 'resize_failed',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          reason: req.t('seating.sync.noTableForResize'),
+          fallback: req.t('seating.sync.keptAtOriginalTable')
+        }
+      });
+    }
+
+    if (seating.arrangement[guestTableId] === undefined || seating.arrangement[guestTableId].length === 0) {
+      const wasAutoCreated = currentTable.autoCreated || currentTable.createdForSync;
+      if (wasAutoCreated) {
+        seating.tables = seating.tables.filter(t => t.id !== guestTableId);
+        delete seating.arrangement[guestTableId];
+        
+        actions.push({
+          action: 'empty_table_removed',
+          details: {
+            tableName: currentTable.name,
+            reason: req.t('seating.sync.emptyTableRemovedAfterMove')
+          }
+        });
+      }
+    }
+  }
+
+  return { actions };
+};
+
+const isGuestSeated = (seating, guestId) => {
+  return Object.values(seating.arrangement || {}).some(guestIds => 
+    Array.isArray(guestIds) && guestIds.includes(guestId)
+  );
+};
+
+const updateSyncSettings = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const syncSettings = req.body;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const seating = await Seating.findOneAndUpdate(
+      { event: eventId, user: req.userId },
+      { 
+        $set: { 
+          syncSettings: {
+            autoSyncEnabled: syncSettings.autoSyncEnabled !== undefined 
+              ? syncSettings.autoSyncEnabled : true,
+            syncOnRsvpChange: syncSettings.syncOnRsvpChange !== undefined 
+              ? syncSettings.syncOnRsvpChange : true,
+            syncOnAttendingCountChange: syncSettings.syncOnAttendingCountChange !== undefined 
+              ? syncSettings.syncOnAttendingCountChange : true,
+            autoCreateTables: syncSettings.autoCreateTables !== undefined 
+              ? syncSettings.autoCreateTables : true,
+            autoOptimizeTables: syncSettings.autoOptimizeTables !== undefined 
+              ? syncSettings.autoOptimizeTables : true,
+            preferredTableSize: syncSettings.preferredTableSize || 12
+          }
+        }
+      },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      message: req.t('seating.sync.settingsUpdated'),
+      syncSettings: seating.syncSettings,
+      syncSummary: seating.getSyncSummary()
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      message: req.t('seating.errors.updateSyncSettingsFailed'),
+      error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
+    });
+  }
+};
+
+const getSyncStatus = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    
+    if (!seating) {
+      return res.json({
+        syncRequired: false,
+        autoSyncEnabled: true,
+        pendingTriggers: 0,
+        lastSync: null,
+        syncStats: {
+          totalSyncs: 0,
+          successfulSyncs: 0,
+          failedSyncs: 0,
+          lastSyncStatus: 'success'
+        }
+      });
+    }
+
+    const syncSummary = seating.getSyncSummary();
+    
+    res.json({
+      syncRequired: syncSummary.pendingTriggers > 0,
+      autoSyncEnabled: syncSummary.autoSyncEnabled,
+      pendingTriggers: syncSummary.pendingTriggers,
+      lastSync: syncSummary.lastSyncProcessed,
+      syncStats: syncSummary.syncStats,
+      recentTriggers: syncSummary.recentTriggers
+    });
+  } catch (err) {
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const proposeSyncOptions = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    if (!seating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
+    }
+
+    const pendingTriggers = seating.pendingSyncTriggers;
+    if (pendingTriggers.length === 0) {
+      return res.json({
+        message: req.t('seating.sync.noChangesToProcess'),
+        hasChanges: false,
+        options: []
+      });
+    }
+
+    const guests = await Guest.find({ 
+      event: eventId, 
+      user: req.userId, 
+      rsvpStatus: 'confirmed' 
+    });
+
+    const option1 = await generateSyncOption(seating, pendingTriggers, guests, req, 'conservative');
+    const option2 = await generateSyncOption(seating, pendingTriggers, guests, req, 'optimal');
+    const affectedGuests = extractAffectedGuests(pendingTriggers, guests);
+
+    res.json({
+      message: req.t('seating.sync.optionsGenerated'),
+      options: [option1, option2],
+      affectedGuests,
+      pendingTriggers: pendingTriggers.map(trigger => ({
+        id: trigger.timestamp.getTime(),
+        changeType: trigger.changeType,
+        changeData: trigger.changeData
+      }))
+    });
+
+  } catch (err) {
+    res.status(500).json({ 
+      message: req.t('seating.sync.optionGenerationFailed'),
+      error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
+    });
+  }
+};
+
+const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
+  const optionSeating = {
+    tables: JSON.parse(JSON.stringify(seating.tables)),
+    arrangement: JSON.parse(JSON.stringify(seating.arrangement || {}))
+  };
+
+  const actions = [];
+  let description = '';
+
+  try {
+    for (const trigger of triggers) {
+      const result = await simulateSyncTrigger(optionSeating, trigger, guests, req, strategy);
+      actions.push(...result.actions);
+    }
+
+    if (strategy === 'optimal' && seating.syncSettings?.autoOptimizeTables) {
+      const optimized = optimizeArrangementSimulation(optionSeating, guests);
+      if (optimized.wasOptimized) {
+        actions.push(...optimized.actions);
+      }
+    }
+
+    optionSeating.tables = updateTableNamesWithGroupsInSync(
+      optionSeating.tables, 
+      optionSeating.arrangement, 
+      guests, 
+      req
+    );
+
+    description = generateOptionDescription(actions, strategy, req);
+
+    return {
+      id: `${strategy}_${Date.now()}`,
+      strategy,
+      description,
+      tables: optionSeating.tables,
+      arrangement: optionSeating.arrangement,
+      actions,
+      stats: calculateArrangementStats(optionSeating, guests)
+    };
+
+  } catch (error) {
+    return {
+      id: `${strategy}_error`,
+      strategy,
+      description: req.t('seating.sync.optionGenerationError'),
+      tables: seating.tables,
+      arrangement: seating.arrangement,
+      actions: [],
+      error: error.message
+    };
+  }
+};
+
+const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy) => {
+  const { changeType, changeData } = trigger;
+  const actions = [];
+
+  try {
+    switch (changeType) {
+      case 'guest_added':
+      case 'rsvp_updated':
+        if (changeData.type === 'status_became_confirmed') {
+          const result = await simulateSeatNewGuest(optionSeating, changeData.guest, guests, req, strategy);
+          actions.push(...result.actions);
+        } else if (changeData.type === 'status_no_longer_confirmed') {
+          const result = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
+          actions.push(...result.actions);
+        } else if (changeData.type === 'attending_count_changed') {
+          const result = await simulateAttendingCountChange(optionSeating, changeData, guests, req, strategy);
+          actions.push(...result.actions);
+        }
+        break;
+
+      case 'guest_deleted':
+        const deleteResult = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
+        actions.push(...deleteResult.actions);
+        break;
+
+      default:
+        // Unknown trigger type
+    }
+  } catch (error) {
+    actions.push({
+      action: 'simulation_error',
+      details: {
+        error: error.message,
+        triggerType: changeType
+      }
+    });
+  }
+
+  return { actions };
+};
+
+const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strategy) => {
+  const actions = [];
+  const guestSize = guest.attendingCount || 1;
+  
+  let availableTable = findAvailableTableSimulation(optionSeating, guestSize, allGuests);
+  
+  if (!availableTable) {
+    const tableSize = determineOptimalTableSize(optionSeating.tables, guestSize, strategy);
+    const tableNumber = optionSeating.tables.length + 1;
+    
+    availableTable = createTableSimulation(optionSeating, tableSize, tableNumber, req);
+    
+    actions.push({
+      action: 'table_created',
+      details: {
+        tableName: availableTable.name,
+        capacity: availableTable.capacity,
+        reason: req.t('seating.sync.createdForGuest', { 
+          guestName: `${guest.firstName} ${guest.lastName}` 
+        })
+      }
+    });
+  }
+  
+  if (!optionSeating.arrangement[availableTable.id]) {
+    optionSeating.arrangement[availableTable.id] = [];
+  }
+  
+  if (!optionSeating.arrangement[availableTable.id].includes(guest._id.toString())) {
+    optionSeating.arrangement[availableTable.id].push(guest._id.toString());
+    
+    const finalOccupancy = optionSeating.arrangement[availableTable.id].reduce((sum, guestId) => {
+      const g = allGuests.find(guest => guest._id.toString() === guestId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+    
+    if (finalOccupancy > availableTable.capacity) {
+      // Handle overcapacity in simulation
+    }
+    
+    actions.push({
+      action: 'guest_seated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: availableTable.name,
+        attendingCount: guestSize
+      }
+    });
+  }
+  
+  return { actions };
+};
+
+const simulateUnseatGuest = async (optionSeating, guestId, allGuests, req) => {
+  const actions = [];
+  let guestName = req.t('seating.unknownGuest');
+  
+  const guest = allGuests.find(g => g._id.toString() === guestId) ||
+               allGuests.find(g => g._id === guestId);
+  if (guest) {
+    guestName = `${guest.firstName} ${guest.lastName}`;
+  }
+  
+  let wasSeated = false;
+  Object.keys(optionSeating.arrangement).forEach(tableId => {
+    const guestIndex = optionSeating.arrangement[tableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      optionSeating.arrangement[tableId].splice(guestIndex, 1);
+      if (optionSeating.arrangement[tableId].length === 0) {
+        delete optionSeating.arrangement[tableId];
+      }
+      
+      const table = optionSeating.tables.find(t => t.id === tableId);
+      actions.push({
+        action: 'guest_removed',
+        details: {
+          guestName,
+          tableName: table?.name || req.t('seating.unknownTable')
+        }
+      });
+      wasSeated = true;
+    }
+  });
+  
+  return { actions };
+};
+
+const simulateAttendingCountChange = async (optionSeating, changeData, allGuests, req, strategy) => {
+  const actions = [];
+  const { guestId, guest, oldCount, newCount } = changeData;
+  
+  let guestTableId = null;
+  Object.keys(optionSeating.arrangement).forEach(tableId => {
+    if (optionSeating.arrangement[tableId].includes(guestId)) {
+      guestTableId = tableId;
+    }
+  });
+
+  if (!guestTableId) {
+    const result = await simulateSeatNewGuest(optionSeating, guest, allGuests, req, strategy);
+    return result;
+  }
+
+  const currentTable = optionSeating.tables.find(t => t.id === guestTableId);
+  if (!currentTable) {
+    return { actions: [] };
+  }
+
+  const tableGuests = optionSeating.arrangement[guestTableId] || [];
+  const otherGuestsSize = tableGuests
+    .filter(id => id !== guestId)
+    .reduce((sum, gId) => {
+      const g = allGuests.find(guest => guest._id.toString() === gId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+  
+  const newTotalSize = otherGuestsSize + newCount;
+  
+  if (newTotalSize <= currentTable.capacity) {
+    actions.push({
+      action: 'guest_updated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: currentTable.name,
+        oldCount,
+        newCount,
+        reason: req.t('seating.sync.stayedAtTable')
+      }
+    });
+  } else {
+    const guestIndex = optionSeating.arrangement[guestTableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      optionSeating.arrangement[guestTableId].splice(guestIndex, 1);
+      if (optionSeating.arrangement[guestTableId].length === 0) {
+        delete optionSeating.arrangement[guestTableId];
+      }
+    }
+
+    let newTable = findAvailableTableSimulation(optionSeating, newCount, allGuests);
+    
+    if (!newTable) {
+      const tableNumber = optionSeating.tables.length + 1;
+      const optimalCapacity = Math.max(
+        strategy === 'conservative' ? 12 : 12,
+        Math.ceil(newCount * 1.5)
+      );
+      
+      newTable = createTableSimulation(optionSeating, optimalCapacity, tableNumber, req);
+      
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          reason: req.t('seating.sync.createdForResize')
+        }
+      });
+    }
+
+    if (!optionSeating.arrangement[newTable.id]) {
+      optionSeating.arrangement[newTable.id] = [];
+    }
+    
+    if (!optionSeating.arrangement[newTable.id].includes(guestId)) {
+      optionSeating.arrangement[newTable.id].push(guestId);
+      
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.movedForResize')
+        }
+      });
+    }
+    
+    const finalOccupancy = optionSeating.arrangement[newTable.id].reduce((sum, gId) => {
+      const g = allGuests.find(guest => guest._id.toString() === gId);
+      return sum + (g?.attendingCount || 1);
+    }, 0);
+    
+    if (finalOccupancy > newTable.capacity) {
+      // Handle overcapacity in simulation
+    }
+  }
+
+  return { actions };
+};
+
+const findAvailableTableSimulation = (optionSeating, guestSize, allGuests) => {
+  return optionSeating.tables.find(table => {
+    const tableGuests = optionSeating.arrangement[table.id] || [];
+    const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+      const guest = allGuests.find(g => g._id.toString() === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+    
+    return (table.capacity - currentOccupancy) >= guestSize;
+  });
+};
+
+const determineOptimalTableSize = (existingTables, guestSize, strategy) => {
+  if (existingTables.length === 0) {
+    return Math.max(8, guestSize * 2);
+  }
+
+  const tableSizes = existingTables.map(t => t.capacity);
+  const sizeCount = {};
+  tableSizes.forEach(size => {
+    sizeCount[size] = (sizeCount[size] || 0) + 1;
+  });
+
+  const mostCommonSize = Object.keys(sizeCount)
+    .reduce((a, b) => sizeCount[a] > sizeCount[b] ? a : b);
+
+  if (strategy === 'conservative') {
+    return parseInt(mostCommonSize);
+  } else {
+    const targetSize = parseInt(mostCommonSize);
+    return Math.max(targetSize, Math.ceil(guestSize * 1.5));
+  }
+};
+
+const createTableSimulation = (optionSeating, capacity, tableNumber, req) => {
+  if (!req || typeof req.t !== 'function') {
+    throw new Error('Translation function (req.t) is required');
+  }
+  
+  let tableName;
+  try {
+    tableName = req.t('seating.tableName', { number: tableNumber });
+    
+    if (!tableName || tableName === 'seating.tableName' || !tableName.includes(tableNumber.toString())) {
+      const baseTableName = req.t('seating.tableName');
+      
+      if (baseTableName && baseTableName !== 'seating.tableName') {
+        tableName = `${baseTableName} ${tableNumber}`;
+      } else {
+        tableName = `שולחן ${tableNumber}`;
+      }
+    }
+  } catch (error) {
+    tableName = `שולחן ${tableNumber}`;
+  }
+  
+  const newTable = {
+    id: `sync_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: tableName,
+    type: capacity <= 8 ? 'round' : 'rectangular',
+    capacity: capacity,
+    position: {
+      x: 300 + ((tableNumber - 1) % 3) * 200,
+      y: 300 + Math.floor((tableNumber - 1) / 3) * 200
+    },
+    rotation: 0,
+    size: capacity <= 8 ? 
+      { width: 120, height: 120 } : 
+      { width: 160, height: 100 },
+    autoCreated: true,
+    createdForSync: true
+  };
+
+  optionSeating.tables.push(newTable);
+  return newTable;
+};
+
+const updateTableNamesWithGroupsInSync = (tables, arrangement, guests, req) => {
+  return tables.map(table => {
+    const basicNamePattern = new RegExp(`^${req.t('seating.tableName')} \\d+$`);
+    if (!basicNamePattern.test(table.name)) {
+      return table;
+    }
+    
+    const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
+    const baseName = `${req.t('seating.tableName')} ${tableNumber}`;
+    
+    const seatedGuestIds = arrangement[table.id] || [];
+    if (seatedGuestIds.length === 0) {
+      return { ...table, name: baseName };
+    }
+    
+    const tableGuests = seatedGuestIds.map(guestId => 
+      guests.find(g => g._id.toString() === guestId)
+    ).filter(Boolean);
+    
+    if (tableGuests.length === 0) {
+      return { ...table, name: baseName };
+    }
+    
+    const groupCounts = {};
+    tableGuests.forEach(guest => {
+      const group = guest.customGroup || guest.group || 'other';
+      const guestCount = guest.attendingCount || 1;
+      groupCounts[group] = (groupCounts[group] || 0) + guestCount;
+    });
+    
+    const dominantGroup = Object.keys(groupCounts).reduce((a, b) => 
+      groupCounts[a] > groupCounts[b] ? a : b
+    );
+    
+    const groupName = ['family', 'friends', 'work', 'other'].includes(dominantGroup) 
+      ? req.t(`guests.groups.${dominantGroup}`) 
+      : dominantGroup;
+    
+    const finalName = `${baseName} - ${groupName}`;
+    
+    return { ...table, name: finalName };
+  });
+};
+
+const optimizeArrangementSimulation = (optionSeating, guests) => {
+  let optimized = false;
+  const actions = [];
+  const tablesToRemove = [];
+
+  optionSeating.tables.forEach(table => {
+    const tableGuests = optionSeating.arrangement[table.id] || [];
+    const tableOccupancy = tableGuests.reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+
+    if (tableOccupancy === 0) {
+      tablesToRemove.push(table.id);
+    }
+  });
+
+  tablesToRemove.forEach(tableId => {
+    optionSeating.tables = optionSeating.tables.filter(t => t.id !== tableId);
+    delete optionSeating.arrangement[tableId];
+    optimized = true;
+    
+    actions.push({
+      action: 'table_removed',
+      details: {
+        reason: 'Empty table removed during optimization'
+      }
+    });
+  });
+
+  return { wasOptimized: optimized, actions };
+};
+
+const generateOptionDescription = (actions, strategy, req) => {
+  const actionCounts = {
+    guest_seated: 0,
+    guest_removed: 0,
+    guest_moved: 0,
+    guest_updated: 0,
+    table_created: 0,
+    table_removed: 0
+  };
+
+  actions.forEach(action => {
+    if (actionCounts.hasOwnProperty(action.action)) {
+      actionCounts[action.action]++;
+    }
+  });
+
+  let description = '';
+  
+  if (strategy === 'conservative') {
+    description = req.t('seating.sync.conservativeOption');
+  } else {
+    description = req.t('seating.sync.optimalOption');
+  }
+
+  const changes = [];
+  if (actionCounts.guest_seated > 0) {
+    changes.push(req.t('seating.sync.guestsSeated', { count: actionCounts.guest_seated }));
+  }
+  if (actionCounts.guest_moved > 0) {
+    changes.push(req.t('seating.sync.guestsMoved', { count: actionCounts.guest_moved }));
+  }
+  if (actionCounts.guest_removed > 0) {
+    changes.push(req.t('seating.sync.guestsRemoved', { count: actionCounts.guest_removed }));
+  }
+  if (actionCounts.table_created > 0) {
+    changes.push(req.t('seating.sync.tablesCreated', { count: actionCounts.table_created }));
+  }
+
+  if (changes.length > 0) {
+    description += ` ${changes.join(', ')}.`;
+  }
+
+  return description;
+};
+
+const calculateArrangementStats = (optionSeating, guests) => {
+  const stats = {
+    totalTables: optionSeating.tables.length,
+    totalCapacity: optionSeating.tables.reduce((sum, table) => sum + table.capacity, 0),
+    occupiedTables: 0,
+    seatedPeople: 0,
+    utilizationRate: 0
+  };
+
+  Object.keys(optionSeating.arrangement).forEach(tableId => {
+    const guestIds = optionSeating.arrangement[tableId] || [];
+    if (guestIds.length > 0) {
+      stats.occupiedTables++;
+      stats.seatedPeople += guestIds.reduce((sum, guestId) => {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest?.attendingCount || 1);
+      }, 0);
+    }
+  });
+
+  if (stats.totalCapacity > 0) {
+    stats.utilizationRate = Math.round((stats.seatedPeople / stats.totalCapacity) * 100);
+  }
+
+  return stats;
+};
+
+const extractAffectedGuests = (triggers, guests) => {
+  const affectedGuestIds = new Set();
+  
+  triggers.forEach(trigger => {
+    const { changeData } = trigger;
+    
+    if (changeData.guestId) {
+      affectedGuestIds.add(changeData.guestId);
+    }
+    if (changeData.guest && changeData.guest._id) {
+      affectedGuestIds.add(changeData.guest._id.toString());
+    }
+  });
+
+  return Array.from(affectedGuestIds).map(guestId => {
+    const guest = guests.find(g => g._id.toString() === guestId);
+    return guest ? {
+      id: guest._id,
+      name: `${guest.firstName} ${guest.lastName}`,
+      attendingCount: guest.attendingCount || 1,
+      group: guest.customGroup || guest.group
+    } : null;
+  }).filter(Boolean);
+};
+
+const applySyncOption = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { optionId, customArrangement } = req.body;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    let seating = await Seating.findOne({ event: eventId, user: req.userId });
+    if (!seating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
+    }
+
+    await seating.populate();
+    seating = await Seating.findById(seating._id);
+
+    const guests = await Guest.find({ 
+      event: eventId, 
+      user: req.userId, 
+      rsvpStatus: 'confirmed' 
+    });
+
+    let appliedArrangement;
+    let appliedTables;
+    let actions = [];
+
+    if (customArrangement) {
+      appliedArrangement = customArrangement.arrangement;
+      appliedTables = customArrangement.tables;
+      actions = customArrangement.actions || [];
+    } else {
+      const pendingTriggers = seating.pendingSyncTriggers;
+      if (pendingTriggers.length === 0) {
+        return res.status(400).json({ message: req.t('seating.sync.noChangesToProcess') });
+      }
+      
+      const strategy = optionId.includes('conservative') ? 'conservative' : 'optimal';
+      
+      const option = await generateSyncOption(seating, pendingTriggers, guests, req, strategy);
+      appliedArrangement = option.arrangement;
+      appliedTables = option.tables;
+      actions = option.actions;
+    }
+
+    const validTableIds = new Set(appliedTables.map(t => t.id));
+    const cleanedArrangement = {};
+    
+    Object.keys(appliedArrangement).forEach(tableId => {
+      if (validTableIds.has(tableId)) {
+        cleanedArrangement[tableId] = appliedArrangement[tableId];
+      }
+    });
+
+    const validationErrors = validateArrangementCapacity(appliedTables, cleanedArrangement, guests, req);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        message: req.t('seating.sync.validationFailed'),
+        errors: validationErrors
+      });
+    }
+
+    seating.tables = appliedTables;
+    seating.arrangement = cleanedArrangement;
+    seating.version += 1;
+    seating.updatedAt = new Date();
+
+    const processedTriggers = seating.pendingSyncTriggers;
+    
+    processedTriggers.forEach(trigger => {
+      seating.processSyncTrigger(trigger, {
+        success: true,
+        actions: actions.filter(action => 
+          action.details && 
+          (action.details.guestName || action.details.tableName)
+        )
+      });
+    });
+
+    const cleanupResult = await cleanupEmptyTables(seating, guests, req);
+    if (cleanupResult.hasChanges) {
+      actions.push(...cleanupResult.actions);
+    }
+
+    let saveSuccess = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (!saveSuccess && retryCount < maxRetries) {
+      try {
+        await seating.save();
+        saveSuccess = true;
+      } catch (saveError) {
+        retryCount++;
+        if (saveError.name === 'VersionError' && retryCount < maxRetries) {
+          seating = await Seating.findById(seating._id);
+          
+          seating.tables = appliedTables;
+          seating.arrangement = cleanedArrangement;
+          seating.version += 1;
+          seating.updatedAt = new Date();
+          
+          await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+        } else {
+          throw saveError;
+        }
+      }
+    }
+    
+    if (!saveSuccess) {
+      throw new Error('Failed to save after multiple retries');
+    }
+
+    const finalStats = calculateArrangementStats({ 
+      tables: seating.tables, 
+      arrangement: seating.arrangement 
+    }, guests);
+
+    const syncSummary = {
+      autoSyncEnabled: seating.syncSettings?.autoSyncEnabled !== false,
+      pendingTriggers: seating.syncTriggers?.filter(t => !t.processed).length || 0,
+      lastSyncTrigger: seating.syncTriggers?.length > 0 ? 
+        seating.syncTriggers[seating.syncTriggers.length - 1].timestamp : null,
+      lastSyncProcessed: seating.lastSyncProcessed || null,
+      syncStats: seating.syncStats || {
+        totalSyncs: 0,
+        successfulSyncs: 0,
+        failedSyncs: 0,
+        lastSyncStatus: 'success'
+      },
+      recentTriggers: seating.syncTriggers?.slice(-5) || []
+    };
+
+    res.json({
+      message: req.t('seating.sync.optionApplied'),
+      seating: {
+        tables: seating.tables,
+        arrangement: seating.arrangement,
+        version: seating.version,
+        syncSummary
+      },
+      appliedActions: actions,
+      stats: finalStats,
+      cleanupSummary: cleanupResult.hasChanges ? cleanupResult.cleanupSummary : null
+    });
+
+  } catch (err) {
+    res.status(500).json({ 
+      message: req.t('seating.sync.applyOptionFailed'),
+      error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
+    });
+  }
+};
+
+const validateArrangementCapacity = (tables, arrangement, guests, req) => {
+  const errors = [];
+  
+  const validTableIds = new Set(tables.map(t => t.id));
+  const invalidTableIds = Object.keys(arrangement).filter(tableId => !validTableIds.has(tableId));
+  
+  if (invalidTableIds.length > 0) {
+    invalidTableIds.forEach(tableId => {
+      errors.push({
+        type: 'table_not_found',
+        message: req.t('seating.sync.validation.tableNotFound', { tableId })
+      });
+    });
+    return errors;
+  }
+  
+  Object.entries(arrangement).forEach(([tableId, guestIds]) => {
+    if (!Array.isArray(guestIds)) return;
+    
+    const table = tables.find(t => t.id === tableId);
+    if (!table) return;
+    
+    const totalPeople = guestIds.reduce((sum, guestId) => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      return sum + (guest?.attendingCount || 1);
+    }, 0);
+
+    if (totalPeople > table.capacity) {
+      errors.push({
+        type: 'overcapacity',
+        message: req.t('seating.sync.validation.tableOvercapacity', {
+          tableName: table.name,
+          occupancy: totalPeople,
+          capacity: table.capacity
+        })
+      });
+    }
+  });
+
+  return errors;
+};
+
+const moveAffectedGuestsToUnassigned = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { affectedGuestIds } = req.body;
+    
+    if (!affectedGuestIds || !Array.isArray(affectedGuestIds) || affectedGuestIds.length === 0) {
+      return res.status(400).json({ message: req.t('seating.sync.noGuestsSpecified') });
+    }
+
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    if (!seating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
+    }
+
+    const guests = await Guest.find({ 
+      event: eventId, 
+      user: req.userId, 
+      rsvpStatus: 'confirmed' 
+    });
+
+    const movedGuests = [];
+    const actions = [];
+
+    affectedGuestIds.forEach(guestId => {
+      const guest = guests.find(g => g._id.toString() === guestId);
+      if (!guest) return;
+
+      let wasMovedFromTable = null;
+      
+      Object.keys(seating.arrangement).forEach(tableId => {
+        const guestIndex = seating.arrangement[tableId].indexOf(guestId);
+        if (guestIndex !== -1) {
+          seating.arrangement[tableId].splice(guestIndex, 1);
+          if (seating.arrangement[tableId].length === 0) {
+            delete seating.arrangement[tableId];
+          }
+          
+          const table = seating.tables.find(t => t.id === tableId);
+          wasMovedFromTable = table?.name || req.t('seating.unknownTable');
+        }
+      });
+
+      if (wasMovedFromTable) {
+        movedGuests.push({
+          id: guest._id,
+          name: `${guest.firstName} ${guest.lastName}`,
+          attendingCount: guest.attendingCount || 1,
+          fromTable: wasMovedFromTable
+        });
+
+        actions.push({
+          action: 'guest_moved_to_unassigned',
+          details: {
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            fromTable: wasMovedFromTable,
+            reason: req.t('seating.sync.movedByUserRequest')
+          }
+        });
+      }
+    });
+
+    if (seating.syncSettings?.autoOptimizeTables) {
+      const emptyTables = [];
+      seating.tables.forEach(table => {
+        const hasGuests = seating.arrangement[table.id] && seating.arrangement[table.id].length > 0;
+        if (!hasGuests && (table.autoCreated || table.createdForSync)) {
+          emptyTables.push(table.id);
+        }
+      });
+
+      emptyTables.forEach(tableId => {
+        seating.tables = seating.tables.filter(t => t.id !== tableId);
+        delete seating.arrangement[tableId];
+        
+        actions.push({
+          action: 'empty_table_removed',
+          details: {
+            reason: req.t('seating.sync.emptyTableRemoved')
+          }
+        });
+      });
+    }
+
+    const pendingTriggers = seating.pendingSyncTriggers;
+    pendingTriggers.forEach(trigger => {
+      const isRelatedTrigger = affectedGuestIds.some(guestId => 
+        trigger.changeData.guestId === guestId ||
+        (trigger.changeData.guest && trigger.changeData.guest._id && 
+         trigger.changeData.guest._id.toString() === guestId)
+      );
+
+      if (isRelatedTrigger) {
+        seating.processSyncTrigger(trigger, {
+          success: true,
+          actions: [{
+            action: 'manually_resolved',
+            details: { reason: req.t('seating.sync.manuallyResolvedByUser') }
+          }]
+        });
+      }
+    });
+
+    seating.version += 1;
+    seating.updatedAt = new Date();
+    await seating.save();
+
+    res.json({
+      message: req.t('seating.sync.guestsMovedToUnassigned', { count: movedGuests.length }),
+      movedGuests,
+      actions,
+      seating: {
+        tables: seating.tables,
+        arrangement: seating.arrangement,
+        version: seating.version,
+        syncSummary: seating.getSyncSummary()
+      },
+      stats: calculateArrangementStats({ 
+        tables: seating.tables, 
+        arrangement: seating.arrangement 
+      }, guests)
+    });
+
+  } catch (err) {
+    res.status(500).json({ 
+      message: req.t('seating.sync.moveGuestsFailed'),
       error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.serverError')
     });
   }
@@ -204,7 +2495,6 @@ const generateAISeating = async (req, res) => {
 
     let aiArrangement;
 
-    // Enhanced AI preferences
     const enhancedPreferences = {
       ...preferences,
       seatingRules: seatingRules || { mustSitTogether: [], cannotSitTogether: [] },
@@ -259,6 +2549,9 @@ const generateAISeating = async (req, res) => {
       seating.generatedBy = 'ai';
       seating.version += 1;
       seating.updatedAt = new Date();
+      
+      seating.syncTriggers = [];
+      seating.lastSyncProcessed = new Date();
     } else {
       seating = new Seating({
         event: eventId,
@@ -276,7 +2569,8 @@ const generateAISeating = async (req, res) => {
       message: req.t('seating.ai.generationSuccess'),
       arrangement: seating.arrangement,
       tables: seating.tables,
-      statistics: seating.getStatistics(guests)
+      statistics: seating.getStatistics(guests),
+      syncSummary: seating.getSyncSummary()
     });
   } catch (err) {
     res.status(500).json({ message: req.t('seating.errors.aiGenerationFailed') });
@@ -315,7 +2609,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, current
     };
   });
 
-  // Apply must sit together rules first
   if (preferences.seatingRules && preferences.seatingRules.mustSitTogether) {
     preferences.seatingRules.mustSitTogether.forEach(rule => {
       const guest1 = unassignedGuests.find(g => g._id.toString() === rule.guest1Id);
@@ -336,7 +2629,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, current
     });
   }
 
-  // Sort tables by remaining capacity and prefer the preferred table size
   availableTables.sort((a, b) => {
     const aPreferred = a.capacity === preferences.preferredTableSize ? 1 : 0;
     const bPreferred = b.capacity === preferences.preferredTableSize ? 1 : 0;
@@ -355,7 +2647,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, current
     return b.remainingCapacity - a.remainingCapacity;
   });
 
-  // Handle group together preferences
   if (preferences.groupTogether) {
     preferences.groupTogether.forEach(groupRule => {
       const unassignedGroupGuests = groupRule.guestIds
@@ -399,7 +2690,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, current
     });
   }
 
-  // Handle group mixing if enabled
   if (preferences.allowGroupMixing && preferences.groupMixingRules) {
     const groupedRemaining = {};
     unassignedGuests.forEach(guest => {
@@ -437,7 +2727,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, current
     });
   }
 
-  // Handle remaining guests by group
   const groupedGuests = {};
   unassignedGuests.forEach(guest => {
     const group = guest.customGroup || guest.group;
@@ -495,7 +2784,6 @@ function createAdditionalTables(additionalCapacityNeeded, existingTablesCount, r
   while (remainingCapacity > 0) {
     let tableCapacity;
     
-    // Prefer the preferred table size (default 12)
     if (remainingCapacity >= preferredTableSize - 2 && remainingCapacity <= preferredTableSize + 4) {
       tableCapacity = preferredTableSize;
     } else if (remainingCapacity <= 8) {
@@ -518,9 +2806,11 @@ function createAdditionalTables(additionalCapacityNeeded, existingTablesCount, r
       }
     }
     
+    const tableName = req.t('seating.tableName', { number: tableCounter });
+    
     const newTable = {
       id: `auto_table_${Date.now()}_${tableCounter}_${Math.random().toString(36).substr(2, 9)}`,
-      name: req.t('seating.tableName', { number: tableCounter }),
+      name: tableName, 
       type: tableCapacity <= 10 ? 'round' : 'rectangular',
       capacity: tableCapacity,
       position: {
@@ -530,7 +2820,9 @@ function createAdditionalTables(additionalCapacityNeeded, existingTablesCount, r
       rotation: 0,
       size: tableCapacity <= 10 ? 
         { width: 120, height: 120 } : 
-        { width: 160, height: 100 }
+        { width: 160, height: 100 },
+      autoCreated: true,
+      createdForSync: false
     };
     
     additionalTables.push(newTable);
@@ -550,10 +2842,9 @@ function generateOptimalSeating(guests, tables, preferences) {
     assignedGuests: []
   }));
 
-  // Sort tables prioritizing preferred table size (12 by default)
   availableTables.sort((a, b) => {
     const getTablePriority = (capacity, preferred = 12) => {
-      if (capacity === preferred) return 4; // Highest priority for preferred size
+      if (capacity === preferred) return 4;
       if (capacity >= preferred - 2 && capacity <= preferred + 2) return 3; 
       if (capacity >= 8 && capacity <= 10) return 2; 
       return 1; 
@@ -567,7 +2858,6 @@ function generateOptimalSeating(guests, tables, preferences) {
            Math.abs(preferences.preferredTableSize - b.capacity);
   });
 
-  // Apply must sit together rules first
   if (preferences.seatingRules && preferences.seatingRules.mustSitTogether) {
     preferences.seatingRules.mustSitTogether.forEach(rule => {
       const guest1 = guests.find(g => g._id.toString() === rule.guest1Id);
@@ -588,7 +2878,6 @@ function generateOptimalSeating(guests, tables, preferences) {
     });
   }
 
-  // Handle group together preferences
   if (preferences.groupTogether) {
     preferences.groupTogether.forEach(groupRule => {
       const groupGuests = groupRule.guestIds
@@ -599,7 +2888,6 @@ function generateOptimalSeating(guests, tables, preferences) {
 
       const totalPeople = groupGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
       
-      // Look for preferred table size first
       const exactTable = availableTables.find(table => 
         table.remainingCapacity >= totalPeople && 
         table.capacity >= totalPeople && 
@@ -624,7 +2912,6 @@ function generateOptimalSeating(guests, tables, preferences) {
     });
   }
 
-  // Handle group mixing if enabled
   if (preferences.allowGroupMixing && preferences.groupMixingRules) {
     const groupedRemaining = {};
     unassignedGuests.forEach(guest => {
@@ -643,7 +2930,6 @@ function generateOptimalSeating(guests, tables, preferences) {
         const combinedSize = group1Guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0) +
                            group2Guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
         
-        // Prefer tables close to preferred size for mixed groups
         const suitableTable = availableTables.find(table => 
           table.remainingCapacity >= combinedSize &&
           table.capacity >= preferences.preferredTableSize - 2 &&
@@ -663,7 +2949,6 @@ function generateOptimalSeating(guests, tables, preferences) {
     });
   }
 
-  // Group remaining guests by group
   const groupedGuests = {};
   unassignedGuests.forEach(guest => {
     const group = guest.customGroup || guest.group;
@@ -682,7 +2967,6 @@ function generateOptimalSeating(guests, tables, preferences) {
   sortedGroups.forEach(([groupName, groupGuests]) => {
     const totalGroupPeople = groupGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
     
-    // First try preferred table size
     const preferredSizeTable = availableTables.find(table => 
       table.remainingCapacity >= totalGroupPeople && 
       table.capacity >= totalGroupPeople &&
@@ -707,7 +2991,6 @@ function generateOptimalSeating(guests, tables, preferences) {
           assignGuestToTable(guest, exactFitTable, arrangement, unassignedGuests);
         });
       } else {
-        // Handle large groups that need splitting
         if (totalGroupPeople > preferences.preferredTableSize + 4) {
           const optimalSplits = calculateOptimalSplit(totalGroupPeople, preferences.preferredTableSize);
           let guestIndex = 0;
@@ -749,7 +3032,6 @@ function generateOptimalSeating(guests, tables, preferences) {
               assignGuestToTable(guest, anyAvailableTable, arrangement, unassignedGuests);
             });
           } else {
-            // Assign individually to preferred size tables
             groupGuests.forEach(guest => {
               const guestSize = guest.attendingCount || 1;
               
@@ -791,7 +3073,6 @@ function generateOptimalSeating(guests, tables, preferences) {
     }
   });
 
-  // Handle any remaining unassigned guests
   if (unassignedGuests.length > 0) {
     unassignedGuests.forEach(guest => {
       const availableTable = availableTables.find(table => 
@@ -958,7 +3239,10 @@ const getSeatingStatistics = async (req, res) => {
 
     const statistics = seating.getStatistics(guests);
     
-    res.json(statistics);
+    res.json({
+      ...statistics,
+      syncSummary: seating.getSyncSummary()
+    });
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -1020,6 +3304,73 @@ const validateSeatingArrangement = async (req, res) => {
   }
 };
 
+const cloneSeatingArrangement = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { targetEventId } = req.body;
+    
+    const [sourceEvent, targetEvent] = await Promise.all([
+      Event.findOne({ _id: eventId, user: req.userId }),
+      Event.findOne({ _id: targetEventId, user: req.userId })
+    ]);
+
+    if (!sourceEvent || !targetEvent) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const sourceSeating = await Seating.findOne({ event: eventId, user: req.userId });
+    if (!sourceSeating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
+    }
+
+    const existingTargetSeating = await Seating.findOne({ event: targetEventId, user: req.userId });
+    if (existingTargetSeating) {
+      return res.status(400).json({ message: req.t('seating.errors.targetAlreadyHasSeating') });
+    }
+
+    const newSeating = new Seating({
+      event: targetEventId,
+      user: req.userId,
+      tables: sourceSeating.tables.map(table => ({
+        ...table,
+        id: `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      })),
+      arrangement: {},
+      preferences: {
+        groupTogether: [],
+        keepSeparate: [],
+        specialRequests: []
+      },
+      layoutSettings: sourceSeating.layoutSettings,
+      syncSettings: sourceSeating.syncSettings || {
+        autoSyncEnabled: true,
+        syncOnRsvpChange: true,
+        syncOnAttendingCountChange: true,
+        autoCreateTables: true,
+        autoOptimizeTables: true,
+        preferredTableSize: 12
+      },
+      generatedBy: 'manual'
+    });
+
+    await newSeating.save();
+
+    res.json({
+      message: req.t('seating.cloneSuccess'),
+      seating: {
+        tables: newSeating.tables,
+        arrangement: {},
+        preferences: newSeating.preferences,
+        layoutSettings: newSeating.layoutSettings,
+        syncSettings: newSeating.syncSettings,
+        syncSummary: newSeating.getSyncSummary()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 const getSeatingSubjestions = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -1067,63 +3418,6 @@ function generateSeatingSubjestions(guest, allGuests, tables, arrangement, prefe
   return suggestions.slice(0, 5);
 }
 
-const cloneSeatingArrangement = async (req, res) => {
-  try {
-    const { eventId } = req.params;
-    const { targetEventId } = req.body;
-    
-    const [sourceEvent, targetEvent] = await Promise.all([
-      Event.findOne({ _id: eventId, user: req.userId }),
-      Event.findOne({ _id: targetEventId, user: req.userId })
-    ]);
-
-    if (!sourceEvent || !targetEvent) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
-
-    const sourceSeating = await Seating.findOne({ event: eventId, user: req.userId });
-    if (!sourceSeating) {
-      return res.status(404).json({ message: req.t('seating.notFound') });
-    }
-
-    const existingTargetSeating = await Seating.findOne({ event: targetEventId, user: req.userId });
-    if (existingTargetSeating) {
-      return res.status(400).json({ message: req.t('seating.errors.targetAlreadyHasSeating') });
-    }
-
-    const newSeating = new Seating({
-      event: targetEventId,
-      user: req.userId,
-      tables: sourceSeating.tables.map(table => ({
-        ...table,
-        id: `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      })),
-      arrangement: {},
-      preferences: {
-        groupTogether: [],
-        keepSeparate: [],
-        specialRequests: []
-      },
-      layoutSettings: sourceSeating.layoutSettings,
-      generatedBy: 'manual'
-    });
-
-    await newSeating.save();
-
-    res.json({
-      message: req.t('seating.cloneSuccess'),
-      seating: {
-        tables: newSeating.tables,
-        arrangement: {},
-        preferences: newSeating.preferences,
-        layoutSettings: newSeating.layoutSettings
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError') });
-  }
-};
-
 module.exports = {
   getSeatingArrangement,
   saveSeatingArrangement,
@@ -1133,5 +3427,11 @@ module.exports = {
   deleteSeatingArrangement,
   validateSeatingArrangement,
   getSeatingSubjestions,
-  cloneSeatingArrangement
+  cloneSeatingArrangement,
+  processSeatingSync,
+  updateSyncSettings,
+  getSyncStatus,
+  proposeSyncOptions,
+  applySyncOption,
+  moveAffectedGuestsToUnassigned
 };

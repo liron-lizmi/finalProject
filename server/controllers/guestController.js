@@ -1,5 +1,6 @@
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
+const Seating = require('../models/Seating');
 
 const getEventGuests = async (req, res) => {
   try {
@@ -61,6 +62,13 @@ const addGuest = async (req, res) => {
 
     const newGuest = new Guest(guestData);
     const savedGuest = await newGuest.save();
+    
+    if (savedGuest.rsvpStatus === 'confirmed') {
+      await triggerSeatingSync(eventId, req.userId, 'guest_added', {
+        guestId: savedGuest._id,
+        guest: savedGuest
+      });
+    }
     
     res.status(201).json(savedGuest);
   } catch (err) {
@@ -165,12 +173,18 @@ const bulkImportGuests = async (req, res) => {
 
     if (guestsToInsert.length > 0) {
       try {
-        
         const insertResult = await Guest.insertMany(guestsToInsert, { 
           ordered: false 
         });
 
         results.imported = insertResult.length;
+
+        const confirmedGuests = insertResult.filter(guest => guest.rsvpStatus === 'confirmed');
+        if (confirmedGuests.length > 0) {
+          await triggerSeatingSync(eventId, req.userId, 'bulk_guests_added', {
+            confirmedGuestsCount: confirmedGuests.length
+          });
+        }
 
       } catch (insertError) {
         console.error('Bulk insert error:', insertError);
@@ -180,7 +194,6 @@ const bulkImportGuests = async (req, res) => {
         }
 
         if (results.imported === 0) {
-          
           for (const guestData of guestsToInsert) {
             try {
               const newGuest = new Guest(guestData);
@@ -233,7 +246,21 @@ const deleteGuest = async (req, res) => {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
+    const wasConfirmed = guest.rsvpStatus === 'confirmed';
+
     await Guest.findByIdAndDelete(guestId);
+
+    if (wasConfirmed) {
+      await triggerSeatingSync(eventId, req.userId, 'guest_deleted', {
+        guestId,
+        guest: {
+          firstName: guest.firstName,
+          lastName: guest.lastName,
+          attendingCount: guest.attendingCount
+        }
+      });
+    }
+
     res.json({ message: req.t('guests.deleteSuccess') });
   } catch (err) {
     console.error('Error deleting guest:', err);
@@ -255,6 +282,9 @@ const updateGuest = async (req, res) => {
     if (!guest) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
+
+    const wasConfirmed = guest.rsvpStatus === 'confirmed';
+    const oldAttendingCount = guest.attendingCount || 1;
 
     if (firstName !== undefined) guest.firstName = firstName.trim();
     if (lastName !== undefined) guest.lastName = lastName.trim();
@@ -281,6 +311,16 @@ const updateGuest = async (req, res) => {
     }
 
     const updatedGuest = await guest.save();
+
+    if (wasConfirmed && (firstName || lastName || group || customGroup)) {
+      await triggerSeatingSync(eventId, req.userId, 'guest_details_updated', {
+        guestId,
+        guest: updatedGuest,
+        oldAttendingCount,
+        newAttendingCount: updatedGuest.attendingCount
+      });
+    }
+
     res.json(updatedGuest);
   } catch (err) {
     console.error('Error updating guest:', err);
@@ -311,6 +351,10 @@ const updateGuestRSVP = async (req, res) => {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
+    const oldStatus = guest.rsvpStatus;
+    const oldAttendingCount = guest.attendingCount || 1;
+    let syncTriggerData = null;
+
     if (rsvpStatus !== undefined) {
       guest.rsvpStatus = rsvpStatus;
       guest.rsvpReceivedAt = Date.now();
@@ -320,7 +364,6 @@ const updateGuestRSVP = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
 
-    // Handle attendingCount properly
     if (attendingCount !== undefined) {
       const count = parseInt(attendingCount);
       if (!isNaN(count) && count >= 0) {
@@ -333,6 +376,40 @@ const updateGuestRSVP = async (req, res) => {
     }
 
     const updatedGuest = await guest.save();
+    const newAttendingCount = updatedGuest.attendingCount || 1;
+
+    if (oldStatus !== rsvpStatus) {
+      if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
+        syncTriggerData = {
+          type: 'status_became_confirmed',
+          guestId,
+          guest: updatedGuest,
+          oldStatus,
+          newStatus: rsvpStatus
+        };
+      } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
+        syncTriggerData = {
+          type: 'status_no_longer_confirmed',
+          guestId,
+          guest: updatedGuest,
+          oldStatus,
+          newStatus: rsvpStatus
+        };
+      }
+    } else if (rsvpStatus === 'confirmed' && oldAttendingCount !== newAttendingCount) {
+      syncTriggerData = {
+        type: 'attending_count_changed',
+        guestId,
+        guest: updatedGuest,
+        oldCount: oldAttendingCount,
+        newCount: newAttendingCount
+      };
+    }
+
+    if (syncTriggerData) {
+      await triggerSeatingSync(eventId, req.userId, 'rsvp_updated', syncTriggerData);
+    }
+
     res.json({
       message: req.t('guests.rsvpUpdateSuccess'),
       guest: updatedGuest
@@ -430,6 +507,10 @@ const updateGuestRSVPPublic = async (req, res) => {
       });
     }
 
+    const oldStatus = guest.rsvpStatus;
+    const oldAttendingCount = guest.attendingCount || 1;
+    let syncTriggerData = null;
+
     guest.rsvpStatus = rsvpStatus;
     guest.rsvpReceivedAt = Date.now();
     
@@ -446,6 +527,39 @@ const updateGuestRSVPPublic = async (req, res) => {
     }
 
     const updatedGuest = await guest.save();
+    const newAttendingCount = updatedGuest.attendingCount || 1;
+
+    if (oldStatus !== rsvpStatus) {
+      if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
+        syncTriggerData = {
+          type: 'status_became_confirmed',
+          guestId: updatedGuest._id,
+          guest: updatedGuest,
+          oldStatus,
+          newStatus: rsvpStatus
+        };
+      } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
+        syncTriggerData = {
+          type: 'status_no_longer_confirmed',
+          guestId: updatedGuest._id,
+          guest: updatedGuest,
+          oldStatus,
+          newStatus: rsvpStatus
+        };
+      }
+    } else if (rsvpStatus === 'confirmed' && oldAttendingCount !== newAttendingCount) {
+      syncTriggerData = {
+        type: 'attending_count_changed',
+        guestId: updatedGuest._id,
+        guest: updatedGuest,
+        oldCount: oldAttendingCount,
+        newCount: newAttendingCount
+      };
+    }
+
+    if (syncTriggerData) {
+      await triggerSeatingSync(eventId, updatedGuest.user, 'public_rsvp_updated', syncTriggerData);
+    }
     
     res.json({
       message: req.t('guests.rsvpUpdateSuccess'),
@@ -570,6 +684,120 @@ const updateGuestGift = async (req, res) => {
   }
 };
 
+const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
+  try {
+    const seating = await Seating.findOne({ event: eventId, user: userId });
+    
+    if (!seating) {
+      return;
+    }
+
+    const recentTriggers = (seating.syncTriggers || []).filter(trigger => 
+      !trigger.processed && 
+      (new Date() - trigger.timestamp) < 30000 &&
+      trigger.changeType === changeType &&
+      JSON.stringify(trigger.changeData) === JSON.stringify(changeData)
+    );
+
+    if (recentTriggers.length > 0) {
+      console.log(`Duplicate sync trigger ignored for event ${eventId}:`, changeType);
+      return;
+    }
+
+    const syncTrigger = {
+      timestamp: new Date(),
+      changeType,
+      changeData,
+      processed: false
+    };
+
+    await Seating.findOneAndUpdate(
+      { event: eventId, user: userId },
+      { 
+        $push: { 
+          syncTriggers: {
+            $each: [syncTrigger],
+            $slice: -10
+          }
+        },
+        $set: { lastSyncTrigger: new Date() }
+      },
+      { upsert: false }
+    );
+
+    console.log(`Seating sync triggered for event ${eventId}:`, changeType, changeData);
+  } catch (error) {
+    console.error('Error triggering seating sync:', error);
+  }
+};
+
+const getSeatingSync = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    
+    if (!seating) {
+      return res.json({
+        syncRequired: false,
+        lastSync: null,
+        pendingTriggers: []
+      });
+    }
+
+    const pendingTriggers = (seating.syncTriggers || []).filter(trigger => !trigger.processed);
+    
+    res.json({
+      syncRequired: pendingTriggers.length > 0,
+      lastSync: seating.lastSyncTrigger || null,
+      pendingTriggers: pendingTriggers.map(trigger => ({
+        timestamp: trigger.timestamp,
+        changeType: trigger.changeType,
+        changeData: trigger.changeData
+      }))
+    });
+  } catch (err) {
+    console.error('Error getting seating sync status:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const markSyncProcessed = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { triggerTimestamps } = req.body;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    await Seating.findOneAndUpdate(
+      { event: eventId, user: req.userId },
+      { 
+        $set: { 
+          "syncTriggers.$[elem].processed": true 
+        }
+      },
+      { 
+        arrayFilters: [{ 
+          "elem.timestamp": { $in: triggerTimestamps.map(ts => new Date(ts)) } 
+        }]
+      }
+    );
+
+    res.json({ message: req.t('seating.sync.triggersProcessed') });
+  } catch (err) {
+    console.error('Error marking sync as processed:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = {
   getEventGuests,
   addGuest,
@@ -583,5 +811,8 @@ module.exports = {
   getEventForRSVP,
   checkGuestByPhone,
   generateRSVPLink,
-  updateGuestGift
+  updateGuestGift,
+  getSeatingSync,
+  markSyncProcessed,
+  triggerSeatingSync
 };

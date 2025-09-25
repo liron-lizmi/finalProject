@@ -13,7 +13,9 @@ const {
   getEventForRSVP,
   checkGuestByPhone,
   generateRSVPLink,
-  updateGuestGift
+  updateGuestGift,
+  getSeatingSync,
+  markSyncProcessed
 } = require('../controllers/guestController');
 
 const auth = require('../middleware/auth');
@@ -34,13 +36,18 @@ router.put('/:guestId', updateGuest);
 router.delete('/:guestId', deleteGuest);            
 
 // RSVP routes
-router.put('/:guestId/rsvp', updateGuestRSVP);      
+router.put('/:guestId/rsvp', updateGuestRSVP);
 router.get('/rsvp-link', generateRSVPLink);    
 
 // Statistics and groups routes
 router.get('/groups', getEventGroups);              
 router.get('/stats', getGuestStats);    
 
+// Gift routes
 router.put('/:guestId/gift', updateGuestGift);
+
+// Sync routes - new routes
+router.get('/sync/status', getSeatingSync);
+router.post('/sync/processed', markSyncProcessed);
 
 module.exports = router;

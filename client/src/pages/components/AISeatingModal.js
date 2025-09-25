@@ -42,7 +42,6 @@ const AISeatingModal = ({
   const [existingArrangementAction, setExistingArrangementAction] = useState('');
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // Group mixing management
   const [showGroupMixingConfig, setShowGroupMixingConfig] = useState(false);
   const [newGroupMixRule, setNewGroupMixRule] = useState({
     group1: '',
@@ -50,7 +49,6 @@ const AISeatingModal = ({
     priority: 'medium'
   });
 
-  // Separation and together rules
   const [showSeatingRules, setShowSeatingRules] = useState(false);
   const [seatingRules, setSeatingRules] = useState({
     mustSitTogether: [],
@@ -103,7 +101,6 @@ const AISeatingModal = ({
     return `${baseName} - ${groupName}`;
   };
 
-  // Get available groups for mixing rules
   const availableGroups = React.useMemo(() => {
     const groups = new Set();
     guests.forEach(guest => {
@@ -125,7 +122,6 @@ const AISeatingModal = ({
     } else if (initialLoad) {
       setInitialLoad(false);
       
-      // Initialize seating rules from preferences
       if (preferences) {
         setSeatingRules({
           mustSitTogether: preferences.groupTogether || [],
@@ -154,7 +150,7 @@ const AISeatingModal = ({
 
   const autoSuggestTables = (guestsNeedingSeats) => {
     if (guestsNeedingSeats === 0) return;
-    
+        
     const newTableSettings = [...tableSettings];
     newTableSettings.forEach(setting => setting.count = 0);
     
@@ -168,41 +164,50 @@ const AISeatingModal = ({
     }
     
     const guestsNeedingNewTables = Math.max(0, guestsNeedingSeats - availableCapacityInExistingTables);
-    
+        
     if (guestsNeedingNewTables === 0) {
       return;
     }
     
     let remainingGuests = guestsNeedingNewTables;
     
-    // Prefer 12-person tables as specified
+    const preferredTableSize = 12;
+    
     while (remainingGuests > 0) {
-      if (remainingGuests >= 10 && remainingGuests <= 14) {
-        const table12Index = newTableSettings.findIndex(s => s.capacity === 12);
+      if (remainingGuests >= preferredTableSize - 2 && remainingGuests <= preferredTableSize + 2) {
+        const table12Index = newTableSettings.findIndex(s => s.capacity === 12 && s.type === 'round');
         if (table12Index !== -1) {
           newTableSettings[table12Index].count += 1;
         }
         remainingGuests = 0;
-      } else if (remainingGuests >= 12) {
-        const table12Index = newTableSettings.findIndex(s => s.capacity === 12);
+      } else if (remainingGuests >= preferredTableSize) {
+        const table12Index = newTableSettings.findIndex(s => s.capacity === 12 && s.type === 'round');
         if (table12Index !== -1) {
           newTableSettings[table12Index].count += 1;
         }
-        remainingGuests -= 12;
+        remainingGuests -= preferredTableSize;
       } else if (remainingGuests >= 8) {
         const table10Index = newTableSettings.findIndex(s => s.capacity === 10);
         if (table10Index !== -1) {
           newTableSettings[table10Index].count += 1;
         }
         remainingGuests -= 10;
-      } else if (remainingGuests >= 6) {
+      } else if (remainingGuests >= 4) {
         const table8Index = newTableSettings.findIndex(s => s.capacity === 8);
         if (table8Index !== -1) {
           newTableSettings[table8Index].count += 1;
         }
         remainingGuests -= 8;
       } else {
+        const table8Index = newTableSettings.findIndex(s => s.capacity === 8);
+        if (table8Index !== -1) {
+          newTableSettings[table8Index].count += 1;
+        }
         remainingGuests = 0;
+      }
+      
+      if (remainingGuests < 0) {
+        break;
       }
     }
     
@@ -286,7 +291,6 @@ const AISeatingModal = ({
     setCustomTableSettings(prev => prev.filter(setting => setting.id !== id));
   };
 
-  // Group mixing functions
   const addGroupMixRule = () => {
     if (newGroupMixRule.group1 && newGroupMixRule.group2 && newGroupMixRule.group1 !== newGroupMixRule.group2) {
       setAiPreferences(prev => ({
@@ -309,7 +313,6 @@ const AISeatingModal = ({
     }));
   };
 
-  // Seating rules functions
   const addMustSitRule = () => {
     if (newMustSitRule.guest1Id && newMustSitRule.guest2Id && newMustSitRule.guest1Id !== newMustSitRule.guest2Id) {
       setSeatingRules(prev => ({
@@ -386,6 +389,7 @@ const AISeatingModal = ({
       
       return result;
     } catch (error) {
+      console.error('Error in handleGenerate:', error);
       return false;
     } finally {
       setIsGenerating(false);
@@ -398,7 +402,7 @@ const AISeatingModal = ({
     
     const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) + 
                        customTableSettings.reduce((sum, s) => sum + s.count, 0);
-    
+        
     const cols = Math.ceil(Math.sqrt(totalTables + tables.length));
     const spacing = 200;
     const startX = 300;
@@ -455,7 +459,7 @@ const AISeatingModal = ({
         currentTable++;
       }
     });
-    
+        
     if (tablesToCreate.length > 0) {
       try {
         setIsGenerating(true);
@@ -493,6 +497,7 @@ const AISeatingModal = ({
         
         onClose();
       } catch (error) {
+        console.error('Error creating tables:', error);
         setIsGenerating(false);
       }
     } else {
@@ -884,7 +889,6 @@ const AISeatingModal = ({
                 </>
               )}
 
-              {/* Seating Rules Section - Always show */}
               <div className="seating-rules-section">
                 <div className="section-header">
                   <h4>{t('seating.ai.seatingRules')}</h4>
@@ -899,7 +903,6 @@ const AISeatingModal = ({
 
                 {showSeatingRules && (
                   <div className="seating-rules-config">
-                    {/* Must Sit Together Rules */}
                     <div className="rule-group">
                       <h5>{t('seating.ai.mustSitTogether')}</h5>
                       <div className="add-rule-form">
@@ -970,7 +973,6 @@ const AISeatingModal = ({
                       )}
                     </div>
 
-                    {/* Cannot Sit Together Rules */}
                     <div className="rule-group">
                       <h5>{t('seating.ai.cannotSitTogether')}</h5>
                       <div className="add-rule-form">
@@ -1044,7 +1046,6 @@ const AISeatingModal = ({
                 )}
               </div>
 
-              {/* AI Preferences - Always show */}
               <div className="ai-preferences">
                 <h4>{t('seating.ai.preferences')}</h4>
                 <div className="preferences-grid">
@@ -1085,7 +1086,6 @@ const AISeatingModal = ({
                   </label>
                 </div>
 
-                {/* Group Mixing Configuration - Always show when enabled */}
                 {aiPreferences.allowGroupMixing && (
                   <div className="group-mixing-section">
                     <div className="section-header">

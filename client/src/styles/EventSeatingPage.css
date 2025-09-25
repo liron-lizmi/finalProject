@@ -3278,3 +3278,370 @@
     opacity: 1;
   }
 }
+
+
+/* Sync Controls Styles */
+.seating-sync-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sync-indicator {
+  font-size: 16px;
+}
+
+.sync-indicator.enabled {
+  color: #4caf50;
+}
+
+.sync-indicator.disabled {
+  color: #999;
+}
+
+.sync-status-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.sync-progress {
+  font-size: 12px;
+  color: #2196f3;
+  font-style: italic;
+  margin-right: 8px;
+}
+
+.sync-toggle-button,
+.manual-sync-button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sync-toggle-button:hover,
+.manual-sync-button:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  border-color: #bbb;
+}
+
+.manual-sync-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Sync Notification Styles */
+.seating-sync-notification {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-right: 4px solid;
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+.seating-sync-notification.success {
+  border-right-color: #4caf50;
+  background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+}
+
+.seating-sync-notification.error {
+  border-right-color: #f44336;
+  background: linear-gradient(135deg, #ffebee 0%, #fce4ec 100%);
+}
+
+.sync-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sync-notification-icon {
+  font-size: 18px;
+}
+
+.sync-notification-message {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+/* Guest List Sync Styles */
+.sync-notification-banner {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  border-right: 3px solid;
+}
+
+.sync-notification-banner.success {
+  background: #e8f5e8;
+  border-right-color: #4caf50;
+  color: #2e7d32;
+}
+
+.sync-notification-banner.error {
+  background: #ffebee;
+  border-right-color: #f44336;
+  color: #c62828;
+}
+
+.guest-item.sync-highlighted {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+  border: 2px solid #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+  animation: syncPulse 2s ease-in-out;
+}
+
+.sync-indicator {
+  font-size: 12px;
+  margin-right: 4px;
+  animation: syncBounce 0.5s ease-in-out;
+}
+
+.guest-item.sync-seated .sync-indicator {
+  color: #4caf50;
+}
+
+.guest-item.sync-removed .sync-indicator {
+  color: #f44336;
+}
+
+.guest-item.sync-moved .sync-indicator {
+  color: #ff9800;
+}
+
+.guest-item.sync-updated .sync-indicator {
+  color: #2196f3;
+}
+
+/* Sync Changes Summary */
+.sync-changes-summary {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.sync-changes-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.sync-changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sync-change-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.sync-change-item.seated {
+  background: rgba(76, 175, 80, 0.1);
+  color: #2e7d32;
+}
+
+.sync-change-item.removed {
+  background: rgba(244, 67, 54, 0.1);
+  color: #c62828;
+}
+
+.sync-change-item.moved {
+  background: rgba(255, 152, 0, 0.1);
+  color: #f57c00;
+}
+
+.sync-change-item.updated {
+  background: rgba(33, 150, 243, 0.1);
+  color: #1976d2;
+}
+
+.sync-change-icon {
+  font-size: 14px;
+}
+
+.sync-change-text {
+  font-weight: 500;
+}
+
+/* Animations */
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes syncPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes syncBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .seating-sync-controls {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .sync-status {
+    justify-content: center;
+  }
+
+  .sync-toggle-button,
+  .manual-sync-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .seating-sync-notification {
+    margin: 10px;
+    padding: 10px 12px;
+  }
+
+  .sync-notification-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .sync-changes-summary {
+    margin: 15px 10px;
+    padding: 12px;
+  }
+
+  .sync-change-item {
+    padding: 8px;
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .seating-sync-notification {
+  border-right: none;
+  border-left: 4px solid;
+}
+
+[dir="rtl"] .sync-notification-banner {
+  border-right: none;
+  border-left: 3px solid;
+}
+
+[dir="rtl"] .sync-indicator {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .guest-item.sync-highlighted {
+    border-width: 3px;
+  }
+
+  .sync-notification-banner.success {
+    background: #e8f5e8;
+    border-color: #2e7d32;
+    color: #1b5e20;
+  }
+
+  .sync-notification-banner.error {
+    background: #ffebee;
+    border-color: #c62828;
+    color: #b71c1c;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .guest-item.sync-highlighted {
+    animation: none;
+    border: 2px solid #2196f3;
+  }
+
+  .sync-indicator {
+    animation: none;
+  }
+
+  .seating-sync-notification {
+    animation: none;
+  }
+}
+
+/* Focus indicators for accessibility */
+.sync-toggle-button:focus,
+.manual-sync-button:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+.sync-change-item:focus {
+  outline: 1px solid #2196f3;
+  outline-offset: 1px;
+}
+
+/* Print styles */
+@media print {
+  .seating-sync-controls,
+  .seating-sync-notification,
+  .sync-notification-banner,
+  .sync-changes-summary {
+    display: none;
+  }
+
+  .guest-item.sync-highlighted {
+    border: 1px solid #000;
+    background: #f0f0f0;
+  }
+}
