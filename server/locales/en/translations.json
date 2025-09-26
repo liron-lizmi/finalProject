@@ -198,11 +198,28 @@
     "expenseDeleteSuccess": "Expense deleted successfully"
   },
   "seating": {
+    "tableName": "Table",
     "table": "Table {{number}}",
     "saveSuccess": "Seating arrangement saved successfully",
     "deleteSuccess": "Seating arrangement deleted successfully",
     "cloneSuccess": "Seating arrangement cloned successfully",
     "notFound": "Seating arrangement not found",
+    "unknownTable": "Unknown table",
+    "unknownGuest": "Unknown guest",
+    "sync": {
+      "createdForGuest": "Created for {{guestName}}",
+      "createdForResize": "Created for resize",
+      "movedForResize": "Moved due to resize",
+      "stayedAtTable": "Stayed at the same table",
+      "noAvailableTable": "No available table",
+      "noTableForResize": "No table available for the new size",
+      "guestNotSeated": "Guest was not seated",
+      "arrangementOptimized": "Arrangement canceled for optimization",
+      "keptAtOriginalTable": "Kept at original table",
+      "optionGenerationError": "Error generating sync options",
+      "changesProcessed": "Changes processed",
+      "optionApplied": "Selected option applied"
+    },
     "errors": {
       "fetchFailed": "Failed to load seating arrangement",
       "saveFailed": "Failed to save seating arrangement",

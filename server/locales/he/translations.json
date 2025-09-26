@@ -197,7 +197,6 @@
     "expenseNotFound": "הוצאה לא נמצאה",
     "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
   },
-  
   "seating": {
     "tableName": "שולחן",
     "table": "שולחן {{number}}",
@@ -217,7 +216,9 @@
       "guestNotSeated": "האורח לא היה יושב",
       "arrangementOptimized": "הסידור בוטל לאופטימיזציה",
       "keptAtOriginalTable": "נשמר בשולחן המקורי",
-      "optionGenerationError": "שגיאה ביצירת אפשרויות סנכרון"
+      "optionGenerationError": "שגיאה ביצירת אפשרויות סנכרון",
+      "changesProcessed": "שינויים עובדו",
+      "optionApplied": "אפשרות נבחרת יושמה"
     },
     "errors": {
       "fetchFailed": "שגיאה בטעינת סידור המקומות",
