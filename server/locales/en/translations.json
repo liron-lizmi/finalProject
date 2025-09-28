@@ -22,7 +22,8 @@
     "googleInitError": "Google initialization error",
     "googleClientIdNotConfigured": "Google Client ID is not configured in environment variables",
     "unknownError": "Unknown error",
-    "googleNotConnected": "Not connected to Google"
+    "googleNotConnected": "Not connected to Google",
+    "invalidEventId": "Invalid event ID"
   },
   "success": {
     "passwordReset": "Password updated successfully",
@@ -41,6 +42,7 @@
     "createSuccess": "Event created successfully",
     "updateSuccess": "Event updated successfully",
     "accessDenied": "Access denied to this event",
+    "editDenied": "You do not have edit permissions for this event",
     "vendors": {
       "addSuccess": "Vendor added successfully to the event",
       "updateSuccess": "Vendor information updated successfully",
@@ -91,6 +93,15 @@
       "errors": {
         "serverError": "Server error"
       }
+    },
+    "share": {
+      "shareSuccess": "The event was shared successfully",
+      "acceptSuccess": "The event was accepted successfully",
+      "removeSuccess": "Access was removed successfully",
+      "permissionUpdated": "Permissions were updated successfully",
+      "alreadyShared": "The event is already shared with this user",
+      "notSharedWithUser": "You do not have access to this event",
+      "shareNotFound": "Share not found"
     },
     "validation": {
       "taskTitleRequired": "Task title is required",
@@ -161,7 +172,9 @@
     "totalBudgetPositive": "Total budget must be positive",
     "tableNotFound": "Table {{tableId}} not found",
     "tableOvercapacity": "Table {{tableName}} is over capacity: {{occupancy}}/{{capacity}}",
-    "duplicateGuest": "Guest {{guestId}} has been assigned to multiple tables"
+    "duplicateGuest": "Guest {{guestId}} has been assigned to multiple tables",
+    "invalidPermission": "Invalid permission level",
+    "permissionRequired": "Permission level required"
   },
   "guests": {
     "notFound": "Guest not found",
@@ -238,6 +251,9 @@
     "export": {
       "title": "Seating Chart",
       "seatingChart": "Seating Chart"
+    },
+    "notifications": {
+      "eventShared": "{{sharer}} shared the event \"{{eventTitle}}\" with you"
     }
   }
 }

@@ -17,7 +17,9 @@
     "today": "היום",
     "now": "עכשיו",
     "showingResults": "מציג {{start}}-{{end}} מתוך {{total}} תוצאות",
-    "loadingPage": "טוען עמוד {{page}}..."
+    "loadingPage": "טוען את הדף {{page}}...",
+    "dismiss": "סגור",
+    "viewOnlyMode": "מצב תצוגה בלבד - אין לך הרשאות עריכה"
   },
   "auth": {
     "email": "אימייל",
@@ -73,7 +75,11 @@
     "deleteEvent": "מחק אירוע",
     "backToDashboard": "חזרה לדשבורד",
     "confirmDelete": "אישור מחיקה",
-    "deleteConfirm": "האם אתה בטוח שברצונך למחוק את אירוע זה?"
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק את אירוע זה?",
+    "newNotifications": "הודעות חדשות",
+    "sharedEvent": "אירוע משותף",
+    "sharedBy": "שותף על ידי",
+    "unknown": "לא ידוע"
   },
   "events": {
     "createEvent": "צור אירוע חדש",
@@ -458,10 +464,11 @@
           "cancelRide": "בטל טרמפ"
         },
         "tabs": {
-          "overview": "סקירה",
+          "overview": "סקירה כללית",
+          "expenses": "הוצאות",
+          "charts": "תרשימים",
           "offering": "מציעים",
-          "seeking": "מחפשים",
-          "myInfo": "המידע שלי"
+          "seeking": "מחפשים"
         },
         "updateSuccess": "המידע עודכן בהצלחה",
         "contactRecorded": "הפעולה נרשמה בהצלחה",
@@ -477,10 +484,6 @@
           "updateGuest": "שגיאה בעדכון המוזמן",
           "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט"
         }
-      },
-      "weather": {
-        "title": "תחזית מזג אוויר",
-        "description": "צפייה בתחזית ליום האירוע"
       },
       "budget": {
         "title": "ניהול תקציב",
@@ -538,20 +541,7 @@
           "title": "הגדרות תקציב",
           "alertSettings": "הגדרת התראה",
           "alertThreshold": "סף התראה",
-          "alertThresholdDescription": "קבלת התראה כאשר ההוצאה בקטגוריה מגיעה לאחוז זה מהתקציב המוקצב",
-          "displaySettings": "הגדרות תצוגה",
-          "chartColors": "צבעי גרפים",
-          "colorDefault": "ברירת מחדל",
-          "colorVibrant": "חיים",
-          "colorPastel": "פסטל",
-          "colorProfessional": "מקצועי",
-          "dateFormat": "פורמט תאריך",
-          "preview": "תצוגה מקדימה",
-          "alertPreviewWarning": "דוגמה להתראת אזהרה - התקרבות לגבול התקציב",
-          "alertPreviewSafe": "הגדרות התראה בטוחות",
-          "chartColorsDescription": "משנה את צבעי הגרפים בלשונית הגרפים",
-          "dateFormatDescription": "משנה את פורמט התאריך המוצג ברשימת הוצאות",
-          "currentAlerts": "התראות נוכחיות"
+          "alertThresholdDescription": "קבלת התראה כאשר ההוצאה בקטגוריה מגיעה לאחוז זה מהתקציב המוקצב"
         },
         "totalSpent": "סך הוצא",
         "expenses": "הוצאות",
@@ -601,7 +591,41 @@
       },
       "share": {
         "title": "שיתוף אירוע",
-        "description": "שתף פרטים עם אורחים ומשתתפים"
+        "description": "שתף פרטים עם אורחים ומשתתפים",
+        "shareEvent": "שיתוף אירוע",
+        "shareDescription": "שתף את האירוע שלך עם משתמשים אחרים לצפייה או עריכה",
+        "shareWith": "שתף עם",
+        "emailPlaceholder": "הזן כתובת אימייל",
+        "permissions": "הרשאות",
+        "viewOnly": "צפייה בלבד",
+        "editAccess": "צפייה ועריכה",
+        "shareButton": "שתף",
+        "sharedWith": "משותף עם",
+        "removeAccess": "הסר גישה",
+        "updatePermission": "עדכן הרשאות",
+        "shareSuccess": "האירוע שותף בהצלחה",
+        "acceptSuccess": "האירוע התקבל בהצלחה",
+        "removeSuccess": "הגישה הוסרה בהצלחה",
+        "permissionUpdated": "ההרשאות עודכנו בהצלחה",
+        "alreadyShared": "האירוע כבר שותף עם משתמש זה",
+        "notSharedWithUser": "אין לך גישה לאירוע זה",
+        "shareNotFound": "שיתוף לא נמצא",
+        "noSharedUsers": "האירוע לא שותף עם אף אחד",
+        "sharedEventInfo": "אירוע משותף",
+        "originalOwner": "בעל האירוע המקורי",
+        "yourPermission": "ההרשאות שלך",
+        "sharedOn": "שותף בתאריך",
+        "accepted": "התקבל",
+        "pending": "ממתין",
+        "confirmRemove": "האם אתה בטוח שברצונך להסיר את הגישה למשתמש זה?",
+        "importantInfo": "מידע חשוב",
+        "syncInfo": "שינויים שתבצע באירוע יתעדכנו אוטומטית לכל המשתמשים המשותפים",
+        "editLimitationsInfo": "משתמשים עם הרשאת 'צפייה בלבד' יכולים לראות את כל הפרטים אך לא לערוך",
+        "sharedEventNote": "זהו אירוע משותף – שינויים יסונכרנו עם בעל האירוע המקורי",
+        "emailLabel": "כתובת אימייל",
+        "shareToCollaborate": "שתף אירוע זה עם אחרים כדי לעבוד יחד על התכנון.",
+        "viewPermissionInfo": "משתמשים עם הרשאת צפייה יכולים לראות את האירוע אך לא לשנות אותו.",
+        "editPermissionInfo": "משתמשים עם הרשאת עריכה יכולים לשנות את פרטי האירוע."
       }
     }
   },
@@ -642,12 +666,15 @@
     "serverError": "שגיאת שרת",
     "authError": "שגיאת אימות - מפנה מחדש להתחברות",
     "networkError": "שגיאת רשת - בדוק את החיבור לאינטרנט",
+    "invalidEventId": "מזהה אירוע לא תקין",
     "samePassword": "לא ניתן לאפס את הסיסמה לסיסמה הנוכחית. אנא בחר סיסמה חדשה",
     "eventNotFound": "אירוע לא נמצא",
     "fetchGuests": "שגיאה בטעינת רשימת המוזמנים",
     "addGuest": "שגיאה בהוספת המוזמן",
     "deleteGuest": "שגיאה במחיקת המוזמן",
-    "importFailed": "הייבוא נכשל"
+    "importFailed": "הייבוא נכשל",
+    "userNotFound": "המשתמש לא נמצא",
+    "notificationNotFound": "ההודעה לא נמצאה"
   },
   "home": {
     "hero": {
@@ -1104,7 +1131,9 @@
     "lastNameRequired": "שם משפחה נדרש",
     "invalidPhoneFormat": "פורמט טלפון לא תקין (נדרש: 05X-XXXXXXX)",
     "groupRequired": "קבוצה נדרשת",
-    "customGroupRequired": "שם הקבוצה נדרש כאשר נבחר 'אחר'"
+    "customGroupRequired": "שם הקבוצה נדרש כאשר נבחר 'אחר'",
+    "invalidPermission": "רמת הרשאה לא חוקית",
+    "emailInvalid": "אנא הזן כתובת דואל חוקית"
   },
   "import": {
     "title": "ייבוא מוזמנים",
@@ -1642,5 +1671,10 @@
       "noConfirmedGuests": "אין מוזמנים שאישרו הגעה",
       "noTables": "לא הוגדרו שולחנות"
     }
+  },
+  "notifications": {
+    "approve": "אישור",
+    "eventShared": "{{sharer}} שיתף איתך את העסקה \"{{eventTitle}}\" איתך",
+    "markedAsRead": "ההודעה סומנה כנקראה"
   }
 }

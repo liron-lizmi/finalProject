@@ -5,16 +5,58 @@ const Seating = require('../models/Seating');
 const getEventGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
+    let guestsToReturn = [];
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
-
-    const guests = await Guest.find({ event: eventId, user: req.userId })
+    const currentEventGuests = await Guest.find({ event: eventId })
       .sort({ lastName: 1, firstName: 1 });
+    guestsToReturn = [...currentEventGuests];
     
-    res.json(guests);
+    console.log('Found guests in current event:', currentEventGuests.length);
+    
+    const currentEvent = await Event.findById(eventId);
+    
+    if (currentEvent) {
+      if (currentEvent.originalEvent) {
+        const originalEventGuests = await Guest.find({ event: currentEvent.originalEvent })
+          .sort({ lastName: 1, firstName: 1 });
+        console.log('Found guests in original event:', originalEventGuests.length);
+        guestsToReturn = [...guestsToReturn, ...originalEventGuests];
+      }
+      else {
+        const sharedCopies = await Event.find({ originalEvent: eventId });
+        console.log('Found shared copies:', sharedCopies.length);
+        
+        for (let copy of sharedCopies) {
+          const copyGuests = await Guest.find({ event: copy._id })
+            .sort({ lastName: 1, firstName: 1 });
+          console.log(`Found guests in copy ${copy._id}:`, copyGuests.length);
+          guestsToReturn = [...guestsToReturn, ...copyGuests];
+        }
+      }
+    }
+    
+    // הסר כפילויות בהתבסס על טלפון (במקרה של אורח זהה שנוסף בכמה מקומות)
+    const uniqueGuests = [];
+    const seenPhones = new Set();
+    
+    for (let guest of guestsToReturn) {
+      if (guest.phone && !seenPhones.has(guest.phone)) {
+        seenPhones.add(guest.phone);
+        uniqueGuests.push(guest);
+      } else if (!guest.phone) {
+        // אורח ללא טלפון - הוסף אותו תמיד
+        uniqueGuests.push(guest);
+      }
+    }
+    
+    console.log('Total unique guests to return:', uniqueGuests.length);
+    
+    res.json(uniqueGuests.sort((a, b) => {
+      const lastNameCompare = a.lastName.localeCompare(b.lastName);
+      return lastNameCompare !== 0 ? lastNameCompare : a.firstName.localeCompare(b.firstName);
+    }));
+    
+
   } catch (err) {
     console.error('Error fetching guests:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
@@ -25,11 +67,6 @@ const addGuest = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { firstName, lastName, phone, group, customGroup } = req.body;
-    
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
 
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
@@ -62,6 +99,13 @@ const addGuest = async (req, res) => {
 
     const newGuest = new Guest(guestData);
     const savedGuest = await newGuest.save();
+
+    console.log('Guest saved:', {
+      name: savedGuest.firstName + ' ' + savedGuest.lastName,
+      phone: savedGuest.phone,
+      eventId: savedGuest.event,
+      userId: savedGuest.user
+    });
     
     if (savedGuest.rsvpStatus === 'confirmed') {
       await triggerSeatingSync(eventId, req.userId, 'guest_added', {
@@ -99,16 +143,6 @@ const bulkImportGuests = async (req, res) => {
     if (!guests || !Array.isArray(guests) || guests.length === 0) {
       return res.status(400).json({ 
         message: req.t('import.errors.noData'),
-        imported: 0,
-        failed: 0,
-        errors: []
-      });
-    }
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ 
-        message: req.t('events.notFound'),
         imported: 0,
         failed: 0,
         errors: []
@@ -179,6 +213,12 @@ const bulkImportGuests = async (req, res) => {
 
         results.imported = insertResult.length;
 
+        console.log('Bulk import completed:', {
+          imported: results.imported,
+          eventId: eventId,
+          userId: req.userId
+        });
+
         const confirmedGuests = insertResult.filter(guest => guest.rsvpStatus === 'confirmed');
         if (confirmedGuests.length > 0) {
           await triggerSeatingSync(eventId, req.userId, 'bulk_guests_added', {
@@ -235,14 +275,28 @@ const bulkImportGuests = async (req, res) => {
 const deleteGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
-    
-    const guest = await Guest.findOne({ 
-      _id: guestId, 
-      event: eventId, 
-      user: req.userId 
-    });
-    
+
+    let guest = await Guest.findById(guestId);
+
     if (!guest) {
+      return res.status(404).json({ message: req.t('guests.notFound') });
+    }
+
+    const currentEvent = await Event.findById(eventId);
+    let isAuthorized = false;
+    
+    if (guest.event.toString() === eventId) {
+      isAuthorized = true;
+    } else if (currentEvent) {
+      if (currentEvent.originalEvent && guest.event.toString() === currentEvent.originalEvent.toString()) {
+        isAuthorized = true;
+      } else if (!currentEvent.originalEvent) {
+        const sharedCopies = await Event.find({ originalEvent: eventId });
+        isAuthorized = sharedCopies.some(copy => guest.event.toString() === copy._id.toString());
+      }
+    }
+    
+    if (!isAuthorized) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
@@ -273,13 +327,27 @@ const updateGuest = async (req, res) => {
     const { eventId, guestId } = req.params;
     const { firstName, lastName, phone, group, customGroup } = req.body;
     
-    const guest = await Guest.findOne({ 
-      _id: guestId, 
-      event: eventId, 
-      user: req.userId 
-    });
-    
+    let guest = await Guest.findById(guestId);
+
     if (!guest) {
+      return res.status(404).json({ message: req.t('guests.notFound') });
+    }
+
+     const currentEvent = await Event.findById(eventId);
+    let isAuthorized = false;
+    
+    if (guest.event.toString() === eventId) {
+      isAuthorized = true;
+    } else if (currentEvent) {
+      if (currentEvent.originalEvent && guest.event.toString() === currentEvent.originalEvent.toString()) {
+        isAuthorized = true;
+      } else if (!currentEvent.originalEvent) {
+        const sharedCopies = await Event.find({ originalEvent: eventId });
+        isAuthorized = sharedCopies.some(copy => guest.event.toString() === copy._id.toString());
+      }
+    }
+    
+    if (!isAuthorized) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
@@ -340,11 +408,26 @@ const updateGuestRSVP = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
     const { rsvpStatus, guestNotes, attendingCount } = req.body;
+
+    let actualEventId = eventId;
+    
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (event && event.originalEvent) {
+      actualEventId = event.originalEvent;
+    } else if (!event) {
+      const originalEvent = await Event.findOne({
+        _id: eventId,
+        'sharedWith.userId': req.userId
+      });
+      if (!originalEvent) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      actualEventId = eventId;
+    }
     
     const guest = await Guest.findOne({ 
       _id: guestId, 
-      event: eventId, 
-      user: req.userId 
+      event: actualEventId
     });
     
     if (!guest) {
@@ -495,11 +578,53 @@ const updateGuestRSVPPublic = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { phone, rsvpStatus, guestNotes, attendingCount } = req.body;
+
+     if (!phone || !phone.trim()) {
+      return res.status(400).json({ message: 'נדרש מספר טלפון' });
+    }
+
+    const cleanPhone = phone.trim();
     
-    const guest = await Guest.findOne({ 
-      phone: phone.trim(), 
-      event: eventId 
-    });
+    const currentEvent = await Event.findById(eventId);
+    let guest = null;
+    
+    guest = await Guest.findOne({ phone: cleanPhone, event: eventId });
+    
+    if (!guest && currentEvent) {
+      if (currentEvent.originalEvent) {
+        guest = await Guest.findOne({ 
+          phone: cleanPhone, 
+          event: currentEvent.originalEvent 
+        });
+      }
+      
+      if (!guest && !currentEvent.originalEvent) {
+        const sharedCopies = await Event.find({ originalEvent: eventId });
+        for (let copy of sharedCopies) {
+          guest = await Guest.findOne({ 
+            phone: cleanPhone, 
+            event: copy._id 
+          });
+          if (guest) break;
+        }
+      }
+      
+      if (!guest) {
+        const relatedUserIds = [currentEvent.user];
+        if (currentEvent.sharedWith && currentEvent.sharedWith.length > 0) {
+          currentEvent.sharedWith.forEach(share => {
+            if (share.userId) {
+              relatedUserIds.push(share.userId);
+            }
+          });
+        }
+        
+        guest = await Guest.findOne({ 
+          phone: cleanPhone,
+          user: { $in: relatedUserIds }
+        });
+      }
+    }
     
     if (!guest) {
       return res.status(404).json({ 
@@ -512,16 +637,14 @@ const updateGuestRSVPPublic = async (req, res) => {
     let syncTriggerData = null;
 
     guest.rsvpStatus = rsvpStatus;
-    guest.rsvpReceivedAt = Date.now();
+    guest.rsvpReceivedAt = new Date();
     
     if (guestNotes !== undefined) {
       guest.guestNotes = guestNotes;
     }
     
-    if (attendingCount !== undefined && attendingCount >= 0) {
-      guest.attendingCount = attendingCount;
-    } else if (rsvpStatus === 'confirmed' && attendingCount === undefined) {
-      guest.attendingCount = guest.attendingCount || 1;
+    if (rsvpStatus === 'confirmed') {
+      guest.attendingCount = attendingCount && attendingCount >= 1 ? attendingCount : 1;
     } else if (rsvpStatus === 'declined') {
       guest.attendingCount = 0;
     }
@@ -580,12 +703,26 @@ const getEventForRSVP = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    const event = await Event.findById(eventId, 'title date');
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound')});
+    let event = await Event.findById(eventId, 'eventName date location originalEvent');
+
+     if (!event) {
+      return res.status(404).json({ message: 'אירוע לא נמצא' });
     }
 
-    res.json(event);
+    if (event.originalEvent) {
+      const originalEvent = await Event.findById(event.originalEvent, 'eventName date location');
+      if (originalEvent) {
+        event = originalEvent;
+      }
+    }
+
+    res.json({
+      eventName: event.eventName,
+      eventDate: event.date,
+      eventLocation: event.location
+    });
+
+  
   } catch (err) {
     console.error('Error fetching event for RSVP:', err);
     res.status(500).json({ message: req.t('errors.serverError')});
@@ -596,12 +733,102 @@ const checkGuestByPhone = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { phone } = req.body;
+        
+    console.log('=== RSVP Debug Start ===');
+    console.log('EventId received:', eventId);
+    console.log('Phone received:', phone);
     
-    const guest = await Guest.findOne({ 
-      phone: phone.trim(), 
-      event: eventId 
-    }, 'firstName lastName rsvpStatus attendingCount guestNotes');
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ message: 'נדרש מספר טלפון' });
+    }
+
+    const cleanPhone = phone.trim();
+    console.log('Clean phone:', cleanPhone);
     
+    const currentEvent = await Event.findById(eventId);
+    console.log('Current event found:', currentEvent ? {
+      id: currentEvent._id,
+      eventName: currentEvent.eventName,
+      originalEvent: currentEvent.originalEvent,
+      user: currentEvent.user
+    } : 'Event not found');
+    
+    let guest = null;
+    let searchedEvents = [];
+    
+    console.log('Searching in current event:', eventId);
+    guest = await Guest.findOne({ phone: cleanPhone, event: eventId });
+    searchedEvents.push(eventId);
+    
+    if (guest) {
+      console.log('Guest found in current event!');
+    } else {
+      console.log('Guest NOT found in current event, expanding search...');
+      
+      if (currentEvent) {
+        if (currentEvent.originalEvent) {
+          console.log('Searching in original event:', currentEvent.originalEvent);
+          guest = await Guest.findOne({ 
+            phone: cleanPhone, 
+            event: currentEvent.originalEvent 
+          });
+          searchedEvents.push(currentEvent.originalEvent.toString());
+          
+          if (guest) {
+            console.log('Guest found in original event!');
+          }
+        }
+        
+        if (!guest && !currentEvent.originalEvent) {
+          console.log('Searching in shared copies...');
+          const sharedCopies = await Event.find({ originalEvent: eventId });
+          console.log('Found shared copies:', sharedCopies.length);
+          
+          for (let copy of sharedCopies) {
+            console.log('Searching in copy:', copy._id);
+            guest = await Guest.findOne({ 
+              phone: cleanPhone, 
+              event: copy._id 
+            });
+            searchedEvents.push(copy._id.toString());
+            
+            if (guest) {
+              console.log('Guest found in shared copy:', copy._id);
+              break;
+            }
+          }
+        }
+        
+        if (!guest) {
+          console.log('Still not found, doing broader search...');
+          
+          const relatedUserIds = [currentEvent.user];
+          
+          if (currentEvent.sharedWith && currentEvent.sharedWith.length > 0) {
+            currentEvent.sharedWith.forEach(share => {
+              if (share.userId) {
+                relatedUserIds.push(share.userId);
+              }
+            });
+          }
+          
+          console.log('Searching for guest with phone in events of related users:', relatedUserIds);
+          guest = await Guest.findOne({ 
+            phone: cleanPhone,
+            user: { $in: relatedUserIds }
+          });
+          
+          if (guest) {
+            console.log('Guest found in broader search! Event:', guest.event);
+          }
+        }
+      }
+    }
+    
+    console.log('Searched in events:', searchedEvents);
+    console.log('Final result - guest found:', guest ? 'YES' : 'NO');
+    console.log('=== RSVP Debug End ===');
+        
     if (!guest) {
       return res.status(404).json({ 
         message: req.t('guests.errors.phoneNotFound') 
@@ -632,7 +859,8 @@ const generateRSVPLink = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
     }
 
-    const rsvpLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/rsvp/${eventId}`;
+    const actualEventId = event.originalEvent || eventId;
+    const rsvpLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/rsvp/${actualEventId}`;
     
     res.json({ 
       rsvpLink,

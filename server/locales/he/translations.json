@@ -22,7 +22,8 @@
     "googleNotConnected": "לא מחובר לגוגל",
     "validationError": "שגיאת ולידציה",
     "missingParameters": "חסרים פרמטרים נדרשים",
-    "databaseError": "שגיאת מסד נתונים"
+    "databaseError": "שגיאת מסד נתונים",
+    "invalidEventId": "מזהה אירוע לא תקין"
   },
   "success": {
     "passwordReset": "הסיסמה עודכנה בהצלחה",
@@ -41,6 +42,7 @@
     "createSuccess": "אירוע נוצר בהצלחה",
     "updateSuccess": "אירוע עודכן בהצלחה",
     "accessDenied": "אין הרשאה לגשת לאירוע זה",
+    "editDenied": "אין לך הרשאות עריכה לאירוע זה",
     "vendors": {
       "addSuccess": "הספק נוסף בהצלחה לאירוע",
       "updateSuccess": "פרטי הספק עודכנו בהצלחה",
@@ -91,6 +93,15 @@
         "errors": {
           "serverError": "שגיאת שרת"
         }
+    },
+    "share": {
+      "shareSuccess": "האירוע שותף בהצלחה",
+      "acceptSuccess": "האירוע התקבל בהצלחה",
+      "removeSuccess": "הגישה הוסרה בהצלחה",
+      "permissionUpdated": "ההרשאות עודכנו בהצלחה",
+      "alreadyShared": "האירוע כבר משותף עם משתמש זה",
+      "notSharedWithUser": "אין לך גישה לאירוע זה",
+      "shareNotFound": "השיתוף לא נמצא"
     },
     "validation": {
       "taskTitleRequired": "כותרת המשימה נדרשת",
@@ -161,7 +172,9 @@
     "totalBudgetPositive": "תקציב כולל חייב להיות חיובי",
     "tableNotFound": "שולחן {{tableId}} לא נמצא",
     "tableOvercapacity": "שולחן {{tableName}} מעל הקיבולת: {{occupancy}}/{{capacity}}",
-    "duplicateGuest": "אורח {{guestId}} שובץ למספר שולחנות"
+    "duplicateGuest": "האורח {{guestId}} הוקצה למספר טבלאות",
+    "invalidPermission": "רמת הרשאה לא חוקית",
+    "permissionRequired": "נדרשת רמת הרשאה"
   },
   "guests": {
     "notFound": "מוזמן לא נמצא",
@@ -238,6 +251,9 @@
     "export": {
       "title": "תרשים סידור מקומות", 
       "seatingChart": "תרשים סידור מקומות"
+    },
+    "notifications": {
+      "eventShared": "{{sharer}} שיתף/ה את האירוע \"{{eventTitle}}\" איתך"
     }
   }
 }

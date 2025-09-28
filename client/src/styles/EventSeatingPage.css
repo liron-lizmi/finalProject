@@ -2491,6 +2491,23 @@
   display: inline-block;
 }
 
+.add-table-button:disabled,
+.seating-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5 !important;
+}
+
+.add-table-btn:disabled,
+.edit-table-btn:disabled,
+.delete-table-btn:disabled,
+.assign-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #f0f0f0 !important;
+  color: #999 !important;
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

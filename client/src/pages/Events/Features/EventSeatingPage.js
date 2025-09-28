@@ -51,6 +51,7 @@ const EventSeatingPage = () => {
   const [isSyncOptionsModalOpen, setIsSyncOptionsModalOpen] = useState(false);
   
   const canvasRef = useRef(null);
+  const [canEdit, setCanEdit] = useState(true);
   const syncTimeoutRef = useRef(null);
 
   const getAuthToken = useCallback(() => {
@@ -110,6 +111,19 @@ const EventSeatingPage = () => {
       throw err;
     }
   }, [getAuthToken, handleAuthError]);
+  
+  const fetchEventPermissions = useCallback(async () => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}`);
+      if (response && response.ok) {
+        const eventData = await response.json();
+        setCanEdit(eventData.canEdit || false);
+      }
+    } catch (err) {
+      console.error('Error fetching event permissions:', err);
+    }
+  }, [eventId, makeApiRequest]);
+
 
   const showSyncNotification = useCallback((type, message) => {
     setSyncNotification({ type, message });
@@ -925,6 +939,12 @@ const EventSeatingPage = () => {
   };
 
   const addTable = useCallback((event, type = 'round', capacity = 8) => {
+
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+
     let position;
     
     if (event.constrainedPosition) {
@@ -962,7 +982,7 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize, getNextTableNumber]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize, getNextTableNumber, canEdit]);
 
   const handleAddTablesFromAI = useCallback(async (tablesToAdd) => {
     try {
@@ -1020,6 +1040,12 @@ const EventSeatingPage = () => {
   }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, getNextTableNumber]);
 
   const updateTable = useCallback((tableId, updates) => {
+
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+
     let newTables;
     let newArrangement = { ...seatingArrangement };
     
@@ -1062,9 +1088,16 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, generateTableNameWithGroup]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, generateTableNameWithGroup ,canEdit]);
+
 
   const deleteTable = useCallback((tableId) => {
+
+     if (!canEdit) {
+        setError(t('events.accessDenied'));
+        return;
+      }
+
     const newTables = tables.filter(table => table.id !== tableId);
     const newArrangement = { ...seatingArrangement };
     delete newArrangement[tableId];
@@ -1085,9 +1118,15 @@ const EventSeatingPage = () => {
         canvasOffset
       }
     });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames]);
+  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, canEdit]);
 
   const seatGuest = useCallback((guestId, tableId) => {
+
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return false;
+    }
+
     const table = tables.find(t => t.id === tableId);
     if (!table) return false;
 
@@ -1149,7 +1188,7 @@ const EventSeatingPage = () => {
     }, 100);
     
     return true;
-  }, [tables, seatingArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups]);
+  }, [tables, seatingArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, canEdit]);
 
   const unseatGuest = useCallback((guestId) => {
     const newArrangement = { ...seatingArrangement };
@@ -1184,6 +1223,12 @@ const EventSeatingPage = () => {
   }, [seatingArrangement, tables, preferences, canvasScale, canvasOffset, autoSave, updateTableNamesWithGroups]);
 
   const clearAllSeating = useCallback(() => {
+
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+
     if (window.confirm(t('seating.confirmClearAll'))) {
       const newArrangement = {};
       const newTables = [];
@@ -1208,7 +1253,8 @@ const EventSeatingPage = () => {
         }
       });
     }
-  }, [preferences, canvasScale, canvasOffset, autoSave, t]);
+  }, [preferences, canvasScale, canvasOffset, autoSave, t, canEdit]);
+
 
   const handleCanvasClick = useCallback((event) => {
     if (!isAddingTable) return;
@@ -1425,19 +1471,36 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
   }
 }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
 
-  useEffect(() => {
-    const initializeData = async () => {
-      const guestData = await fetchConfirmedGuests();
+  // useEffect(() => {
+  //   const initializeData = async () => {
+  //     const guestData = await fetchConfirmedGuests();
       
-      if (guestData) {
-      } else {
-      }
+  //     if (guestData) {
+  //     } else {
+  //     }
       
-      const seatingData = await fetchSeatingArrangement();
-    };
+  //     const seatingData = await fetchSeatingArrangement();
+  //   };
 
-    initializeData();
-  }, [fetchConfirmedGuests, fetchSeatingArrangement]);
+  //   initializeData();
+  // }, [fetchConfirmedGuests, fetchSeatingArrangement]);
+
+    useEffect(() => {
+      const initializeData = async () => {
+        // First, we load the permissions.
+        await fetchEventPermissions();
+        
+        const guestData = await fetchConfirmedGuests();
+        
+        if (guestData) {
+        } else {
+        }
+        
+        const seatingData = await fetchSeatingArrangement();
+      };
+
+      initializeData();
+    }, [fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement]);
 
   const stats = (() => {
     const totalGuests = confirmedGuests.reduce((sum, guest) => {
@@ -1561,7 +1624,7 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
               <button
                 className="seating-action-button ai-button"
                 onClick={() => setIsAIModalOpen(true)}
-                disabled={confirmedGuests.length === 0}
+                disabled={confirmedGuests.length === 0 || !canEdit}
               >
                 🤖 {t('seating.generateAI')}
               </button>
@@ -1570,7 +1633,7 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
             <button
               className="seating-action-button clear-all-button"
               onClick={clearAllSeating}
-              disabled={tables.length === 0 && Object.keys(seatingArrangement).length === 0}
+              disabled={tables.length === 0 && Object.keys(seatingArrangement).length === 0 || !canEdit}
               title={t('seating.clearAllTooltip')}
             >
               🗑️ {t('seating.clearAll')}
@@ -1639,6 +1702,7 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
                     <button
                       className={`add-table-button ${isAddingTable ? 'active' : ''}`}
                       onClick={() => setIsAddingTable(!isAddingTable)}
+                      disabled={!canEdit}
                     >
                       {isAddingTable ? t('seating.cancelAddTable') : t('seating.addTable')}
                     </button>
@@ -1703,6 +1767,7 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
                 onEditTable={handleTableClick}
                 onAddTable={handleAddTableFromView}
                 onDeleteTable={deleteTable}
+                canEdit={canEdit}
               />
             </div>
           )}

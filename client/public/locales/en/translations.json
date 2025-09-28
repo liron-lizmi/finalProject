@@ -17,7 +17,9 @@
     "today": "Today",
     "now": "Now",
     "showingResults": "Showing {{start}}-{{end}} of {{total}} results",
-    "loadingPage": "Loading page {{page}}..."
+    "loadingPage": "Loading page {{page}}...",
+    "dismiss": "Dismiss",
+    "viewOnlyMode": "View only mode - you do not have editing permissions"
   },
   "auth": {
     "email": "Email",
@@ -73,7 +75,11 @@
     "deleteEvent": "Delete Event",
     "confirmDelete": "confirmDelete",
     "backToDashboard": "Back to Dashboard",
-    "deleteConfirm": "Are you sure you want to delete this event?"
+    "deleteConfirm": "Are you sure you want to delete this event?",
+    "newNotifications": "New Notifications",
+    "sharedEvent": "event shared",
+    "sharedBy": "Shared by",
+    "unknown": "Unknown"
   },
   "events": {
     "createEvent": "Create New Event",
@@ -460,9 +466,10 @@
         },
         "tabs": {
           "overview": "Overview",
-          "offering": "Offering",
-          "seeking": "Seeking",
-          "myInfo": "My Info"
+          "expenses": "Expenses", 
+          "charts": "Charts",
+          "offering": "Offers",
+          "seeking": "Seekers"
         },
         "updateSuccess": "Information updated successfully",
         "contactRecorded": "Action recorded successfully",
@@ -478,10 +485,6 @@
           "updateGuest": "Error updating guest",
           "networkError": "Network error - please check your internet connection"
         }
-      },
-      "weather": {
-        "title": "Weather Forecast",
-        "description": "Check the forecast for your event day"
       },
       "budget": {
         "title": "Budget Management",
@@ -539,21 +542,7 @@
           "title": "Budget Settings",
           "alertSettings": "Alert Setting",
           "alertThreshold": "Alert Threshold",
-          "alertThresholdDescription": "Receive an alert when spending in a category reaches this percentage of the allocated budget",
-          "displaySettings": "Display Settings",
-          "chartColors": "Chart Colors",
-          "colorDefault": "Default",
-          "colorVibrant": "Vibrant",
-          "colorPastel": "Pastel",
-          "colorProfessional": "Professional",
-          "dateFormat": "Date Format",
-          "preview": "Preview",
-          "alertPreviewWarning": "Example of a warning alert - approaching budget limit",
-          "alertPreviewSafe": "Safe alert settings",
-          "chartColorsDescription": "Changes the chart colors in the charts tab",
-          "dateFormatDescription": "Changes the date format displayed in the expenses list",
-          "currentAlerts": "Current Alerts"
-
+          "alertThresholdDescription": "Receive an alert when spending in a category reaches this percentage of the allocated budget"
         },
         "totalSpent": "Total Spent",
         "expenses": "Expenses",
@@ -603,7 +592,41 @@
       },
       "share": {
         "title": "Share Event",
-        "description": "Share details with guests and participants"
+        "description": "Share details with guests and participants",
+        "shareEvent": "Share Event",
+        "shareDescription": "Share your event with other users for viewing or editing",
+        "shareWith": "Share with",
+        "emailPlaceholder": "Enter email address",
+        "permissions": "Permissions",
+        "viewOnly": "View Only",
+        "editAccess": "View and Edit",
+        "shareButton": "Share",
+        "sharedWith": "Shared With",
+        "removeAccess": "Remove Access",
+        "updatePermission": "Update Permissions",
+        "shareSuccess": "The event was shared successfully",
+        "acceptSuccess": "The event was accepted successfully",
+        "removeSuccess": "Access was removed successfully",
+        "permissionUpdated": "Permissions were updated successfully",
+        "alreadyShared": "The event is already shared with this user",
+        "notSharedWithUser": "You do not have access to this event",
+        "shareNotFound": "Share not found",
+        "noSharedUsers": "The event is not shared with anyone",
+        "sharedEventInfo": "Shared Event",
+        "originalOwner": "Original Event Owner",
+        "yourPermission": "Your Permissions",
+        "sharedOn": "Shared On",
+        "accepted": "Accepted",
+        "pending": "Pending",
+        "confirmRemove": "Are you sure you want to remove access for this user?",
+        "importantInfo": "Important Information",
+        "syncInfo": "Changes you make to the event will automatically update for all shared users",
+        "editLimitationsInfo": "Users with 'View Only' permission can see all details but cannot edit",
+        "sharedEventNote": "This is a shared event - changes will be synchronized with the original event owner",
+        "emailLabel": "Email Address",
+        "shareToCollaborate": "Share this event with others to work together on the planning.",
+        "viewPermissionInfo": "Users with viewing permission can see the event but not change it.",
+        "editPermissionInfo": "Users with edit permission can change the event details."
       }
     }
   },
@@ -644,12 +667,15 @@
     "serverError": "Server error",
     "authError": "Authentication error - redirecting to login",
     "networkError": "Network error - please check your internet connection",
+    "invalidEventId": "Invalid event ID",
     "samePassword": "The password cannot be reset to the current password. Please choose a new password.",
     "eventNotFound": "Event not found or you don't have access to it",
     "fetchGuests": "Error loading guest list",
     "addGuest": "Error adding guest",
     "deleteGuest": "Error deleting guest",
-    "importFailed": "The import failed"
+    "importFailed": "The import failed",
+    "userNotFound": "User not found",
+    "notificationNotFound": "Notification not found"
   },
   "home": {
     "hero": {
@@ -1105,7 +1131,9 @@
     "lastNameRequired": "Last name is required",
     "invalidPhoneFormat": "Invalid phone format (required: 05X-XXXXXXX)",
     "groupRequired": "Group is required",
-    "customGroupRequired": "Group name is required when 'Other' is selected"
+    "customGroupRequired": "Group name is required when 'Other' is selected",
+    "invalidPermission": "Invalid permission level",
+    "emailInvalid": "Please enter a valid email address"
   },
   "import": {
     "title": "Import Guests",
@@ -1642,5 +1670,10 @@
       "noConfirmedGuests": "No confirmed guests",
       "noTables": "No tables defined"
     }
+  },
+  "notifications": {
+    "approve": "Approve",
+    "eventShared": "{{sharer}} shared the deal \"{{eventTitle}}\" with you",
+    "markedAsRead": "Notification marked as read"
   }
 }
