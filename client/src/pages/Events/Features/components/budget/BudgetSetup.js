@@ -13,8 +13,7 @@ const defaultCategoryAllocations = {
   gifts: 0.03,
   other: 0.05
 };
-
-const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
+const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated, canEdit = true}) => {
   const { t } = useTranslation();
   const [totalBudget, setTotalBudget] = useState('');
   const [categories, setCategories] = useState([]);
@@ -141,7 +140,6 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
   const remaining = getRemainingBudget();
   const isValid = remaining >= 0 && parseFloat(totalBudget) > 0;
 
-  // If no existing budget, show the simple form
   if (!isEditing) {
     return (
       <div className="budget-setup">
@@ -247,7 +245,6 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
     );
   }
 
-  // If existing budget, show the compact view with edit button
   return (
     <>
       <div className="budget-setup-compact">
@@ -261,6 +258,7 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated }) => {
             type="button"
             onClick={openEditModal}
             className="edit-budget-button"
+            disabled={!canEdit}
           >
             {t('events.features.budget.editBudget')}
           </button>

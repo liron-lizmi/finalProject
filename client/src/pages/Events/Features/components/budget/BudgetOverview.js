@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAlertThresholdChange }) => {
+const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAlertThresholdChange, canEdit }) => {
   const { t } = useTranslation();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updatingThreshold, setUpdatingThreshold] = useState(false);
 
   useEffect(() => {
     fetchBudgetSummary();
@@ -75,8 +76,30 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
               min="50"
               max="100"
               value={alertThreshold}
-              onChange={(e) => onAlertThresholdChange(parseInt(e.target.value))}
+              onChange={async (e) => {
+                if (!canEdit) return;
+                
+                const newThreshold = parseInt(e.target.value);
+                try {
+                  const token = localStorage.getItem('token');
+                  const response = await fetch(`/api/events/${eventId}/budget/alert-threshold`, {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ alertThreshold: newThreshold })
+                  });
+
+                  if (response.ok) {
+                    onAlertThresholdChange(newThreshold);
+                  }
+                } catch (err) {
+                  console.error('Error updating alert threshold:', err);
+                }
+              }}
               className="threshold-slider"
+              disabled={!canEdit}
             />
           </label>
           <p className="setting-description">

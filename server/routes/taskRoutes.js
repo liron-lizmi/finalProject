@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 const {
   getEventTasks,
   createTask,
@@ -18,18 +19,18 @@ const {
 router.use(auth);
 
 // Task CRUD routes
-router.get('/event/:eventId', getEventTasks);
-router.get('/event/:eventId/statistics', getTasksStatistics);
-router.post('/event/:eventId', createTask);
-router.put('/event/:eventId/:taskId', updateTask);
-router.patch('/event/:eventId/:taskId/status', updateTaskStatus);
-router.delete('/event/:eventId/:taskId', deleteTask);
+router.get('/event/:eventId', checkViewPermission, getEventTasks);
+router.get('/event/:eventId/statistics', checkViewPermission, getTasksStatistics);
+router.post('/event/:eventId', checkEditPermission, createTask);
+router.put('/event/:eventId/:taskId', checkEditPermission, updateTask);
+router.patch('/event/:eventId/:taskId/status', checkEditPermission, updateTaskStatus);
+router.delete('/event/:eventId/:taskId', checkEditPermission, deleteTask);
 
 // Google Calendar integration routes
 router.get('/google-calendar/status', getGoogleCalendarStatus);
 router.get('/google-calendar/auth-url', getGoogleAuthUrl);
 router.post('/google-calendar/callback', handleGoogleCallback);
 router.delete('/google-calendar/disconnect', disconnectGoogleCalendar);
-router.post('/event/:eventId/sync-calendar', syncWithGoogleCalendar);
+router.post('/event/:eventId/sync-calendar', checkEditPermission, syncWithGoogleCalendar);
 
 module.exports = router;

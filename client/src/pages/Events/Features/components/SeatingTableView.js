@@ -9,7 +9,8 @@ const SeatingTableView = ({
   onUnseatGuest,
   onEditTable,
   onAddTable,
-  onDeleteTable
+  onDeleteTable,
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -214,7 +215,11 @@ const SeatingTableView = ({
         </div>
 
         <div className="table-actions">
-          <button className="add-table-btn" onClick={handleAddTable}>
+          <button 
+            className="add-table-btn" 
+            onClick={handleAddTable}
+            disabled={!canEdit}
+          >
             ➕ {t('seating.tableView.addTable')}
           </button>
         </div>
@@ -320,6 +325,7 @@ const SeatingTableView = ({
                   className="edit-table-btn"
                   onClick={() => onEditTable(table)}
                   title={t('seating.tableView.editTable')}
+                  disabled={!canEdit}
                 >
                   ✏️
                 </button>
@@ -331,6 +337,7 @@ const SeatingTableView = ({
                     }
                   }}
                   title={t('seating.tableView.deleteTable')}
+                  disabled={!canEdit}
                 >
                   🗑️
                 </button>
@@ -451,7 +458,7 @@ const SeatingTableView = ({
                         </div>
                         <button
                           className="assign-btn"
-                          disabled={!canFit}
+                          disabled={!canFit || !canEdit}
                           onClick={() => handleMoveGuest(selectedGuest._id, table.id)}
                         >
                           {canFit ? t('seating.tableView.assign') : t('seating.tableView.full')}

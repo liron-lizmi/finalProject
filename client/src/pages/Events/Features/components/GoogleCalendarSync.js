@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
-const GoogleCalendarSync = ({ eventId }) => {
+const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const [isConnected, setIsConnected] = useState(false);
@@ -190,7 +190,7 @@ const GoogleCalendarSync = ({ eventId }) => {
             <button 
               className="connect-btn"
               onClick={connectGoogleCalendar}
-              disabled={loading}
+              disabled={loading || !canEdit}
             >
               {loading ? (t('auth.connecting')) : (t('events.features.tasks.calendar.sync.connectButton'))}
             </button>
@@ -242,7 +242,7 @@ const GoogleCalendarSync = ({ eventId }) => {
               <button 
                 className="sync-btn"
                 onClick={syncWithCalendar}
-                disabled={syncing}
+                disabled={syncing || !canEdit}
               >
                 {syncing ? (t('events.features.tasks.calendar.sync.syncing')) : (t('events.features.tasks.calendar.sync.syncButton'))}
               </button>
@@ -250,7 +250,7 @@ const GoogleCalendarSync = ({ eventId }) => {
               <button 
                 className="disconnect-btn"
                 onClick={() => setShowDisconnectConfirm(true)}
-                disabled={loading}
+                disabled={loading || !canEdit}
               >
                 {t('events.features.tasks.calendar.sync.disconnectButton')}
               </button>

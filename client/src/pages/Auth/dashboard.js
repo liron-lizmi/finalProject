@@ -177,28 +177,8 @@ const Dashboard = () => {
           }
         });
         
-        // Populate original event owner info for shared events
-        const eventsWithOwnerInfo = await Promise.all(
-          response.data.map(async (event) => {
-            if (event.originalEvent) {
-              try {
-                const originalEventResponse = await axios.get(`/api/events/${event.originalEvent}`, {
-                  headers: { 'x-auth-token': token }
-                });
-                return {
-                  ...event,
-                  originalOwner: originalEventResponse.data.user
-                };
-              } catch (err) {
-                return event;
-              }
-            }
-            return event;
-          })
-        );
-        
-        console.log("Events fetched:", eventsWithOwnerInfo.length);
-        setEvents(eventsWithOwnerInfo);
+        console.log("Events fetched:", response.data.length);
+        setEvents(response.data);
       } catch (err) {
         console.error('Error fetching events:', err);
         setError(t('errors.loadEventsFailed'));
@@ -210,13 +190,18 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
+        console.log("Fetching notifications...");
         const response = await axios.get('/api/events/notifications', {
           headers: { 'x-auth-token': token }
         });
         
+        console.log("Notifications response:", response.data);
         setNotifications(response.data);
         if (response.data.length > 0) {
+          console.log("Setting showNotifications to true");
           setShowNotifications(true);
+        } else {
+          console.log("No notifications found");
         }
       } catch (err) {
         console.error('Error fetching notifications:', err);
@@ -235,7 +220,6 @@ const Dashboard = () => {
     }
   }, [navigate, location.search, t, i18n.language]);
 
-  // שאר הקוד נשאר זהה...
   if (shouldRedirect) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -300,22 +284,34 @@ const Dashboard = () => {
     setEventToDelete(null);
   };
 
-  const handleDismissNotifications = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      for (const notification of notifications) {
+  const handleAcceptNotifications = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    for (const notification of notifications) {
+      if (notification.type === 'event_shared') {
+        await axios.put(`/api/events/notifications/${notification._id}/accept`, {}, {
+          headers: { 'x-auth-token': token }
+        });
+      } else {
         await axios.put(`/api/events/notifications/${notification._id}/read`, {}, {
           headers: { 'x-auth-token': token }
         });
       }
-      
-      setNotifications([]);
-      setShowNotifications(false);
-    } catch (err) {
-      console.error('Error dismissing notifications:', err);
     }
-  };
+    
+    setNotifications([]);
+    setShowNotifications(false);
+    
+    const eventsResponse = await axios.get('/api/events', {
+      headers: { 'x-auth-token': token }
+    });
+    setEvents(eventsResponse.data);
+    
+  } catch (err) {
+    console.error('Error accepting notifications:', err);
+  }
+};
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -400,8 +396,8 @@ const Dashboard = () => {
                   ))}
                 </div>
               </div>
-              <button className="notifications-dismiss" onClick={handleDismissNotifications}>
-                {t('general.dismiss')}
+              <button className="notifications-dismiss" onClick={handleAcceptNotifications}>
+                {t('notifications.approve')}
               </button>
             </div>
           )}

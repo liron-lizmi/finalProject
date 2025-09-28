@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const ExpenseManager = ({ budget, eventId, onBudgetUpdated }) => {
+const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => {
   const { t } = useTranslation();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -244,6 +244,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated }) => {
         <button 
           onClick={() => setShowAddForm(true)}
           className="add-expense-button"
+          disabled={!canEdit}
         >
           {t('events.features.budget.addExpense')}
         </button>
@@ -414,6 +415,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated }) => {
                     onClick={() => togglePaymentStatus(expense)}
                     className={`payment-toggle ${expense.isPaid ? 'paid' : 'unpaid'}`}
                     title={expense.isPaid ? t('events.features.budget.markUnpaid') : t('events.features.budget.markPaid')}
+                    disabled={!canEdit}
                   >
                     {expense.isPaid ? '✅' : '⏳'}
                   </button>
@@ -422,6 +424,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated }) => {
                     onClick={() => handleEdit(expense)}
                     className="edit-button"
                     title={t('events.features.budget.editExpense')}
+                    disabled={!canEdit}
                   >
                     ✏️
                   </button>
@@ -430,6 +433,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated }) => {
                     onClick={() => handleDelete(expense._id)}
                     className="delete-button"
                     title={t('events.features.budget.deleteExpense')}
+                    disabled={!canEdit}
                   >
                     🗑️
                   </button>

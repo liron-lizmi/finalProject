@@ -137,6 +137,9 @@ TaskSchema.index({ event: 1, user: 1 });
 TaskSchema.index({ dueDate: 1 });
 TaskSchema.index({ status: 1 });
 TaskSchema.index({ priority: 1 });
+TaskSchema.index({ event: 1, dueDate: 1 });
+TaskSchema.index({ event: 1, status: 1 });
+TaskSchema.index({ event: 1, priority: 1 });
 
 TaskSchema.pre('save', function(next) {
   this.updatedAt = Date.now();

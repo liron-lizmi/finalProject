@@ -108,13 +108,18 @@ const BudgetSchema = new mongoose.Schema({
       return i18next.t('validation.totalBudgetRequired');
     },
     min: 0,
-    // Store exact value as entered by user
     get: function(value) {
       return value;
     },
     set: function(value) {
       return value;
     }
+  },
+  alertThreshold: {
+    type: Number,
+    default: 80,
+    min: 50,
+    max: 100
   },
   categories: [BudgetCategorySchema],
   items: [BudgetItemSchema],

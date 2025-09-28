@@ -11,6 +11,7 @@ const {
   updateGuestRideInfoByOwner
 } = require('../controllers/ridesController');
 const auth = require('../middleware/auth');
+const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 
 router.get('/:eventId/info', getEventRidesInfo);
 router.post('/:eventId/check-phone', checkPhoneForRides);
@@ -20,6 +21,6 @@ router.post('/:eventId/contact', recordContact);
 router.post('/:eventId/suggestions', getSuggestedRides);
 router.post('/:eventId/cancel', cancelRide);
 
-router.put('/:eventId/guests/:guestId/ride-info', auth, updateGuestRideInfoByOwner);
+router.put('/:eventId/guests/:guestId/ride-info', auth, checkEditPermission, updateGuestRideInfoByOwner);
 
 module.exports = router;

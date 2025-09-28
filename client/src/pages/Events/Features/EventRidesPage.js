@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import FeaturePageTemplate from './FeaturePageTemplate';
 import '../../../styles/EventRidesPage.css';
 
-const EventRidesPage = () => {
+const EventRidesPage = ({ permissionLoading = false }) => {
   const { t } = useTranslation();
   const { id: eventId } = useParams();
   const navigate = useNavigate();
@@ -22,12 +23,14 @@ const EventRidesPage = () => {
     notSet: 0
   });
 
+  const [canEdit, setCanEdit] = useState(true);
+  const [userPermission, setUserPermission] = useState('edit');
+
   useEffect(() => {
     fetchEventData();
     fetchRidesData();
   }, [eventId]);
 
-  // Fetches event data from the API
   const fetchEventData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -35,12 +38,17 @@ const EventRidesPage = () => {
         headers: { 'x-auth-token': token }
       });
       setEvent(response.data);
+      
+      // בדיקת הרשאות
+      if (response.data.userPermission) {
+        setCanEdit(response.data.canEdit || false);
+        setUserPermission(response.data.userPermission);
+      }
     } catch (err) {
       setError(t('events.features.rides.errors.eventLoadFailed'));
     }
-  };
+};
 
-  // Fetches rides data and calculates statistics
   const fetchRidesData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -62,81 +70,85 @@ const EventRidesPage = () => {
     }
   };
 
-  // Updates guest ride information
   const updateGuestRideInfo = async (guestId, rideInfo) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(`/api/events/${eventId}/guests/${guestId}/ride-info`, rideInfo, {
-        headers: { 'x-auth-token': token }
-      });
-      fetchRidesData();
-    } catch (err) {
-      setError(t('events.features.rides.errors.updateGuest'));
-    }
-  };
+  if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+  
+  try {
+    const token = localStorage.getItem('token');
+    await axios.put(`/api/events/${eventId}/guests/${guestId}/ride-info`, rideInfo, {
+      headers: { 'x-auth-token': token }
+    });
+    fetchRidesData();
+  } catch (err) {
+    setError(t('events.features.rides.errors.updateGuest'));
+  }
+};
 
-  // Copies ride link to clipboard
   const copyRideLink = () => {
-    const rideLink = `${window.location.origin}/rides/${eventId}`;
+    // תמיד השתמש ב-ID המקורי של האירוע
+    const actualEventId = event.originalEvent || eventId;
+    const rideLink = `${window.location.origin}/rides/${actualEventId}`;
     navigator.clipboard.writeText(rideLink).then(() => {
       alert(t('events.features.rides.linkCopied'));
     });
   };
 
-  // Navigates back to event details page
-  const handleBack = () => {
-    navigate(`/event/${eventId}`);
-  };
-
-  // Gets status display text based on ride status and contact history
   const getStatusDisplay = (guest) => {
     const contactStatus = guest.rideInfo?.contactStatus;
     
-    switch (contactStatus) {
-      case 'taken':
-        return t('events.features.rides.status.taken');
-      case 'not_relevant':
-        return t('events.features.rides.status.not_relevant');
-      case 'in_process':
-        return t('events.features.rides.status.in_process');
-      default:
-        return t(`events.features.rides.status.${guest.rideInfo?.status || 'not_set'}`);
+    let text, icon, className;
+    
+    if (contactStatus === 'taken') {
+      text = t('events.features.rides.status.taken');
+      icon = '🚗';
+      className = 'taken';
+    } else if (contactStatus === 'not_relevant') {
+      text = t('events.features.rides.status.not_relevant');
+      icon = '✗';
+      className = 'not-relevant';
+    } else if (contactStatus === 'in_process') {
+      text = t('events.features.rides.status.in_process');
+      icon = '🔄';
+      className = 'in-process';
+    } else {
+      const status = guest.rideInfo?.status || 'not_set';
+      text = t(`events.features.rides.status.${status}`);
+      icon = status === 'offering' ? '🚗' : status === 'seeking' ? '🔍' : '❓';
+      className = status;
     }
+    
+    return (
+      <span className={`status-indicator ${className}`}>
+        <span className="status-icon">{icon}</span>
+        <span className="status-text">{text}</span>
+      </span>
+    );
   };
 
-  // הוסרת כל בלוק הטעינה - הדף מוצג מיד
-  if (error) {
+  if (error && !permissionLoading) {
     return (
-      <div className="rides-page-wrapper">
-        <div className="rides-container">
-          <div className="error-message">
-            {error}
-          </div>
+      <FeaturePageTemplate
+        title={t('events.features.rides.title')}
+        icon="🚎"
+        description={t('events.features.rides.description')}
+      >
+        <div className="error-message">
+          {error}
         </div>
-      </div>
+      </FeaturePageTemplate>
     );
   }
 
   return (
-    <div className="rides-page-wrapper">
-      <div className="page-header">
-        <div className="header-top">
-          <div className="app-logo">
-            <img src="/images/logo.png" alt={t('events.features.rides.appLogo')} />
-          </div>
-          <button className="back-button" onClick={handleBack}>
-            <span className="back-icon">←</span>
-            {t('events.features.rides.backToEventDetails')}
-          </button>
-        </div>
-      </div>
-
+    <FeaturePageTemplate
+      title={t('events.features.rides.title')}
+      icon="🚎"
+      description={t('events.features.rides.description')}
+    >
       <div className="rides-container">
-        <header className="rides-header">
-          <h1 className="rides-title">{t('events.features.rides.title')}</h1>
-          <p className="rides-description">{t('events.features.rides.description')}</p>
-        </header>
-
         <div className="rides-stats">
           <div className="stat-item offering">
             <div className="stat-number">{stats.offering}</div>
@@ -147,7 +159,12 @@ const EventRidesPage = () => {
             <div className="stat-label">{t('events.features.rides.stats.seeking')}</div>
           </div>
           <div className="stat-item share-section">
-            <button className="share-link-button" onClick={copyRideLink}>
+            <button 
+              className={`share-link-button ${!canEdit ? 'disabled' : ''}`}
+              onClick={canEdit ? copyRideLink : undefined}
+              disabled={!canEdit}
+              title={!canEdit ? t('general.viewOnlyMode') : undefined}
+            >
               <div className="share-icon">🔗</div>
               <div className="share-text">{t('events.features.rides.shareLink')}</div>
             </button>
@@ -162,6 +179,7 @@ const EventRidesPage = () => {
             </span>
           </div>
         </div>
+
         <nav className="rides-tabs">
           <button
             className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
@@ -193,14 +211,14 @@ const EventRidesPage = () => {
                       <h3 className="guest-name">{guest.firstName} {guest.lastName}</h3>
                       <p className="guest-phone">{guest.phone}</p>
                     </div>
-                    <div className={`ride-status status-${guest.rideInfo?.status || 'not_set'}`}>
-                      {getStatusDisplay(guest)}
-                    </div>
                     {guest.rideInfo?.address && (
                       <div className="ride-details">
                         <p className="ride-address">{guest.rideInfo.address}</p>
                       </div>
                     )}
+                    <div className="contact-status-display">
+                      {getStatusDisplay(guest)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -223,8 +241,9 @@ const EventRidesPage = () => {
                       {guest.rideInfo.address && <p><strong>{t('events.features.rides.form.address')}:</strong> {guest.rideInfo.address}</p>}
                       {guest.rideInfo.availableSeats && <p><strong>{t('events.features.rides.form.availableSeats')}:</strong> {guest.rideInfo.availableSeats}</p>}
                       {guest.rideInfo.departureTime && <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {guest.rideInfo.departureTime}</p>}
+                      {guest.rideInfo.notes && <p><strong>{t('events.features.rides.form.notes')}:</strong> {guest.rideInfo.notes}</p>}
                     </div>
-                    <div className="contact-status">
+                    <div className="contact-status-display">
                       {getStatusDisplay(guest)}
                     </div>
                   </div>
@@ -249,8 +268,9 @@ const EventRidesPage = () => {
                       {guest.rideInfo.address && <p><strong>{t('events.features.rides.form.address')}:</strong> {guest.rideInfo.address}</p>}
                       {guest.rideInfo.requiredSeats && <p><strong>{t('events.features.rides.form.requiredSeats')}:</strong> {guest.rideInfo.requiredSeats}</p>}
                       {guest.rideInfo.departureTime && <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {guest.rideInfo.departureTime}</p>}
+                      {guest.rideInfo.notes && <p><strong>{t('events.features.rides.form.notes')}:</strong> {guest.rideInfo.notes}</p>}
                     </div>
-                    <div className="contact-status">
+                    <div className="contact-status-display">
                       {getStatusDisplay(guest)}
                     </div>
                   </div>
@@ -260,7 +280,7 @@ const EventRidesPage = () => {
           )}
         </div>
       </div>
-    </div>
+    </FeaturePageTemplate>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/EventTimeline.css';
 
-const ReminderToast = ({ tasks, onTaskClick }) => {
+const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const [activeReminders, setActiveReminders] = useState([]);
@@ -32,7 +32,6 @@ const ReminderToast = ({ tasks, onTaskClick }) => {
     const dueDate = new Date(task.dueDate);
     const dueDateString = dueDate.toDateString();
 
-    // בדוק אם המשימה עברה זמן והתריעה טרם הוצגה
     if (dueDate < now && !shownTodayFromStorage.includes(`${taskId}_overdue_${dueDateString}`)) {
       reminderTasks.push({
         ...task,
@@ -300,7 +299,8 @@ const ReminderToast = ({ tasks, onTaskClick }) => {
             <div className="reminder-toast-actions">
               <button 
                 className="reminder-btn view-task"
-                onClick={() => handleTaskClick(task)}
+                onClick={() => canEdit && handleTaskClick(task)}
+                disabled={!canEdit}
               >
                 {t('events.features.tasks.reminders.viewTask')}
               </button>

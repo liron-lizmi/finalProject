@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
+const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -124,8 +124,12 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
                   <div
                     key={task._id}
                     className={`task-item status-${task.status}`}
-                    onClick={() => onTaskClick(task)}
-                    style={{ borderLeftColor: getPriorityColor(task.priority) }}
+                    onClick={() => canEdit && onTaskClick(task)}
+                    style={{ 
+                      borderLeftColor: getPriorityColor(task.priority),
+                      cursor: canEdit ? 'pointer' : 'not-allowed',
+                      opacity: canEdit ? 1 : 0.7
+                    }}
                   >
                     <span className="task-title">{task.title}</span>
                     <span className="task-time">{task.dueTime || '09:00'}</span>
@@ -180,8 +184,12 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
               <div
                 key={task._id}
                 className={`week-task-item status-${task.status}`}
-                onClick={() => onTaskClick(task)}
-                style={{ borderLeftColor: getPriorityColor(task.priority) }}
+                ononClick={() => canEdit && onTaskClick(task)}
+                style={{ 
+                  borderLeftColor: getPriorityColor(task.priority),
+                  cursor: canEdit ? 'pointer' : 'not-allowed',
+                  opacity: canEdit ? 1 : 0.7
+                }}
               >
                 <div className="task-title">{task.title}</div>
                 <div className="task-category">{t(`events.features.tasks.category.${task.category}`)}</div>
@@ -335,10 +343,16 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick }) => {
                   key={task._id}
                   className={`modal-task-item status-${task.status}`}
                   onClick={() => {
-                    onTaskClick(task);
-                    closeTasksModal();
+                    if (canEdit) {
+                      onTaskClick(task);
+                      closeTasksModal();
+                    }
                   }}
-                  style={{ borderLeftColor: getPriorityColor(task.priority) }}
+                  style={{ 
+                    borderLeftColor: getPriorityColor(task.priority),
+                    cursor: canEdit ? 'pointer' : 'not-allowed',
+                    opacity: canEdit ? 1 : 0.7
+                  }}
                 >
                   <div className="task-title">{task.title}</div>
                   <div className="task-details">

@@ -9,7 +9,7 @@ import ReminderToast from './ReminderToast';
 import FeaturePageTemplate from '../FeaturePageTemplate';
 import '../../../../styles/EventTimeline.css';
 
-const TaskManager = ({ eventId }) => {
+const TaskManager = ({ eventId, permissionLoading = false }) => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,7 +39,9 @@ const TaskManager = ({ eventId }) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const messageTimeoutRef = useRef(null);
   const processedAuthState = useRef(false);
-
+  const [canEdit, setCanEdit] = useState(true);
+  const [userPermission, setUserPermission] = useState('edit');
+  
   const showError = (message) => {
     if (messageTimeoutRef.current) {
       clearTimeout(messageTimeoutRef.current);
@@ -61,6 +63,33 @@ const TaskManager = ({ eventId }) => {
   const getAuthToken = () => {
     return localStorage.getItem('token');
   };
+
+  const fetchEventPermissions = useCallback(async () => {
+  try {
+    const token = getAuthToken();
+    
+    if (!token) {
+      return;
+    }
+    
+    const response = await fetch(`/api/events/${actualEventId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch event permissions');
+    }
+
+    const data = await response.json();
+    setCanEdit(data.canEdit || false);
+    setUserPermission(data.userPermission || 'view');
+  } catch (error) {
+    console.error('Error fetching event permissions:', error);
+  }
+}, [actualEventId]);
 
   const fetchEventData = useCallback(async () => {
     try {
@@ -88,40 +117,56 @@ const TaskManager = ({ eventId }) => {
     }
   }, [actualEventId]);
 
-  const fetchTasks = useCallback(async (showErrorMsg = true) => {
-    try {
-      setLoading(true);
-      const token = getAuthToken();
-      
-      if (!token) {
-        if (showErrorMsg) {
-          showError(t('auth.notLoggedIn'));
-        }
+const fetchTasks = useCallback(async (showErrorMsg = true) => {
+  try {
+    const token = getAuthToken();
+    
+    if (!token) {
+      if (showErrorMsg) {
+        showError(t('auth.notLoggedIn'));
+      }
+      return;
+    }
+    
+    // בקשה עם timeout קצר יותר
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`/api/tasks/event/${actualEventId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        setTasks([]);
         return;
       }
-      
-      const response = await fetch(`/api/tasks/event/${actualEventId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      throw new Error('Failed to fetch tasks');
+    }
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
+    const data = await response.json();
+    setTasks(data);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('Request timeout');
+      if (showErrorMsg && canEdit) {
+        showError(t('events.features.tasks.messages.timeout'));
       }
-
-      const data = await response.json();
-      setTasks(data);
-    } catch (error) {
+    } else {
       console.error('Error fetching tasks:', error);
-      if (showErrorMsg) {
+      if (showErrorMsg && canEdit) {
         showError(t('events.features.tasks.messages.loadError'));
       }
-    } finally {
-      setLoading(false);
     }
-  }, [actualEventId, t]);
+    setTasks([]);
+  }
+}, [actualEventId, t, canEdit]);
 
   const fetchStatistics = useCallback(async () => {
     try {
@@ -146,6 +191,12 @@ const TaskManager = ({ eventId }) => {
   }, [actualEventId]);
 
   const handleSaveTask = async (taskData) => {
+
+    if (!canEdit) {
+    showError(t('events.accessDenied'));
+    return;
+  }
+    
     try {
       const token = getAuthToken();
       const isEditing = editingTask !== null;
@@ -182,11 +233,19 @@ const TaskManager = ({ eventId }) => {
   };
 
   const handleDeleteTask = async (taskId) => {
+
+    if (!canEdit) {
+    showError(t('events.accessDenied'));
+    return;
+  }
+    
     setDeletingTaskId(taskId);
     setShowDeleteModal(true);
   };
 
   const confirmDeleteTask = async () => {
+    if (!canEdit) return;
+    
     setShowDeleteModal(false);
     
     try {
@@ -221,6 +280,12 @@ const TaskManager = ({ eventId }) => {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
+    
+    if (!canEdit) {
+    showError(t('events.accessDenied'));
+    return;
+  }
+    
     try {
       const token = getAuthToken();
       
@@ -246,6 +311,10 @@ const TaskManager = ({ eventId }) => {
   };
 
   const handleEditTask = (task) => {
+    if (!canEdit) {
+      showError(t('events.accessDenied'));
+      return;
+    }
     setEditingTask(task);
     setShowModal(true);
   };
@@ -283,16 +352,19 @@ const TaskManager = ({ eventId }) => {
   }, [location.state, navigate, location.pathname, t]);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (actualEventId) {
-        await fetchEventData();
-        await fetchTasks(true);
-        await fetchStatistics();
-      }
-    };
-    
-    loadData();
-  }, [actualEventId, fetchEventData, fetchTasks, fetchStatistics]);
+    if (actualEventId) {
+      setLoading(false);
+      
+      Promise.all([
+        fetchEventPermissions(),
+        fetchEventData(), 
+        fetchTasks(false),
+        fetchStatistics()
+      ]).catch(error => {
+        console.error('Error loading initial data:', error);
+      });
+    }
+  }, [actualEventId, fetchEventPermissions, fetchEventData, fetchTasks, fetchStatistics]);
 
   useEffect(() => {
     return () => {
@@ -302,31 +374,16 @@ const TaskManager = ({ eventId }) => {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <FeaturePageTemplate
-        title={t('events.features.tasks.title')}
-        icon="📋"
-        description={t('events.features.tasks.description')}
-      >
-        <div className="loading-container">
-          <span>{t('events.features.tasks.loading')}</span>
-          <div className="loading-spinner"></div>
-        </div>
-      </FeaturePageTemplate>
-    );
-  }
-
   return (
     <FeaturePageTemplate
       title={t('events.features.tasks.title')}
       icon="📋"
       description={t('events.features.tasks.description')}
     >
-      {/* הוספת רכיב התזכורות */}
       <ReminderToast 
         tasks={tasks} 
         onTaskClick={handleEditTask}
+        canEdit={canEdit}
       />
 
       <div className="statistics-grid">
@@ -369,7 +426,7 @@ const TaskManager = ({ eventId }) => {
       </div>
 
       {calendarMode === 'google' && (
-        <GoogleCalendarSync eventId={actualEventId} />
+        <GoogleCalendarSync eventId={actualEventId} canEdit={canEdit} />
       )}
 
       {errorMessage && (
@@ -390,6 +447,7 @@ const TaskManager = ({ eventId }) => {
             tasks={tasks}
             eventDate={eventData?.date}
             onTaskClick={handleEditTask}
+            canEdit={canEdit}
           />
         </div>
       )}
@@ -446,16 +504,22 @@ const TaskManager = ({ eventId }) => {
           </div>
         </div>
 
-        <button 
-          className="add-task-btn"
-          onClick={() => {
-            setEditingTask(null);
-            setShowModal(true);
-          }}
+        
+          <button 
+            className="add-task-btn"
+            onClick={() => {
+              if (!canEdit) {
+                showError(t('events.accessDenied'));
+                return;
+              }
+              setEditingTask(null);
+              setShowModal(true);
+            }}
+            disabled={!canEdit}
         >
-          <span>✚</span>
-          {t('events.features.tasks.addTask')}
-        </button>
+            <span>✚</span>
+            {t('events.features.tasks.addTask')}
+          </button>
       </div>
 
       {filteredTasks.length === 0 ? (
@@ -472,9 +536,14 @@ const TaskManager = ({ eventId }) => {
             <button 
               className="btn-primary"
               onClick={() => {
+                if (!canEdit) {
+                  showError(t('events.accessDenied'));
+                  return;
+                }
                 setEditingTask(null);
                 setShowModal(true);
               }}
+              disabled={!canEdit}
             >
               {t('events.features.tasks.createTask')}
             </button>
@@ -486,6 +555,7 @@ const TaskManager = ({ eventId }) => {
             <TaskCard
               key={task._id}
               task={task}
+              canEdit={canEdit}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}
               onStatusChange={handleStatusChange}
@@ -494,7 +564,7 @@ const TaskManager = ({ eventId }) => {
         </div>
       )}
 
-      {showModal && (
+      {canEdit && showModal && (
         <TaskModal
           task={editingTask}
           eventDate={eventData?.date}
@@ -506,7 +576,7 @@ const TaskManager = ({ eventId }) => {
         />
       )}
 
-      {showDeleteModal && (
+      {showDeleteModal && canEdit && (
         <div className="modal-overlay" onClick={cancelDeleteTask}>
           <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close-delete" onClick={cancelDeleteTask}>

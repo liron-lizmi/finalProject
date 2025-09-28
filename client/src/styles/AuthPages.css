@@ -1138,6 +1138,101 @@ body {
 
 }
 
+/* Shared event styling */
+.shared-event {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+}
+
+.rtl .shared-event {
+  border-left: none;
+  border-right: 4px solid #3b82f6;
+}
+
+.shared-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.rtl .shared-badge {
+  right: auto;
+  left: 10px;
+}
+
+.shared-icon {
+  font-size: 12px;
+}
+
+.shared-by {
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.notifications-banner {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  position: relative;
+}
+
+.notifications-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.notifications-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.notifications-text h3 {
+  margin: 0 0 10px 0;
+  color: #1e40af;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.notifications-text p {
+  margin: 5px 0;
+  color: #1e40af;
+  font-size: 14px;
+}
+
+.notifications-dismiss {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.notifications-dismiss:hover {
+  background: #2563eb;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

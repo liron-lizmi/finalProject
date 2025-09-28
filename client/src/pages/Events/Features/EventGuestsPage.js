@@ -1,3 +1,4 @@
+// client/src/pages/Events/Features/EventGuestsPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +39,8 @@ const EventGuestsPage = () => {
     group: 'other',
     customGroup: ''
   });
+
+  const [canEdit, setCanEdit] = useState(true);
 
   const formatPhoneNumber = (value) => {
     const cleanedValue = value.replace(/\D/g, '');
@@ -381,12 +384,24 @@ const EventGuestsPage = () => {
     }
   }, [getAuthToken, handleAuthError]);
 
+  const fetchEventPermissions = useCallback(async () => {
+  try {
+    const response = await makeApiRequest(`/api/events/${eventId}`);
+    if (response && response.ok) {
+      const eventData = await response.json();
+      setCanEdit(eventData.canEdit || false);
+    }
+  } catch (err) {
+    console.error('Error fetching event permissions:', err);
+  }
+}, [eventId, makeApiRequest]);
+
 const fetchEventDate = useCallback(async () => {
   try {
     const response = await makeApiRequest(`/api/events/${eventId}`);
     if (response && response.ok) {
       const event = await response.json();
-      setEventDate(new Date(event.date)); // שנה מ-eventDate ל-date
+      setEventDate(new Date(event.date));
     }
   } catch (err) {
     console.error('Error fetching event date:', err);
@@ -399,6 +414,12 @@ const hasEventPassed = () => {
 };
 
 const handleGiftUpdate = async (guestId, giftData) => {
+
+  if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
   try {
     const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}/gift`, {
       method: 'PUT',
@@ -441,6 +462,12 @@ const handlePhoneChange = (e) => {
 
 
   const handleManualRSVPUpdate = async (guestData) => {
+
+    if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestData.guestId}/rsvp`, {
         method: 'PUT',
@@ -478,7 +505,6 @@ const handlePhoneChange = (e) => {
     }
   };
 
-  // תיקון הפונקציה שמטפלת בעריכת RSVP
   const handleEditRSVP = useCallback((guest) => {
     console.log('Opening RSVP modal for guest:', guest.firstName, guest.lastName);
     setEditingRSVPGuest(guest);
@@ -488,9 +514,14 @@ const handlePhoneChange = (e) => {
   const handleAddGuest = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+  if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
+  if (!validateForm()) {
+    return;
+  }
 
     try {
       let finalGroup = guestForm.group;
@@ -538,15 +569,20 @@ const handlePhoneChange = (e) => {
   };
 
   const handleEditGuest = (guest) => {
-    setEditingGuest(guest._id);
-    setGuestForm({
-      firstName: guest.firstName,
-      lastName: guest.lastName,
-      phone: guest.phone,
-      group: guest.customGroup ? 'other' : guest.group,
-      customGroup: guest.customGroup || ''
-    });
-    setError('');
+    if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+  
+  setEditingGuest(guest._id);
+  setGuestForm({
+    firstName: guest.firstName,
+    lastName: guest.lastName,
+    phone: guest.phone,
+    group: guest.customGroup ? 'other' : guest.group,
+    customGroup: guest.customGroup || ''
+  });
+  setError('');
   };
 
   const handleUpdateGuest = async (e) => {
@@ -616,6 +652,12 @@ const handlePhoneChange = (e) => {
   };
 
   const handleImportGuests = async (importedGuests) => {
+
+    if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
     try {
       if (!importedGuests || importedGuests.length === 0) {
         setError(t('guest.errors.noData'));
@@ -625,7 +667,6 @@ const handlePhoneChange = (e) => {
       setLoading(true);
       console.log(`Starting bulk import of ${importedGuests.length} guests...`);
 
-      // הכנת הנתונים לייבוא
       const guestsToImport = importedGuests.map(guest => {
         const validatedGuest = {
           firstName: guest.firstName?.trim() || t('import.unknownContact'),
@@ -640,7 +681,6 @@ const handlePhoneChange = (e) => {
           validatedGuest.customGroup = guest.group;
         }
 
-        // תיקון פורמט טלפון
         if (validatedGuest.phone && !/^05\d-\d{7}$/.test(validatedGuest.phone)) {
           const cleanPhone = validatedGuest.phone.replace(/\D/g, '');
           if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
@@ -695,7 +735,12 @@ const handlePhoneChange = (e) => {
 };
 
   const handleDeleteGuest = async (guestId) => {
-    if (!window.confirm(t('guests.confirmDelete'))) return;
+     if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+  
+  if (!window.confirm(t('guests.confirmDelete'))) return;
 
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
@@ -745,8 +790,9 @@ const handlePhoneChange = (e) => {
   }, [detectDuplicates]);
 
   useEffect(() => {
+    fetchEventPermissions();
     fetchGuests();
-  }, [fetchGuests]);
+  }, [fetchEventPermissions, fetchGuests]);
 
   useEffect(() => {
     if (eventId) {
@@ -792,15 +838,19 @@ const handlePhoneChange = (e) => {
           <h3>📨 {t('guests.rsvp.shareLink')}</h3>
           <p>{t('guests.rsvp.shareLinkDescription')}</p>
           <div className="rsvp-link-container">
-            <input
-              type="text"
-              className="rsvp-link-input"
-              value={rsvpLink}
-              readOnly
-            />
+            {canEdit && (
+              <input
+                type="text"
+                className="rsvp-link-input"
+                value={rsvpLink}
+                readOnly
+              />
+            )}
             <button
-              className="rsvp-copy-button"
-              onClick={copyRSVPLink}
+              className={`rsvp-copy-button ${!canEdit ? 'disabled' : ''}`}
+              onClick={canEdit ? copyRSVPLink : undefined}
+              disabled={!canEdit}
+              title={!canEdit ? t('general.viewOnlyMode') : undefined}
             >
               📋 {t('guests.rsvp.copyLink')}
             </button>
@@ -882,6 +932,7 @@ const handlePhoneChange = (e) => {
               setShowAddForm(true);
               setError('');
             }}
+            disabled={!canEdit}
           >
             {t('guests.addGuest')}
           </button>
@@ -892,6 +943,7 @@ const handlePhoneChange = (e) => {
               setShowImportModal(true);
               setError('');
             }}
+            disabled={!canEdit}
           >
             {t('import.importGuests')}
           </button>
@@ -899,6 +951,7 @@ const handlePhoneChange = (e) => {
           <button
             className={`guests-bulk-select-button ${isSelectionMode ? 'active' : ''}`}
             onClick={toggleSelectionMode}
+            disabled={!canEdit}
           >
             {isSelectionMode ? t('guests.cancelSelection') : t('guests.selectMultiple')}
           </button>
@@ -1124,6 +1177,7 @@ const handlePhoneChange = (e) => {
                         className="guest-edit-button"
                         title={t('guests.editGuest')}
                         type="button"
+                        disabled={!canEdit}
                       >
                         ✏️
                       </button>
@@ -1137,6 +1191,7 @@ const handlePhoneChange = (e) => {
                         className="guest-rsvp-edit-button"
                         title={t('guests.rsvp.editRSVP')}
                         type="button"
+                        disabled={!canEdit}
                       >
                         📝
                       </button>
@@ -1144,14 +1199,16 @@ const handlePhoneChange = (e) => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          if (hasEventPassed()) {
+                          if (hasEventPassed() && canEdit) {
                             handleEditGifts(guest);
                           }
                         }}
-                        className={`guest-gifts-button ${!hasEventPassed() ? 'disabled' : ''}`}
-                        title={hasEventPassed() ? t('guests.gifts.editGifts') : t('guests.gifts.availableAfterEvent')}
+                        className={`guest-gifts-button ${(!hasEventPassed() || !canEdit) ? 'disabled' : ''}`}
+                        title={hasEventPassed() && canEdit ? t('guests.gifts.editGifts') : 
+                              !hasEventPassed() ? t('guests.gifts.availableAfterEvent') :
+                              t('events.accessDenied')} 
                         type="button"
-                        disabled={!hasEventPassed()}
+                        disabled={!hasEventPassed()  || !canEdit}
                       >
                         🎁
                         {hasEventPassed() && (
@@ -1165,6 +1222,7 @@ const handlePhoneChange = (e) => {
                         className="guest-delete-button"
                         title={t('common.delete')}
                         type="button"
+                        disabled={!canEdit}
                       >
                         🗑️
                       </button>
@@ -1183,17 +1241,143 @@ const handlePhoneChange = (e) => {
           eventId={eventId}
         />
 
-        <RSVPManualModal
-        
-          isOpen={showRSVPModal}
-          onClose={() => {
-            console.log('Closing RSVP modal');
+        {showRSVPModal && (
+          <div className="modal-overlay" onClick={() => {
             setShowRSVPModal(false);
             setEditingRSVPGuest(null);
-          }}
-          guest={editingRSVPGuest}
-          onUpdateRSVP={handleManualRSVPUpdate}
-        />
+          }}>
+            <div className="modal-content rsvp-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{t('guests.rsvp.editRSVP')}</h2>
+                <button
+                  className="modal-close-button"
+                  onClick={() => {
+                    setShowRSVPModal(false);
+                    setEditingRSVPGuest(null);
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {editingRSVPGuest && (
+                <>
+                  <div className="guest-info-display">
+                    <p><strong>{editingRSVPGuest.firstName} {editingRSVPGuest.lastName}</strong></p>
+                    <p>{editingRSVPGuest.phone}</p>
+                    <p>{t('guests.group')}: {getGroupDisplayName(editingRSVPGuest)}</p>
+                  </div>
+
+                  <div className="rsvp-form">
+                    <div className="rsvp-status-section">
+                      <div className="form-group">
+                        <label>{t('guests.rsvp.status')}</label>
+                        <div className="rsvp-status-options">
+                          <label className="rsvp-option">
+                            <input
+                              type="radio"
+                              name="rsvpStatus"
+                              value="confirmed"
+                              checked={editingRSVPGuest.rsvpStatus === 'confirmed'}
+                              onChange={(e) => setEditingRSVPGuest({
+                                ...editingRSVPGuest,
+                                rsvpStatus: e.target.value
+                              })}
+                            />
+                            {t('guests.rsvp.confirmed')}
+                          </label>
+                          <label className="rsvp-option">
+                            <input
+                              type="radio"
+                              name="rsvpStatus"
+                              value="declined"
+                              checked={editingRSVPGuest.rsvpStatus === 'declined'}
+                              onChange={(e) => setEditingRSVPGuest({
+                                ...editingRSVPGuest,
+                                rsvpStatus: e.target.value
+                              })}
+                            />
+                            {t('guests.rsvp.declined')}
+                          </label>
+                          <label className="rsvp-option">
+                            <input
+                              type="radio"
+                              name="rsvpStatus"
+                              value="pending"
+                              checked={editingRSVPGuest.rsvpStatus === 'pending'}
+                              onChange={(e) => setEditingRSVPGuest({
+                                ...editingRSVPGuest,
+                                rsvpStatus: e.target.value
+                              })}
+                            />
+                            {t('guests.rsvp.pending')}
+                          </label>
+                        </div>
+                      </div>
+
+                      {editingRSVPGuest.rsvpStatus === 'confirmed' && (
+                        <div className="attending-count-section">
+                          <div className="form-group">
+                            <label>{t('guests.rsvp.attendingCount')}</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={editingRSVPGuest.attendingCount || 1}
+                              onChange={(e) => setEditingRSVPGuest({
+                                ...editingRSVPGuest,
+                                attendingCount: parseInt(e.target.value) || 1
+                              })}
+                              className="attending-count-input"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>{t('guests.guestNote')}</label>
+                      <textarea
+                        value={editingRSVPGuest.guestNotes || ''}
+                        onChange={(e) => setEditingRSVPGuest({
+                          ...editingRSVPGuest,
+                          guestNotes: e.target.value
+                        })}
+                        className="guest-notes-input"
+                        placeholder={t('guests.form.guestNotePlaceholder')}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="modal-actions">
+                    <button
+                      onClick={() => {
+                        handleManualRSVPUpdate({
+                          guestId: editingRSVPGuest._id,
+                          rsvpStatus: editingRSVPGuest.rsvpStatus,
+                          guestNotes: editingRSVPGuest.guestNotes,
+                          attendingCount: editingRSVPGuest.attendingCount || 1
+                        });
+                      }}
+                      className="modal-submit-button"
+                    >
+                      {t('common.save')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowRSVPModal(false);
+                        setEditingRSVPGuest(null);
+                      }}
+                      className="modal-cancel-button"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         <GiftsModal
           isOpen={showGiftsModal}
           onClose={() => {

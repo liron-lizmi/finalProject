@@ -1,21 +1,400 @@
-// pages/Events/Features/EventSharePage.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from './FeaturePageTemplate';
+import '../../../styles/EventSharePage.css';
 
 const EventSharePage = () => {
+  const { t } = useTranslation();
+  const { id: eventId } = useParams();
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [shareEmail, setShareEmail] = useState('');
+  const [sharePermission, setSharePermission] = useState('view');
+  const [sharedUsers, setSharedUsers] = useState([]);
+  const [eventInfo, setEventInfo] = useState(null);
+  const [canEdit, setCanEdit] = useState(null); 
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setInitialLoading(true);
+      await Promise.all([
+        loadEventInfo(),
+        loadSharedUsers(),
+        checkEditPermission()
+      ]);
+      setInitialLoading(false);
+    };
+    
+    loadInitialData();
+  }, [eventId]);
+
+  const loadEventInfo = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${eventId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': localStorage.getItem('language') || 'he'
+        }
+      });
+
+      if (response.ok) {
+        const event = await response.json();
+        setEventInfo(event);
+      }
+    } catch (error) {
+      console.error('Error loading event info:', error);
+    }
+  };
+
+  const loadSharedUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${eventId}/shared-users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': localStorage.getItem('language') || 'he'
+        }
+      });
+
+      if (response.ok) {
+        const users = await response.json();
+        setSharedUsers(users);
+      }
+    } catch (error) {
+      console.error('Error loading shared users:', error);
+      setSharedUsers([]);
+    }
+  };
+
+  const checkEditPermission = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/events/${eventId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept-Language': localStorage.getItem('language') || 'he'
+      }
+    });
+
+    if (response.ok) {
+      const eventData = await response.json();
+      setCanEdit(eventData.canEdit || false);
+      
+      setEventInfo(eventData);
+    }
+  } catch (error) {
+    console.error('Error checking edit permission:', error);
+    setCanEdit(false);
+  }
+};
+
+  const handleShareEvent = async (e) => {
+    e.preventDefault();
+    
+    if (!shareEmail.trim()) {
+      alert(t('validation.emailRequired'));
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(shareEmail)) {
+      alert(t('validation.emailInvalid'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${eventId}/share`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': localStorage.getItem('language') || 'he'
+        },
+        body: JSON.stringify({
+          email: shareEmail,
+          permission: sharePermission
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message);
+        setShareEmail('');
+        setSharePermission('view');
+        loadSharedUsers();
+      } else {
+        alert(data.message || t('errors.serverError'));
+      }
+    } catch (error) {
+      console.error('Error sharing event:', error);
+      alert(t('errors.serverError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveShare = async (shareId) => {
+    if (!window.confirm(t('events.features.share.confirmRemove'))) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${eventId}/share/${shareId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': localStorage.getItem('language') || 'he'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message);
+        loadSharedUsers();
+      } else {
+        alert(data.message || t('errors.serverError'));
+      }
+    } catch (error) {
+      console.error('Error removing share:', error);
+      alert(t('errors.serverError'));
+    }
+  };
+
+  const handleUpdatePermission = async (shareId, newPermission) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${eventId}/share/${shareId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': localStorage.getItem('language') || 'he'
+        },
+        body: JSON.stringify({ permission: newPermission })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message);
+        loadSharedUsers();
+      } else {
+        alert(data.message || t('errors.serverError'));
+      }
+    } catch (error) {
+      console.error('Error updating permission:', error);
+      alert(t('errors.serverError'));
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('he-IL');
+  };
+
+  const getPermissionText = (permission) => {
+    return permission === 'edit' ? t('events.features.share.editAccess') : t('events.features.share.viewOnly');
+  };
+
   return (
     <FeaturePageTemplate
-      title="שיתוף אירוע"
+      title={t('events.features.share.shareEvent')}
       icon="🔗"
-      description="שתף את פרטי האירוע שלך עם אורחים או שותפים לארגון"
+      description={t('events.features.share.shareDescription')}
     >
       <div className="share-content">
-        <h3>שיתוף פרטי האירוע</h3>
-        <p>כאן תוכל לשתף את פרטי האירוע שלך עם אחרים.</p>
-        <div className="coming-soon-message">
-          <p>תכונה זו תהיה זמינה בקרוב!</p>
+  {initialLoading ? (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>טוען...</p>
+    </div>
+  ) : (
+    <>
+      {eventInfo && eventInfo.originalEvent && (
+        <div className="shared-event-alert">
+          <div className="alert-icon">👥</div>
+          <div className="alert-text">
+            <h4>{t('events.features.share.sharedEventInfo')}</h4>
+            <p>{t('events.features.share.yourPermission')}: {getPermissionText(canEdit ? 'edit' : 'view')}</p>
+          </div>
+        </div>
+      )}
+
+      {canEdit && (
+        <div className="share-form-section">
+          <h3 className="section-title">
+            <span className="title-icon">➕</span>
+            {t('events.features.share.shareWith')}
+          </h3>
+          
+          <form onSubmit={handleShareEvent} className="modern-share-form">
+            <div className="form-row">
+              <div className="input-group">
+                <label htmlFor="shareEmail" className="input-label">
+                  {t('events.features.share.emailLabel')}
+                </label>
+                <input
+                  id="shareEmail"
+                  type="email"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  placeholder={t('events.features.share.emailPlaceholder')}
+                  className="email-input"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="sharePermission" className="input-label">
+                  {t('events.features.share.permissions')}
+                </label>
+                <select
+                  id="sharePermission"
+                  value={sharePermission}
+                  onChange={(e) => setSharePermission(e.target.value)}
+                  className="permission-select"
+                  disabled={loading}
+                >
+                  <option value="view">{t('events.features.share.viewOnly')}</option>
+                  <option value="edit">{t('events.features.share.editAccess')}</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="share-submit-btn"
+                disabled={loading || !shareEmail.trim()}
+              >
+                {loading ? (
+                  <span className="loading-spinner-small"></span>
+                ) : (
+                  <span className="btn-icon">📤</span>
+                )}
+                {loading ? t('common.loading') : t('events.features.share.shareButton')}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {!eventInfo?.originalEvent && (
+        <div className="shared-users-section">
+          <h3 className="section-title">
+            <span className="title-icon">👥</span>
+            {t('events.features.share.sharedWith')}
+          </h3>
+          
+          {sharedUsers.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📭</div>
+              <h4>{t('events.features.share.noSharedUsers')}</h4>
+              <p>{t('events.features.share.shareToCollaborate')}</p>
+            </div>
+          ) : (
+            <div className="shared-users-list">
+              {sharedUsers.map((share) => (
+                <div key={share._id} className="shared-user-card">
+                  <div className="user-avatar">
+                    <span className="avatar-icon">👤</span>
+                  </div>
+                  
+                  <div className="user-details">
+                    <div className="user-primary">
+                      <h4 className="user-email">{share.email}</h4>
+                      {share.userId && (
+                        <p className="user-name">
+                          {share.userId.firstName} {share.userId.lastName}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="user-meta">
+                      <span className="share-date">
+                        {t('events.features.share.sharedOn')}: {formatDate(share.sharedAt)}
+                      </span>
+                      <span className={`status-indicator ${share.accepted ? 'accepted' : 'pending'}`}>
+                        <span className="status-dot"></span>
+                        {share.accepted ? t('events.features.share.accepted') : t('events.features.share.pending')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="user-actions">
+                    {canEdit ? (
+                      <>
+                        <div className="permission-control">
+                          <select
+                            value={share.permission}
+                            onChange={(e) => handleUpdatePermission(share._id, e.target.value)}
+                            className="permission-select-inline"
+                          >
+                            <option value="view">{t('events.features.share.viewOnly')}</option>
+                            <option value="edit">{t('events.features.share.editAccess')}</option>
+                          </select>
+                        </div>
+
+                        <button
+                          onClick={() => handleRemoveShare(share._id)}
+                          className="remove-btn"
+                          title={t('events.features.share.removeAccess')}
+                        >
+                          <span className="btn-icon">🗑️</span>
+                        </button>
+                      </>
+                    ) : (
+                      <div className="permission-display">
+                        <span className={`permission-badge ${share.permission}`}>
+                          <span className="badge-icon">
+                            {share.permission === 'edit' ? '✏️' : '👁️'}
+                          </span>
+                          {getPermissionText(share.permission)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="info-section">
+        <div className="info-card">
+          <div className="info-header">
+            <span className="info-icon">ℹ️</span>
+            <h4>{t('events.features.share.importantInfo')}</h4>
+          </div>
+          <div className="info-content">
+            <ul>
+              <li>
+                <span className="list-icon">👁️</span>
+                {t('events.features.share.viewPermissionInfo')}
+              </li>
+              <li>
+                <span className="list-icon">✏️</span>
+                {t('events.features.share.editPermissionInfo')}
+              </li>
+              {eventInfo && eventInfo.originalEvent && (
+                <li>
+                  <span className="list-icon">⚠️</span>
+                  {t('events.features.share.sharedEventNote')}
+                </li>
+              )}
+            </ul>
+          </div>
         </div>
       </div>
+    </>
+  )}
+</div>
     </FeaturePageTemplate>
   );
 };

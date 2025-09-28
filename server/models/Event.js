@@ -114,6 +114,39 @@ const EventSchema = new mongoose.Schema({
       trim: true
     }
   }],
+  
+  originalEvent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Event',
+    default: null
+  },
+  isShared: {
+    type: Boolean,
+    default: false
+  },
+  sharedWith: [{
+    email: {
+      type: String,
+      required: true
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    permission: {
+      type: String,
+      enum: ['view', 'edit'],
+      required: true
+    },
+    sharedAt: {
+      type: Date,
+      default: Date.now
+    },
+    accepted: {
+      type: Boolean,
+      default: false
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

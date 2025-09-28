@@ -15,6 +15,8 @@ const EventDetailsPage = () => {
     guestCount: 0
   });
   const [error, setError] = useState(null);
+  const [canEdit, setCanEdit] = useState(true);
+  const [userPermission, setUserPermission] = useState('edit');
   
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   
@@ -23,57 +25,63 @@ const EventDetailsPage = () => {
     document.body.dir = isRTL ? 'rtl' : 'ltr';
     
     const fetchEventDetails = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError(t('errors.notLoggedIn'));
-          navigate('/login');
-          return;
-        }
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError(t('errors.notLoggedIn'));
+      navigate('/login');
+      return;
+    }
 
-        const response = await axios.get(`/api/events/${id}`, {
-          headers: {
-            'x-auth-token': token
-          }
-        });
-
-        setEvent(response.data);
-      } catch (err) {
-        console.error('Error fetching event details:', err);
-        setError(t('errors.eventLoadFailed'));
+    const response = await axios.get(`/api/events/${id}`, {
+      headers: {
+        'x-auth-token': token
       }
-    };
+    });
+
+    setEvent(response.data);
+    
+    if (response.data.userPermission) {
+      setCanEdit(response.data.canEdit || false);
+      setUserPermission(response.data.userPermission);
+    }
+  } catch (err) {
+    console.error('Error fetching event details:', err);
+    setError(t('errors.eventLoadFailed'));
+  }
+};
 
     fetchEventDetails();
   }, [id, navigate, t, i18n.language, isRTL]);
 
   const handleFeatureClick = (feature) => {
-    switch (feature) {
-      case 'venue':
-        navigate(`/event/${id}/venue`);
-        break;
-      case 'vendors':
-        navigate(`/event/${id}/vendors`);
-        break;
-      case 'guests':
-        navigate(`/event/${id}/guests`);
-        break;
-      case 'seating':
-        navigate(`/event/${id}/seating`);
-        break;
-      case 'timeline':
-        navigate(`/event/${id}/timeline`);
-        break;
-      case 'rides':
-        navigate(`/event/${id}/rides`);
-        break;
-      case 'budget':
-        navigate(`/event/${id}/budget`);
-        break;
-      default:
-        break;
-    }
-  };
+  
+  switch (feature) {
+    case 'venue':
+      navigate(`/event/${id}/venue`);
+      break;
+    case 'vendors':
+      navigate(`/event/${id}/vendors`);
+      break;
+    case 'guests':
+      navigate(`/event/${id}/guests`);
+      break;
+    case 'seating':
+      navigate(`/event/${id}/seating`);
+      break;
+    case 'timeline':
+      navigate(`/event/${id}/timeline`);
+      break;
+    case 'rides':
+      navigate(`/event/${id}/rides`);
+      break;
+    case 'budget':
+      navigate(`/event/${id}/budget`);
+      break;
+    default:
+      break;
+  }
+};
 
   const handleBack = () => {
     navigate('/dashboard');

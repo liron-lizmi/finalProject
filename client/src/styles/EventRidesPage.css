@@ -336,6 +336,135 @@
   font-weight: 500;
 }
 
+.contact-status-display {
+  margin-top: 1rem;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: transparent;
+  color: #495057;
+  border: none;
+}
+
+.status-indicator.taken {
+  background: transparent;
+  color: #155724;
+  border: none;
+}
+
+.status-indicator.not-relevant {
+  background: transparent;
+  color: #721c24;
+  border: none;
+}
+
+.status-indicator.in-process {
+  background: transparent;
+  color: #856404;
+  border: none;
+}
+
+.status-indicator.offering {
+  background: transparent;
+  color: #155724;
+  border: none;
+}
+
+.status-indicator.seeking {
+  background: transparent;
+  color: #004085;
+  border: none;
+}
+
+.status-indicator.not_set {
+  background: transparent;
+  color: #495057;
+  border: none;
+}
+
+.status-indicator.arranged_separately {
+  background: transparent;
+  color: #856404;
+  border: none;
+}
+
+.status-icon {
+  font-size: 1rem;
+}
+
+.overview-tab .guest-item {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.overview-tab .guest-info {
+  grid-column: 1;
+}
+
+.overview-tab .ride-details {
+  grid-column: 2;
+}
+
+.overview-tab .contact-status-display {
+  grid-column: 3;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.offering-tab .guest-item,
+.seeking-tab .guest-item {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.2fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.offering-tab .guest-info,
+.seeking-tab .guest-info {
+  grid-column: 1;
+}
+
+.offering-tab .ride-details,
+.seeking-tab .ride-details {
+  grid-column: 2;
+  margin-right: 0;
+}
+
+.offering-tab .contact-status-display,
+.seeking-tab .contact-status-display {
+  grid-column: 3;
+  margin-top: 0;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.share-link-button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.share-link-button.disabled:hover {
+  opacity: 0.6;
+  transform: none;
+}
+
+.share-link-button.disabled .share-icon {
+  color: #6c757d;
+}
+
+.share-link-button.disabled .share-text {
+  color: #6c757d;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .rides-container {

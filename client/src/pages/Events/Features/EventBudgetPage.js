@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams} from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from './FeaturePageTemplate';
@@ -18,17 +18,44 @@ const EventBudgetPage = () => {
   const [alertThreshold, setAlertThreshold] = useState(80);
   const [chartColors] = useState('default');
   const [alerts, setAlerts] = useState([]);
+  const [canEdit, setCanEdit] = useState(true);
+
+    const fetchEventPermissions = useCallback(async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`/api/events/${id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const eventData = await response.json();
+            setCanEdit(eventData.canEdit || false);
+          }
+        } catch (err) {
+          console.error('Error fetching event permissions:', err);
+        }
+    }, [id]);
 
   useEffect(() => {
+    fetchEventPermissions();
     fetchBudget();
-    loadSettings();
-  }, [id]);
+  }, [id, fetchEventPermissions]);
 
   useEffect(() => {
     if (budget) {
+      setAlertThreshold(budget.alertThreshold || 80);
       checkForAlerts();
     }
-  }, [budget, alertThreshold]);
+  }, [budget]);
+
+  useEffect(() => {
+    if (budget && alertThreshold) {
+      checkForAlerts();
+    }
+  }, [alertThreshold]);
 
   const fetchBudget = async () => {
     try {
@@ -58,15 +85,13 @@ const EventBudgetPage = () => {
   };
 
   const loadSettings = () => {
-    const savedThreshold = localStorage.getItem(`alert_threshold_${id}`);
-    if (savedThreshold) {
-      setAlertThreshold(parseInt(savedThreshold));
+    if (budget && budget.alertThreshold !== undefined) {
+      setAlertThreshold(budget.alertThreshold);
     }
   };
 
   const handleAlertThresholdChange = (newThreshold) => {
     setAlertThreshold(newThreshold);
-    localStorage.setItem(`alert_threshold_${id}`, newThreshold.toString());
   };
 
   const checkForAlerts = async () => {
@@ -94,8 +119,6 @@ const EventBudgetPage = () => {
               category: cat.category,
               percentage: cat.percentage,
               message: cat.percentage > 100 
-                // ? `התראה: ${categoryName} חרגה מהתקציב ב-${cat.percentage.toFixed(1)}%`
-                // : `התראה: ${categoryName} הגיעה ל-${cat.percentage.toFixed(1)}% מהתקציב (סף התראה: ${alertThreshold}%)`
                 ? t('events.features.budget.categoryOverBudget', {
                   category: categoryName,
                   amount: Math.abs(cat.remaining).toLocaleString()
@@ -130,11 +153,23 @@ const EventBudgetPage = () => {
   };
 
   const handleBudgetCreated = (newBudget) => {
+
+    if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
     setBudget(newBudget);
     setActiveTab('overview');
   };
 
   const handleBudgetUpdated = (updatedBudget) => {
+
+    if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
+
     setBudget(updatedBudget);
     fetchBudget();
   };
@@ -201,6 +236,7 @@ const EventBudgetPage = () => {
           eventId={id}
           existingBudget={budget}
           onBudgetCreated={handleBudgetUpdated}
+          canEdit={canEdit}
         />
       </div>
       
@@ -235,6 +271,7 @@ const EventBudgetPage = () => {
                 onBudgetUpdated={handleBudgetUpdated}
                 alertThreshold={alertThreshold}
                 onAlertThresholdChange={handleAlertThresholdChange}
+                canEdit={canEdit}
               />
             )}
             
@@ -243,6 +280,7 @@ const EventBudgetPage = () => {
                 budget={budget}
                 eventId={id}
                 onBudgetUpdated={handleBudgetUpdated}
+                canEdit={canEdit}
               />
             )}
             

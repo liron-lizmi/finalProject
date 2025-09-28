@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-const TaskCard = ({ task, onEdit, onDelete, onStatusChange }) => {
+const TaskCard = ({ task, onEdit, onDelete, onStatusChange, canEdit = true  }) => {
   const { t } = useTranslation();
 
   const formatDate = (date) => {
@@ -115,14 +115,16 @@ const TaskCard = ({ task, onEdit, onDelete, onStatusChange }) => {
         <div className="task-actions">
           <button
             className="task-action-btn btn-edit"
-            onClick={() => onEdit(task)}
+            onClick={() => canEdit && onEdit(task)}
+            disabled={!canEdit}
           >
             {t('events.features.tasks.actions.edit')}
           </button>
 
           <button
             className="task-action-btn btn-delete"
-            onClick={() => onDelete(task._id)}
+            onClick={() => canEdit && onDelete(task._id)}
+            disabled={!canEdit}
           >
             {t('events.features.tasks.actions.delete')}
           </button>
@@ -130,7 +132,8 @@ const TaskCard = ({ task, onEdit, onDelete, onStatusChange }) => {
           {task.status !== 'cancelled' && (
             <button
               className={`task-action-btn ${task.status === 'completed' ? 'btn-edit' : 'btn-complete'}`}
-              onClick={() => onStatusChange(task._id, getNextStatus(task.status))}
+              onClick={() => canEdit && onStatusChange(task._id, getNextStatus(task.status))}
+              disabled={!canEdit}
             >
               {getNextStatusText(task.status)}
             </button>
