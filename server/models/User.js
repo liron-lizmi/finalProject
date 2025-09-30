@@ -55,7 +55,7 @@ const UserSchema = new mongoose.Schema({
     },
     message: {
       type: String,
-      required: true
+      required: false
     },
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -64,6 +64,14 @@ const UserSchema = new mongoose.Schema({
     sharedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    },
+    sharerName: {  
+      type: String,
+      required: false
+    },
+    eventTitle: {  
+      type: String,
+      required: false
     },
     read: {
       type: Boolean,

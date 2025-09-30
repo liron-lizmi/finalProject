@@ -59,7 +59,14 @@
     "passwordRequired": "סיסמה היא שדה חובה",
     "invalidEmailFormat": "נא להזין כתובת אימייל תקינה",
     "emailRequired": "אימייל הוא שדה חובה",
-    "notLoggedIn": "לא מחובר. יש להתחבר תחילה"
+    "notLoggedIn": "לא מחובר. יש להתחבר תחילה",
+    "authFailed": {
+      "title": "שגיאת התחברות",
+      "generalError": "אירעה שגיאה במהלך תהליך ההתחברות. אנא נסה שוב או התחבר באמצעות אימייל וסיסמה.",
+      "userNotExists": "יש להירשם לאתר תחילה כדי להתחבר באמצעות Google.",
+      "goToRegister": "עבור לדף ההרשמה",
+      "backToLogin": "חזור לדף ההתחברות"
+    }
   },
   "dashboard": {
     "title": "לוח בקרה",
@@ -1675,7 +1682,7 @@
   },
   "notifications": {
     "approve": "אישור",
-    "eventShared": "{{sharer}} שיתף איתך את העסקה \"{{eventTitle}}\" איתך",
+    "eventShared": "{{sharer}} שיתף/ה איתך את האירוע \"{{eventTitle}}\"",
     "markedAsRead": "ההודעה סומנה כנקראה"
   }
 }

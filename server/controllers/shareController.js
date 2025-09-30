@@ -52,15 +52,13 @@ const shareEvent = async (req, res) => {
       
       // Add notification to target user
       const sharerName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email;
-      targetUser.notifications.push({
+       targetUser.notifications.push({
         type: 'event_shared',
-        message: req.t('notifications.eventShared', {
-          sharer: sharerName,
-          eventTitle: originalEvent.title
-        }),
         eventId: originalEvent._id,
         sharedBy: req.userId,
-        read: false
+        read: false,
+        sharerName: sharerName,
+        eventTitle: originalEvent.title
       });
       await targetUser.save();
       

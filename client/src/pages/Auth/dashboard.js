@@ -24,6 +24,23 @@ const Dashboard = () => {
   const params = new URLSearchParams(location.search);
   const shouldRedirect = params.get('source') === 'google';
 
+  
+  const getNotificationMessage = (notification) => {
+    console.log("=== NOTIFICATION DEBUG ===");
+    console.log("Full notification:", JSON.stringify(notification, null, 2));
+    console.log("sharerName:", notification.sharerName);
+    console.log("eventTitle:", notification.eventTitle);
+    console.log("========================");
+    if (notification.type === 'event_shared') {
+      return t('notifications.eventShared', {
+        sharer: notification.sharerName,
+        eventTitle: notification.eventTitle
+      });
+    }
+    return notification.message;
+  };
+
+
   useEffect(() => {
     console.log("Dashboard mounted, search params:", location.search);
     
@@ -145,7 +162,6 @@ const Dashboard = () => {
                   localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
                   setUser(registerResponse.data.user);
                   
-                  // טען אירועים והתראות במקביל
                   Promise.all([fetchEvents(), fetchNotifications()]);
                   
                   navigate('/dashboard', { replace: true });
@@ -167,7 +183,6 @@ const Dashboard = () => {
                   localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
                   setUser(loginResponse.data.user);
                   
-                  // טען אירועים והתראות במקביל
                   Promise.all([fetchEvents(), fetchNotifications()]);
                   
                   navigate('/dashboard', { replace: true });
@@ -200,7 +215,6 @@ const Dashboard = () => {
           if (token && localUser) {
             setUser(JSON.parse(localUser));
             
-            // טען אירועים והתראות במקביל
             Promise.all([fetchEvents(), fetchNotifications()]);
           } else {
             navigate('/login', { replace: true });
@@ -399,7 +413,8 @@ const Dashboard = () => {
                 <div className="notifications-text">
                   <h3>{t('dashboard.newNotifications')}</h3>
                   {notifications.map(notification => (
-                    <p key={notification._id}>{notification.message}</p>
+                    <p key={notification._id}>{getNotificationMessage(notification)}</p>
+
                   ))}
                 </div>
               </div>

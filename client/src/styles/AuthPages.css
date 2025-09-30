@@ -1233,6 +1233,31 @@ body {
   background: #2563eb;
 }
 
+.auth-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.auth-buttons-container .auth-button {
+  margin: 0;
+}
+
+.auth-buttons-container .auth-button:first-child {
+  margin-bottom: 0;
+}
+
+.auth-buttons-container .auth-button.secondary {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.auth-buttons-container .auth-button.secondary:hover {
+  background: #ebebeb;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

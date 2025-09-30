@@ -59,7 +59,14 @@
     "passwordRequired": "Password is required",
     "invalidEmailFormat": "Please enter a valid email address",
     "emailRequired": "Email is required",
-    "notLoggedIn": "Not logged in. Please log in again."
+    "notLoggedIn": "Not logged in. Please log in again.",
+    "authFailed": {
+      "title": "Login Error",
+      "generalError": "An error occurred during the login process. Please try again or log in with your email and password.",
+      "userNotExists": "You must first register on the site to log in with Google.",
+      "goToRegister": "Go to the registration page",
+      "backToLogin": "Back to the login page"
+      }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1674,7 +1681,7 @@
   },
   "notifications": {
     "approve": "Approve",
-    "eventShared": "{{sharer}} shared the deal \"{{eventTitle}}\" with you",
+    "eventShared": "{{sharer}} shared the event \"{{eventTitle}}\" with you",
     "markedAsRead": "Notification marked as read"
   }
 }

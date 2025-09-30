@@ -443,9 +443,6 @@ const loginOAuth = async (req, res) => {
   }
 };
 
-/**
- * Get user notifications
- */
 const getNotifications = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -456,16 +453,30 @@ const getNotifications = async (req, res) => {
       return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
     
-    const unreadNotifications = user.notifications.filter(n => !n.read);
+    const unreadNotifications = user.notifications
+      .filter(n => !n.read)
+      .map(notification => {
+        const notifObj = notification.toObject();
+        
+        if (!notifObj.sharerName && notification.sharedBy) {
+          notifObj.sharerName = `${notification.sharedBy.firstName || ''} ${notification.sharedBy.lastName || ''}`.trim();
+        }
+        
+        if (!notifObj.eventTitle && notification.eventId) {
+          notifObj.eventTitle = notification.eventId.title;
+        }
+        
+        return notifObj;
+      });
+    
+    console.log('Sending notifications:', JSON.stringify(unreadNotifications, null, 2));
     res.json(unreadNotifications);
   } catch (err) {
+    console.error('Error in getNotifications:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
-/**
- * Mark notification as read
- */
 const markNotificationAsRead = async (req, res) => {
   try {
     const { notificationId } = req.params;
