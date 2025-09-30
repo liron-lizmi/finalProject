@@ -13,10 +13,8 @@ const checkUserExists = async (req, res) => {
     }
     
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    console.log(`Checking if user exists for email: ${email}, found: ${!!user}`);
     return res.json({ exists: !!user });
   } catch (err) {
-    console.error('Check user exists error:', err);
     res.status(500).json({ message: req.t('errors.serverError'), exists: false });
   }
 };
@@ -38,7 +36,6 @@ const register = async (req, res) => {
     });
 
     await user.save();
-    console.log('New user registered:', user.email);
 
     const token = jwt.sign(
       { userId: user._id },
@@ -65,7 +62,6 @@ const register = async (req, res) => {
         emailData 
       });
     } catch (emailError) {
-      console.error('Email sending error:', emailError);
       res.status(201).json({
         token,
         user: {
@@ -78,7 +74,6 @@ const register = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error('Register error:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -97,8 +92,6 @@ const login = async (req, res) => {
       return res.status(400).json({ message: req.t('errors.invalidCredentials') });
     }
 
-    console.log('User logged in successfully:', user.email);
-
     const token = jwt.sign(
       { userId: user._id },
       JWT_SECRET,
@@ -115,7 +108,6 @@ const login = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Login error:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -128,7 +120,6 @@ const getCurrentUser = async (req, res) => {
     }
     res.json(user);
   } catch (err) {
-    console.error('Get user error:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -156,7 +147,6 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     const resetURL = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
-    console.log('Reset URL (Dev Only):', resetURL);
     
     const emailData = {
       recipientEmail: email,
@@ -173,7 +163,6 @@ const forgotPassword = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Forgot password error:', err);
     
     if (user) {
       user.resetPasswordToken = undefined;
@@ -234,7 +223,6 @@ const resetPassword = async (req, res) => {
     });
     
   } catch (err) {
-    console.error('Reset password error:', err);
     res.status(500).json({ 
       message: req.t('errors.resetError'),
       code: 'SERVER_ERROR'
@@ -245,25 +233,14 @@ const resetPassword = async (req, res) => {
 const registerOAuth = async (req, res) => {
   try {
     const { email, firstName, lastName, provider, providerId } = req.body;
-    
-    console.log('OAuth Register request received:', { 
-      email, 
-      firstName, 
-      lastName, 
-      provider, 
-      providerId 
-    });
 
     if (!email || !firstName || !providerId) {
-      console.error('Missing required OAuth data:', { email, firstName, providerId });
       return res.status(400).json({ 
         message: req.t('errors.incompleteOAuthData') || 'Missing required data for OAuth registration'
       });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-
-    console.log('Searching for existing user with email:', normalizedEmail, 'and providerId:', providerId);
     
     let existingUser = await User.findOne({ 
       'oauth.provider': provider,
@@ -273,33 +250,25 @@ const registerOAuth = async (req, res) => {
     if (!existingUser) {
       existingUser = await User.findOne({ email: normalizedEmail });
       
-      if (existingUser && existingUser.oauth && existingUser.oauth.providerId && existingUser.oauth.providerId !== providerId) {
-        console.error('Email exists but with different OAuth ID:', {
-          existingProviderId: existingUser.oauth.providerId,
-          newProviderId: providerId
-        });
-        return res.status(400).json({ 
-          message: req.t('errors.emailExistsWithDifferentProvider') || 'Email already exists with different OAuth account'
-        });
+      if (existingUser) {
+        
+        if (existingUser.oauth && existingUser.oauth.providerId && existingUser.oauth.providerId !== providerId) {
+          return res.status(400).json({ 
+            message: req.t('errors.emailExistsWithDifferentProvider') || 'Email already exists with different OAuth account'
+          });
+        }
+        
+        if (!existingUser.oauth || !existingUser.oauth.providerId) {
+          existingUser.oauth = {
+            provider,
+            providerId
+          };
+          await existingUser.save();
+        }
       }
     }
     
     if (existingUser) {
-      console.log('Existing user found, updating OAuth info if needed:', {
-        id: existingUser._id,
-        email: existingUser.email,
-        currentProviderId: existingUser.oauth?.providerId,
-        newProviderId: providerId
-      });
-      
-      if (!existingUser.oauth || existingUser.oauth.providerId !== providerId) {
-        existingUser.oauth = {
-          provider,
-          providerId
-        };
-        await existingUser.save();
-        console.log('Updated existing user with OAuth info');
-      }
       
       const token = jwt.sign(
         { userId: existingUser._id },
@@ -347,12 +316,6 @@ const registerOAuth = async (req, res) => {
     });
 
     await user.save();
-    console.log('New OAuth user created successfully:', {
-      id: user._id,
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
-      providerId: user.oauth.providerId
-    });
 
     const token = jwt.sign(
       { userId: user._id },
@@ -371,26 +334,22 @@ const registerOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('OAuth Register error:', err);
     
     if (err.code === 11000) {
       try {
-        const { email, providerId } = req.body;
-        
+        const { email, providerId, provider } = req.body;
+        const normalizedEmail = email.toLowerCase().trim();
+                
         let user = await User.findOne({ 
-          'oauth.provider': 'google',
+          'oauth.provider': provider,
           'oauth.providerId': providerId 
         });
         
-        if (!user && email) {
-          user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user) {
+          user = await User.findOne({ email: normalizedEmail });
         }
         
         if (user) {
-          console.log('Duplicate key error, returning existing user:', {
-            email: user.email,
-            providerId: user.oauth?.providerId
-          });
           
           const token = jwt.sign(
             { userId: user._id },
@@ -424,8 +383,6 @@ const loginOAuth = async (req, res) => {
   try {
     const { email, provider, providerId } = req.body;
     
-    console.log('OAuth Login request received:', { email, provider, providerId });
-
     if (!email || !providerId) {
       return res.status(400).json({ 
         message: req.t('errors.missingOAuthData') || 'Email and provider ID are required'
@@ -433,9 +390,7 @@ const loginOAuth = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    
-    console.log('Searching for user with providerId:', providerId, 'and email:', normalizedEmail);
-    
+        
     let user = await User.findOne({ 
       'oauth.provider': provider,
       'oauth.providerId': providerId 
@@ -451,12 +406,7 @@ const loginOAuth = async (req, res) => {
             providerId
           };
           await user.save();
-          console.log('Updated existing user with OAuth info');
         } else if (user.oauth.providerId !== providerId) {
-          console.error('User found with same email but different OAuth ID:', {
-            existingProviderId: user.oauth.providerId,
-            newProviderId: providerId
-          });
           return res.status(404).json({ 
             message: req.t('errors.userNotFound') || 'User not found'
           });
@@ -465,18 +415,10 @@ const loginOAuth = async (req, res) => {
     }
     
     if (!user) {
-      console.log('User not found for OAuth login with providerId:', providerId);
       return res.status(404).json({ 
         message: req.t('errors.userNotFound') || 'User not found'
       });
     }
-
-    console.log('OAuth login successful for user:', {
-      id: user._id,
-      email: user.email,
-      name: `${user.firstName} ${user.lastName}`,
-      providerId: user.oauth?.providerId
-    });
 
     const token = jwt.sign(
       { userId: user._id },
@@ -495,7 +437,6 @@ const loginOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('OAuth Login error:', err);
     res.status(500).json({ 
       message: req.t('errors.serverError') || 'Server error occurred during OAuth login'
     });
@@ -518,7 +459,6 @@ const getNotifications = async (req, res) => {
     const unreadNotifications = user.notifications.filter(n => !n.read);
     res.json(unreadNotifications);
   } catch (err) {
-    console.error('Error fetching notifications:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -544,7 +484,6 @@ const markNotificationAsRead = async (req, res) => {
       res.status(404).json({ message: 'Notification not found' });
     }
   } catch (err) {
-    console.error('Error marking notification as read:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
