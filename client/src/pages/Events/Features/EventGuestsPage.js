@@ -4,8 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import ImportModal from '../../components/ImportModal';
-import RSVPManualModal from './components/RSVPManualModal';
 import GiftsModal from './components/GiftsModal';
+import RSVPManualModal from './components/RSVPManualModal'
 import '../../../styles/EventGuestsPage.css';
 
 const EventGuestsPage = () => {
@@ -506,7 +506,6 @@ const handlePhoneChange = (e) => {
   };
 
   const handleEditRSVP = useCallback((guest) => {
-    console.log('Opening RSVP modal for guest:', guest.firstName, guest.lastName);
     setEditingRSVPGuest(guest);
     setShowRSVPModal(true);
   }, []);
@@ -665,7 +664,6 @@ const handlePhoneChange = (e) => {
       }
 
       setLoading(true);
-      console.log(`Starting bulk import of ${importedGuests.length} guests...`);
 
       const guestsToImport = importedGuests.map(guest => {
         const validatedGuest = {
@@ -691,8 +689,6 @@ const handlePhoneChange = (e) => {
         return validatedGuest;
       });
 
-      console.log('Sending bulk import request...');
-
       const response = await makeApiRequest(`/api/events/${eventId}/guests/bulk-import`, {
         method: 'POST',
         body: JSON.stringify({ guests: guestsToImport })
@@ -700,21 +696,14 @@ const handlePhoneChange = (e) => {
 
       if (response && response.ok) {
         const result = await response.json();
-        console.log(`Bulk import completed: ${result.imported} imported, ${result.duplicates} duplicates`);
 
         await fetchGuests();
 
         if (result.imported > 0) {
           setError('');
-          console.log(`Successfully imported ${result.imported} guests`);
-          
-          if (result.duplicates > 0) {
-            console.log(`${result.duplicates} duplicates found - will show in duplicates warning`);
-          }
           
         } else if (result.duplicates > 0 && result.imported === 0) {
           setError('');
-          console.log(`All guests were duplicates - duplicate warning will appear`);
           
         } else if (result.failed > 0) {
           setError(`${t('import.errors.importFailed')}: ${result.errors?.slice(0, 2).join(', ')}${result.errors?.length > 2 ? '...' : ''}`);
@@ -1172,60 +1161,67 @@ const handlePhoneChange = (e) => {
                   
                   {!isSelectionMode && (
                     <div className="guest-actions">
-                      <button
-                        onClick={() => handleEditGuest(guest)}
-                        className="guest-edit-button"
-                        title={t('guests.editGuest')}
-                        type="button"
-                        disabled={!canEdit}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('RSVP button clicked for guest:', guest.firstName, guest.lastName);
-                          handleEditRSVP(guest);
-                        }}
-                        className="guest-rsvp-edit-button"
-                        title={t('guests.rsvp.editRSVP')}
-                        type="button"
-                        disabled={!canEdit}
-                      >
-                        📝
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (hasEventPassed() && canEdit) {
-                            handleEditGifts(guest);
-                          }
-                        }}
-                        className={`guest-gifts-button ${(!hasEventPassed() || !canEdit) ? 'disabled' : ''}`}
-                        title={hasEventPassed() && canEdit ? t('guests.gifts.editGifts') : 
-                              !hasEventPassed() ? t('guests.gifts.availableAfterEvent') :
-                              t('events.accessDenied')} 
-                        type="button"
-                        disabled={!hasEventPassed()  || !canEdit}
-                      >
-                        🎁
-                        {hasEventPassed() && (
-                          <span className={`gift-status-indicator ${guest.gift?.hasGift ? 'has-gift' : 'no-gift'}`}>
-                            {guest.gift?.hasGift ? '✓' : '✗'}
-                          </span>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteGuest(guest._id)}
-                        className="guest-delete-button"
-                        title={t('common.delete')}
-                        type="button"
-                        disabled={!canEdit}
-                      >
-                        🗑️
-                      </button>
+                      <div className={!canEdit ? 'button-wrapper-disabled' : ''}>
+                        <button
+                          onClick={() => handleEditGuest(guest)}
+                          className="guest-edit-button"
+                          title={t('guests.editGuest')}
+                          type="button"
+                          disabled={!canEdit}
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                      <div className={!canEdit ? 'button-wrapper-disabled' : ''}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEditRSVP(guest);
+                          }}
+                          className="guest-rsvp-edit-button"
+                          title={t('guests.rsvp.editRSVP')}
+                          type="button"
+                          disabled={!canEdit}
+                        >
+                          📝
+                        </button>
+                      </div>
+                      <div className={(!hasEventPassed() || !canEdit) ? 'button-wrapper-disabled' : ''}>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (hasEventPassed() && canEdit) {
+                              handleEditGifts(guest);
+                            }
+                          }}
+                          className={`guest-gifts-button ${(!hasEventPassed() || !canEdit) ? 'disabled' : ''}`}
+                          title={hasEventPassed() && canEdit ? t('guests.gifts.editGifts') : 
+                                !hasEventPassed() ? t('guests.gifts.availableAfterEvent') :
+                                t('general.viewOnlyMode')} 
+                          type="button"
+                          disabled={!hasEventPassed()  || !canEdit}
+                        >
+                          🎁
+                          {hasEventPassed() && (
+                            <span className={`gift-status-indicator ${guest.gift?.hasGift ? 'has-gift' : 'no-gift'}`}>
+                              {guest.gift?.hasGift ? '✓' : '✗'}
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                      <div className={!canEdit ? 'button-wrapper-disabled' : ''}>
+                        <button
+                          onClick={() => handleDeleteGuest(guest._id)}
+                          className="guest-delete-button"
+                          title={t('common.delete')}
+                          type="button"
+                          disabled={!canEdit}
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1241,143 +1237,17 @@ const handlePhoneChange = (e) => {
           eventId={eventId}
         />
 
-        {showRSVPModal && (
-          <div className="modal-overlay" onClick={() => {
+         <RSVPManualModal
+          isOpen={showRSVPModal}
+          onClose={() => {
             setShowRSVPModal(false);
             setEditingRSVPGuest(null);
-          }}>
-            <div className="modal-content rsvp-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>{t('guests.rsvp.editRSVP')}</h2>
-                <button
-                  className="modal-close-button"
-                  onClick={() => {
-                    setShowRSVPModal(false);
-                    setEditingRSVPGuest(null);
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
-              {editingRSVPGuest && (
-                <>
-                  <div className="guest-info-display">
-                    <p><strong>{editingRSVPGuest.firstName} {editingRSVPGuest.lastName}</strong></p>
-                    <p>{editingRSVPGuest.phone}</p>
-                    <p>{t('guests.group')}: {getGroupDisplayName(editingRSVPGuest)}</p>
-                  </div>
-
-                  <div className="rsvp-form">
-                    <div className="rsvp-status-section">
-                      <div className="form-group">
-                        <label>{t('guests.rsvp.status')}</label>
-                        <div className="rsvp-status-options">
-                          <label className="rsvp-option">
-                            <input
-                              type="radio"
-                              name="rsvpStatus"
-                              value="confirmed"
-                              checked={editingRSVPGuest.rsvpStatus === 'confirmed'}
-                              onChange={(e) => setEditingRSVPGuest({
-                                ...editingRSVPGuest,
-                                rsvpStatus: e.target.value
-                              })}
-                            />
-                            {t('guests.rsvp.confirmed')}
-                          </label>
-                          <label className="rsvp-option">
-                            <input
-                              type="radio"
-                              name="rsvpStatus"
-                              value="declined"
-                              checked={editingRSVPGuest.rsvpStatus === 'declined'}
-                              onChange={(e) => setEditingRSVPGuest({
-                                ...editingRSVPGuest,
-                                rsvpStatus: e.target.value
-                              })}
-                            />
-                            {t('guests.rsvp.declined')}
-                          </label>
-                          <label className="rsvp-option">
-                            <input
-                              type="radio"
-                              name="rsvpStatus"
-                              value="pending"
-                              checked={editingRSVPGuest.rsvpStatus === 'pending'}
-                              onChange={(e) => setEditingRSVPGuest({
-                                ...editingRSVPGuest,
-                                rsvpStatus: e.target.value
-                              })}
-                            />
-                            {t('guests.rsvp.pending')}
-                          </label>
-                        </div>
-                      </div>
-
-                      {editingRSVPGuest.rsvpStatus === 'confirmed' && (
-                        <div className="attending-count-section">
-                          <div className="form-group">
-                            <label>{t('guests.rsvp.attendingCount')}</label>
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              value={editingRSVPGuest.attendingCount || 1}
-                              onChange={(e) => setEditingRSVPGuest({
-                                ...editingRSVPGuest,
-                                attendingCount: parseInt(e.target.value) || 1
-                              })}
-                              className="attending-count-input"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="form-group">
-                      <label>{t('guests.guestNote')}</label>
-                      <textarea
-                        value={editingRSVPGuest.guestNotes || ''}
-                        onChange={(e) => setEditingRSVPGuest({
-                          ...editingRSVPGuest,
-                          guestNotes: e.target.value
-                        })}
-                        className="guest-notes-input"
-                        placeholder={t('guests.form.guestNotePlaceholder')}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="modal-actions">
-                    <button
-                      onClick={() => {
-                        handleManualRSVPUpdate({
-                          guestId: editingRSVPGuest._id,
-                          rsvpStatus: editingRSVPGuest.rsvpStatus,
-                          guestNotes: editingRSVPGuest.guestNotes,
-                          attendingCount: editingRSVPGuest.attendingCount || 1
-                        });
-                      }}
-                      className="modal-submit-button"
-                    >
-                      {t('common.save')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowRSVPModal(false);
-                        setEditingRSVPGuest(null);
-                      }}
-                      className="modal-cancel-button"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+          }}
+          guest={editingRSVPGuest}
+          onUpdateRSVP={handleManualRSVPUpdate}
+          getGroupDisplayName={getGroupDisplayName}
+        />
+        
         <GiftsModal
           isOpen={showGiftsModal}
           onClose={() => {

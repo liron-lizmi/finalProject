@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import '../../../../styles/RSVPManualModal.css';
 
-const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
+const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplayName  }) => {
   const { t } = useTranslation();
   const [rsvpStatus, setRsvpStatus] = useState('pending');
   const [attendingCount, setAttendingCount] = useState(1);
@@ -10,7 +11,6 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
   useEffect(() => {
     if (guest) {
       setRsvpStatus(guest.rsvpStatus || 'pending');
-      // הבטח שattendingCount תמיד יהיה מספר חוקי
       setAttendingCount(guest.attendingCount && guest.attendingCount > 0 ? guest.attendingCount : 1);
       setGuestNotes(guest.guestNotes || '');
     }
@@ -32,7 +32,6 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
   };
 
   const handleAttendingCountChange = (newCount) => {
-    // הבטח שהמספר תמיד יהיה לפחות 1 עבור אישור הגעה
     const validCount = Math.max(1, Math.min(10, newCount));
     setAttendingCount(validCount);
   };
@@ -43,7 +42,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
     <div className="rsvp-modal-overlay" onClick={onClose}>
       <div className="rsvp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="rsvp-modal-header">
-          <h3>{t('guests.rsvp.editRSVP') || 'עריכת אישור הגעה'}</h3>
+          <h3>{t('guests.rsvp.editRSVP')}</h3>
           <button className="rsvp-modal-close" onClick={onClose}>
             ✕
           </button>
@@ -53,11 +52,12 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
           <div className="guest-info">
             <h4>{guest.firstName} {guest.lastName}</h4>
             <p>{guest.phone}</p>
+            <p>{t('guests.group')}: {getGroupDisplayName(guest)}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="rsvp-form">
             <div className="rsvp-form-group">
-              <label>{t('guests.rsvp.status') || 'סטטוס הגעה'}</label>
+              <label>{t('guests.rsvp.status')}</label>
               <div className="rsvp-status-options">
                 <label className="rsvp-radio-option">
                   <input
@@ -68,7 +68,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
                     onChange={(e) => setRsvpStatus(e.target.value)}
                   />
                   <span className="rsvp-radio-label confirmed">
-                    ✅ {t('guests.rsvp.confirmed') || 'מגיע'}
+                    ✅ {t('guests.rsvp.confirmed')}
                   </span>
                 </label>
                 
@@ -81,7 +81,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
                     onChange={(e) => setRsvpStatus(e.target.value)}
                   />
                   <span className="rsvp-radio-label declined">
-                    ❌ {t('guests.rsvp.declined') || 'לא מגיע'}
+                    ❌ {t('guests.rsvp.declined')}
                   </span>
                 </label>
 
@@ -94,7 +94,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
                     onChange={(e) => setRsvpStatus(e.target.value)}
                   />
                   <span className="rsvp-radio-label pending">
-                    ⏳ {t('guests.rsvp.pending') || 'ממתין לתשובה'}
+                    ⏳ {t('guests.rsvp.pending')}
                   </span>
                 </label>
               </div>
@@ -103,7 +103,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
             {rsvpStatus === 'confirmed' && (
               <div className="rsvp-form-group">
                 <label htmlFor="attending-count">
-                  {t('guests.rsvp.attendingCount') || 'כמות מגיעים'}
+                  {t('guests.rsvp.attendingCount')}
                 </label>
                 <div className="count-input-container">
                   <button
@@ -132,7 +132,7 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
                     type="button"
                     className="count-button increase"
                     onClick={() => handleAttendingCountChange(attendingCount + 1)}
-                    disabled={attendingCount >= 20}
+                    disabled={attendingCount >= 10}
                   >
                     +
                   </button>
@@ -142,13 +142,13 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
 
             <div className="rsvp-form-group">
               <label htmlFor="guest-notes">
-                {t('guests.rsvp.notes') || 'הערות'} ({t('guests.rsvp.optional') || 'רשות'})
+                {t('guests.rsvp.notes')} ({t('guests.rsvp.optional')})
               </label>
               <textarea
                 id="guest-notes"
                 value={guestNotes}
                 onChange={(e) => setGuestNotes(e.target.value)}
-                placeholder={t('guests.rsvp.notesPlaceholder') || 'הערות נוספות...'}
+                placeholder={t('guests.rsvp.notesPlaceholder')}
                 className="rsvp-form-textarea"
                 rows="3"
                 maxLength="500"
@@ -164,13 +164,13 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP }) => {
                 className="rsvp-cancel-button"
                 onClick={onClose}
               >
-                {t('common.cancel') || 'ביטול'}
+                {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 className="rsvp-submit-button"
               >
-                {t('guests.rsvp.updateRSVP') || 'עדכן אישור הגעה'}
+                {t('guests.rsvp.updateRSVP')}
               </button>
             </div>
           </form>

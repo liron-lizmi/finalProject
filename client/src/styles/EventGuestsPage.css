@@ -316,6 +316,26 @@
   transition: all 0.2s;
 }
 
+.guests-table-row .guest-info {
+  grid-column: 1;
+}
+
+.guests-table-row .guest-group {
+  grid-column: 2;
+  margin-left: 0;
+}
+
+.guests-table-row .guest-rsvp-status {
+  grid-column: 3;
+  justify-self: center;
+  margin-left: 60px;
+}
+
+.guests-table-row .guest-actions {
+  grid-column: 4;
+  justify-self: end;
+}
+
 .guests-table-row .guest-group {
   margin-left: 500px;
   min-width: 100px;
@@ -362,6 +382,8 @@
 .guest-info {
   display: flex;
   flex-direction: column;
+  background-color: transparent;
+  padding: 0;
 }
 
 .guest-name {
@@ -389,11 +411,13 @@
 }
 
 .guest-rsvp-status {
-  padding: 4px 8px;
+  padding: 8px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: bold;
   text-align: center;
+  min-width: 100px;
+  display: inline-block;
 }
 
 .guest-rsvp-status.confirmed {
@@ -938,307 +962,6 @@
   position: relative;
 }
 
-/* RSVP Modal Styles */
-.rsvp-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.rsvp-modal {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.rsvp-modal::-webkit-scrollbar {
-  display: none;
-}
-
-.rsvp-modal {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.rsvp-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #e9ecef;
-  padding: 20px 20px 15px 20px;
-}
-
-.rsvp-modal-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.rsvp-modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.rsvp-modal-close:hover {
-  background-color: #f8f9fa;
-  color: #333;
-}
-
-.rsvp-modal-content {
-  padding: 0 20px 20px 20px;
-}
-
-.rsvp-modal-content .guest-info {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.rsvp-modal-content .guest-info h4 {
-  margin: 0 0 5px 0;
-  color: #333;
-  font-size: 16px;
-}
-
-.rsvp-modal-content .guest-info p {
-  margin: 0;
-  color: #495057;
-  font-size: 14px;
-}
-
-.rsvp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.rsvp-form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.rsvp-form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
-  font-size: 14px;
-}
-
-.rsvp-status-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.rsvp-radio-option {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 15px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  transition: all 0.3s;
-  background-color: #fff;
-}
-
-.rsvp-radio-option:hover {
-  border-color: #000000;
-  background-color: #f8f9ff;
-}
-
-.rsvp-radio-option input[type="radio"] {
-  margin-right: 12px;
-  margin-left: 0;
-}
-
-.rsvp-radio-option:has(input:checked) {
-  border-color: #000000;
-  background-color: #f8f9ff;
-}
-
-.rsvp-radio-label {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.rsvp-radio-label.confirmed {
-  color: #28a745;
-}
-
-.rsvp-radio-label.declined {
-  color: #dc3545;
-}
-
-.rsvp-radio-label.pending {
-  color: #856404;
-}
-
-.count-input-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-  width: fit-content;
-}
-
-.count-button {
-  background: #000000;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.count-button:hover {
-  background: #333333;
-}
-
-.count-button:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f5f5f5 !important;
-  color: #999 !important;
-  border-color: #ddd !important;
-}
-
-.guest-edit-button:disabled,
-.guest-rsvp-edit-button:disabled,
-.guest-delete-button:disabled {
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-.guests-add-button:disabled,
-.guests-bulk-select-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.count-input {
-  border: none;
-  padding: 12px 16px;
-  font-size: 16px;
-  text-align: center;
-  min-width: 80px;
-  background: white;
-  outline: none;
-}
-
-.rsvp-form-textarea {
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
-}
-
-.rsvp-form-textarea:focus {
-  outline: none;
-  border-color: #000000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-}
-
-.character-count {
-  margin-top: 5px;
-  font-size: 12px;
-  color: #6c757d;
-  text-align: right;
-}
-
-.rsvp-form-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #e9ecef;
-}
-
-.rsvp-form-actions .rsvp-cancel-button,
-.rsvp-form-actions .rsvp-submit-button {
-  min-width: 180px;
-  padding: 12px 30px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.rsvp-cancel-button {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.rsvp-cancel-button:hover {
-  background-color: #545b62;
-}
-
-.rsvp-submit-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.rsvp-submit-button:hover {
-  background-color: #1e7e34;
-}
-
 .rsvp-copy-button.disabled {
   background-color: #6c757d;
   cursor: not-allowed;
@@ -1259,6 +982,15 @@ button:disabled {
   background: #f8d7da;
   border: 1px solid #f5c6cb;
   border-radius: 6px;
+}
+
+.button-wrapper-disabled {
+  cursor: not-allowed;
+  display: inline-block;
+}
+
+.button-wrapper-disabled button {
+  pointer-events: none;
 }
 
 /* התאמה למסכים קטנים */

@@ -1020,6 +1020,7 @@
     "duplicateName": "שם כפול",
     "deleteDuplicate": "מחק כפילות",
     "confirmDeleteDuplicate": "האם אתה בטוח שברצונך למחוק מוזמן זה? (כפילות)",
+    "group": "קבוצה",
     "stats": {
       "total": "סה״כ מוזמנים",
       "confirmed": "אישרו הגעה",

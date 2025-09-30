@@ -251,9 +251,6 @@
     "export": {
       "title": "תרשים סידור מקומות", 
       "seatingChart": "תרשים סידור מקומות"
-    },
-    "notifications": {
-      "eventShared": "{{sharer}} שיתף/ה את האירוע \"{{eventTitle}}\" איתך"
     }
   }
 }

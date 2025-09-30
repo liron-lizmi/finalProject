@@ -543,12 +543,6 @@
   gap: 12px;
 }
 
-.category-icon {
-  font-size: 20px;
-  width: 32px;
-  text-align: center;
-}
-
 .category-details {
   flex: 1;
 }

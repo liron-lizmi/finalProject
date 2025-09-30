@@ -1020,6 +1020,7 @@
     "duplicateName": "Duplicate name",
     "deleteDuplicate": "Delete duplicate",
     "confirmDeleteDuplicate": "Are you sure you want to delete this guest? (duplicate)",
+    "group": "Group",
     "stats": {
       "total": "Total Guests",
       "confirmed": "Confirmed",

@@ -204,22 +204,6 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
     });
   };
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      venue: '🏢',
-      catering: '🍽️',
-      photography: '📸',
-      music: '🎵',
-      decoration: '🎨',
-      makeup: '💄',
-      clothing: '👗',
-      transportation: '🚗',
-      gifts: '🎁',
-      other: '📦'
-    };
-    return icons[category] || '📦';
-  };
-
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const paidExpenses = expenses.filter(exp => exp.isPaid).reduce((sum, exp) => sum + exp.amount, 0);
 
@@ -392,7 +376,6 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
             <div key={expense._id} className={`expense-item ${expense.isPaid ? 'paid' : 'unpaid'}`}>
               <div className="expense-main">
                 <div className="expense-category">
-                  <span className="category-icon">{getCategoryIcon(expense.category)}</span>
                   <span className="category-name">{t(`events.features.budget.categories.${expense.category}`)}</span>
                 </div>
                 

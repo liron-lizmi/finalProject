@@ -39,22 +39,6 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
     return 'danger';
   };
 
-  const getCategoryIcon = (category) => {
-    const icons = {
-      venue: '🏢',
-      catering: '🍽️',
-      photography: '📸',
-      music: '🎵',
-      decoration: '🎨',
-      makeup: '💄',
-      clothing: '👗',
-      transportation: '🚗',
-      gifts: '🎁',
-      other: '📦'
-    };
-    return icons[category] || '📦';
-  };
-
   if (loading) {
     return <div className="budget-loading">{t('common.loading')}</div>;
   }
@@ -169,7 +153,6 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
           {summary.categoryBreakdown.map(cat => (
             <div key={cat.category} className="category-breakdown-item">
               <div className="category-info">
-                <span className="category-icon">{getCategoryIcon(cat.category)}</span>
                 <div className="category-details">
                   <div className="category-name">
                     {t(`events.features.budget.categories.${cat.category}`)}

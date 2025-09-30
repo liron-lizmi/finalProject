@@ -251,9 +251,6 @@
     "export": {
       "title": "Seating Chart",
       "seatingChart": "Seating Chart"
-    },
-    "notifications": {
-      "eventShared": "{{sharer}} shared the event \"{{eventTitle}}\" with you"
     }
   }
 }
