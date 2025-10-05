@@ -175,6 +175,26 @@
             "priceLevel": "Price Level",
             "openingHours": "Opening Hours",
             "reviewsTitle": "Reviews"
+          },
+          "venueKeywords": {
+            "hotel": ["hotel", "convention"],
+            "restaurant": ["restaurant", "café", "bistro"],
+            "museum": ["museum", "cultural"],
+            "park": ["park", "garden", "outdoor"],
+            "center": ["center"],
+            "styles": {
+              "modern": ["modern", "contemporary", "new", "fresh", "loft", "studio", "design", "boutique", "trendy"],
+              "classic": ["classic", "traditional", "historic", "heritage", "vintage", "old", "antique", "palace", "manor", "estate"],
+              "luxury": ["luxury", "premium", "deluxe", "exclusive", "elite", "vip", "royal", "grand", "upscale", "five star", "5 star"],
+              "urban": ["outdoor", "garden", "park", "nature", "botanical", "green", "landscape", "terrace", "patio", "courtyard", "rooftop"]
+            },
+            "amenities": {
+              "parking": ["parking", "garage", "valet"],
+              "accessibility": ["accessible", "wheelchair", "barrier-free", "handicap", "disabled", "elevator", "ramp"],
+              "outdoorSpace": ["outdoor", "garden", "terrace", "patio", "courtyard", "rooftop", "balcony", "park"],
+              "catering": ["catering", "restaurant", "kitchen", "dining", "food", "kosher", "chef"],
+              "accommodation": ["hotel", "accommodation", "resort", "inn", "lodge", "guest", "room"]
+            }
           }
         },
       "vendors": {
@@ -1129,7 +1149,8 @@
       "excel": "Excel", 
       "png": "PNG"
     },
-    "export": "Export"
+    "export": "Export",
+    "loadMore": "Load More"
   },
   "validation": {
     "phoneRequired": "Phone number is required",

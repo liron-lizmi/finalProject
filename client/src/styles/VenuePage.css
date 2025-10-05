@@ -145,6 +145,11 @@ html[dir="ltr"] .venue-search-button {
   direction: ltr;
 }
 
+.filter-group.amenities-group {
+  display: flex;
+  flex-direction: column;
+}
+
 .amenities-group .checkbox-group {
   display: flex;
   flex-direction: column;
@@ -156,6 +161,8 @@ html[dir="ltr"] .venue-search-button {
   display: flex;
   align-items: center;
   font-weight: normal;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 html[dir="rtl"] .checkbox-group input[type="checkbox"] {
@@ -769,6 +776,81 @@ html[dir="ltr"] .review-rating {
 .add-more-venues {
   text-align: center;
   margin-top: 20px;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  position: relative;
+}
+
+.error-close-btn {
+  background: transparent;
+  border: none;
+  color: #c33;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  font-size: 20px;
+  line-height: 1;
+  padding: 5px 10px;
+}
+
+html[dir="rtl"] .error-close-btn {
+  left: 10px;
+}
+
+html[dir="ltr"] .error-close-btn {
+  right: 10px;
+}
+
+.load-more-container {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.load-more-button {
+  background: black;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.load-more-button:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 200px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-placeholder span {
+  color: #999;
+}
+
+.venue-image img.loading {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.venue-image img.loaded {
+  opacity: 1;
+  transition: opacity 0.2s ease;
 }
 
 @keyframes spin {

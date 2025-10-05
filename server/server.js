@@ -1,5 +1,7 @@
+// server/sever.js
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 
 const express = require('express');
 const app = express();
@@ -36,6 +38,7 @@ const taskRoutes = require('./routes/taskRoutes');
 const rsvpRoutes = require('./routes/rsvpRoutes'); 
 const budgetRoutes = require('./routes/budgetRoutes');
 const ridesRoutes = require('./routes/ridesRoutes');
+const venueRoutes = require('./routes/venueRoutes');
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -55,6 +58,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/rsvp', rsvpRoutes); 
 app.use('/api/events/:eventId/budget', budgetRoutes);
 app.use('/api/rides', ridesRoutes);
+app.use('/api/venues', venueRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -92,3 +96,4 @@ mongoose.connect(MONGO_URI)
 });
 
 module.exports = app;
+
