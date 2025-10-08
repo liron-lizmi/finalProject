@@ -1552,7 +1552,6 @@
       "reasonOptional": "סיבה (אופציונלי)",
       "addRule": "הוסף כלל",
       "unknownGuest": "מוזמן לא ידוע",
-      "allowGroupMixingTitle": "אפשר עירוב קבוצות",
       "allowGroupMixingDescription": "מאפשר לערב קבוצות שונות באותו שולחן כשאין מקום",
       "groupMixingRules": "כללי עירוב קבוצות",
       "showMixing": "הצג עירוב",
@@ -1562,7 +1561,19 @@
       "priorityLow": "נמוכה",
       "priorityMedium": "בינונית",
       "priorityHigh": "גבוהה",
-      "addMixRule": "הוסף כלל עירוב"
+      "addMixRule": "הוסף כלל עירוב",
+      "allowGroupMixingTitle": "אפשר ערבוב קבוצות",
+      "allowGroupMixingWithRules": "קבוצות יתערבבו לפי הכללים שהגדרת למטה",
+      "allowGroupMixingFree": "כל הקבוצות יוכלו להתערבב באופן אופטימלי (ללא כללים מיוחדים)",
+      "groupPolicies": "מדיניות קבוצות",
+      "showPolicies": "הצג מדיניות",
+      "hidePolicies": "הסתר מדיניות",
+      "groupPoliciesDescription": "קבע לכל קבוצה אם היא יכולה להתערבב עם אחרות או חייבת לשבת בנפרד",
+      "policyMixable": "ניתן לערבב",
+      "policySeparate": "חייבת לשבת לבד",
+      "policyMixableDesc": "קבוצה זו יכולה לשבת עם קבוצות אחרות",
+      "policySeparateDesc": "קבוצה זו תקבל שולחן נפרד, יתרה שלה לא תתערבב",
+      "allGroupsInMixingRules": "כל הקבוצות כבר מוגדרות בכללי הערבוב למעלה. קבוצות שמופיעות בכללי ערבוב מתנהגות לפי הכללים שהגדרת."
     },
     "exportChart": {
       "title": "תרשים סידורי הושבה",
