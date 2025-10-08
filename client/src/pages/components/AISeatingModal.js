@@ -23,7 +23,8 @@ const AISeatingModal = ({
     customInstructions: '',
     allowGroupMixing: false,
     preferredTableSize: 12,
-    groupMixingRules: []
+    groupMixingRules: [],
+    groupPolicies: {}
   });
   
   const [tableSettings, setTableSettings] = useState([
@@ -46,7 +47,6 @@ const AISeatingModal = ({
   const [newGroupMixRule, setNewGroupMixRule] = useState({
     group1: '',
     group2: '',
-    priority: 'medium'
   });
 
   const [showSeatingRules, setShowSeatingRules] = useState(false);
@@ -64,6 +64,7 @@ const AISeatingModal = ({
     guest2Id: '',
     reason: ''
   });
+  const [showGroupPolicies, setShowGroupPolicies] = useState(false);
 
   const hasExistingArrangement = seatingArrangement && Object.keys(seatingArrangement).length > 0 && Object.values(seatingArrangement).some(arr => arr.length > 0);
 
@@ -140,7 +141,7 @@ const AISeatingModal = ({
       if (totalCapacity < totalGuests || tables.length === 0) {
         setShowTableCreation(true);
         if (tables.length === 0) {
-          autoSuggestTables(totalGuests);
+          autoSuggestTables(totalGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
         }
       } else {
         setShowTableCreation(false);
@@ -148,72 +149,367 @@ const AISeatingModal = ({
     }
   }, [isOpen, initialLoad, tables.length, guests, tables, hasExistingArrangement, seatingArrangement, preferences]);
 
-  const autoSuggestTables = (guestsNeedingSeats) => {
-    if (guestsNeedingSeats === 0) return;
+
+  useEffect(() => {
+    if (isOpen && showTableCreation && aiPreferences.allowGroupMixing && 
+        Object.keys(aiPreferences.groupPolicies).length > 0) {
+      
+      const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+      const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
+      
+      let guestsNeedingSeats = 0;
+      
+      if (existingArrangementAction === 'continue') {
+        const seatedGuestsCount = getSeatedGuestsCount();
+        guestsNeedingSeats = totalGuests - seatedGuestsCount;
+      } else {
+        guestsNeedingSeats = totalGuests;
+      }
+      
+      if (totalCapacity < guestsNeedingSeats || tables.length === 0) {
+        autoSuggestTables(guestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
+      }
+    }
+  }, [isOpen, showTableCreation, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, guests, tables, existingArrangementAction]);
+
+  const autoSuggestTables = (guestsNeedingSeats, allowMixing = null, customGroupPolicies = null) => {
+    if (guestsNeedingSeats === 0) {
+      return;
+    }
+    
+    const effectiveGroupPolicies = customGroupPolicies || aiPreferences.groupPolicies || {};
         
     const newTableSettings = [...tableSettings];
     newTableSettings.forEach(setting => setting.count = 0);
     
-    let availableCapacityInExistingTables = 0;
-    if (existingArrangementAction === 'continue') {
-      const seatedGuestsCount = getSeatedGuestsCount();
-      const totalExistingCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-      availableCapacityInExistingTables = totalExistingCapacity - seatedGuestsCount;
-    } else {
-      availableCapacityInExistingTables = tables.reduce((sum, table) => sum + table.capacity, 0);
+    const shouldAllowMixing = allowMixing !== null ? allowMixing : aiPreferences.allowGroupMixing;
+    
+    const seatedGuestIds = new Set();
+    if (seatingArrangement && Object.keys(seatingArrangement).length > 0) {
+      Object.values(seatingArrangement).forEach(guestIds => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(id => seatedGuestIds.add(id));
+        }
+      });
     }
     
-    const guestsNeedingNewTables = Math.max(0, guestsNeedingSeats - availableCapacityInExistingTables);
+    const unseatedGuests = seatedGuestIds.size > 0
+      ? guests.filter(guest => !seatedGuestIds.has(guest._id))
+      : guests;
         
-    if (guestsNeedingNewTables === 0) {
-      return;
-    }
+    const totalUnseatedPeople = unseatedGuests.reduce((sum, guest) => 
+      sum + (guest.attendingCount || 1), 0
+    );
     
-    let remainingGuests = guestsNeedingNewTables;
+    let totalAvailableCapacityInExisting = 0;
+    let totalAvailableInEmpty = 0;
+    const tableCapacityDetails = [];
     
-    const preferredTableSize = 12;
+    tables.forEach(table => {
+      const tableGuestIds = (seatingArrangement && seatingArrangement[table.id]) || [];
+      const tableGuests = tableGuestIds.map(guestId => 
+        guests.find(g => g._id === guestId)
+      ).filter(Boolean);
+      
+      const hasSGroupGuests = tableGuests.some(g => {
+        const group = g.customGroup || g.group;
+        const policy = effectiveGroupPolicies[group];
+        return policy === 'S';
+      });
+      
+      const currentOccupancy = tableGuests.reduce((sum, g) => 
+        sum + (g.attendingCount || 1), 0
+      );
+      
+      const availableCapacity = Math.max(0, table.capacity - currentOccupancy);
+      
+      const isEmpty = tableGuests.length === 0;
+      const status = isEmpty ? 'EMPTY' : 
+                    hasSGroupGuests ? 'HAS_S' : 'HAS_GUESTS';
+      
+      tableCapacityDetails.push({
+        name: table.name,
+        capacity: table.capacity,
+        occupied: currentOccupancy,
+        available: availableCapacity,
+        status: status,
+        isEmpty: isEmpty
+      });
+      
+      if (!hasSGroupGuests && availableCapacity > 0) {
+        totalAvailableCapacityInExisting += availableCapacity;
+        if (isEmpty) {
+          totalAvailableInEmpty += availableCapacity;
+        }
+      }
+    });
     
-    while (remainingGuests > 0) {
-      if (remainingGuests >= preferredTableSize - 2 && remainingGuests <= preferredTableSize + 2) {
-        const table12Index = newTableSettings.findIndex(s => s.capacity === 12 && s.type === 'round');
-        if (table12Index !== -1) {
-          newTableSettings[table12Index].count += 1;
+    if (!shouldAllowMixing) {
+      const groupCounts = {};
+      unseatedGuests.forEach(guest => {
+        const group = guest.customGroup || guest.group;
+        if (!groupCounts[group]) {
+          groupCounts[group] = 0;
         }
-        remainingGuests = 0;
-      } else if (remainingGuests >= preferredTableSize) {
-        const table12Index = newTableSettings.findIndex(s => s.capacity === 12 && s.type === 'round');
-        if (table12Index !== -1) {
-          newTableSettings[table12Index].count += 1;
-        }
-        remainingGuests -= preferredTableSize;
-      } else if (remainingGuests >= 8) {
-        const table10Index = newTableSettings.findIndex(s => s.capacity === 10);
-        if (table10Index !== -1) {
-          newTableSettings[table10Index].count += 1;
-        }
-        remainingGuests -= 10;
-      } else if (remainingGuests >= 4) {
-        const table8Index = newTableSettings.findIndex(s => s.capacity === 8);
-        if (table8Index !== -1) {
-          newTableSettings[table8Index].count += 1;
-        }
-        remainingGuests -= 8;
-      } else {
-        const table8Index = newTableSettings.findIndex(s => s.capacity === 8);
-        if (table8Index !== -1) {
-          newTableSettings[table8Index].count += 1;
-        }
-        remainingGuests = 0;
+        groupCounts[group] += (guest.attendingCount || 1);
+      });
+      
+      const existingTablesByGroup = {};
+      if (seatingArrangement && Object.keys(seatingArrangement).length > 0) {
+        tables.forEach(table => {
+          const tableGuestIds = seatingArrangement[table.id] || [];
+          if (tableGuestIds.length === 0) return;
+          
+          const tableGuests = tableGuestIds.map(guestId => 
+            guests.find(g => g._id === guestId)
+          ).filter(Boolean);
+          
+          if (tableGuests.length > 0) {
+            const groupsInTable = {};
+            tableGuests.forEach(guest => {
+              const group = guest.customGroup || guest.group;
+              groupsInTable[group] = (groupsInTable[group] || 0) + (guest.attendingCount || 1);
+            });
+            
+            const dominantGroup = Object.keys(groupsInTable).reduce((a, b) => 
+              groupsInTable[a] > groupsInTable[b] ? a : b
+            );
+            
+            if (!existingTablesByGroup[dominantGroup]) {
+              existingTablesByGroup[dominantGroup] = [];
+            }
+            
+            const currentOccupancy = tableGuests.reduce((sum, g) => 
+              sum + (g.attendingCount || 1), 0
+            );
+            const availableCapacity = table.capacity - currentOccupancy;
+            
+            if (availableCapacity > 0) {
+              existingTablesByGroup[dominantGroup].push({
+                tableId: table.id,
+                tableName: table.name,
+                availableCapacity
+              });
+            }
+          }
+        });
       }
       
-      if (remainingGuests < 0) {
-        break;
+      Object.entries(groupCounts).forEach(([group, totalPeople]) => {
+        let peopleNeedingSeats = totalPeople;
+        
+        if (existingTablesByGroup[group]) {
+          existingTablesByGroup[group].forEach(tableInfo => {
+            if (peopleNeedingSeats > 0) {
+              const canSeat = Math.min(tableInfo.availableCapacity, peopleNeedingSeats);
+              peopleNeedingSeats -= canSeat;
+            }
+          });
+        }
+                
+        while (peopleNeedingSeats > 0) {
+          const preferredTableSize = aiPreferences.preferredTableSize || 12;
+          let tableSize;
+          
+          if (peopleNeedingSeats <= 6) {
+            tableSize = 8;
+          } else if (peopleNeedingSeats <= 8) {
+            tableSize = 10;
+          } else if (peopleNeedingSeats <= 14) {
+            tableSize = 12;
+          } else {
+            tableSize = preferredTableSize;
+          }
+          
+          const tableIndex = newTableSettings.findIndex(s => s.capacity === tableSize);
+          if (tableIndex !== -1) {
+            newTableSettings[tableIndex].count += 1;
+          }
+          
+          peopleNeedingSeats -= tableSize;
+        }
+      });
+      
+      setTableSettings(newTableSettings);
+      return;
+    }
+        
+    const groupsByPolicy = {
+      separate: [],
+      mixable: []
+    };
+    
+    const groupSizes = {};
+    unseatedGuests.forEach(guest => {
+      const group = guest.customGroup || guest.group;
+      const policy = effectiveGroupPolicies[group];
+      const size = guest.attendingCount || 1;
+      
+      if (!groupSizes[group]) {
+        groupSizes[group] = 0;
+      }
+      groupSizes[group] += size;
+            
+      if (policy === 'S') {
+        if (!groupsByPolicy.separate.find(g => g.name === group)) {
+          groupsByPolicy.separate.push({ name: group, size: 0 });
+        }
+        const groupObj = groupsByPolicy.separate.find(g => g.name === group);
+        groupObj.size += size;
+      } else {
+        if (!groupsByPolicy.mixable.find(g => g.name === group)) {
+          groupsByPolicy.mixable.push({ name: group, size: 0 });
+        }
+        const groupObj = groupsByPolicy.mixable.find(g => g.name === group);
+        groupObj.size += size;
+      }
+    });
+    
+    let availableForSGroups = 0;
+    
+    groupsByPolicy.separate.forEach(group => {
+      let reservedCapacity = 0;
+      
+      tables.forEach(table => {
+        const tableGuestIds = (seatingArrangement && seatingArrangement[table.id]) || [];
+        const tableGuests = tableGuestIds.map(guestId => 
+          guests.find(g => g._id === guestId)
+        ).filter(Boolean);
+        
+        const hasThisGroup = tableGuests.some(g => {
+          const guestGroup = g.customGroup || g.group;
+          return guestGroup === group.name;
+        });
+        
+        if (hasThisGroup) {
+          const currentOccupancy = tableGuests.reduce((sum, g) => 
+            sum + (g.attendingCount || 1), 0
+          );
+          const availableCapacity = Math.max(0, table.capacity - currentOccupancy);
+          reservedCapacity += availableCapacity;
+        }
+      });
+      
+      let remaining = Math.max(0, group.size - reservedCapacity);
+      const preferredTableSize = aiPreferences.preferredTableSize || 12;
+      
+      while (remaining > 0) {
+        let tableSize;
+        
+        if (remaining <= 6) {
+          tableSize = 8;
+        } else if (remaining <= 8) {
+          tableSize = 10;
+        } else if (remaining <= 14) {
+          tableSize = 12;
+        } else {
+          tableSize = preferredTableSize;
+        }
+        
+        const tableIndex = newTableSettings.findIndex(s => s.capacity === tableSize);
+        if (tableIndex !== -1) {
+          newTableSettings[tableIndex].count += 1;
+        }
+        
+        remaining -= tableSize;
+      }
+    });
+    
+    const hasMixingRules = aiPreferences.groupMixingRules && aiPreferences.groupMixingRules.length > 0;
+    
+    if (hasMixingRules) {
+      const groupsInRules = new Set();
+      aiPreferences.groupMixingRules.forEach(rule => {
+        const policy1 = effectiveGroupPolicies[rule.group1];
+        const policy2 = effectiveGroupPolicies[rule.group2];
+        
+        if (policy1 !== 'S') {
+          groupsInRules.add(rule.group1);
+        }
+        if (policy2 !== 'S') {
+          groupsInRules.add(rule.group2);
+        }
+      });
+          
+      let clusteredGroupsSize = 0;
+      groupsByPolicy.mixable.forEach(group => {
+        if (groupsInRules.has(group.name)) {
+          clusteredGroupsSize += group.size;
+        }
+      });
+      
+      let nonClusteredGroupsSize = 0;
+      groupsByPolicy.mixable.forEach(group => {
+        if (!groupsInRules.has(group.name)) {
+          nonClusteredGroupsSize += group.size;
+        }
+      });
+          
+      if (clusteredGroupsSize > 0) {
+        const neededForClustered = Math.max(0, clusteredGroupsSize - totalAvailableCapacityInExisting);
+        const preferredTableSize = aiPreferences.preferredTableSize || 12;
+        
+        if (neededForClustered > 0) {
+          let remaining = neededForClustered;
+          
+          while (remaining > 0) {
+            let tableSize;
+            
+            if (remaining <= 6) {
+              tableSize = 8;
+            } else if (remaining <= 8) {
+              tableSize = 10;
+            } else if (remaining <= 14) {
+              tableSize = 12;
+            } else {
+              tableSize = preferredTableSize;
+            }
+            
+            const tableIndex = newTableSettings.findIndex(s => s.capacity === tableSize);
+            if (tableIndex !== -1) {
+              newTableSettings[tableIndex].count += 1;
+            }
+            
+            remaining -= tableSize;
+          }
+        }
+      }
+      
+    } else {
+      const mixableTotal = groupsByPolicy.mixable.reduce((sum, group) => sum + group.size, 0);
+      
+      const neededForMixable = Math.max(0, mixableTotal - totalAvailableCapacityInExisting);
+      
+      if (neededForMixable > 0) {
+        let remaining = neededForMixable;
+        const preferredTableSize = aiPreferences.preferredTableSize || 12;
+        
+        while (remaining > 0) {
+          let tableSize;
+          
+          if (remaining <= 6) {
+            tableSize = 8;
+          } else if (remaining <= 8) {
+            tableSize = 10;
+          } else if (remaining <= 14) {
+            tableSize = 12;
+          } else {
+            tableSize = preferredTableSize;
+          }
+          
+          const tableIndex = newTableSettings.findIndex(s => s.capacity === tableSize);
+          if (tableIndex !== -1) {
+            newTableSettings[tableIndex].count += 1;
+          }
+          
+          remaining -= tableSize;
+        }
       }
     }
     
     setTableSettings(newTableSettings);
   };
-
+  
   const getSeatedGuestsCount = () => {
     if (!hasExistingArrangement) return 0;
     
@@ -251,7 +547,7 @@ const AISeatingModal = ({
       
       if (totalCapacity < totalGuests) {
         setShowTableCreation(true);
-        autoSuggestTables(totalGuests);
+        autoSuggestTables(totalGuests, null, aiPreferences.groupPolicies);
       }
     } else if (action === 'continue') {
       const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
@@ -262,7 +558,7 @@ const AISeatingModal = ({
       
       if (availableCapacity < unseatedGuestsCount) {
         setShowTableCreation(true);
-        autoSuggestTables(unseatedGuestsCount);
+        autoSuggestTables(unseatedGuestsCount, null, aiPreferences.groupPolicies);
       }
     }
   };
@@ -298,11 +594,10 @@ const AISeatingModal = ({
         groupMixingRules: [...prev.groupMixingRules, {
           id: Date.now().toString(),
           group1: newGroupMixRule.group1,
-          group2: newGroupMixRule.group2,
-          priority: newGroupMixRule.priority
+          group2: newGroupMixRule.group2
         }]
       }));
-      setNewGroupMixRule({ group1: '', group2: '', priority: 'medium' });
+      setNewGroupMixRule({ group1: '', group2: '' });
     }
   };
 
@@ -377,10 +672,12 @@ const AISeatingModal = ({
         ...aiPreferences,
         preserveExisting: existingArrangementAction === 'continue',
         clearExisting: existingArrangementAction === 'clear',
+        currentArrangement: seatingArrangement,
         seatingRules,
-        groupMixingRules: aiPreferences.groupMixingRules
+        groupMixingRules: aiPreferences.groupMixingRules,
+        groupPolicies: aiPreferences.groupPolicies
       };
-      
+            
       const result = await onGenerate(generationOptions);
       
       if (!customPreferences) {
@@ -389,7 +686,6 @@ const AISeatingModal = ({
       
       return result;
     } catch (error) {
-      console.error('Error in handleGenerate:', error);
       return false;
     } finally {
       setIsGenerating(false);
@@ -401,7 +697,7 @@ const AISeatingModal = ({
     let tableCounter = getNextTableNumber ? getNextTableNumber() : tables.length + 1;
     
     const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) + 
-                       customTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      customTableSettings.reduce((sum, s) => sum + s.count, 0);
         
     const cols = Math.ceil(Math.sqrt(totalTables + tables.length));
     const spacing = 200;
@@ -474,9 +770,11 @@ const AISeatingModal = ({
           ...aiPreferences,
           preserveExisting: existingArrangementAction === 'continue',
           clearExisting: existingArrangementAction === 'clear',
+          currentArrangement: seatingArrangement,
           allTables: allTablesForGeneration,
           seatingRules,
-          groupMixingRules: aiPreferences.groupMixingRules
+          groupMixingRules: aiPreferences.groupMixingRules,
+          groupPolicies: aiPreferences.groupPolicies
         };
         
         const result = await handleGenerate(aiPreferencesWithExisting);
@@ -497,7 +795,6 @@ const AISeatingModal = ({
         
         onClose();
       } catch (error) {
-        console.error('Error creating tables:', error);
         setIsGenerating(false);
       }
     } else {
@@ -506,8 +803,10 @@ const AISeatingModal = ({
         preserveExisting: existingArrangementAction === 'continue',
         clearExisting: existingArrangementAction === 'clear',
         allTables: tables,
+        currentArrangement: seatingArrangement,
         seatingRules,
-        groupMixingRules: aiPreferences.groupMixingRules
+        groupMixingRules: aiPreferences.groupMixingRules,
+        groupPolicies: aiPreferences.groupPolicies
       };
       
       await handleGenerate(aiPreferencesWithExisting);
@@ -519,6 +818,27 @@ const AISeatingModal = ({
       ...prev,
       [key]: value
     }));
+  };
+
+  const handleAllowGroupMixingChange = (value) => {
+    const updatedPreferences = {
+      ...aiPreferences,
+      allowGroupMixing: value
+    };
+    
+    setAiPreferences(updatedPreferences);
+    
+    const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+    let guestsNeedingCalculation = 0;
+    
+    if (existingArrangementAction === 'continue') {
+      const seatedGuestsCount = getSeatedGuestsCount();
+      guestsNeedingCalculation = totalGuests - seatedGuestsCount;
+    } else {
+      guestsNeedingCalculation = totalGuests;
+    }
+    
+    autoSuggestTables(guestsNeedingCalculation, value, updatedPreferences.groupPolicies);
   };
 
   const handleTableSettingChange = (index, field, value) => {
@@ -636,6 +956,7 @@ const AISeatingModal = ({
                             ...aiPreferences,
                             preserveExisting: true,
                             clearExisting: false,
+                            currentArrangement: seatingArrangement,
                             seatingRules,
                             groupMixingRules: aiPreferences.groupMixingRules
                           };
@@ -1077,11 +1398,15 @@ const AISeatingModal = ({
                     <input
                       type="checkbox"
                       checked={aiPreferences.allowGroupMixing}
-                      onChange={(e) => handlePreferenceChange('allowGroupMixing', e.target.checked)}
+                      onChange={(e) => handleAllowGroupMixingChange(e.target.checked)}
                     />
                     <div className="preference-content">
                       <div className="preference-title">{t('seating.ai.allowGroupMixingTitle')}</div>
-                      <div className="preference-description">{t('seating.ai.allowGroupMixingDescription')}</div>
+                      <div className="preference-description">
+                        {aiPreferences.groupMixingRules && aiPreferences.groupMixingRules.length > 0
+                          ? t('seating.ai.allowGroupMixingWithRules')
+                          : t('seating.ai.allowGroupMixingFree')}
+                      </div>
                     </div>
                   </label>
                 </div>
@@ -1128,16 +1453,6 @@ const AISeatingModal = ({
                             ))}
                           </select>
                           
-                          <select
-                            value={newGroupMixRule.priority}
-                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, priority: e.target.value }))}
-                            className="priority-select"
-                          >
-                            <option value="low">{t('seating.ai.priorityLow')}</option>
-                            <option value="medium">{t('seating.ai.priorityMedium')}</option>
-                            <option value="high">{t('seating.ai.priorityHigh')}</option>
-                          </select>
-                          
                           <button
                             type="button"
                             onClick={addGroupMixRule}
@@ -1156,9 +1471,6 @@ const AISeatingModal = ({
                                   <span className="mix-rule-groups">
                                     {getGroupDisplayName(rule.group1)} + {getGroupDisplayName(rule.group2)}
                                   </span>
-                                  <span className={`priority-badge ${rule.priority}`}>
-                                    {t(`seating.ai.priority${rule.priority.charAt(0).toUpperCase() + rule.priority.slice(1)}`)}
-                                  </span>
                                 </div>
                                 <button
                                   type="button"
@@ -1171,6 +1483,83 @@ const AISeatingModal = ({
                             ))}
                           </div>
                         )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {aiPreferences.allowGroupMixing && (
+                  <div className="group-policies-section">
+                    <div className="section-header">
+                      <h5>{t('seating.ai.groupPolicies')}</h5>
+                      <button
+                        type="button"
+                        onClick={() => setShowGroupPolicies(!showGroupPolicies)}
+                        className="toggle-section-btn"
+                      >
+                        {showGroupPolicies ? t('seating.ai.hidePolicies') : t('seating.ai.showPolicies')}
+                      </button>
+                    </div>
+
+                    {showGroupPolicies && (
+                      <div className="group-policies-config">
+                        <div className="policies-info">
+                          {t('seating.ai.groupPoliciesDescription')}
+                        </div>
+                        <div className="group-policies-list">
+                          {(() => {
+                            const groupsInMixingRules = new Set();
+                            if (aiPreferences.groupMixingRules && aiPreferences.groupMixingRules.length > 0) {
+                              aiPreferences.groupMixingRules.forEach(rule => {
+                                groupsInMixingRules.add(rule.group1);
+                                groupsInMixingRules.add(rule.group2);
+                              });
+                            }
+                            
+                            const availableGroupsForPolicy = availableGroups.filter(group => 
+                              !groupsInMixingRules.has(group)
+                            );
+
+                            if (availableGroupsForPolicy.length === 0) {
+                              return (
+                                <div className="no-groups-message">
+                                  {t('seating.ai.allGroupsInMixingRules')}
+                                </div>
+                              );
+                            }
+
+                            return availableGroupsForPolicy.map(group => {
+                              const currentPolicy = aiPreferences.groupPolicies[group] || 'M';
+                              return (
+                                <div key={group} className="group-policy-item">
+                                  <span className="group-policy-name">
+                                    {getGroupDisplayName(group)}
+                                  </span>
+                                  <select
+                                    value={currentPolicy}
+                                    onChange={(e) => {
+                                      setAiPreferences(prev => ({
+                                        ...prev,
+                                        groupPolicies: {
+                                          ...prev.groupPolicies,
+                                          [group]: e.target.value
+                                        }
+                                      }));
+                                    }}
+                                    className="policy-select"
+                                  >
+                                    <option value="M">{t('seating.ai.policyMixable')}</option>
+                                    <option value="S">{t('seating.ai.policySeparate')}</option>
+                                  </select>
+                                  <div className="policy-description">
+                                    {currentPolicy === 'S' 
+                                      ? t('seating.ai.policySeparateDesc')
+                                      : t('seating.ai.policyMixableDesc')}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
                       </div>
                     )}
                   </div>
