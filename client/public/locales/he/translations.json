@@ -235,6 +235,7 @@
         },
         "searchResults": "תוצאות חיפוש",
         "loading": "טוען ספקים...",
+        "loadingMore": "טוען...",
         "noResults": "לא נמצאו ספקים. נסה לשנות את החיפוש או הסינון.",
         "defaultVendorName": "ספק",
         "noAddress": "אין כתובת",

@@ -232,6 +232,7 @@
         },
         "searchResults": "Search Results",
         "loading": "Loading vendors...",
+        "loadingMore": "Loading...",
         "noResults": "No vendors found. Try changing your search or filters.",
         "defaultVendorName": "Vendor",
         "noAddress": "No address",
