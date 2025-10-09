@@ -35,6 +35,7 @@ const EventVendorsPage = () => {
     return phoneRegex.test(phoneNumber);
   };
 
+  // Fetches event details on component mount and sets RTL direction for Hebrew
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
@@ -66,6 +67,7 @@ const EventVendorsPage = () => {
     fetchEventDetails();
   }, [id, navigate, t, i18n.language, isRTL]);
 
+  // Handles vendor selection from API search - adds or replaces vendor in event
   const handleVendorSelect = async (vendor) => {
     try {
       const token = localStorage.getItem('token');
@@ -122,6 +124,7 @@ const EventVendorsPage = () => {
     }
   };
 
+   // Handles manual vendor form field changes with phone validation
   const handleManualVendorChange = (e) => {
     const { name, value } = e.target;
    
@@ -139,6 +142,7 @@ const EventVendorsPage = () => {
     }));
   };
 
+  // Submits manually entered vendor data to event with validation
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
      
@@ -215,6 +219,7 @@ const EventVendorsPage = () => {
     }
   };
 
+  // Deletes a vendor from the event by index
   const handleDeleteVendor = async (index) => {
     try {
       const token = localStorage.getItem('token');
@@ -256,32 +261,38 @@ const EventVendorsPage = () => {
     }
   };
 
+  // Opens modal to choose between API search or manual entry for adding/changing vendor
   const handleShowVendorOptions = (actionType, vendorIndex = null) => {
     setVendorActionType(actionType);
     setVendorToChangeIndex(vendorIndex);
     setShowVendorSelectionModal(true);
   };
 
+  // Navigates to API vendor search page from modal
   const handleSelectAPIVendors = () => {
     setShowVendorSelectionModal(false);
     setShowVendorsPage(true);
   };
 
+  // Opens manual vendor form from modal
   const handleSelectManualVendor = () => {
     setShowVendorSelectionModal(false);
     setShowManualForm(true);
   };
 
+   // Direct navigation to API vendor search 
   const handleDirectAPIVendors = () => {
     setVendorActionType('add');
     setShowVendorsPage(true);
   };
 
+  // Direct navigation to manual vendor form
   const handleDirectManualVendor = () => {
     setVendorActionType('add');
     setShowManualForm(true);
   };
 
+  // Returns emoji icon for vendor category
   const getCategoryIcon = (category) => {
     switch(category?.toLowerCase()) {
       case 'catering':
@@ -309,34 +320,7 @@ const EventVendorsPage = () => {
     }
   };
 
-  // const getCategoryName = (category) => {
-  //   console.log("getCategoryName called with:", category);
-   
-  //   if (!category || category === 'other' || category === '') {
-  //     const translation = t('events.features.vendors.categories.other');
-  //     console.log("Translation for 'other':", translation);
-     
-  //     if (translation === 'events.features.vendors.categories.other') {
-  //       return t('events.features.vendors.categories.other');
-  //     }
-  //     return translation;
-  //   }
-   
-  //   const translationKey = `events.features.vendors.categories.${category?.toLowerCase()}`;
-  //   const translation = t(translationKey);
-  //   console.log(`Translation for ${translationKey}:`, translation);
-   
-  //   if (translation === translationKey) {
-  //     const fallbackTranslation = t('events.features.vendors.categories.other');
-  //     if (fallbackTranslation === 'events.features.vendors.categories.other') {
-  //       return t('events.features.vendors.categories.other');
-  //     }
-  //     return fallbackTranslation;
-  //   }
-   
-  //   return translation;
-  // };
-
+  // Returns translated category name, defaults to 'other' if category is undefined
   const getCategoryName = (category) => {
   const categoryToUse = category || 'other' || '';
   return t(`events.features.vendors.categories.${categoryToUse}`);

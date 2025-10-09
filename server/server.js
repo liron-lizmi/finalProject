@@ -39,6 +39,7 @@ const rsvpRoutes = require('./routes/rsvpRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const ridesRoutes = require('./routes/ridesRoutes');
 const venueRoutes = require('./routes/venueRoutes');
+const vendorRoutes = require('./routes/vendorRoutes');
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
@@ -59,6 +60,7 @@ app.use('/api/rsvp', rsvpRoutes);
 app.use('/api/events/:eventId/budget', budgetRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/events/:eventId/vendors', vendorRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -86,7 +88,6 @@ app.use((err, req, res, next) => {
 
 mongoose.connect(MONGO_URI)
 .then(() => {
-    console.log('Connected to MongoDB');
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });

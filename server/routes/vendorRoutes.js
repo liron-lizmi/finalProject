@@ -1,20 +1,22 @@
-// routes/vendorRoutes.js
 const express = require('express');
 const router = express.Router({ mergeParams: true }); 
 const { 
   getEventVendors,
   addVendor,
   updateVendor,
-  deleteVendor
+  deleteVendor,
+  searchVendors,
+  getCacheStats
 } = require('../controllers/vendorController');
 const auth = require('../middleware/auth');
 
-router.use(auth);
+router.get('/search', searchVendors);
 
-router.get('/', getEventVendors);
-router.post('/', addVendor);
+router.get('/cache/stats', auth, getCacheStats);
 
-router.put('/:vendorId', updateVendor);
-router.delete('/:vendorId', deleteVendor);
+router.get('/', auth, getEventVendors);
+router.post('/', auth, addVendor);
+router.put('/:vendorId', auth, updateVendor);
+router.delete('/:vendorId', auth, deleteVendor);
 
 module.exports = router;

@@ -1,12 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import '../../styles/VendorsPage.css';
+import vendorService from '../../services/vendorService';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
-const getMapStyles = () => {
-  // Get CSS variables for map styling
+const VendorsPage = ({ onSelectVendor }) => {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [vendors, setVendors] = useState([]);
+  const [allVendors, setAllVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [map, setMap] = useState(null);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedVendorPhotoIndex, setSelectedVendorPhotoIndex] = useState(null);
+  const [markers, setMarkers] = useState([]);
+  const [successMessage, setSuccessMessage] = useState(null);
+ 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [vendorsPerPage] = useState(20);
+
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  const [displayedVendors, setDisplayedVendors] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+
+  const [error, setError] = useState(null);
+ 
+  const eventId = location.state?.eventId;
+ 
+  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
+  const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
+ 
+  const [filters, setFilters] = useState({
+    area: 'all',
+    vendorType: 'all',
+    specificFilters: [],
+    kashrutLevel: 'all'
+  });
+
+  const getMapStyles = () => {
   const root = document.documentElement;
   const styles = getComputedStyle(root);
   
@@ -37,38 +76,7 @@ const getMapStyles = () => {
   ];
 };
 
-const VendorsPage = ({ onSelectVendor }) => {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [vendors, setVendors] = useState([]);
-  const [allVendors, setAllVendors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [map, setMap] = useState(null);
-  const [selectedVendor, setSelectedVendor] = useState(null);
-  const [selectedVendorPhotoIndex, setSelectedVendorPhotoIndex] = useState(null);
-  const [markers, setMarkers] = useState([]);
-  const [successMessage, setSuccessMessage] = useState(null);
- 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [vendorsPerPage] = useState(20);
-  const [totalPages, setTotalPages] = useState(0);
-
-  const [searchTimeout, setSearchTimeout] = useState(null);
- 
-  const eventId = location.state?.eventId;
- 
-  const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
-  const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
- 
-  const [filters, setFilters] = useState({
-    area: 'all',
-    vendorType: 'all',
-    specificFilters: [],
-    kashrutLevel: 'all'
-  });
-
+// Returns emoji and Hebrew category mappings for specific vendor types
   const getSpecificFilters = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -159,6 +167,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
+  // Returns kosher certification level options
   const getKashrutOptions = () => {
     return [
       { value: 'all', labelKey: 'vendors.specificFilters.catering.kashrut.all' },
@@ -170,22 +179,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     ];
   };
 
-  useEffect(() => {
-    const totalVendors = allVendors.length;
-    const pages = Math.ceil(totalVendors / vendorsPerPage);
-    setTotalPages(pages);
-   
-    const startIndex = (currentPage - 1) * vendorsPerPage;
-    const endIndex = startIndex + vendorsPerPage;
-    const currentVendors = allVendors.slice(startIndex, endIndex);
-   
-    setVendors(currentVendors);
-   
-    if (currentVendors.length > 0) {
-      addMarkers(currentVendors);
-    }
-  }, [allVendors, currentPage, vendorsPerPage]);
-
+  // Returns location coordinates and search radius for Israeli regions
   const getLocationForArea = (area) => {
     switch (area) {
       case 'ירושלים':
@@ -213,40 +207,41 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  const isVendorInArea = (vendor, selectedArea) => {
-    if (selectedArea === 'all') return true;
+  // const isVendorInArea = (vendor, selectedArea) => {
+  //   if (selectedArea === 'all') return true;
    
-    if (!vendor.geometry || !vendor.geometry.location) return false;
+  //   if (!vendor.geometry || !vendor.geometry.location) return false;
    
-    const venueLat = typeof vendor.geometry.location.lat === 'function' ?
-      vendor.geometry.location.lat() : vendor.geometry.location.lat;
-    const venueLng = typeof vendor.geometry.location.lng === 'function' ?
-      vendor.geometry.location.lng() : vendor.geometry.location.lng;
+  //   const venueLat = typeof vendor.geometry.location.lat === 'function' ?
+  //     vendor.geometry.location.lat() : vendor.geometry.location.lat;
+  //   const venueLng = typeof vendor.geometry.location.lng === 'function' ?
+  //     vendor.geometry.location.lng() : vendor.geometry.location.lng;
    
-    if (isNaN(venueLat) || isNaN(venueLng)) return false;
+  //   if (isNaN(venueLat) || isNaN(venueLng)) return false;
    
-    const areaLocation = getLocationForArea(selectedArea);
-    if (!areaLocation) return true;
+  //   const areaLocation = getLocationForArea(selectedArea);
+  //   if (!areaLocation) return true;
    
-    const distance = calculateDistance(
-      venueLat, venueLng,
-      areaLocation.location.lat, areaLocation.location.lng
-    );
+  //   const distance = calculateDistance(
+  //     venueLat, venueLng,
+  //     areaLocation.location.lat, areaLocation.location.lng
+  //   );
    
-    return distance <= areaLocation.radius;
-  };
+  //   return distance <= areaLocation.radius;
+  // };
 
-  const calculateDistance = (lat1, lng1, lat2, lng2) => {
-    const R = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
+  // const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  //   const R = 6371000;
+  //   const dLat = (lat2 - lat1) * Math.PI / 180;
+  //   const dLng = (lng2 - lng1) * Math.PI / 180;
+  //   const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+  //       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+  //       Math.sin(dLng/2) * Math.sin(dLng/2);
+  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  //   return R * c;
+  // };
 
+  // Maps vendor type string to event category 
   const determineCategoryFromVendorType = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -270,6 +265,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
+  // Determines vendor category from Google Place types array using keyword matching
   const determineCategoryFromPlaceTypes = (types) => {
     if (!types || !Array.isArray(types)) return 'other';
    
@@ -313,6 +309,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     return 'other';
   };
 
+  // Determines vendor category from business name and description using keyword matching
   const determineCategoryFromName = (name, description = '') => {
     const text = (name + ' ' + description).toLowerCase();
    
@@ -337,234 +334,234 @@ const VendorsPage = ({ onSelectVendor }) => {
     return 'other';
   };
 
-  const buildSearchQuery = (vendorType, searchTerm = '') => {
-    let query = '';
+  // const buildSearchQuery = (vendorType, searchTerm = '') => {
+  //   let query = '';
    
-    if (!vendorType || vendorType === 'all') {
-      query = 'event services wedding party celebration catering photographer florist music entertainment';
-    } else {
-      switch (vendorType) {
-        case 'catering':
-          query = 'catering service food restaurant chef';
+  //   if (!vendorType || vendorType === 'all') {
+  //     query = 'event services wedding party celebration catering photographer florist music entertainment';
+  //   } else {
+  //     switch (vendorType) {
+  //       case 'catering':
+  //         query = 'catering service food restaurant chef';
          
-          if (filters.kashrutLevel && filters.kashrutLevel !== 'all') {
-            switch (filters.kashrutLevel) {
-              case 'mehadrin':
-                query += ' מהדרין mehadrin kosher';
-                break;
-              case 'regular-kosher':
-                query += ' כשר kosher';
-                break;
-              case 'rabbinate':
-                query += ' רבנות rabbinate kosher';
-                break;
-              case 'badatz':
-                query += ' בד"ץ badatz kosher';
-                break;
-              case 'non-kosher':
-                query += ' לא כשר non kosher';
-                break;
-            }
-          }
+  //         if (filters.kashrutLevel && filters.kashrutLevel !== 'all') {
+  //           switch (filters.kashrutLevel) {
+  //             case 'mehadrin':
+  //               query += ' מהדרין mehadrin kosher';
+  //               break;
+  //             case 'regular-kosher':
+  //               query += ' כשר kosher';
+  //               break;
+  //             case 'rabbinate':
+  //               query += ' רבנות rabbinate kosher';
+  //               break;
+  //             case 'badatz':
+  //               query += ' בד"ץ badatz kosher';
+  //               break;
+  //             case 'non-kosher':
+  //               query += ' לא כשר non kosher';
+  //               break;
+  //           }
+  //         }
          
-          if (filters.specificFilters.length > 0) {
-            filters.specificFilters.forEach(filter => {
-              switch (filter) {
-                case 'dairy':
-                  query += ' חלבי dairy חלב milk';
-                  break;
-                case 'meat':
-                  query += ' בשרי meat בשר';
-                  break;
-                case 'pareve':
-                  query += ' פרווה pareve';
-                  break;
-                case 'vegan':
-                  query += ' טבעוני vegan';
-                  break;
-                case 'vegetarian':
-                  query += ' צמחוני vegetarian';
-                  break;
-                case 'gluten-free':
-                  query += ' ללא גלוטן gluten free';
-                  break;
-              }
-            });
-          }
-          break;
+  //         if (filters.specificFilters.length > 0) {
+  //           filters.specificFilters.forEach(filter => {
+  //             switch (filter) {
+  //               case 'dairy':
+  //                 query += ' חלבי dairy חלב milk';
+  //                 break;
+  //               case 'meat':
+  //                 query += ' בשרי meat בשר';
+  //                 break;
+  //               case 'pareve':
+  //                 query += ' פרווה pareve';
+  //                 break;
+  //               case 'vegan':
+  //                 query += ' טבעוני vegan';
+  //                 break;
+  //               case 'vegetarian':
+  //                 query += ' צמחוני vegetarian';
+  //                 break;
+  //               case 'gluten-free':
+  //                 query += ' ללא גלוטן gluten free';
+  //                 break;
+  //             }
+  //           });
+  //         }
+  //         break;
          
-        case 'photographer':
-          query = 'photographer photography studio';
-          if (filters.specificFilters.length > 0) {
-            query += ' ' + filters.specificFilters.join(' ');
-          }
-          break;
+  //       case 'photographer':
+  //         query = 'photographer photography studio';
+  //         if (filters.specificFilters.length > 0) {
+  //           query += ' ' + filters.specificFilters.join(' ');
+  //         }
+  //         break;
          
-        case 'florist':
-          query = 'florist flower shop';
-          if (filters.specificFilters.length > 0) {
-            filters.specificFilters.forEach(filter => {
-              switch (filter) {
-                case 'bridal':
-                  query += ' bridal wedding';
-                  break;
-                case 'arrangements':
-                  query += ' arrangements';
-                  break;
-                case 'decorations':
-                  query += ' decorations';
-                  break;
-                case 'plants':
-                  query += ' plants';
-                  break;
-              }
-            });
-          }
-          break;
+  //       case 'florist':
+  //         query = 'florist flower shop';
+  //         if (filters.specificFilters.length > 0) {
+  //           filters.specificFilters.forEach(filter => {
+  //             switch (filter) {
+  //               case 'bridal':
+  //                 query += ' bridal wedding';
+  //                 break;
+  //               case 'arrangements':
+  //                 query += ' arrangements';
+  //                 break;
+  //               case 'decorations':
+  //                 query += ' decorations';
+  //                 break;
+  //               case 'plants':
+  //                 query += ' plants';
+  //                 break;
+  //             }
+  //           });
+  //         }
+  //         break;
          
-        case 'musician':
-          query = 'musician entertainment band music';
-          if (filters.specificFilters.length > 0) {
-            query += ' ' + filters.specificFilters.join(' ');
-          }
-          break;
+  //       case 'musician':
+  //         query = 'musician entertainment band music';
+  //         if (filters.specificFilters.length > 0) {
+  //           query += ' ' + filters.specificFilters.join(' ');
+  //         }
+  //         break;
          
-        case 'dj':
-          query = 'dj sound entertainment music';
-          if (filters.specificFilters.length > 0) {
-            filters.specificFilters.forEach(filter => {
-              switch (filter) {
-                case 'wedding':
-                  query += ' wedding';
-                  break;
-                case 'party':
-                  query += ' party';
-                  break;
-                case 'corporate':
-                  query += ' corporate';
-                  break;
-                case 'with-equipment':
-                  query += ' equipment sound system';
-                  break;
-              }
-            });
-          }
-          break;
+  //       case 'dj':
+  //         query = 'dj sound entertainment music';
+  //         if (filters.specificFilters.length > 0) {
+  //           filters.specificFilters.forEach(filter => {
+  //             switch (filter) {
+  //               case 'wedding':
+  //                 query += ' wedding';
+  //                 break;
+  //               case 'party':
+  //                 query += ' party';
+  //                 break;
+  //               case 'corporate':
+  //                 query += ' corporate';
+  //                 break;
+  //               case 'with-equipment':
+  //                 query += ' equipment sound system';
+  //                 break;
+  //             }
+  //           });
+  //         }
+  //         break;
          
-        case 'decorator':
-          query = 'event decorator design planning';
-          if (filters.specificFilters.length > 0) {
-            query += ' ' + filters.specificFilters.join(' ');
-          }
-          break;
+  //       case 'decorator':
+  //         query = 'event decorator design planning';
+  //         if (filters.specificFilters.length > 0) {
+  //           query += ' ' + filters.specificFilters.join(' ');
+  //         }
+  //         break;
          
-        case 'makeup':
-          query = 'makeup artist beauty';
-          if (filters.specificFilters.length > 0) {
-            filters.specificFilters.forEach(filter => {
-              switch (filter) {
-                case 'bridal':
-                  query += ' bridal wedding';
-                  break;
-                case 'event':
-                  query += ' event';
-                  break;
-                case 'with-hairstyling':
-                  query += ' hairstyling';
-                  break;
-                case 'mobile':
-                  query += ' mobile service';
-                  break;
-              }
-            });
-          }
-          break;
+  //       case 'makeup':
+  //         query = 'makeup artist beauty';
+  //         if (filters.specificFilters.length > 0) {
+  //           filters.specificFilters.forEach(filter => {
+  //             switch (filter) {
+  //               case 'bridal':
+  //                 query += ' bridal wedding';
+  //                 break;
+  //               case 'event':
+  //                 query += ' event';
+  //                 break;
+  //               case 'with-hairstyling':
+  //                 query += ' hairstyling';
+  //                 break;
+  //               case 'mobile':
+  //                 query += ' mobile service';
+  //                 break;
+  //             }
+  //           });
+  //         }
+  //         break;
          
-        case 'transport':
-          query = 'transportation rental service car bus';
-          if (filters.specificFilters.length > 0) {
-            filters.specificFilters.forEach(filter => {
-              switch (filter) {
-                case 'luxury-cars':
-                  query += ' luxury cars';
-                  break;
-                case 'buses':
-                  query += ' buses';
-                  break;
-                case 'limousines':
-                  query += ' limousines';
-                  break;
-                case 'classic-cars':
-                  query += ' classic vintage cars';
-                  break;
-              }
-            });
-          }
-          break;
+  //       case 'transport':
+  //         query = 'transportation rental service car bus';
+  //         if (filters.specificFilters.length > 0) {
+  //           filters.specificFilters.forEach(filter => {
+  //             switch (filter) {
+  //               case 'luxury-cars':
+  //                 query += ' luxury cars';
+  //                 break;
+  //               case 'buses':
+  //                 query += ' buses';
+  //                 break;
+  //               case 'limousines':
+  //                 query += ' limousines';
+  //                 break;
+  //               case 'classic-cars':
+  //                 query += ' classic vintage cars';
+  //                 break;
+  //             }
+  //           });
+  //         }
+  //         break;
          
-        default:
-          query = 'event services provider';
-          break;
-      }
-    }
+  //       default:
+  //         query = 'event services provider';
+  //         break;
+  //     }
+  //   }
    
-    if (searchTerm) {
-      query += ' ' + searchTerm;
-    }
+  //   if (searchTerm) {
+  //     query += ' ' + searchTerm;
+  //   }
    
-    return query;
-  };
+  //   return query;
+  // };
 
-  const filterVendorsByAdvancedCriteria = (vendors) => {
-    return vendors.filter(vendor => {
-      const vendorText = (vendor.name + ' ' + (vendor.vicinity || '') + ' ' + (vendor.formatted_address || '')).toLowerCase();
+  // const filterVendorsByAdvancedCriteria = (vendors) => {
+  //   return vendors.filter(vendor => {
+  //     const vendorText = (vendor.name + ' ' + (vendor.vicinity || '') + ' ' + (vendor.formatted_address || '')).toLowerCase();
      
-      const venueKeywords = ['hotel', 'hall', 'venue', 'event center', 'convention', 'resort', 'banquet', 'palace', 'manor', 'estate'];
-      const isVenue = venueKeywords.some(keyword => vendorText.includes(keyword));
+  //     const venueKeywords = ['hotel', 'hall', 'venue', 'event center', 'convention', 'resort', 'banquet', 'palace', 'manor', 'estate'];
+  //     const isVenue = venueKeywords.some(keyword => vendorText.includes(keyword));
      
-      if (isVenue) return false;
+  //     if (isVenue) return false;
      
-      if (filters.vendorType === 'catering' && filters.kashrutLevel && filters.kashrutLevel !== 'all') {
-        const kashrutKeywords = {
-          'mehadrin': ['מהדרין', 'mehadrin'],
-          'regular-kosher': ['כשר', 'kosher'],
-          'rabbinate': ['רבנות', 'rabbinate'],
-          'badatz': ['בד"ץ', 'badatz'],
-          'non-kosher': ['לא כשר', 'non kosher', 'טרף']
-        };
+  //     if (filters.vendorType === 'catering' && filters.kashrutLevel && filters.kashrutLevel !== 'all') {
+  //       const kashrutKeywords = {
+  //         'mehadrin': ['מהדרין', 'mehadrin'],
+  //         'regular-kosher': ['כשר', 'kosher'],
+  //         'rabbinate': ['רבנות', 'rabbinate'],
+  //         'badatz': ['בד"ץ', 'badatz'],
+  //         'non-kosher': ['לא כשר', 'non kosher', 'טרף']
+  //       };
        
-        const levelKeywords = kashrutKeywords[filters.kashrutLevel];
-        if (levelKeywords) {
-          const hasKashrutMatch = levelKeywords.some(keyword => vendorText.includes(keyword));
-          if (!hasKashrutMatch) return false;
-        }
-      }
+  //       const levelKeywords = kashrutKeywords[filters.kashrutLevel];
+  //       if (levelKeywords) {
+  //         const hasKashrutMatch = levelKeywords.some(keyword => vendorText.includes(keyword));
+  //         if (!hasKashrutMatch) return false;
+  //       }
+  //     }
      
-      if (filters.specificFilters.length > 0) {
-        const hasMatchingFilter = filters.specificFilters.some(filter => {
-          const filterKeywords = {
-            'dairy': ['חלבי', 'dairy', 'חלב', 'milk'],
-            'meat': ['בשרי', 'meat', 'בשר'],
-            'pareve': ['פרווה', 'pareve'],
-            'vegan': ['טבעוני', 'vegan'],
-            'vegetarian': ['צמחוני', 'vegetarian'],
-            'gluten-free': ['ללא גלוטן', 'gluten free', 'celiac']
-          };
+  //     if (filters.specificFilters.length > 0) {
+  //       const hasMatchingFilter = filters.specificFilters.some(filter => {
+  //         const filterKeywords = {
+  //           'dairy': ['חלבי', 'dairy', 'חלב', 'milk'],
+  //           'meat': ['בשרי', 'meat', 'בשר'],
+  //           'pareve': ['פרווה', 'pareve'],
+  //           'vegan': ['טבעוני', 'vegan'],
+  //           'vegetarian': ['צמחוני', 'vegetarian'],
+  //           'gluten-free': ['ללא גלוטן', 'gluten free', 'celiac']
+  //         };
          
-          const keywords = filterKeywords[filter];
-          if (keywords) {
-            return keywords.some(keyword => vendorText.includes(keyword));
-          }
+  //         const keywords = filterKeywords[filter];
+  //         if (keywords) {
+  //           return keywords.some(keyword => vendorText.includes(keyword));
+  //         }
          
-          return vendorText.includes(filter);
-        });
+  //         return vendorText.includes(filter);
+  //       });
        
-        if (!hasMatchingFilter) return false;
-      }
+  //       if (!hasMatchingFilter) return false;
+  //     }
      
-      return true;
-    });
-  };
+  //     return true;
+  //   });
+  // };
   const [selectedPhoto, setSelectedPhoto] = useState(0);
  
   const mapRef = useRef(null);
@@ -612,91 +609,81 @@ const VendorsPage = ({ onSelectVendor }) => {
   }, [isRTL, i18n.language]);
  
   useEffect(() => {
-    if (isEffectRun.current) return;
-    isEffectRun.current = true;
-   
-    const setupGoogleMaps = () => {
-      console.log("Setting up Google Maps...");
-      initMap();
-    };
-   
-    const loadGoogleMapsAPI = () => {
-      if (window.google && window.google.maps) {
-        console.log("Google Maps already loaded, skipping load");
+  if (isEffectRun.current) return;
+  isEffectRun.current = true;
+  
+  const setupGoogleMaps = () => {
+    initMap();
+  };
+  
+  const loadGoogleMapsAPI = () => {
+    if (window.google && window.google.maps) {
+      setupGoogleMaps();
+      return;
+    }
+
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+    if (existingScript) {
+      if (!window.google || !window.google.maps) {
+        window.initGoogleMapsCallback = setupGoogleMaps;
+        return;
+      } else {
         setupGoogleMaps();
         return;
       }
+    }
 
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-      if (existingScript) {
-        console.log("Google Maps script tag already exists");
-       
-        if (!window.google || !window.google.maps) {
-          console.log("Google Maps script exists but API not yet initialized, waiting...");
-          window.initGoogleMapsCallback = setupGoogleMaps;
-          return;
-        } else {
-          setupGoogleMaps();
-          return;
-        }
+    window.googleMapsLoaded = true;
+    const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+    
+    if (!API_KEY) {
+      console.error("Missing Google Maps API key");
+      setLoading(false);
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async&language=${isRTL ? 'he' : 'en'}&region=IL`;
+    script.async = true;
+    script.defer = true;
+
+    window.googleMapsCallback = () => {
+      setupGoogleMaps();
+      if (window.initGoogleMapsCallback) {
+        window.initGoogleMapsCallback();
+        window.initGoogleMapsCallback = null;
       }
-
-      window.googleMapsLoaded = true;
-     
-      const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-      if (!API_KEY) {
-        console.error("Missing Google Maps API key");
-        setLoading(false);
-        return;
-      }
-     
-      console.log("Loading Google Maps API");
-     
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async&language=${isRTL ? 'he' : 'en'}&region=IL`;
-      script.async = true;
-      script.defer = true;
-
-      window.googleMapsCallback = () => {
-        console.log("Google Maps API loaded via callback");
-        setupGoogleMaps();
-       
-        if (window.initGoogleMapsCallback) {
-          window.initGoogleMapsCallback();
-          window.initGoogleMapsCallback = null;
-        }
-      };
-     
-      scriptRef.current = script;
-      document.head.appendChild(script);
     };
-   
-    loadGoogleMapsAPI();
-   
-    return () => {
-      if (scriptRef.current && scriptRef.current.parentNode && !window.google) {
-        scriptRef.current.parentNode.removeChild(scriptRef.current);
-        window.googleMapsLoaded = false;
-      }
-     
-      if (markers.length > 0) {
-        markers.forEach(marker => {
-          if (marker) {
-            try {
-              if (typeof marker.setMap === 'function') {
-                marker.setMap(null);
-              } else if (marker.map) {
-                marker.map = null;
-              }
-            } catch (error) {
-              console.error("Error clearing marker on unmount:", error);
+    
+    scriptRef.current = script;
+    document.head.appendChild(script);
+  };
+  
+  loadGoogleMapsAPI();
+  
+  return () => {
+    if (scriptRef.current && scriptRef.current.parentNode && !window.google) {
+      scriptRef.current.parentNode.removeChild(scriptRef.current);
+      window.googleMapsLoaded = false;
+    }
+    
+    if (markers.length > 0) {
+      markers.forEach(marker => {
+        if (marker) {
+          try {
+            if (typeof marker.setMap === 'function') {
+              marker.setMap(null);
             }
+          } catch (error) {
+            console.error("Error clearing marker:", error);
           }
-        });
-      }
-    };
-  }, []);
+        }
+      });
+    }
+  };
+}, []);
  
+// Initializes Google Maps instance with Israel center, creates PlacesService and Geocoder
   const initMap = () => {
     if (!mapRef.current || !window.google) {
       console.error("Map ref or Google API not ready");
@@ -704,7 +691,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
    
     if (isMapInitialized.current || mapInstance.current) {
-      console.log("Map already initialized");
       return;
     }
    
@@ -744,15 +730,15 @@ const VendorsPage = ({ onSelectVendor }) => {
         console.error("Google Maps Places Service is not available");
       }
      
-      console.log("Map is fully loaded");
-
       const israelCenter = { lat: 31.5, lng: 34.75 };
       newMap.setCenter(israelCenter);
       newMap.setZoom(7);
 
       if (placesService.current) {
-        console.log("Performing initial optimized search");
-        searchVendors(israelCenter, 'all', newMap);
+        if (!initialLoadDone) {
+          setInitialLoadDone(true);
+          searchVendors(false);
+        }
       } else {
         console.error("Places service not available for search");
         setLoading(false);
@@ -764,235 +750,129 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  const collectAllResults = async (request, mapParamDirect) => {
-    return new Promise((resolve) => {
-      let allResults = [];
-      let paginationCount = 0;
-      const maxPages = 2;
+  // const collectAllResults = async (request, mapParamDirect) => {
+  //   return new Promise((resolve) => {
+  //     let allResults = [];
+  //     let paginationCount = 0;
+  //     const maxPages = 2;
      
-      const performSearch = (searchRequest) => {
-        placesService.current.textSearch(searchRequest, async (results, status, pagination) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-            console.log(`Found ${results.length} vendors in batch ${paginationCount + 1}`);
+  //     const performSearch = (searchRequest) => {
+  //       placesService.current.textSearch(searchRequest, async (results, status, pagination) => {
+  //         if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
            
-            const processedResults = await Promise.all(results.map(async vendor => {
-              let processedVendor = { ...vendor };
+  //           const processedResults = await Promise.all(results.map(async vendor => {
+  //             let processedVendor = { ...vendor };
              
-              if (containsHebrew(vendor.name)) {
-                processedVendor.originalName = vendor.name;
-              }
+  //             if (containsHebrew(vendor.name)) {
+  //               processedVendor.originalName = vendor.name;
+  //             }
              
-              if (vendor.vicinity && containsHebrew(vendor.vicinity)) {
-                processedVendor.originalVicinity = vendor.vicinity;
-              }
+  //             if (vendor.vicinity && containsHebrew(vendor.vicinity)) {
+  //               processedVendor.originalVicinity = vendor.vicinity;
+  //             }
              
-              if (vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
-                processedVendor.originalFormattedAddress = vendor.formatted_address;
-              }
+  //             if (vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
+  //               processedVendor.originalFormattedAddress = vendor.formatted_address;
+  //             }
              
-              if (isEnglish && containsHebrew(vendor.name)) {
-                processedVendor.name = await translateText(vendor.name, 'en');
-              }
+  //             if (isEnglish && containsHebrew(vendor.name)) {
+  //               processedVendor.name = await translateText(vendor.name, 'en');
+  //             }
              
-              if (isEnglish && vendor.vicinity && containsHebrew(vendor.vicinity)) {
-                processedVendor.vicinity = await translateText(vendor.vicinity, 'en');
-              }
+  //             if (isEnglish && vendor.vicinity && containsHebrew(vendor.vicinity)) {
+  //               processedVendor.vicinity = await translateText(vendor.vicinity, 'en');
+  //             }
              
-              if (isEnglish && vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
-                processedVendor.formatted_address = await translateText(vendor.formatted_address, 'en');
-              }
+  //             if (isEnglish && vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
+  //               processedVendor.formatted_address = await translateText(vendor.formatted_address, 'en');
+  //             }
              
-              return processedVendor;
-            }));
+  //             return processedVendor;
+  //           }));
            
-            allResults = [...allResults, ...processedResults];
-            paginationCount++;
+  //           allResults = [...allResults, ...processedResults];
+  //           paginationCount++;
 
-            if (pagination &&
-                pagination.hasNextPage &&
-                typeof pagination.nextPage === 'function' &&
-                paginationCount < maxPages) {
-              console.log(`Getting page ${paginationCount + 1}, current total: ${allResults.length}`);
-              setTimeout(() => {
-                pagination.nextPage();
-              }, 50);
-            } else {
-              console.log(`Search completed with ${allResults.length} total results after ${paginationCount} pages`);
-              resolve(allResults);
-            }
-          } else {
-            console.log(`Search finished with status: ${status} after ${paginationCount} pages`);
-            resolve(allResults);
-          }
-        });
-      };
+  //           if (pagination &&
+  //               pagination.hasNextPage &&
+  //               typeof pagination.nextPage === 'function' &&
+  //               paginationCount < maxPages) {
+  //             setTimeout(() => {
+  //               pagination.nextPage();
+  //             }, 50);
+  //           } else {
+  //             resolve(allResults);
+  //           }
+  //         } else {
+  //           resolve(allResults);
+  //         }
+  //       });
+  //     };
      
-      performSearch(request);
-    });
-  };
+  //     performSearch(request);
+  //   });
+  // };
 
-  const searchVendors = async (location, vendorType, mapParamDirect = null) => {
-    console.log(`Starting optimized searchVendors - vendorType: ${vendorType}, area: ${filters.area}, kashrut: ${filters.kashrutLevel}`);
-   
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      console.error("Google Maps or Places API not available");
-      setLoading(false);
-      return;
-    }
-   
-    if (!placesService.current) {
-      console.log("Places service not initialized, creating it now");
-      try {
-        const placesDiv = document.createElement('div');
-        document.body.appendChild(placesDiv);
-        placesService.current = new window.google.maps.places.PlacesService(placesDiv);
-      } catch (error) {
-        console.error("Failed to create places service:", error);
-        setLoading(false);
-        return;
-      }
-    }
-   
+ // Searches vendors via backend API with filters and manages loading states, pagination, and map markers 
+const searchVendors = async (shouldAppend = false) => {
+  if (!shouldAppend) {
     setLoading(true);
+    setAllVendors([]);
+    setDisplayedVendors([]);
+    setVendors([]);
+    setError(null);
     setCurrentPage(1);
+  } else {
+    setLoadingMore(true);
+  }
 
-    const performOptimizedSearches = async (centerLocation, radius, searchType) => {
-      const searchQueries = [];
-     
-      if (searchType === 'all') {
-        searchQueries.push(
-          'event services Israel',
-          'catering photographer Israel',
-          'florist musician Israel',
-          'dj decorator Israel',
-          'makeup transportation Israel',
-          'קייטרינג צלם פרחים'
-        );
+  try {
+    const pageToLoad = shouldAppend ? currentPage + 1 : 1;
+        
+    const result = await vendorService.searchVendors(
+      filters,
+      search,
+      pageToLoad,
+      isRTL ? 'he' : 'en'
+    );
+
+    const newVendors = result.vendors || [];
+    
+    if (shouldAppend) {
+      const updatedVendors = [...displayedVendors, ...newVendors];
+      setAllVendors(updatedVendors);
+      setDisplayedVendors(updatedVendors);
+      setVendors(updatedVendors);
+      setCurrentPage(pageToLoad);
+    } else {
+      setAllVendors(newVendors);
+      setDisplayedVendors(newVendors);
+      setVendors(newVendors);
+      setCurrentPage(1);
+    }
+    
+    setHasMore(result.hasMore || false);
+    
+    if (newVendors.length > 0 && map && window.google) {
+      if (!shouldAppend) {
+        addMarkers(newVendors);
       } else {
-        const baseQuery = buildSearchQuery(searchType, search);
-        searchQueries.push(
-          baseQuery + ' Israel',
-          baseQuery.split(' ').slice(0, 4).join(' ') + ' Israel'
-        );
-      }
-
-      let allResults = [];
-     
-      for (let i = 0; i < searchQueries.length; i++) {
-        const query = searchQueries[i];
-        console.log(`Performing search ${i + 1}/${searchQueries.length}: ${query}`);
-       
-        const request = {
-          query: query,
-          location: centerLocation,
-          radius: radius,
-          language: isRTL ? 'he' : 'en'
-        };
-       
-        try {
-          const results = await collectAllResults(request, mapParamDirect);
-          allResults = [...allResults, ...results];
-          console.log(`Search ${i + 1} completed: ${results.length} results`);
-         
-          if (i < searchQueries.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 50));
-          }
-        } catch (error) {
-          console.error(`Error in search ${i + 1}:`, error);
-        }
-      }
-     
-      return allResults;
-    };
-
-    let locationObj = location;
-    let searchRadius = 50000;
-
-    const areaLocation = getLocationForArea(filters.area);
-    if (areaLocation) {
-      locationObj = areaLocation.location;
-      searchRadius = areaLocation.radius;
-      console.log("Using area-specific location:", locationObj, "with radius:", searchRadius);
-    } else if (typeof location.lat === 'function') {
-      locationObj = {
-        lat: location.lat(),
-        lng: location.lng()
-      };
-    }
-
-    if (filters.area === 'all') {
-      const searchAreas = [
-        { lat: 32.0853, lng: 34.7818, name: 'Center', radius: 25000 },
-        { lat: 31.7683, lng: 35.2137, name: 'Jerusalem', radius: 20000 },
-        { lat: 32.7940, lng: 35.0423, name: 'North', radius: 30000 }
-      ];
-     
-      console.log("Starting optimized nationwide search with advanced filtering");
-     
-      try {
-        let allResults = [];
-       
-        for (const area of searchAreas) {
-          console.log(`Starting search for area: ${area.name}`);
-          const areaResults = await performOptimizedSearches(area, area.radius, vendorType);
-          allResults = [...allResults, ...areaResults];
-          console.log(`Area ${area.name} completed: ${areaResults.length} results`);
-        }
-       
-        const uniqueResults = [];
-        const seenIds = new Set();
-       
-        allResults.forEach(vendor => {
-          if (!seenIds.has(vendor.place_id)) {
-            seenIds.add(vendor.place_id);
-            uniqueResults.push(vendor);
-          }
-        });
-       
-        const filteredResults = filterVendorsByAdvancedCriteria(uniqueResults);
-       
-        console.log(`Nationwide search completed: ${filteredResults.length} total filtered results`);
-       
-        setAllVendors(filteredResults);
-        setLoading(false);
-        return;
-       
-      } catch (error) {
-        console.error("Error in nationwide search:", error);
-        setLoading(false);
-        return;
+        addMarkers([...displayedVendors, ...newVendors]);
       }
     }
-   
-    try {
-      console.log(`Starting optimized search for specific area: ${filters.area}`);
-      const allResults = await performOptimizedSearches(locationObj, searchRadius, vendorType);
-     
-      const uniqueResults = [];
-      const seenIds = new Set();
-     
-      allResults.forEach(vendor => {
-        if (!seenIds.has(vendor.place_id)) {
-          seenIds.add(vendor.place_id);
-          uniqueResults.push(vendor);
-        }
-      });
-     
-      let filteredResults = filterVendorsByAdvancedCriteria(uniqueResults);
-     
-      filteredResults = filteredResults.filter(vendor => {
-        return isVendorInArea(vendor, filters.area);
-      });
-     
-      console.log(`Area search completed: ${filteredResults.length} total filtered results for area: ${filters.area}, type: ${filters.vendorType}, kashrut: ${filters.kashrutLevel}`);
-     
-      setAllVendors(filteredResults);
-      setLoading(false);
-    } catch (error) {
-      console.error("Search execution error:", error);
-      setLoading(false);
-    }
-  };
+    
+  } catch (error) {
+    console.error('❌ Search error:', error);
+    setError(t('vendors.noResults'));
+    setDisplayedVendors([]);
+    setVendors([]);
+  } finally {
+    setLoading(false);
+    setLoadingMore(false);
+  }
+};
+
+// Creates map markers for vendors and adds click listeners to show details
   const addMarkers = (vendors, mapParamDirect = null) => {
     clearMarkers();
    
@@ -1002,9 +882,7 @@ const VendorsPage = ({ onSelectVendor }) => {
       console.error("Map not available for adding markers");
       return;
     }
-   
-    console.log("Adding markers using map:", currentMap ? "available" : "not available");
-   
+      
     const newMarkers = vendors.map(vendor => {
       if (!vendor.geometry || !vendor.geometry.location) return null;
      
@@ -1012,7 +890,6 @@ const VendorsPage = ({ onSelectVendor }) => {
         let marker;
        
         if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
-          console.log("Using AdvancedMarkerElement");
           marker = new window.google.maps.marker.AdvancedMarkerElement({
             position: vendor.geometry.location,
             map: currentMap,
@@ -1023,7 +900,6 @@ const VendorsPage = ({ onSelectVendor }) => {
             getVendorDetails(vendor.place_id);
           });
         } else {
-          console.log("Using regular Marker (deprecated)");
           marker = new window.google.maps.Marker({
             position: vendor.geometry.location,
             map: currentMap,
@@ -1045,6 +921,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     setMarkers(newMarkers);
   };
  
+  // Removes all markers from the map
   const clearMarkers = () => {
     markers.forEach(marker => {
       if (marker) {
@@ -1062,6 +939,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     setMarkers([]);
   };
  
+  // Fetches detailed vendor information using Google Places API placeId
   const getVendorDetails = async (placeId) => {
     if (!placesService.current || !placeId) return;
  
@@ -1078,7 +956,6 @@ const VendorsPage = ({ onSelectVendor }) => {
  
     placesService.current.getDetails(request, async (place, status) => {
       if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-        console.log("Vendor details loaded:", place.name, "Types:", place.types);
        
         let processedPlace = { ...place };
        
@@ -1135,6 +1012,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     });
   };
  
+  // Handles search input changes with debouncing
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
@@ -1155,6 +1033,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     setSearchTimeout(timeout);
   };
  
+  // Handles search form submission with geocoding for address searches
   const handleSearchSubmit = (e) => {
     e.preventDefault();
    
@@ -1197,6 +1076,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     });
   };
  
+  // Handles filter dropdown changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
    
@@ -1220,6 +1100,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
+  // Toggles specific filter checkboxes
   const handleSpecificFilterChange = (filterValue) => {
     setFilters(prev => ({
       ...prev,
@@ -1229,174 +1110,40 @@ const VendorsPage = ({ onSelectVendor }) => {
     }));
   };
  
+  // Applies current filters and triggers new vendor search with cache clear
   const applyFilters = () => {
-    console.log("Applying filters:", filters);
-    const currentMap = mapInstance.current || map;
-   
-    setAllVendors([]);
-    setVendors([]);
+    
+    vendorService.clearFiltersCache(filters, search);
+    
     setCurrentPage(1);
-    setTotalPages(0);
-    setLoading(true);
-   
+    setDisplayedVendors([]);
+    setVendors([]);
+    setAllVendors([]);
+    setHasMore(false);
     clearMarkers();
-
-    const areaLocation = getLocationForArea(filters.area);
-    if (areaLocation) {
-      if (currentMap) {
-        currentMap.setCenter(areaLocation.location);
-        currentMap.setZoom(10);
-      }
-      searchVendors(areaLocation.location, filters.vendorType, currentMap);
-      return;
-    }
-
-    if (filters.area === 'all') {
-      const israelCenter = { lat: 31.5, lng: 34.75 };
-      if (currentMap) {
-        currentMap.setCenter(israelCenter);
-        currentMap.setZoom(7);
-      }
-      searchVendors(israelCenter, filters.vendorType, currentMap);
-      return;
-    }
-
-    if (currentMap && currentMap.getCenter) {
-      searchVendors(currentMap.getCenter(), filters.vendorType, currentMap);
-    } else {
-      const israelCenter = { lat: 31.5, lng: 34.75 };
-      searchVendors(israelCenter, filters.vendorType, currentMap);
-    }
-  };
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-   
-    const resultsElement = document.querySelector('.vendors-list');
-    if (resultsElement) {
-      resultsElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  };
-
-  const renderPaginationNumbers = () => {
-    if (totalPages <= 1) return null;
-
-    const pageNumbers = [];
-    const maxVisiblePages = 7;
-   
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-   
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    if (currentPage > 1) {
-      pageNumbers.push(
-        <button
-          key="prev"
-          onClick={() => handlePageChange(currentPage - 1)}
-          className="pagination-btn pagination-prev"
-        >
-          ‹
-        </button>
-      );
-    }
-
-    if (startPage > 1) {
-      pageNumbers.push(
-        <button
-          key={1}
-          onClick={() => handlePageChange(1)}
-          className="pagination-btn"
-        >
-          1
-        </button>
-      );
-      if (startPage > 2) {
-        pageNumbers.push(
-          <span key="ellipsis1" className="pagination-ellipsis">...</span>
-        );
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`pagination-btn ${i === currentPage ? 'active' : ''}`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        pageNumbers.push(
-          <span key="ellipsis2" className="pagination-ellipsis">...</span>
-        );
-      }
-      pageNumbers.push(
-        <button
-          key={totalPages}
-          onClick={() => handlePageChange(totalPages)}
-          className="pagination-btn"
-        >
-          {totalPages}
-        </button>
-      );
-    }
-
-    if (currentPage < totalPages) {
-      pageNumbers.push(
-        <button
-          key="next"
-          onClick={() => handlePageChange(currentPage + 1)}
-          className="pagination-btn pagination-next"
-        >
-          ›
-        </button>
-      );
-    }
-
-    return pageNumbers;
+    
+    searchVendors(false);
   };
  
+  // Selects a vendor, determines category, and calls onSelectVendor callback or navigates
   const selectVendor = (vendor) => {
     try {
       let category = 'other';
      
-      console.log("=== Vendor Selection Debug ===");
-      console.log("Vendor name:", vendor.name);
-      console.log("Current filter:", filters.vendorType);
-      console.log("Vendor types:", vendor.types);
-      console.log("Vendor vicinity:", vendor.vicinity);
-     
       if (filters.vendorType && filters.vendorType !== 'all') {
         category = determineCategoryFromVendorType(filters.vendorType);
-        console.log("Category from filter:", category);
       }
       else if (vendor.types && vendor.types.length > 0) {
         const typeCategory = determineCategoryFromPlaceTypes(vendor.types);
         if (typeCategory !== 'other') {
           category = typeCategory;
-          console.log("Category from place types:", category);
         }
       }
      
       if (category === 'other') {
         const nameBasedCategory = determineCategoryFromName(vendor.name, vendor.vicinity);
         category = nameBasedCategory;
-        console.log("Category from name analysis:", category);
       }
-     
-      console.log("Final category assigned:", category);
-      console.log("===============================");
      
       const vendorData = {
         place_id: vendor.place_id,
@@ -1426,62 +1173,94 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
  
-  const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
-    try {
-      if (photo && typeof photo.getUrl === 'function') {
-        if (useHighQuality) {
-          return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
-        }
-        return photo.getUrl({ maxWidth, maxHeight });
-      }
-    } catch (error) {
-      console.error("Error getting photo URL:", error);
-    }
-   
-    return null;
-  };
+//   const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
+//   try {
+//     if (photo && typeof photo === 'object' && photo.url) {
+//       return photo.url;
+//     }
+    
+//     if (typeof photo === 'string' && photo.startsWith('http')) {
+//       return photo;
+//     }
+    
+//     if (photo && typeof photo.getUrl === 'function') {
+//       if (useHighQuality) {
+//         return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
+//       }
+//       return photo.getUrl({ maxWidth, maxHeight });
+//     }
+    
+//     if (photo && photo.photo_reference) {
+//       const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+//       if (API_KEY) {
+//         const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&maxheight=${maxHeight}&photoreference=${photo.photo_reference}&key=${API_KEY}`;
+//         return url;
+//       } else {
+//         console.error('❌ Missing API key for photo reference');
+//       }
+//     }
+    
+//     console.warn('⚠️ No valid photo data found:', photo);
+//   } catch (error) {
+//     console.error("❌ Error getting photo URL:", error);
+//   }
+  
+//   return null;
+// };
 
+// Returns first valid photo with URL from vendor photos array along with its index
   const getMainVendorImage = (vendor) => {
+    
     if (!vendor.photos || vendor.photos.length === 0) {
+      console.warn('⚠️ No photos for:', vendor.name);
       return null;
     }
 
-    try {
-      for (let i = 0; i < vendor.photos.length; i++) {
-        const imageUrl = getPhotoUrl(vendor.photos[i], 300, 200, true);
-        if (imageUrl) {
-          return { url: imageUrl, index: i };
-        }
+    for (let i = 0; i < vendor.photos.length; i++) {
+      const photo = vendor.photos[i];
+            
+      if (photo && photo.url && typeof photo.url === 'string' && photo.url.startsWith('http')) {
+        return { url: photo.url, index: i };
+      } else {
+        console.warn(`  ❌ Photo ${i} invalid:`, {
+          exists: !!photo,
+          hasUrl: !!photo?.url,
+          urlType: typeof photo?.url,
+          url: photo?.url?.substring(0, 50)
+        });
       }
-    } catch (error) {
-      console.error("Error getting main vendor image:", error);
     }
 
+    console.warn('⚠️ No valid photos found for:', vendor.name);
     return null;
   };
 
+  // Returns array of all valid photos with URLs from vendor photos
   const getValidPhotos = (vendor) => {
-    if (!vendor.photos || vendor.photos.length === 0) {
-      return [];
-    }
+  if (!vendor.photos || vendor.photos.length === 0) {
+    return [];
+  }
 
-    const validPhotos = [];
-    for (let i = 0; i < vendor.photos.length; i++) {
-      try {
-        const photoUrl = getPhotoUrl(vendor.photos[i], 100, 70);
-        if (photoUrl) {
-          validPhotos.push({ photo: vendor.photos[i], url: photoUrl, index: i });
-        }
-      } catch (error) {
-        console.error("Error getting photo at index", i, error);
-      }
+  const validPhotos = [];
+  
+  for (let i = 0; i < vendor.photos.length; i++) {
+    const photo = vendor.photos[i];
+    
+    if (photo && photo.url && typeof photo.url === 'string' && photo.url.startsWith('http')) {
+      validPhotos.push({ photo: photo, url: photo.url, index: i });
     }
+  }
 
-    return validPhotos;
-  };
+  return validPhotos;
+};
 
   const currentSpecificFilters = getSpecificFilters(filters.vendorType);
   const kashrutOptions = getKashrutOptions();
+
+  // Loads next page of vendors and appends to existing results
+  const handleLoadMore = () => {
+    searchVendors(true); 
+  };
 
   return (
     <div className="vendors-page">
@@ -1598,15 +1377,6 @@ const VendorsPage = ({ onSelectVendor }) => {
           <div className="vendors-list">
             <div className="vendors-list-header">
               <h3>{t('vendors.searchResults')}</h3>
-              {!loading && allVendors.length > 0 && (
-                <div className="results-info">
-                  {t('general.showingResults', { 
-                  start: ((currentPage - 1) * vendorsPerPage) + 1,
-                  end: Math.min(currentPage * vendorsPerPage, allVendors.length),
-                  total: allVendors.length 
-                })}
-                </div>
-              )}
             </div>
            
             {loading ? (
@@ -1614,20 +1384,20 @@ const VendorsPage = ({ onSelectVendor }) => {
                 <div className="loading-spinner"></div>
                 <p>{t('vendors.loading')}</p>
               </div>
-            ) : vendors.length === 0 ? (
+            ) : displayedVendors.length === 0 ? (
               <div className="no-results">{t('vendors.noResults')}</div>
             ) : (
               <>
                 <div className="vendors-grid">
-                  {vendors.map(vendor => {
+                  {displayedVendors.map(vendor => {
                     const mainImageData = getMainVendorImage(vendor);
-                   
+                    
                     return (
                       <div
                         key={vendor.place_id}
                         className={`vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'selected' : ''}`}
                         onClick={() => {
-                          setSelectedVendorPhotoIndex(mainImageData ? mainImageData.index : null);
+                          setSelectedVendorPhotoIndex(mainImageData ? mainImageData.index : 0);
                           getVendorDetails(vendor.place_id);
                         }}
                       >
@@ -1636,25 +1406,27 @@ const VendorsPage = ({ onSelectVendor }) => {
                             <img
                               src={mainImageData.url}
                               alt={vendor.name}
+                              loading="lazy"
                               onError={(e) => {
                                 e.target.onerror = null;
-                                e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`;
+                                e.target.src = `https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || 'No Image')}`;
                               }}
                             />
                           ) : (
                             <img
-                              src={`https://dummyimage.com/300x200/eeeeee/333333&text=${encodeURIComponent(vendor.name || t('vendors.defaultVendorName'))}`}
-                              alt={vendor.name || t('vendors.defaultVendorName')}
+                              src={`https://dummyimage.com/300x200/cccccc/666666&text=${encodeURIComponent(vendor.name || 'No Image')}`}
+                              alt={vendor.name || 'Vendor'}
+                              loading="lazy"
                             />
                           )}
                         </div>
-                       
+                        
                         <div className="vendor-info">
                           <h4>{vendor.name}</h4>
                           <p className="vendor-address">
                             {vendor.formatted_address || vendor.vicinity || t('vendors.noAddress')}
                           </p>
-                         
+                          
                           {vendor.rating && (
                             <div className="vendor-rating">
                               <span className="stars">
@@ -1667,7 +1439,7 @@ const VendorsPage = ({ onSelectVendor }) => {
                               <span className="review-count">({vendor.user_ratings_total || 0})</span>
                             </div>
                           )}
-                         
+                          
                           {vendor.price_level && (
                             <div className="vendor-price">
                               {'₪'.repeat(vendor.price_level)}
@@ -1679,11 +1451,15 @@ const VendorsPage = ({ onSelectVendor }) => {
                   })}
                 </div>
 
-                {totalPages > 1 && (
-                  <div className="pagination-container">
-                    <div className="pagination">
-                      {renderPaginationNumbers()}
-                    </div>
+                {hasMore && !loading && displayedVendors.length > 0 && (
+                  <div className="load-more-container">
+                    <button 
+                      className="load-more-button" 
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? 'טוען...' : 'טען עוד'}
+                    </button>
                   </div>
                 )}
               </>
@@ -1716,43 +1492,47 @@ const VendorsPage = ({ onSelectVendor }) => {
                       if (validPhotos.length > 0) {
                         const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
                         const photoToShow = validPhotos[photoIndex];
-                       
+                        
                         return (
                           <img
-                            src={getPhotoUrl(photoToShow.photo, 600, 400, true)}
+                            src={photoToShow.url}
                             alt={selectedVendor.name}
+                            loading="lazy"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`;
+                              e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`;
                             }}
                           />
                         );
                       } else {
                         return (
                           <img
-                            src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`}
-                            alt={selectedVendor.name || t('vendors.defaultVendorName')}
+                            src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`}
+                            alt={selectedVendor.name || 'Vendor'}
+                            loading="lazy"
                           />
                         );
                       }
                     })()
                   ) : (
                     <img
-                      src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || t('vendors.defaultVendorName'))}`}
-                      alt={selectedVendor.name || t('vendors.defaultVendorName')}
+                      src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`}
+                      alt={selectedVendor.name || 'Vendor'}
+                      loading="lazy"
                     />
                   )}
                 </div>
-               
+                
                 {selectedVendor.photos && selectedVendor.photos.length > 0 && getValidPhotos(selectedVendor).length > 0 && (
                   <div className="all-photos">
-                    {getValidPhotos(selectedVendor).map(({ photo, url, index }) => (
+                    {getValidPhotos(selectedVendor).map(({ url, index }) => (
                       <img
                         key={index}
                         src={url}
                         alt={`${selectedVendor.name} - ${index + 1}`}
                         className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
                         onClick={() => setSelectedPhoto(index)}
+                        loading="lazy"
                         onError={(e) => {
                           e.target.style.display = 'none';
                         }}
