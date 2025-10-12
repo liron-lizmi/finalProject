@@ -1,40 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
 import '../../styles/VendorsPage.css';
 import vendorService from '../../services/vendorService';
+import { translateItems, containsHebrew, translateText } from '../../services/translationUtils';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
 const VendorsPage = ({ onSelectVendor }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [vendors, setVendors] = useState([]);
-  const [allVendors, setAllVendors] = useState([]);
+ 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [map, setMap] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const [selectedVendorPhotoIndex, setSelectedVendorPhotoIndex] = useState(null);
   const [markers, setMarkers] = useState([]);
   const [successMessage, setSuccessMessage] = useState(null);
- 
   const [currentPage, setCurrentPage] = useState(1);
-  const [vendorsPerPage] = useState(20);
-
   const [searchTimeout, setSearchTimeout] = useState(null);
-
   const [displayedVendors, setDisplayedVendors] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
-
-  const [error, setError] = useState(null);
- 
-  const eventId = location.state?.eventId;
- 
+  const [selectedVendorMainPhoto, setSelectedVendorMainPhoto] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(0);
+  
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
  
@@ -179,68 +170,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     ];
   };
 
-  // Returns location coordinates and search radius for Israeli regions
-  const getLocationForArea = (area) => {
-    switch (area) {
-      case 'ירושלים':
-        return {
-          location: { lat: 31.7683, lng: 35.2137 },
-          radius: 20000
-        };
-      case 'מרכז':
-        return {
-          location: { lat: 32.0853, lng: 34.7818 },
-          radius: 20000  
-        };
-      case 'דרום':
-        return {
-          location: { lat: 31.2518, lng: 34.7915 },
-          radius: 35000  
-        };
-      case 'צפון':
-        return {
-          location: { lat: 32.7940, lng: 35.0423 },
-          radius: 30000
-        };
-      default:
-        return null;
-    }
-  };
-
-  // const isVendorInArea = (vendor, selectedArea) => {
-  //   if (selectedArea === 'all') return true;
-   
-  //   if (!vendor.geometry || !vendor.geometry.location) return false;
-   
-  //   const venueLat = typeof vendor.geometry.location.lat === 'function' ?
-  //     vendor.geometry.location.lat() : vendor.geometry.location.lat;
-  //   const venueLng = typeof vendor.geometry.location.lng === 'function' ?
-  //     vendor.geometry.location.lng() : vendor.geometry.location.lng;
-   
-  //   if (isNaN(venueLat) || isNaN(venueLng)) return false;
-   
-  //   const areaLocation = getLocationForArea(selectedArea);
-  //   if (!areaLocation) return true;
-   
-  //   const distance = calculateDistance(
-  //     venueLat, venueLng,
-  //     areaLocation.location.lat, areaLocation.location.lng
-  //   );
-   
-  //   return distance <= areaLocation.radius;
-  // };
-
-  // const calculateDistance = (lat1, lng1, lat2, lng2) => {
-  //   const R = 6371000;
-  //   const dLat = (lat2 - lat1) * Math.PI / 180;
-  //   const dLng = (lng2 - lng1) * Math.PI / 180;
-  //   const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-  //       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-  //       Math.sin(dLng/2) * Math.sin(dLng/2);
-  //   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  //   return R * c;
-  // };
-
   // Maps vendor type string to event category 
   const determineCategoryFromVendorType = (vendorType) => {
     switch (vendorType) {
@@ -333,236 +262,6 @@ const VendorsPage = ({ onSelectVendor }) => {
    
     return 'other';
   };
-
-  // const buildSearchQuery = (vendorType, searchTerm = '') => {
-  //   let query = '';
-   
-  //   if (!vendorType || vendorType === 'all') {
-  //     query = 'event services wedding party celebration catering photographer florist music entertainment';
-  //   } else {
-  //     switch (vendorType) {
-  //       case 'catering':
-  //         query = 'catering service food restaurant chef';
-         
-  //         if (filters.kashrutLevel && filters.kashrutLevel !== 'all') {
-  //           switch (filters.kashrutLevel) {
-  //             case 'mehadrin':
-  //               query += ' מהדרין mehadrin kosher';
-  //               break;
-  //             case 'regular-kosher':
-  //               query += ' כשר kosher';
-  //               break;
-  //             case 'rabbinate':
-  //               query += ' רבנות rabbinate kosher';
-  //               break;
-  //             case 'badatz':
-  //               query += ' בד"ץ badatz kosher';
-  //               break;
-  //             case 'non-kosher':
-  //               query += ' לא כשר non kosher';
-  //               break;
-  //           }
-  //         }
-         
-  //         if (filters.specificFilters.length > 0) {
-  //           filters.specificFilters.forEach(filter => {
-  //             switch (filter) {
-  //               case 'dairy':
-  //                 query += ' חלבי dairy חלב milk';
-  //                 break;
-  //               case 'meat':
-  //                 query += ' בשרי meat בשר';
-  //                 break;
-  //               case 'pareve':
-  //                 query += ' פרווה pareve';
-  //                 break;
-  //               case 'vegan':
-  //                 query += ' טבעוני vegan';
-  //                 break;
-  //               case 'vegetarian':
-  //                 query += ' צמחוני vegetarian';
-  //                 break;
-  //               case 'gluten-free':
-  //                 query += ' ללא גלוטן gluten free';
-  //                 break;
-  //             }
-  //           });
-  //         }
-  //         break;
-         
-  //       case 'photographer':
-  //         query = 'photographer photography studio';
-  //         if (filters.specificFilters.length > 0) {
-  //           query += ' ' + filters.specificFilters.join(' ');
-  //         }
-  //         break;
-         
-  //       case 'florist':
-  //         query = 'florist flower shop';
-  //         if (filters.specificFilters.length > 0) {
-  //           filters.specificFilters.forEach(filter => {
-  //             switch (filter) {
-  //               case 'bridal':
-  //                 query += ' bridal wedding';
-  //                 break;
-  //               case 'arrangements':
-  //                 query += ' arrangements';
-  //                 break;
-  //               case 'decorations':
-  //                 query += ' decorations';
-  //                 break;
-  //               case 'plants':
-  //                 query += ' plants';
-  //                 break;
-  //             }
-  //           });
-  //         }
-  //         break;
-         
-  //       case 'musician':
-  //         query = 'musician entertainment band music';
-  //         if (filters.specificFilters.length > 0) {
-  //           query += ' ' + filters.specificFilters.join(' ');
-  //         }
-  //         break;
-         
-  //       case 'dj':
-  //         query = 'dj sound entertainment music';
-  //         if (filters.specificFilters.length > 0) {
-  //           filters.specificFilters.forEach(filter => {
-  //             switch (filter) {
-  //               case 'wedding':
-  //                 query += ' wedding';
-  //                 break;
-  //               case 'party':
-  //                 query += ' party';
-  //                 break;
-  //               case 'corporate':
-  //                 query += ' corporate';
-  //                 break;
-  //               case 'with-equipment':
-  //                 query += ' equipment sound system';
-  //                 break;
-  //             }
-  //           });
-  //         }
-  //         break;
-         
-  //       case 'decorator':
-  //         query = 'event decorator design planning';
-  //         if (filters.specificFilters.length > 0) {
-  //           query += ' ' + filters.specificFilters.join(' ');
-  //         }
-  //         break;
-         
-  //       case 'makeup':
-  //         query = 'makeup artist beauty';
-  //         if (filters.specificFilters.length > 0) {
-  //           filters.specificFilters.forEach(filter => {
-  //             switch (filter) {
-  //               case 'bridal':
-  //                 query += ' bridal wedding';
-  //                 break;
-  //               case 'event':
-  //                 query += ' event';
-  //                 break;
-  //               case 'with-hairstyling':
-  //                 query += ' hairstyling';
-  //                 break;
-  //               case 'mobile':
-  //                 query += ' mobile service';
-  //                 break;
-  //             }
-  //           });
-  //         }
-  //         break;
-         
-  //       case 'transport':
-  //         query = 'transportation rental service car bus';
-  //         if (filters.specificFilters.length > 0) {
-  //           filters.specificFilters.forEach(filter => {
-  //             switch (filter) {
-  //               case 'luxury-cars':
-  //                 query += ' luxury cars';
-  //                 break;
-  //               case 'buses':
-  //                 query += ' buses';
-  //                 break;
-  //               case 'limousines':
-  //                 query += ' limousines';
-  //                 break;
-  //               case 'classic-cars':
-  //                 query += ' classic vintage cars';
-  //                 break;
-  //             }
-  //           });
-  //         }
-  //         break;
-         
-  //       default:
-  //         query = 'event services provider';
-  //         break;
-  //     }
-  //   }
-   
-  //   if (searchTerm) {
-  //     query += ' ' + searchTerm;
-  //   }
-   
-  //   return query;
-  // };
-
-  // const filterVendorsByAdvancedCriteria = (vendors) => {
-  //   return vendors.filter(vendor => {
-  //     const vendorText = (vendor.name + ' ' + (vendor.vicinity || '') + ' ' + (vendor.formatted_address || '')).toLowerCase();
-     
-  //     const venueKeywords = ['hotel', 'hall', 'venue', 'event center', 'convention', 'resort', 'banquet', 'palace', 'manor', 'estate'];
-  //     const isVenue = venueKeywords.some(keyword => vendorText.includes(keyword));
-     
-  //     if (isVenue) return false;
-     
-  //     if (filters.vendorType === 'catering' && filters.kashrutLevel && filters.kashrutLevel !== 'all') {
-  //       const kashrutKeywords = {
-  //         'mehadrin': ['מהדרין', 'mehadrin'],
-  //         'regular-kosher': ['כשר', 'kosher'],
-  //         'rabbinate': ['רבנות', 'rabbinate'],
-  //         'badatz': ['בד"ץ', 'badatz'],
-  //         'non-kosher': ['לא כשר', 'non kosher', 'טרף']
-  //       };
-       
-  //       const levelKeywords = kashrutKeywords[filters.kashrutLevel];
-  //       if (levelKeywords) {
-  //         const hasKashrutMatch = levelKeywords.some(keyword => vendorText.includes(keyword));
-  //         if (!hasKashrutMatch) return false;
-  //       }
-  //     }
-     
-  //     if (filters.specificFilters.length > 0) {
-  //       const hasMatchingFilter = filters.specificFilters.some(filter => {
-  //         const filterKeywords = {
-  //           'dairy': ['חלבי', 'dairy', 'חלב', 'milk'],
-  //           'meat': ['בשרי', 'meat', 'בשר'],
-  //           'pareve': ['פרווה', 'pareve'],
-  //           'vegan': ['טבעוני', 'vegan'],
-  //           'vegetarian': ['צמחוני', 'vegetarian'],
-  //           'gluten-free': ['ללא גלוטן', 'gluten free', 'celiac']
-  //         };
-         
-  //         const keywords = filterKeywords[filter];
-  //         if (keywords) {
-  //           return keywords.some(keyword => vendorText.includes(keyword));
-  //         }
-         
-  //         return vendorText.includes(filter);
-  //       });
-       
-  //       if (!hasMatchingFilter) return false;
-  //     }
-     
-  //     return true;
-  //   });
-  // };
-  const [selectedPhoto, setSelectedPhoto] = useState(0);
  
   const mapRef = useRef(null);
   const placesService = useRef(null);
@@ -571,37 +270,6 @@ const VendorsPage = ({ onSelectVendor }) => {
   const isMapInitialized = useRef(false);
   const isEffectRun = useRef(false);
   const mapInstance = useRef(null);
- 
-  const translateText = async (text, targetLang = 'en') => {
-    if (!text || targetLang === 'he') return text;
-   
-    try {
-      if ('translator' in window && 'createTranslator' in window.translator) {
-        const translator = await window.translator.createTranslator({
-          sourceLanguage: 'he',
-          targetLanguage: targetLang
-        });
-        const translation = await translator.translate(text);
-        return translation;
-      }
-     
-      const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=he&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`);
-      const data = await response.json();
-     
-      if (data && data[0] && data[0][0]) {
-        return data[0][0][0];
-      }
-     
-    } catch (error) {
-      console.error('Translation failed:', error);
-    }
-   
-    return text;
-  };
- 
-  const containsHebrew = (text) => {
-    return /[\u0590-\u05FF]/.test(text);
-  };
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -609,12 +277,12 @@ const VendorsPage = ({ onSelectVendor }) => {
   }, [isRTL, i18n.language]);
  
   useEffect(() => {
-  if (isEffectRun.current) return;
-  isEffectRun.current = true;
+    if (isEffectRun.current) return;
+    isEffectRun.current = true;
   
-  const setupGoogleMaps = () => {
-    initMap();
-  };
+    const setupGoogleMaps = () => {
+      initMap();
+    };
   
   const loadGoogleMapsAPI = () => {
     if (window.google && window.google.maps) {
@@ -750,77 +418,11 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  // const collectAllResults = async (request, mapParamDirect) => {
-  //   return new Promise((resolve) => {
-  //     let allResults = [];
-  //     let paginationCount = 0;
-  //     const maxPages = 2;
-     
-  //     const performSearch = (searchRequest) => {
-  //       placesService.current.textSearch(searchRequest, async (results, status, pagination) => {
-  //         if (status === window.google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-           
-  //           const processedResults = await Promise.all(results.map(async vendor => {
-  //             let processedVendor = { ...vendor };
-             
-  //             if (containsHebrew(vendor.name)) {
-  //               processedVendor.originalName = vendor.name;
-  //             }
-             
-  //             if (vendor.vicinity && containsHebrew(vendor.vicinity)) {
-  //               processedVendor.originalVicinity = vendor.vicinity;
-  //             }
-             
-  //             if (vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
-  //               processedVendor.originalFormattedAddress = vendor.formatted_address;
-  //             }
-             
-  //             if (isEnglish && containsHebrew(vendor.name)) {
-  //               processedVendor.name = await translateText(vendor.name, 'en');
-  //             }
-             
-  //             if (isEnglish && vendor.vicinity && containsHebrew(vendor.vicinity)) {
-  //               processedVendor.vicinity = await translateText(vendor.vicinity, 'en');
-  //             }
-             
-  //             if (isEnglish && vendor.formatted_address && containsHebrew(vendor.formatted_address)) {
-  //               processedVendor.formatted_address = await translateText(vendor.formatted_address, 'en');
-  //             }
-             
-  //             return processedVendor;
-  //           }));
-           
-  //           allResults = [...allResults, ...processedResults];
-  //           paginationCount++;
-
-  //           if (pagination &&
-  //               pagination.hasNextPage &&
-  //               typeof pagination.nextPage === 'function' &&
-  //               paginationCount < maxPages) {
-  //             setTimeout(() => {
-  //               pagination.nextPage();
-  //             }, 50);
-  //           } else {
-  //             resolve(allResults);
-  //           }
-  //         } else {
-  //           resolve(allResults);
-  //         }
-  //       });
-  //     };
-     
-  //     performSearch(request);
-  //   });
-  // };
-
  // Searches vendors via backend API with filters and manages loading states, pagination, and map markers 
 const searchVendors = async (shouldAppend = false) => {
   if (!shouldAppend) {
     setLoading(true);
-    setAllVendors([]);
     setDisplayedVendors([]);
-    setVendors([]);
-    setError(null);
     setCurrentPage(1);
   } else {
     setLoadingMore(true);
@@ -833,21 +435,21 @@ const searchVendors = async (shouldAppend = false) => {
       filters,
       search,
       pageToLoad,
-      isRTL ? 'he' : 'en'
+      'he'
     );
 
-    const newVendors = result.vendors || [];
+    let newVendors = result.vendors || [];
+    
+    if (isEnglish) {
+      newVendors = await translateItems(newVendors, 'en');
+    }
     
     if (shouldAppend) {
       const updatedVendors = [...displayedVendors, ...newVendors];
-      setAllVendors(updatedVendors);
       setDisplayedVendors(updatedVendors);
-      setVendors(updatedVendors);
       setCurrentPage(pageToLoad);
     } else {
-      setAllVendors(newVendors);
       setDisplayedVendors(newVendors);
-      setVendors(newVendors);
       setCurrentPage(1);
     }
     
@@ -863,9 +465,7 @@ const searchVendors = async (shouldAppend = false) => {
     
   } catch (error) {
     console.error('❌ Search error:', error);
-    setError(t('vendors.noResults'));
     setDisplayedVendors([]);
-    setVendors([]);
   } finally {
     setLoading(false);
     setLoadingMore(false);
@@ -941,75 +541,71 @@ const searchVendors = async (shouldAppend = false) => {
  
   // Fetches detailed vendor information using Google Places API placeId
   const getVendorDetails = async (placeId) => {
-    if (!placesService.current || !placeId) return;
- 
-    const request = {
-      placeId: placeId,
-      fields: [
-        'name', 'formatted_address', 'formatted_phone_number',
-        'website', 'photos', 'rating', 'reviews',
-        'opening_hours', 'price_level', 'user_ratings_total',
-        'geometry', 'vicinity', 'url', 'photo', 'types'
-      ],
-      language: isRTL ? 'he' : 'en'
-    };
- 
-    placesService.current.getDetails(request, async (place, status) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
-       
-        let processedPlace = { ...place };
-       
-        if (containsHebrew(place.name)) {
-          processedPlace.originalName = place.name;
-        }
-       
-        if (place.formatted_address && containsHebrew(place.formatted_address)) {
-          processedPlace.originalFormattedAddress = place.formatted_address;
-        }
-       
-        if (place.vicinity && containsHebrew(place.vicinity)) {
-          processedPlace.originalVicinity = place.vicinity;
-        }
-       
-        if (isEnglish) {
-          if (containsHebrew(place.name)) {
-            processedPlace.name = await translateText(place.name, 'en');
-          }
-         
-          if (place.formatted_address && containsHebrew(place.formatted_address)) {
-            processedPlace.formatted_address = await translateText(place.formatted_address, 'en');
-          }
-         
-          if (place.vicinity && containsHebrew(place.vicinity)) {
-            processedPlace.vicinity = await translateText(place.vicinity, 'en');
-          }
-         
-          if (place.opening_hours && place.opening_hours.weekday_text) {
-            processedPlace.opening_hours = {
-              ...place.opening_hours,
-              weekday_text: await Promise.all(
-                place.opening_hours.weekday_text.map(async (day) => {
-                  if (containsHebrew(day)) {
-                    return await translateText(day, 'en');
-                  }
-                  return day;
-                })
-              )
-            };
-          }
-        }
-       
-        setSelectedVendor(processedPlace);
-       
-        if (selectedVendorPhotoIndex !== null) {
-          setSelectedPhoto(selectedVendorPhotoIndex);
-        } else {
-          setSelectedPhoto(0);
-        }
-      } else {
-        console.error("Failed to get vendor details:", status);
+    if (!placeId) {
+      console.error("Missing placeId");
+      return;
+    }
+
+    try {
+      const vendorDetails = await vendorService.getVendorDetails(
+        placeId,
+        isRTL ? 'he' : 'en'
+      );
+
+      if (!vendorDetails) {
+        console.error("No vendor details received");
+        return;
       }
-    });
+
+      let processedPlace = { ...vendorDetails };
+
+      if (containsHebrew(vendorDetails.name)) {
+        processedPlace.originalName = vendorDetails.name;
+      }
+
+      if (vendorDetails.formatted_address && containsHebrew(vendorDetails.formatted_address)) {
+        processedPlace.originalFormattedAddress = vendorDetails.formatted_address;
+      }
+
+      if (vendorDetails.vicinity && containsHebrew(vendorDetails.vicinity)) {
+        processedPlace.originalVicinity = vendorDetails.vicinity;
+      }
+
+      if (isEnglish) {
+        if (containsHebrew(vendorDetails.name)) {
+          processedPlace.name = await translateText(vendorDetails.name, 'en');
+        }
+
+        if (vendorDetails.formatted_address && containsHebrew(vendorDetails.formatted_address)) {
+          processedPlace.formatted_address = await translateText(vendorDetails.formatted_address, 'en');
+        }
+
+        if (vendorDetails.vicinity && containsHebrew(vendorDetails.vicinity)) {
+          processedPlace.vicinity = await translateText(vendorDetails.vicinity, 'en');
+        }
+
+        if (vendorDetails.opening_hours && vendorDetails.opening_hours.weekday_text) {
+          processedPlace.opening_hours = {
+            ...vendorDetails.opening_hours,
+            weekday_text: await Promise.all(
+              vendorDetails.opening_hours.weekday_text.map(async (day) => {
+                if (containsHebrew(day)) {
+                  return await translateText(day, 'en');
+                }
+                return day;
+              })
+            )
+          };
+        }
+      }
+
+      setSelectedVendor(processedPlace);
+
+      setSelectedPhoto(0);
+
+    } catch (error) {
+      console.error("Failed to get vendor details:", error);
+    }
   };
  
   // Handles search input changes with debouncing
@@ -1117,8 +713,6 @@ const searchVendors = async (shouldAppend = false) => {
     
     setCurrentPage(1);
     setDisplayedVendors([]);
-    setVendors([]);
-    setAllVendors([]);
     setHasMore(false);
     clearMarkers();
     
@@ -1172,45 +766,9 @@ const searchVendors = async (shouldAppend = false) => {
       console.error("Error selecting vendor:", error);
     }
   };
- 
-//   const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200, useHighQuality = false) => {
-//   try {
-//     if (photo && typeof photo === 'object' && photo.url) {
-//       return photo.url;
-//     }
-    
-//     if (typeof photo === 'string' && photo.startsWith('http')) {
-//       return photo;
-//     }
-    
-//     if (photo && typeof photo.getUrl === 'function') {
-//       if (useHighQuality) {
-//         return photo.getUrl({ maxWidth: Math.max(maxWidth, 500), maxHeight: Math.max(maxHeight, 300) });
-//       }
-//       return photo.getUrl({ maxWidth, maxHeight });
-//     }
-    
-//     if (photo && photo.photo_reference) {
-//       const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-//       if (API_KEY) {
-//         const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&maxheight=${maxHeight}&photoreference=${photo.photo_reference}&key=${API_KEY}`;
-//         return url;
-//       } else {
-//         console.error('❌ Missing API key for photo reference');
-//       }
-//     }
-    
-//     console.warn('⚠️ No valid photo data found:', photo);
-//   } catch (error) {
-//     console.error("❌ Error getting photo URL:", error);
-//   }
-  
-//   return null;
-// };
 
 // Returns first valid photo with URL from vendor photos array along with its index
   const getMainVendorImage = (vendor) => {
-    
     if (!vendor.photos || vendor.photos.length === 0) {
       console.warn('⚠️ No photos for:', vendor.name);
       return null;
@@ -1218,16 +776,13 @@ const searchVendors = async (shouldAppend = false) => {
 
     for (let i = 0; i < vendor.photos.length; i++) {
       const photo = vendor.photos[i];
-            
+      
       if (photo && photo.url && typeof photo.url === 'string' && photo.url.startsWith('http')) {
-        return { url: photo.url, index: i };
-      } else {
-        console.warn(`  ❌ Photo ${i} invalid:`, {
-          exists: !!photo,
-          hasUrl: !!photo?.url,
-          urlType: typeof photo?.url,
-          url: photo?.url?.substring(0, 50)
-        });
+        return { 
+          url: photo.url, 
+          index: i,
+          photo_reference: photo.photo_reference || null
+        };
       }
     }
 
@@ -1397,7 +952,15 @@ const searchVendors = async (shouldAppend = false) => {
                         key={vendor.place_id}
                         className={`vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'selected' : ''}`}
                         onClick={() => {
-                          setSelectedVendorPhotoIndex(mainImageData ? mainImageData.index : 0);
+                          const mainImageData = getMainVendorImage(vendor);
+                          if (mainImageData) {
+                            setSelectedVendorMainPhoto({
+                              url: mainImageData.url,
+                              photo_reference: mainImageData.photo_reference
+                            });
+                          } else {
+                            setSelectedVendorMainPhoto(null);
+                          }
                           getVendorDetails(vendor.place_id);
                         }}
                       >
@@ -1458,7 +1021,7 @@ const searchVendors = async (shouldAppend = false) => {
                       onClick={handleLoadMore}
                       disabled={loadingMore}
                     >
-                      {loadingMore ? 'טוען...' : 'טען עוד'}
+                      {loadingMore ? t('vendors.loadingMore') : t('vendors.loadMore')}
                     </button>
                   </div>
                 )}
@@ -1474,7 +1037,7 @@ const searchVendors = async (shouldAppend = false) => {
                 <h2>{selectedVendor.name}</h2>
                 <button className="close-details" onClick={() => {
                   setSelectedVendor(null);
-                  setSelectedVendorPhotoIndex(null);
+                  setSelectedVendorMainPhoto(null);
                 }}>×</button>
               </div>
              
@@ -1489,22 +1052,8 @@ const searchVendors = async (shouldAppend = false) => {
                   {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
                     (() => {
                       const validPhotos = getValidPhotos(selectedVendor);
-                      if (validPhotos.length > 0) {
-                        const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
-                        const photoToShow = validPhotos[photoIndex];
-                        
-                        return (
-                          <img
-                            src={photoToShow.url}
-                            alt={selectedVendor.name}
-                            loading="lazy"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`;
-                            }}
-                          />
-                        );
-                      } else {
+                      
+                      if (validPhotos.length === 0) {
                         return (
                           <img
                             src={`https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`}
@@ -1513,6 +1062,37 @@ const searchVendors = async (shouldAppend = false) => {
                           />
                         );
                       }
+                      
+                      if (selectedPhoto === 0 && selectedVendorMainPhoto) {
+                        return (
+                          <img
+                            src={selectedVendorMainPhoto.url}
+                            alt={selectedVendor.name}
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              if (validPhotos.length > 0) {
+                                e.target.src = validPhotos[0].url;
+                              }
+                            }}
+                          />
+                        );
+                      }
+                      
+                      const photoIndex = Math.min(selectedPhoto, validPhotos.length - 1);
+                      const photoToShow = validPhotos[photoIndex];
+                      
+                      return (
+                        <img
+                          src={photoToShow.url}
+                          alt={selectedVendor.name}
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://dummyimage.com/600x400/eeeeee/333333&text=${encodeURIComponent(selectedVendor.name || 'No Image')}`;
+                          }}
+                        />
+                      );
                     })()
                   ) : (
                     <img

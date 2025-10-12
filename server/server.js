@@ -2,7 +2,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
@@ -60,6 +59,7 @@ app.use('/api/rsvp', rsvpRoutes);
 app.use('/api/events/:eventId/budget', budgetRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/vendors', vendorRoutes);
 app.use('/api/events/:eventId/vendors', vendorRoutes);
 
 app.get('/api/health', (req, res) => {

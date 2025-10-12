@@ -3,8 +3,8 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/events/temp/vendors';
 
 class VendorService {
-  
-    // Searches vendors with filters, query, pagination, and language preference
+
+   // Searches vendors with filters, query, pagination, and language preference
   async searchVendors(filters = {}, searchQuery = '', page = 1, language = 'he') {
     try {
       const response = await axios.get(`${API_BASE_URL}/search`, {
@@ -19,7 +19,7 @@ class VendorService {
         },
         timeout: 30000 
       });
-      
+
       return {
         vendors: response.data.results || [],
         hasMore: response.data.hasMore || false,
@@ -29,7 +29,7 @@ class VendorService {
 
     } catch (error) {
       console.error('Error searching vendors:', error);
-      
+
       if (error.response) {
         throw new Error(error.response.data.message || 'Failed to search vendors');
       } else if (error.request) {
@@ -58,6 +58,23 @@ class VendorService {
   // Placeholder method for clearing filters cache
   clearFiltersCache(filters, searchQuery) {
     return Promise.resolve();
+  }
+
+  async getVendorDetails(placeId, language = 'he') {
+    try {
+        if (!placeId) {
+        throw new Error('placeId is required');
+        }
+
+        const response = await axios.get(`/api/vendors/details/${placeId}`, {
+        params: { language }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching vendor details:', error);
+        throw error;
+    }
   }
 }
 

@@ -17,7 +17,7 @@ class VendorCacheManager {
       kashrutLevel: filters.kashrutLevel || 'all',
       page: page
     };
-    
+
     return JSON.stringify(keyData);
   }
 
@@ -28,29 +28,29 @@ class VendorCacheManager {
       timestamp: Date.now(),
       expiresAt: Date.now() + this.ttl
     };
-    
+
     this.cache.set(key, cacheEntry);
-    
+
     if (this.cache.size > 100) {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);
     }
-    
+
   }
 
   // Returns cached data if exists and valid, otherwise returns null
   get(key) {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return null;
     }
-    
+
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
 
@@ -67,7 +67,7 @@ class VendorCacheManager {
   clearFilters(query, filters) {
     const pattern = this.generateKey(query, filters, 1);
     const baseKey = pattern.slice(0, -10); 
-    
+
     let deletedCount = 0;
     for (const key of this.cache.keys()) {
       if (key.includes(baseKey)) {
@@ -75,7 +75,7 @@ class VendorCacheManager {
         deletedCount++;
       }
     }
-    
+
   }
 
   // Starts automatic cleanup every 30 minutes to remove expired entries
@@ -83,14 +83,14 @@ class VendorCacheManager {
     setInterval(() => {
       const now = Date.now();
       let deletedCount = 0;
-      
+
       for (const [key, entry] of this.cache.entries()) {
         if (now > entry.expiresAt) {
           this.cache.delete(key);
           deletedCount++;
         }
       }
-      
+
     }, this.cleanupInterval);
   }
 
@@ -98,7 +98,7 @@ class VendorCacheManager {
   getStats() {
     const entries = Array.from(this.cache.values());
     const now = Date.now();
-    
+
     return {
       totalEntries: this.cache.size,
       validEntries: entries.filter(e => now <= e.expiresAt).length,

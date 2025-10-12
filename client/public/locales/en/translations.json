@@ -917,6 +917,8 @@
     "defaultVendorName": "Vendor",
     "selectButton": "Select Vendor",
     "vendorAddedSuccess": "Vendor added successfully!",
+    "loadMore": "Load more",
+    "loadingMore": "Loading more vendors...",
     "filters": {
       "areaLabel": "Area",
       "allAreas": "All Areas",

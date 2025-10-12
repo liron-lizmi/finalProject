@@ -6,12 +6,13 @@ const {
   updateVendor,
   deleteVendor,
   searchVendors,
-  getCacheStats
+  getCacheStats,
+  getVendorDetailsByPlaceId
 } = require('../controllers/vendorController');
 const auth = require('../middleware/auth');
 
 router.get('/search', searchVendors);
-
+router.get('/details/:placeId', getVendorDetailsByPlaceId);
 router.get('/cache/stats', auth, getCacheStats);
 
 router.get('/', auth, getEventVendors);

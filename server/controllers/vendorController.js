@@ -3,7 +3,7 @@ const i18next = require('i18next');
 const vendorCacheManager = require('../services/vendorCacheManager');
 const googleVendorService = require('../services/googleVendorService');
 
-// Filters vendors by excluding venues and applying geographic area restrictions using Haversine formula
+// Filters vendors by excluding venues, applying geographic area restrictions, and specific filters
 const applyServerFilters = (vendors, filters) => {
   return vendors.filter(vendor => {
     const vendorText = (
@@ -44,12 +44,90 @@ const applyServerFilters = (vendors, filters) => {
       }
     }
 
+    if (filters.vendorType === 'catering' && filters.kashrutLevel && filters.kashrutLevel !== 'all') {
+      const kashrutKeywords = {
+        'mehadrin': ['מהדרין', 'mehadrin'],
+        'regular-kosher': ['כשר', 'kosher'],
+        'rabbinate': ['רבנות', 'rabbinate'],
+        'badatz': ['בד"ץ', 'badatz', 'בדץ'],
+        'non-kosher': ['לא כשר', 'non kosher', 'טרף', 'not kosher']
+      };
+      
+      const levelKeywords = kashrutKeywords[filters.kashrutLevel];
+      if (levelKeywords) {
+        const hasKashrutMatch = levelKeywords.some(keyword => vendorText.includes(keyword));
+        if (!hasKashrutMatch) return false;
+      }
+    }
+
+    if (filters.specificFilters && filters.specificFilters.length > 0) {
+      const filterKeywords = {
+        // Catering
+        'dairy': ['חלבי', 'dairy', 'חלב', 'milk','פיצה', 'pizza', 'פסטה', 'pasta','גבינות', 'cheeses'],
+        'meat': ['בשרי', 'meat', 'בשר','שווארמה', 'shawarma'],
+        'pareve': ['פרווה', 'pareve', 'parev', 'ללא חלב', 'non-dairy', 'ללא בשר', 'no meat', 'ניטרלי', 'neutral', 'דגים', 'fish'],
+        'vegan': ['טבעוני', 'vegan', 'צמחי', 'plant-based', 'טבעונות', 'veganism', 'ללא מוצרים מן החי', 'no animal products'],
+        'vegetarian': ['צמחוני', 'vegetarian', 'ללא בשר', 'no meat', 'ללא עוף', 'no chicken', 'ללא דגים', 'no fish'],
+        'gluten-free': ['ללא גלוטן', 'gluten free', 'celiac', 'gluten-free', 'glutenfree', 'צליאק', 'celiac', 'ללא חיטה', 'wheat free', 'ללא לחם', 'bread free', 'gluten intolerance', 'רגישות לגלוטן'],
+        
+        // Photographer
+        'wedding': ['חתונה', 'wedding', 'כלה', 'צילומי חתונה', 'wedding photography', 'צילום כלות', 'bridal photography', 'יום הנישואין', 'wedding day', 'טקס חתונה', 'wedding ceremony'],
+        'event': ['אירוע', 'event', 'אירועים', 'events', 'מסיבה', 'party', 'חגיגה', 'celebration', 'בר מצווה', 'bar mitzvah', 'בת מצווה', 'bat mitzvah', 'יום הולדת', 'birthday', 'ברית', 'brit', 'קורפורטיבי', 'corporate', 'עסקי', 'business', 'כנס', 'conference', 'סמינר', 'seminar'],
+        'portrait': ['פורטרט', 'portrait', 'צילומי פרופיל', 'profile photos', 'צילומי סטודיו', 'studio photography'],
+        'commercial': ['מסחרי', 'commercial'],
+        
+        // Florist
+        'bridal': ['כלה', 'bridal', 'חתונה', 'wedding', 'זר כלה', 'bridal bouquet', 'זר לכלה', 'bride bouquet', 'פרחי כלה', 'bridal flowers',],
+        'arrangements': ['סידורים', 'arrangements', 'סידור פרחים', 'flower arrangement', 'עיצוב פרחים', 'floral design', 'סידורי פרחים', 'floral arrangements', 'זרי פרחים', 'flower bouquets'],
+        'decorations': ['קישוטים', 'decorations', 'עיצוב אולם', 'hall decoration', 'עיצוב שולחנות', 'table decoration', 'קישוט אירועים', 'event decoration', 'עיצוב פרחים לאירועים', 'floral event design',],
+        'plants': ['צמחים', 'plants'],
+        
+        // Musician
+        'solo': ['סולו', 'solo', 'יחיד', 'single'],
+        'band': ['להקה', 'band', 'תזמורת', 'orchestra'],
+        'classical': ['קלאסי', 'classical', 'תזמורת סימפונית', 'symphony orchestra', 'תזמורת קאמרית', 'chamber orchestra',],
+        'modern': ['מודרני', 'modern'],
+        'traditional': ['מסורתי', 'traditional'],
+        
+        // DJ
+        'party': ['מסיבה', 'party', 'חגיגה', 'celebration', 'מסיבת רחוב', 'street party', 'מסיבה פרטית', 'private party', 'מסיבת יום הולדת', 'birthday party'],
+        'corporate': ['עסקי', 'corporate'],
+        'with-equipment': ['ציוד', 'equipment', 'sound system'],
+        
+        // Decorator
+        'balloons': ['בלונים', 'balloons', 'פיסול בלונים', 'balloon sculpting', 'בלונים מעוצבים', 'designer balloons'],
+        'lighting': ['תאורה', 'lighting'],
+        'furniture': ['רהיטים', 'furniture',  'רהיטי אירועים', 'event furniture'],
+        'backdrops': ['רקע', 'backdrops', 'backdrop', 'רקע לאירוע', 'event backdrop'],
+        
+        // Makeup
+        'with-hairstyling': ['עיצוב שיער', 'hairstyling', 'hair', 'hair styling', 'תסרוקת', 'מעצבת שיער', 'hair stylist', 'תסרוקות', 'hairstyles', 'איפור ושיער', 'makeup and hair', 'שיער ואיפור', 'hair and makeup'],
+        'mobile': ['נייד', 'mobile', 'הגעה', 'נייד לאירועים', 'mobile for events'],
+        
+        // Transport
+        'luxury-cars': ['רכב יוקרה', 'luxury car', 'מכונית יוקרה', 'luxury vehicle', 'רכבי יוקרה', 'luxury cars', 'רכב מפואר', 'prestige car'],
+        'buses': ['אוטובוס', 'buses', 'bus'],
+        'limousines': ['לימוזין', 'limousine'],
+        'classic-cars': ['רכב קלאסי', 'classic car', 'vintage']
+      };
+      
+      const hasMatchingFilter = filters.specificFilters.some(filter => {
+        const keywords = filterKeywords[filter];
+        if (keywords) {
+          return keywords.some(keyword => vendorText.includes(keyword));
+        }
+        return vendorText.includes(filter);
+      });
+      
+      if (!hasMatchingFilter) return false;
+    }
+
     return true;
   });
 };
 
 // Converts photo references to full URLs using Google Places Photo API and filters out invalid photos
-  const processVendorsWithPhotos = (vendors) => {
+const processVendorsWithPhotos = (vendors) => {
   return vendors.map(vendor => {
     if (vendor.photos && vendor.photos.length > 0) {
       vendor.photos = vendor.photos.map(photo => {
@@ -94,11 +172,97 @@ const applyServerFilters = (vendors, filters) => {
         console.warn('Photo without valid reference or URL:', photo);
         return null;
       }).filter(Boolean); 
-      
     }
     
     return vendor;
   });
+};
+
+// Process and filter vendors with duplicate removal
+const processAndFilterVendors = (results, filters, existingIds = null) => {
+  let vendors = processVendorsWithPhotos(results);
+  vendors = applyServerFilters(vendors, filters);
+  
+  if (existingIds && existingIds.size > 0) {
+    vendors = vendors.filter(v => !existingIds.has(v.place_id));
+  }
+  
+  return vendors;
+};
+
+// Remove duplicate vendors based on place_id
+const removeDuplicates = (vendors) => {
+  const uniqueVendors = [];
+  const seenIds = new Set();
+  
+  vendors.forEach(vendor => {
+    if (!seenIds.has(vendor.place_id)) {
+      seenIds.add(vendor.place_id);
+      uniqueVendors.push(vendor);
+    }
+  });
+  
+  return uniqueVendors;
+};
+
+// Fetch more results using pagination
+const fetchMoreResults = async (
+  currentPageToken,
+  filteredResults,
+  filters,
+  TARGET,
+  apiCallCount,
+  MAX_API_CALLS
+) => {
+  let hasMore = true;
+  let token = currentPageToken;
+  let count = apiCallCount;
+  
+  while (filteredResults.length < TARGET && 
+         token && 
+         hasMore && 
+         count < MAX_API_CALLS) {
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const result = await googleVendorService.getNextPage(token);
+    count++;
+    
+    const existingIds = new Set(filteredResults.map(v => v.place_id));
+    const newVendors = processAndFilterVendors(result.results, filters, existingIds);
+    
+    filteredResults.push(...newVendors);
+    token = result.nextPageToken;
+    hasMore = result.hasMore;
+    
+    if (!token || !hasMore) break;
+  }
+  
+  return { 
+    filteredResults, 
+    nextPageToken: token, 
+    hasMore, 
+    apiCallCount: count 
+  };
+};
+
+// Search with alternative query
+const searchWithAlternativeQuery = async (
+  vendorType,
+  query,
+  filters,
+  area,
+  pageNum,
+  language
+) => {
+  const location = googleVendorService.getLocationForArea(area);
+  const alternativeQuery = googleVendorService.buildAlternativeSearchQuery(
+    vendorType, query, filters, pageNum
+  );
+  
+  return await googleVendorService.textSearch(
+    alternativeQuery, location, location.radius, language
+  );
 };
 
 // Searches vendors using Google Places API with caching and server-side filtering
@@ -127,6 +291,7 @@ const searchVendors = async (req, res) => {
                       specificFilters !== '' ||
                       kashrutLevel !== 'all';
 
+    // Check cache
     const cacheKey = vendorCacheManager.generateKey(query, filters, pageNum);
     const cachedData = vendorCacheManager.get(cacheKey);
     
@@ -141,176 +306,163 @@ const searchVendors = async (req, res) => {
     let apiCallCount = 0;
     const MAX_API_CALLS = 5;
 
-    if (pageNum > 1) {
-      const tokenKey = vendorCacheManager.generateKey(query, filters, `token_page${pageNum - 1}`);
-      currentPageToken = vendorCacheManager.get(tokenKey);
+    // ========== CASE 1: No filters - browse all categories ==========
+    if (vendorType === 'all' && !query && !hasFilters) {
+      const location = googleVendorService.getLocationForArea(area);
       
-      if (!currentPageToken) {        
-        const location = googleVendorService.getLocationForArea(area);
-        const alternativeQuery = googleVendorService.buildAlternativeSearchQuery(
-          vendorType, query, filters, pageNum
-        );
+      const allCategories = [
+        'catering service kosher food Israel',
+        'photographer photography wedding Israel',
+        'florist flowers wedding Israel',
+        'musician band entertainment Israel',
+        'dj sound system entertainment Israel',
+        'event planner decorator design Israel',
+        'makeup artist beauty bridal Israel',
+        'transportation rental wedding Israel'
+      ];
       
-        const result = await googleVendorService.textSearch(
-          alternativeQuery, location, location.radius, language
-        );
-        
-        let newVendors = processVendorsWithPhotos(result.results);
-        
-        if (hasFilters) {
-          const beforeFilter = newVendors.length;
-          newVendors = applyServerFilters(newVendors, filters);
-        }
-        
-        filteredResults = newVendors;
-        currentPageToken = result.nextPageToken;
-        hasMore = result.hasMore;
-        
-      } else {
-        
-        while (filteredResults.length < TARGET && currentPageToken && apiCallCount < MAX_API_CALLS) {
-          apiCallCount++;
-          
-          const result = await googleVendorService.getNextPage(currentPageToken);
-          
-          let newVendors = processVendorsWithPhotos(result.results);
-
-          if (hasFilters) {
-            const beforeFilter = newVendors.length;
-            newVendors = applyServerFilters(newVendors, filters);
-          }
-
-          filteredResults = [...filteredResults, ...newVendors];
-          currentPageToken = result.nextPageToken;
-          hasMore = result.hasMore;
-          
-          
-          if (!currentPageToken || !hasMore) {
-            break;
-          }
-          
-          if (filteredResults.length >= TARGET) {
-            break;
-          }
-          
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+      // Rotate through categories based on page number
+      const startIndex = ((pageNum - 1) * 4) % allCategories.length;
+      const categoriesToSearch = [];
+      for (let i = 0; i < 4; i++) {
+        categoriesToSearch.push(allCategories[(startIndex + i) % allCategories.length]);
       }
       
-      if ((filteredResults.length < TARGET || !currentPageToken) && apiCallCount < MAX_API_CALLS) {
-        
-        const location = googleVendorService.getLocationForArea(area);
-        const alternativeQuery = googleVendorService.buildAlternativeSearchQuery(
-          vendorType, query, filters, pageNum
-        );
-                
-        const result = await googleVendorService.textSearch(
-          alternativeQuery, location, location.radius, language
-        );
-        
-        let newVendors = processVendorsWithPhotos(result.results);
-        
-        if (hasFilters) {
-          const beforeFilter = newVendors.length;
-          newVendors = applyServerFilters(newVendors, filters);
-        }
-        
-        const existingIds = new Set(filteredResults.map(v => v.place_id));
-        newVendors = newVendors.filter(v => !existingIds.has(v.place_id));
-        
-        filteredResults = [...filteredResults, ...newVendors];
-        
-        if (result.nextPageToken) {
-          currentPageToken = result.nextPageToken;
-          hasMore = result.hasMore;
-        }
-        
-      }
-      
-    } else {
-      const searchQuery = googleVendorService.buildSearchQuery(
-        vendorType, query, filters
+      // Search all categories in parallel
+      const searchPromises = categoriesToSearch.map(categoryQuery => 
+        googleVendorService.textSearch(categoryQuery, location, location.radius, language)
       );
+      
+      const results = await Promise.all(searchPromises);
+      
+      // Combine all results
+      let allVendors = [];
+      results.forEach(result => {
+        if (result.results && result.results.length > 0) {
+          const vendors = result.results.slice(0, 5);
+          allVendors.push(...vendors);
+        }
+      });
+      
+      // Process and remove duplicates
+      const processedVendors = processAndFilterVendors(allVendors, filters);
+      filteredResults = removeDuplicates(processedVendors);
+      hasMore = true;
+    } 
+    
+    // ========== CASE 2: First page with filters ==========
+    else if (pageNum === 1) {
+      const searchQuery = googleVendorService.buildSearchQuery(vendorType, query, filters);
       const location = googleVendorService.getLocationForArea(area);
 
-
+      // Initial search
       let result = await googleVendorService.textSearch(
         searchQuery, location, location.radius, language
       );
+      apiCallCount++;
 
-      let newVendors = processVendorsWithPhotos(result.results);
-
-      if (hasFilters) {
-        const beforeFilter = newVendors.length;
-        newVendors = applyServerFilters(newVendors, filters);
-      }
-
-      filteredResults = [...filteredResults, ...newVendors];
+      filteredResults = processAndFilterVendors(result.results, filters);
       currentPageToken = result.nextPageToken;
       hasMore = result.hasMore;
 
-      while (hasFilters && 
-            filteredResults.length < TARGET && 
-            currentPageToken && 
-            apiCallCount < MAX_API_CALLS) {
-
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch more if needed
+      if (filteredResults.length < TARGET && currentPageToken && hasMore && apiCallCount < MAX_API_CALLS) {
+        const paginationResult = await fetchMoreResults(
+          currentPageToken,
+          filteredResults,
+          filters,
+          TARGET,
+          apiCallCount,
+          MAX_API_CALLS
+        );
         
-        result = await googleVendorService.getNextPage(currentPageToken);
-        
-        newVendors = processVendorsWithPhotos(result.results);
-        
-        const beforeFilter = newVendors.length;
-        newVendors = applyServerFilters(newVendors, filters);
-        
-        filteredResults = [...filteredResults, ...newVendors];
-        currentPageToken = result.nextPageToken;
-        hasMore = result.hasMore;
-        
-        
-        if (!currentPageToken || !hasMore) {
-          break;
-        }
+        filteredResults = paginationResult.filteredResults;
+        currentPageToken = paginationResult.nextPageToken;
+        hasMore = paginationResult.hasMore;
+        apiCallCount = paginationResult.apiCallCount;
       }
       
+      // Try alternative query if still not enough results
       if (filteredResults.length < TARGET && apiCallCount < MAX_API_CALLS) {
-        
-        const alternativeQuery = googleVendorService.buildAlternativeSearchQuery(
-          vendorType, query, filters, pageNum
+        result = await searchWithAlternativeQuery(
+          vendorType, query, filters, area, pageNum, language
         );
-                
-        result = await googleVendorService.textSearch(
-          alternativeQuery, location, location.radius, language
-        );
-        
-        newVendors = processVendorsWithPhotos(result.results);
-        
-        if (hasFilters) {
-          const beforeFilter = newVendors.length;
-          newVendors = applyServerFilters(newVendors, filters);
-        }
+        apiCallCount++;
         
         const existingIds = new Set(filteredResults.map(v => v.place_id));
-        newVendors = newVendors.filter(v => !existingIds.has(v.place_id));
-        
-        filteredResults = [...filteredResults, ...newVendors];
+        const newVendors = processAndFilterVendors(result.results, filters, existingIds);
+        filteredResults.push(...newVendors);
         
         if (result.nextPageToken && !currentPageToken) {
           currentPageToken = result.nextPageToken;
           hasMore = result.hasMore;
         }
+      }
+    } 
+    
+    // ========== CASE 3: Subsequent pages ==========
+    else {
+      const tokenKey = vendorCacheManager.generateKey(query, filters, `token_page${pageNum - 1}`);
+      currentPageToken = vendorCacheManager.get(tokenKey);
+      
+      // No cached token - use alternative query
+      if (!currentPageToken) {
+        const result = await searchWithAlternativeQuery(
+          vendorType, query, filters, area, pageNum, language
+        );
+        apiCallCount++;
         
+        filteredResults = processAndFilterVendors(result.results, filters);
+        currentPageToken = result.nextPageToken;
+        hasMore = result.hasMore;
+      } 
+      // Has cached token - fetch more results
+      else {
+        const paginationResult = await fetchMoreResults(
+          currentPageToken,
+          filteredResults,
+          filters,
+          TARGET,
+          apiCallCount,
+          MAX_API_CALLS
+        );
+        
+        filteredResults = paginationResult.filteredResults;
+        currentPageToken = paginationResult.nextPageToken;
+        hasMore = paginationResult.hasMore;
+        apiCallCount = paginationResult.apiCallCount;
+      }
+      
+      // Try alternative query if still not enough results
+      if (filteredResults.length < TARGET && apiCallCount < MAX_API_CALLS) {
+        const result = await searchWithAlternativeQuery(
+          vendorType, query, filters, area, pageNum + 1, language
+        );
+        apiCallCount++;
+        
+        const existingIds = new Set(filteredResults.map(v => v.place_id));
+        const newVendors = processAndFilterVendors(result.results, filters, existingIds);
+        filteredResults.push(...newVendors);
+        
+        if (result.nextPageToken) {
+          currentPageToken = result.nextPageToken;
+          hasMore = result.hasMore;
+        }
       }
     }
 
+    // Cache the next page token
     if (currentPageToken) {
       const tokenKey = vendorCacheManager.generateKey(query, filters, `token_page${pageNum}`);
       vendorCacheManager.set(tokenKey, currentPageToken);
     }
 
+    // Prepare response
     const response = {
       results: filteredResults.slice(0, 20),
-      hasMore: filteredResults.length > 20 || (hasMore && !!currentPageToken),
+      hasMore: (vendorType === 'all' && !query && !hasFilters) 
+        ? true 
+        : (filteredResults.length > 20 || (hasMore && !!currentPageToken)),
       currentPage: pageNum,
       totalResults: Math.min(filteredResults.length, 20)
     };
@@ -478,11 +630,47 @@ const getCacheStats = (req, res) => {
   }
 };
 
+// Fetches detailed vendor information from Google Places API by placeId and processes photos
+const getVendorDetailsByPlaceId = async (req, res) => {
+  try {
+    const { placeId } = req.params;
+    const { language = 'he' } = req.query;
+
+    if (!placeId) {
+      return res.status(400).json({ 
+        error: 'Missing placeId parameter',
+        message: 'placeId is required' 
+      });
+    }
+
+    const placeDetails = await googleVendorService.getPlaceDetails(placeId, language);
+
+    if (!placeDetails) {
+      return res.status(404).json({ 
+        error: 'Vendor not found',
+        message: 'No details found for this placeId' 
+      });
+    }
+
+    let processedVendor = processVendorsWithPhotos([placeDetails])[0];
+
+    res.json(processedVendor);
+
+  } catch (error) {
+    console.error('❌ Error fetching vendor details:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch vendor details',
+      message: error.message 
+    });
+  }
+};
+
 module.exports = {
   getEventVendors,
   addVendor,
   updateVendor,
   deleteVendor,
   searchVendors,
-  getCacheStats
+  getCacheStats,
+  getVendorDetailsByPlaceId  
 };

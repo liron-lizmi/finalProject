@@ -917,6 +917,8 @@
     "defaultVendorName": "ספק",
     "selectButton": "בחר ספק",
     "vendorAddedSuccess": "הספק נוסף בהצלחה!",
+    "loadMore": "טען עוד",
+    "loadingMore": "טוען עוד ספקים...",
     "filters": {
       "areaLabel": "אזור",
       "allAreas": "כל האזורים",
