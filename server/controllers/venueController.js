@@ -1,5 +1,5 @@
 const googlePlacesService = require('../services/googlePlacesService');
-const cacheManager = require('../services/cacheManager');
+const CacheManager = require('../services/CacheManager');
 
 const getVenueStyle = (venue, language = 'en') => {
   const venueText = (
@@ -214,7 +214,6 @@ const processVenuesWithPhotos = (venues) => {
     }
     
     if (!venue.photos || venue.photos.length === 0) {
-      console.log(`  ⚠️  No photos for venue: ${venue.name}`);
       venue.photos = [];
     }
     
@@ -262,15 +261,12 @@ const searchVenues = async (req, res) => {
                       catering === 'true' ||
                       accommodation === 'true';
 
-    const cacheKey = cacheManager.generateKey(query, filters, pageNum);
-    const cachedData = cacheManager.get(cacheKey);
+    const cacheKey = CacheManager.generateKey(query, filters, pageNum);
+    const cachedData = CacheManager.get(cacheKey);
     
     if (cachedData) {
-      console.log(`✅ Cache hit for page ${pageNum}`);
       return res.json(cachedData);
     }
-
-    console.log(`🔍 Searching page ${pageNum}, filters active: ${hasFilters}`);
 
     let filteredResults = [];
     let googlePage = pageNum;
@@ -290,8 +286,8 @@ const searchVenues = async (req, res) => {
           searchQuery, location, location.radius, language, venueType
         );
       } else {
-        const tokenKey = cacheManager.generateKey(query, filters, `token_page${googlePage - 1}`);
-        const pageToken = cacheManager.get(tokenKey);
+        const tokenKey = CacheManager.generateKey(query, filters, `token_page${googlePage - 1}`);
+        const pageToken = CacheManager.get(tokenKey);
         
         if (!pageToken) break;
         
@@ -308,8 +304,8 @@ const searchVenues = async (req, res) => {
       hasMore = result.hasMore;
       
       if (result.nextPageToken) {
-        const tokenKey = cacheManager.generateKey(query, filters, `token_page${googlePage}`);
-        cacheManager.set(tokenKey, result.nextPageToken);
+        const tokenKey = CacheManager.generateKey(query, filters, `token_page${googlePage}`);
+        CacheManager.set(tokenKey, result.nextPageToken);
       }
       
       googlePage++;
@@ -322,7 +318,7 @@ const searchVenues = async (req, res) => {
       totalResults: 20
     };
 
-    cacheManager.set(cacheKey, response);
+    CacheManager.set(cacheKey, response);
     return res.json(response);
 
   } catch (error) {
@@ -340,7 +336,7 @@ const getVenueDetails = async (req, res) => {
     const { language = 'en' } = req.query;
 
     const cacheKey = `details_${placeId}_${language}`;
-    const cachedData = cacheManager.get(cacheKey);
+    const cachedData = CacheManager.get(cacheKey);
     
     if (cachedData) {
       return res.json(cachedData);
@@ -360,7 +356,7 @@ const getVenueDetails = async (req, res) => {
       });
     }
 
-    cacheManager.set(cacheKey, details);
+    CacheManager.set(cacheKey, details);
     return res.json(details);
 
   } catch (error) {

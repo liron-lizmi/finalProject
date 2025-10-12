@@ -1,4 +1,4 @@
-// server/services/cacheManager.js
+// server/services/CacheManager.js
 class CacheManager {
   constructor() {
     this.cache = new Map();

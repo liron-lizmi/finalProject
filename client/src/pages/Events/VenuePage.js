@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import '../../styles/VenuePage.css';
 import venueService from '../../services/venueService';
+import { translateItems} from '../../services/translationUtils';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 
@@ -60,31 +61,39 @@ const VenuePage = ({ onSelectVenue }) => {
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
 
-  const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters = false) => {
-    setLoading(true);
-    setCurrentPage(1);
-    setAllVenues([]);
-    setVenues([]);
-    clearMarkers();
+  // VenuePage.jsx - searchVenues
 
-    try {
-      const result = await venueService.searchVenues(
-        filterParams, 
-        searchQuery, 
-        1,
-        isRTL ? 'he' : 'en'
-      );
-      
-      setAllVenues(result.venues);
-      setHasMoreResults(result.hasMore);
-      setLoading(false);
+const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters = false) => {
+  setLoading(true);
+  setCurrentPage(1);
+  setAllVenues([]);
+  setVenues([]);
+  clearMarkers();
 
-    } catch (error) {
-      console.error('Error searching venues:', error);
-      setError(error.message || t('errors.generalError'));
-      setLoading(false);
+  try {
+    const result = await venueService.searchVenues(
+      filterParams, 
+      searchQuery, 
+      1,
+      isRTL ? 'he' : 'en'
+    );
+    
+    let venues = result.venues;
+    
+    if (isEnglish) {
+      venues = await translateItems(venues, 'en');
     }
-  };
+    
+    setAllVenues(venues);
+    setHasMoreResults(result.hasMore);
+    setLoading(false);
+
+  } catch (error) {
+    console.error('Error searching venues:', error);
+    setError(error.message || t('errors.generalError'));
+    setLoading(false);
+  }
+};
 
   const getVenueDetails = async (placeId) => {
     if (!placeId) return;
