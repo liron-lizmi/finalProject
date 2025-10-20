@@ -49,7 +49,6 @@ const getEventGuests = async (req, res) => {
     
 
   } catch (err) {
-    console.error('Error fetching guests:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -57,7 +56,12 @@ const getEventGuests = async (req, res) => {
 const addGuest = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { firstName, lastName, phone, group, customGroup } = req.body;
+    const { firstName, lastName, phone, group, customGroup, gender } = req.body;
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
 
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
@@ -81,11 +85,15 @@ const addGuest = async (req, res) => {
       group: finalGroup,
       event: eventId,
       user: req.userId,
-      attendingCount: 1 
+      attendingCount: 1
     };
 
     if (finalCustomGroup) {
       guestData.customGroup = finalCustomGroup;
+    }
+
+    if (event.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
+      guestData.gender = gender;
     }
 
     const newGuest = new Guest(guestData);
@@ -100,7 +108,6 @@ const addGuest = async (req, res) => {
     
     res.status(201).json(savedGuest);
   } catch (err) {
-    console.error('Error adding guest:', err);
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -205,7 +212,6 @@ const bulkImportGuests = async (req, res) => {
         }
 
       } catch (insertError) {
-        console.error('Bulk insert error:', insertError);
         
         if (insertError.insertedDocs) {
           results.imported = insertError.insertedDocs.length;
@@ -220,7 +226,6 @@ const bulkImportGuests = async (req, res) => {
             } catch (individualError) {
               results.failed++;
               errors.push(`${guestData.firstName} ${guestData.lastName}: ${individualError.message}`);
-              console.error(`Failed to insert ${guestData.firstName} ${guestData.lastName}:`, individualError);
             }
           }
         }
@@ -240,7 +245,6 @@ const bulkImportGuests = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Bulk import error:', err);
     res.status(500).json({ 
       message: req.t('errors.serverError'),
       imported: 0,
@@ -295,7 +299,6 @@ const deleteGuest = async (req, res) => {
 
     res.json({ message: req.t('guests.deleteSuccess') });
   } catch (err) {
-    console.error('Error deleting guest:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -369,7 +372,6 @@ const updateGuest = async (req, res) => {
 
     res.json(updatedGuest);
   } catch (err) {
-    console.error('Error updating guest:', err);
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -385,23 +387,19 @@ const updateGuest = async (req, res) => {
 const updateGuestRSVP = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
-    const { rsvpStatus, guestNotes, attendingCount } = req.body;
+    const { rsvpStatus, guestNotes, attendingCount, maleCount, femaleCount } = req.body;
 
-    // Find the event - could be original or shared copy
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event && !(await Event.findOne({ _id: eventId, 'sharedWith.userId': req.userId }))) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
     
-    // Try to find guest in multiple locations
     let guest = await Guest.findOne({ _id: guestId, event: eventId });
     
-    // If not found in current event, try in original event
     if (!guest && event && event.originalEvent) {
       guest = await Guest.findOne({ _id: guestId, event: event.originalEvent });
     }
     
-    // If still not found, try in shared copies
     if (!guest) {
       const sharedCopies = await Event.find({ 
         $or: [
@@ -422,6 +420,8 @@ const updateGuestRSVP = async (req, res) => {
 
     const oldStatus = guest.rsvpStatus;
     const oldAttendingCount = guest.attendingCount || 1;
+    const oldMaleCount = guest.maleCount || 0;
+    const oldFemaleCount = guest.femaleCount || 0;
     let syncTriggerData = null;
 
     if (rsvpStatus !== undefined) {
@@ -433,19 +433,31 @@ const updateGuestRSVP = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
 
-    if (attendingCount !== undefined) {
-      const count = parseInt(attendingCount);
-      if (!isNaN(count) && count >= 0) {
-        guest.attendingCount = count;
+    if (event.isSeparatedSeating) {
+      if (maleCount !== undefined) {
+        guest.maleCount = rsvpStatus === 'confirmed' ? Math.max(0, parseInt(maleCount)) : 0;
       }
-    } else if (rsvpStatus === 'declined') {
-      guest.attendingCount = 0;
-    } else if (rsvpStatus === 'confirmed' && (!guest.attendingCount || guest.attendingCount < 1)) {
-      guest.attendingCount = 1;
+      if (femaleCount !== undefined) {
+        guest.femaleCount = rsvpStatus === 'confirmed' ? Math.max(0, parseInt(femaleCount)) : 0;
+      }
+      guest.attendingCount = (guest.maleCount || 0) + (guest.femaleCount || 0);
+    } else {
+      if (attendingCount !== undefined) {
+        const count = parseInt(attendingCount);
+        if (!isNaN(count) && count >= 0) {
+          guest.attendingCount = count;
+        }
+      } else if (rsvpStatus === 'declined') {
+        guest.attendingCount = 0;
+      } else if (rsvpStatus === 'confirmed' && (!guest.attendingCount || guest.attendingCount < 1)) {
+        guest.attendingCount = 1;
+      }
     }
 
     const updatedGuest = await guest.save();
     const newAttendingCount = updatedGuest.attendingCount || 1;
+    const newMaleCount = updatedGuest.maleCount || 0;
+    const newFemaleCount = updatedGuest.femaleCount || 0;
 
     if (oldStatus !== rsvpStatus) {
       if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
@@ -454,7 +466,10 @@ const updateGuestRSVP = async (req, res) => {
           guestId,
           guest: updatedGuest,
           oldStatus,
-          newStatus: rsvpStatus
+          newStatus: rsvpStatus,
+          isSeparated: event.isSeparatedSeating,
+          maleCount: newMaleCount,
+          femaleCount: newFemaleCount
         };
       } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
         syncTriggerData = {
@@ -465,14 +480,31 @@ const updateGuestRSVP = async (req, res) => {
           newStatus: rsvpStatus
         };
       }
-    } else if (rsvpStatus === 'confirmed' && oldAttendingCount !== newAttendingCount) {
-      syncTriggerData = {
-        type: 'attending_count_changed',
-        guestId,
-        guest: updatedGuest,
-        oldCount: oldAttendingCount,
-        newCount: newAttendingCount
-      };
+    } else if (rsvpStatus === 'confirmed') {
+      if (event.isSeparatedSeating) {
+        if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
+          syncTriggerData = {
+            type: 'attending_count_changed',
+            guestId,
+            guest: updatedGuest,
+            oldCount: oldAttendingCount,
+            newCount: newAttendingCount,
+            oldMaleCount,
+            newMaleCount,
+            oldFemaleCount,
+            newFemaleCount,
+            isSeparated: true
+          };
+        }
+      } else if (oldAttendingCount !== newAttendingCount) {
+        syncTriggerData = {
+          type: 'attending_count_changed',
+          guestId,
+          guest: updatedGuest,
+          oldCount: oldAttendingCount,
+          newCount: newAttendingCount
+        };
+      }
     }
 
     if (syncTriggerData) {
@@ -480,11 +512,10 @@ const updateGuestRSVP = async (req, res) => {
     }
 
     res.json({
-      message: req.t('guests.rsvpUpdateSuccess'),
+      message: req.t('guests.rsvp.updateSuccess'),
       guest: updatedGuest
     });
   } catch (err) {
-    console.error('Error updating guest RSVP:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -513,7 +544,6 @@ const getEventGroups = async (req, res) => {
 
     res.json(Array.from(groups));
   } catch (err) {
-    console.error('Error fetching event groups:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -555,7 +585,6 @@ const getGuestStats = async (req, res) => {
 
     res.json(stats);
   } catch (err) {
-    console.error('Error fetching guest stats:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -563,9 +592,9 @@ const getGuestStats = async (req, res) => {
 const updateGuestRSVPPublic = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { phone, rsvpStatus, guestNotes, attendingCount } = req.body;
+    const { phone, rsvpStatus, guestNotes, attendingCount, maleCount, femaleCount } = req.body;
 
-     if (!phone || !phone.trim()) {
+    if (!phone || !phone.trim()) {
       return res.status(400).json({ message: 'נדרש מספר טלפון' });
     }
 
@@ -620,6 +649,8 @@ const updateGuestRSVPPublic = async (req, res) => {
 
     const oldStatus = guest.rsvpStatus;
     const oldAttendingCount = guest.attendingCount || 1;
+    const oldMaleCount = guest.maleCount || 0;
+    const oldFemaleCount = guest.femaleCount || 0;
     let syncTriggerData = null;
 
     guest.rsvpStatus = rsvpStatus;
@@ -629,14 +660,28 @@ const updateGuestRSVPPublic = async (req, res) => {
       guest.guestNotes = guestNotes;
     }
     
-    if (rsvpStatus === 'confirmed') {
-      guest.attendingCount = attendingCount && attendingCount >= 1 ? attendingCount : 1;
-    } else if (rsvpStatus === 'declined') {
-      guest.attendingCount = 0;
+    if (currentEvent.isSeparatedSeating) {
+      if (rsvpStatus === 'confirmed') {
+        guest.maleCount = maleCount >= 0 ? maleCount : 0;
+        guest.femaleCount = femaleCount >= 0 ? femaleCount : 0;
+        guest.attendingCount = guest.maleCount + guest.femaleCount;
+      } else if (rsvpStatus === 'declined') {
+        guest.maleCount = 0;
+        guest.femaleCount = 0;
+        guest.attendingCount = 0;
+      }
+    } else {
+      if (rsvpStatus === 'confirmed') {
+        guest.attendingCount = attendingCount && attendingCount >= 1 ? attendingCount : 1;
+      } else if (rsvpStatus === 'declined') {
+        guest.attendingCount = 0;
+      }
     }
 
     const updatedGuest = await guest.save();
     const newAttendingCount = updatedGuest.attendingCount || 1;
+    const newMaleCount = updatedGuest.maleCount || 0;
+    const newFemaleCount = updatedGuest.femaleCount || 0;
 
     if (oldStatus !== rsvpStatus) {
       if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
@@ -645,7 +690,10 @@ const updateGuestRSVPPublic = async (req, res) => {
           guestId: updatedGuest._id,
           guest: updatedGuest,
           oldStatus,
-          newStatus: rsvpStatus
+          newStatus: rsvpStatus,
+          isSeparated: currentEvent.isSeparatedSeating,
+          maleCount: newMaleCount,
+          femaleCount: newFemaleCount
         };
       } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
         syncTriggerData = {
@@ -656,14 +704,31 @@ const updateGuestRSVPPublic = async (req, res) => {
           newStatus: rsvpStatus
         };
       }
-    } else if (rsvpStatus === 'confirmed' && oldAttendingCount !== newAttendingCount) {
-      syncTriggerData = {
-        type: 'attending_count_changed',
-        guestId: updatedGuest._id,
-        guest: updatedGuest,
-        oldCount: oldAttendingCount,
-        newCount: newAttendingCount
-      };
+    } else if (rsvpStatus === 'confirmed') {
+      if (currentEvent.isSeparatedSeating) {
+        if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
+          syncTriggerData = {
+            type: 'attending_count_changed',
+            guestId: updatedGuest._id,
+            guest: updatedGuest,
+            oldCount: oldAttendingCount,
+            newCount: newAttendingCount,
+            oldMaleCount,
+            newMaleCount,
+            oldFemaleCount,
+            newFemaleCount,
+            isSeparated: true
+          };
+        }
+      } else if (oldAttendingCount !== newAttendingCount) {
+        syncTriggerData = {
+          type: 'attending_count_changed',
+          guestId: updatedGuest._id,
+          guest: updatedGuest,
+          oldCount: oldAttendingCount,
+          newCount: newAttendingCount
+        };
+      }
     }
 
     if (syncTriggerData) {
@@ -671,16 +736,17 @@ const updateGuestRSVPPublic = async (req, res) => {
     }
     
     res.json({
-      message: req.t('guests.rsvpUpdateSuccess'),
+      message: req.t('guests.rsvp.updateSuccess'),
       guest: {
         firstName: updatedGuest.firstName,
         lastName: updatedGuest.lastName,
         rsvpStatus: updatedGuest.rsvpStatus,
-        attendingCount: updatedGuest.attendingCount
+        attendingCount: updatedGuest.attendingCount,
+        maleCount: updatedGuest.maleCount,
+        femaleCount: updatedGuest.femaleCount
       }
     });
   } catch (err) {
-    console.error('Error updating guest RSVP (public):', err);
     res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
@@ -689,14 +755,14 @@ const getEventForRSVP = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    let event = await Event.findById(eventId, 'eventName date location originalEvent');
+    let event = await Event.findById(eventId, 'eventName date location originalEvent isSeparatedSeating');
 
-     if (!event) {
+    if (!event) {
       return res.status(404).json({ message: 'אירוע לא נמצא' });
     }
 
     if (event.originalEvent) {
-      const originalEvent = await Event.findById(event.originalEvent, 'eventName date location');
+      const originalEvent = await Event.findById(event.originalEvent, 'eventName date location isSeparatedSeating');
       if (originalEvent) {
         event = originalEvent;
       }
@@ -705,12 +771,10 @@ const getEventForRSVP = async (req, res) => {
     res.json({
       eventName: event.eventName,
       eventDate: event.date,
-      eventLocation: event.location
+      eventLocation: event.location,
+      isSeparatedSeating: event.isSeparatedSeating || false
     });
-
-  
   } catch (err) {
-    console.error('Error fetching event for RSVP:', err);
     res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
@@ -735,9 +799,8 @@ const checkGuestByPhone = async (req, res) => {
     searchedEvents.push(eventId);
     
     if (guest) {
-      console.log('Guest found in current event!');
+      // Guest found
     } else {
-      
       if (currentEvent) {
         if (currentEvent.originalEvent) {
           guest = await Guest.findOne({ 
@@ -764,7 +827,6 @@ const checkGuestByPhone = async (req, res) => {
         }
         
         if (!guest) {
-          
           const relatedUserIds = [currentEvent.user];
           
           if (currentEvent.sharedWith && currentEvent.sharedWith.length > 0) {
@@ -779,7 +841,6 @@ const checkGuestByPhone = async (req, res) => {
             phone: cleanPhone,
             user: { $in: relatedUserIds }
           });
-          
         }
       }
     }
@@ -796,11 +857,12 @@ const checkGuestByPhone = async (req, res) => {
         lastName: guest.lastName,
         rsvpStatus: guest.rsvpStatus,
         attendingCount: guest.attendingCount || 1,
+        maleCount: guest.maleCount || 0,
+        femaleCount: guest.femaleCount || 0,
         guestNotes: guest.guestNotes || ''
       }
     });
   } catch (err) {
-    console.error('Error checking guest by phone:', err);
     res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
   }
 };
@@ -822,7 +884,6 @@ const generateRSVPLink = async (req, res) => {
       eventName: event.eventName 
     });
   } catch (err) {
-    console.error('Error generating RSVP link:', err);
     res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
   }
 };
@@ -862,7 +923,6 @@ const updateGuestGift = async (req, res) => {
     const updatedGuest = await guest.save();
     res.json(updatedGuest);
   } catch (err) {
-    console.error('Error updating guest gift:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -943,7 +1003,6 @@ const getSeatingSync = async (req, res) => {
       }))
     });
   } catch (err) {
-    console.error('Error getting seating sync status:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -974,7 +1033,6 @@ const markSyncProcessed = async (req, res) => {
 
     res.json({ message: req.t('seating.sync.triggersProcessed') });
   } catch (err) {
-    console.error('Error marking sync as processed:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

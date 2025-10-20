@@ -36,6 +36,10 @@ const EventSchema = new mongoose.Schema({
     default: 'other',
     enum: ['wedding', 'birthday', 'corporate', 'conference', 'party', 'other']
   },
+  isSeparatedSeating: {
+    type: Boolean,
+    default: false
+  },
   guestCount: {
     type: Number,
     default: 0,

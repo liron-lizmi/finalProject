@@ -42,6 +42,16 @@ const GuestSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female'],
+    required: function() {
+      if (this.maleCount > 0 || this.femaleCount > 0) {
+        return false;
+      }
+      return false;
+    }
+  },
   rsvpStatus: {
     type: String,
     enum: ['pending', 'confirmed', 'declined', 'no_response'],
@@ -50,6 +60,26 @@ const GuestSchema = new mongoose.Schema({
   attendingCount: {
     type: Number,
     default: 1,
+    min: 0,
+    max: 20
+  },
+  attendingCount: {
+    type: Number,
+    default: 1,
+    min: 0,
+    max: 20
+  },
+  
+  maleCount: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 20
+  },
+  
+  femaleCount: {
+    type: Number,
+    default: 0,
     min: 0,
     max: 20
   },
@@ -163,8 +193,20 @@ GuestSchema.pre('save', function(next) {
   
   if (this.rsvpStatus === 'declined') {
     this.attendingCount = 0;
+    this.maleCount = 0;
+    this.femaleCount = 0;
   } else if (this.rsvpStatus === 'confirmed') {
-    if (!this.attendingCount || this.attendingCount < 1 || isNaN(this.attendingCount)) {
+    if (this.maleCount > 0 || this.femaleCount > 0) {
+      this.attendingCount = (this.maleCount || 0) + (this.femaleCount || 0);
+      
+      if (this.maleCount > 0 && this.femaleCount === 0) {
+        this.gender = 'male';
+      } else if (this.femaleCount > 0 && this.maleCount === 0) {
+        this.gender = 'female';
+      } else if (this.maleCount > 0 && this.femaleCount > 0) {
+        this.gender = 'male';
+      }
+    } else if (!this.attendingCount || this.attendingCount < 1 || isNaN(this.attendingCount)) {
       this.attendingCount = 1;
     }
   }

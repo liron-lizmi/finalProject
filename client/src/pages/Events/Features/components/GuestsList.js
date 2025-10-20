@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import '../../../../styles/EventSeatingPage.css';
 
 const GuestsList = ({
   guests,
@@ -9,7 +10,12 @@ const GuestsList = ({
   onDragEnd,
   onUnseatGuest,
   syncNotification = null,
-  onSyncStatusChange = null
+  onSyncStatusChange = null,
+  isSeparatedSeating = false,
+  genderFilter = 'all',
+  onGenderFilterChange = null,
+  maleArrangement = {},
+  femaleArrangement = {}
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,11 +27,9 @@ const GuestsList = ({
 
   useEffect(() => {
     if (syncNotification && syncNotification.type === 'success') {
-      // For simple sync notifications, create a basic structure
       setSyncChanges([]);
       setHighlightedGuests(new Set());
       
-      // Only process if there's actual sync data with results
       if (syncNotification.syncResults || syncNotification.appliedActions) {
         const changes = syncNotification.syncResults || syncNotification.appliedActions || [];
         if (changes.length > 0) {
@@ -88,18 +92,74 @@ const GuestsList = ({
   }, [guests]);
 
   const seatedGuestIds = useMemo(() => {
-    return new Set(Object.values(seatingArrangement).flat());
-  }, [seatingArrangement]);
+    const ids = new Set();
+    
+    if (isSeparatedSeating) {
+      Object.values(maleArrangement).forEach(guestIds => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(id => {
+            ids.add(id);
+            ids.add(`${id}_male`);
+          });
+        }
+      });
+      
+      Object.values(femaleArrangement).forEach(guestIds => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(id => {
+            ids.add(id);
+            ids.add(`${id}_female`);
+          });
+        }
+      });
+    } else {
+      Object.values(seatingArrangement).forEach(guestIds => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(id => {
+            ids.add(id);
+          });
+        }
+      });
+    }
+    
+    return ids;
+  }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement]);
 
   const getGuestTable = useMemo(() => {
     const guestTableMap = {};
-    Object.entries(seatingArrangement).forEach(([tableId, guestIds]) => {
-      guestIds.forEach(guestId => {
-        guestTableMap[guestId] = tableId;
+    
+    if (isSeparatedSeating) {
+      Object.entries(maleArrangement || {}).forEach(([tableId, guestIds]) => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(guestId => {
+            guestTableMap[`${guestId}_male`] = tableId;
+            guestTableMap[guestId] = tableId;
+          });
+        }
       });
-    });
+      
+      Object.entries(femaleArrangement || {}).forEach(([tableId, guestIds]) => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(guestId => {
+            guestTableMap[`${guestId}_female`] = tableId;
+            if (!guestTableMap[guestId]) {
+              guestTableMap[guestId] = tableId;
+            }
+          });
+        }
+      });
+    } else {
+      Object.entries(seatingArrangement).forEach(([tableId, guestIds]) => {
+        if (Array.isArray(guestIds)) {
+          guestIds.forEach(guestId => {
+            guestTableMap[guestId] = tableId;
+          });
+        }
+      });
+    }
+    
     return guestTableMap;
-  }, [seatingArrangement]);
+  }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement]);
 
   const getTableName = useCallback((tableId) => {
     if (!tables || !Array.isArray(tables)) {
@@ -109,12 +169,86 @@ const GuestsList = ({
     return table ? table.name : tableId;
   }, [tables]);
 
+  const getGuestCount = useCallback((guest) => {
+    if (isSeparatedSeating) {
+      if (guest.displayGender === 'male') {
+        return guest.maleCount || 0;
+      } else if (guest.displayGender === 'female') {
+        return guest.femaleCount || 0;
+      }
+      
+      if (genderFilter === 'male') {
+        return guest.maleCount || 0;
+      } else if (genderFilter === 'female') {
+        return guest.femaleCount || 0;
+      } else {
+        return (guest.maleCount || 0) + (guest.femaleCount || 0);
+      }
+    }
+    return guest.attendingCount || 1;
+  }, [isSeparatedSeating, genderFilter]);
+
   const filteredGuests = useMemo(() => {
-    return guests.filter(guest => {
+    let guestsToFilter = [];
+    
+    if (isSeparatedSeating) {
+      guests.forEach(guest => {
+        const hasMales = (guest.maleCount || 0) > 0;
+        const hasFemales = (guest.femaleCount || 0) > 0;
+        
+        if (genderFilter === 'all') {
+          if (hasMales) {
+            guestsToFilter.push({
+              ...guest,
+              _id: `${guest._id}_male`,
+              originalId: guest._id,
+              displayGender: 'male',
+              attendingCount: guest.maleCount,
+              maleCount: guest.maleCount,
+              femaleCount: 0
+            });
+          }
+          if (hasFemales) {
+            guestsToFilter.push({
+              ...guest,
+              _id: `${guest._id}_female`,
+              originalId: guest._id,
+              displayGender: 'female',
+              attendingCount: guest.femaleCount,
+              maleCount: 0,
+              femaleCount: guest.femaleCount
+            });
+          }
+        } else if (genderFilter === 'male' && hasMales) {
+          guestsToFilter.push({
+            ...guest,
+            _id: `${guest._id}_male`,
+            originalId: guest._id,
+            displayGender: 'male',
+            attendingCount: guest.maleCount,
+            maleCount: guest.maleCount,
+            femaleCount: 0
+          });
+        } else if (genderFilter === 'female' && hasFemales) {
+          guestsToFilter.push({
+            ...guest,
+            _id: `${guest._id}_female`,
+            originalId: guest._id,
+            displayGender: 'female',
+            attendingCount: guest.femaleCount,
+            maleCount: 0,
+            femaleCount: guest.femaleCount
+          });
+        }
+      });
+    } else {
+      guestsToFilter = guests;
+    }
+    
+    return guestsToFilter.filter(guest => {
       if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
         const fullName = `${guest.firstName} ${guest.lastName}`.toLowerCase();
-        if (!fullName.includes(searchLower)) {
+        if (!fullName.includes(searchTerm.toLowerCase())) {
           return false;
         }
       }
@@ -126,24 +260,25 @@ const GuestsList = ({
         }
       }
 
-      const isSeated = seatedGuestIds.has(guest._id);
-      if (showSeatedOnly && !isSeated) {
-        return false;
-      }
-      if (showUnseatedOnly && isSeated) {
-        return false;
-      }
+      const guestIdToCheck = guest.originalId || guest._id;
+      const isSeated = seatedGuestIds.has(guestIdToCheck) || seatedGuestIds.has(guest._id);
+      
+      if (showSeatedOnly && !isSeated) return false;
+      if (showUnseatedOnly && isSeated) return false;
 
       return true;
     });
-  }, [guests, searchTerm, filterGroup, showSeatedOnly, showUnseatedOnly, seatedGuestIds]);
+  }, [guests, searchTerm, filterGroup, showSeatedOnly, showUnseatedOnly, seatedGuestIds, isSeparatedSeating, genderFilter]);
 
   const groupedGuests = useMemo(() => {
     const seated = [];
     const unseated = [];
 
     filteredGuests.forEach(guest => {
-      if (seatedGuestIds.has(guest._id)) {
+      const originalId = guest.originalId || guest._id.replace('_male', '').replace('_female', '');
+      const isSeated = seatedGuestIds.has(originalId) || seatedGuestIds.has(guest._id);
+      
+      if (isSeated) {
         seated.push(guest);
       } else {
         unseated.push(guest);
@@ -164,6 +299,11 @@ const GuestsList = ({
     
     return guest.group;
   };
+
+  const getGenderIcon = useCallback((guest) => {
+    if (!isSeparatedSeating || !guest.displayGender) return '';
+    return guest.displayGender === 'male' ? '♂️ ' : '♀️ ';
+  }, [isSeparatedSeating]);
 
   const getGuestSyncStatus = useCallback((guestId) => {
     const change = syncChanges.find(change => change.guestId === guestId);
@@ -189,48 +329,115 @@ const GuestsList = ({
     }
   }, []);
 
-  const handleDragStart = (e, guest) => {
+  const handleDragStart = useCallback((e, guest) => {
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', guest._id);
-    onDragStart(guest);
-  };
+    
+    const guestIdForDrag = guest._id;
+    e.dataTransfer.setData('text/plain', guestIdForDrag);
+    
+    const guestWithGenderInfo = {
+      ...guest,
+      _id: guestIdForDrag,
+      originalId: guest.originalId || guest._id.replace('_male', '').replace('_female', ''),
+      gender: guest.displayGender || guest.gender,
+      displayGender: guest.displayGender || guest.gender,
+      attendingCount: guest.attendingCount,
+      maleCount: guest.maleCount || 0,
+      femaleCount: guest.femaleCount || 0
+    };
+    
+    onDragStart(guestWithGenderInfo);
+  }, [onDragStart]);
 
   const handleDragEnd = () => {
     onDragEnd();
   };
 
   const handleUnseatGuest = useCallback((guestId) => {
-    onUnseatGuest(guestId);
+    const actualGuestId = guestId.replace('_male', '').replace('_female', '');
+    onUnseatGuest(actualGuestId);
     
     if (onSyncStatusChange) {
-      onSyncStatusChange('manual_action', { guestId, action: 'unseated' });
+      onSyncStatusChange('manual_action', { guestId: actualGuestId, action: 'unseated' });
     }
   }, [onUnseatGuest, onSyncStatusChange]);
 
-  const stats = {
-    total: guests.length,
-    totalPeople: guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0),
-    seated: groupedGuests.seated.length,
-    seatedPeople: groupedGuests.seated.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0),
-    unseated: groupedGuests.unseated.length,
-    unseatedPeople: groupedGuests.unseated.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0)
-  };
+  const stats = useMemo(() => {
+    if (isSeparatedSeating) {
+      const maleGuestEntries = filteredGuests.filter(g => g.displayGender === 'male');
+      const femaleGuestEntries = filteredGuests.filter(g => g.displayGender === 'female');
+      
+      const totalMaleGuests = maleGuestEntries.length;
+      const totalFemaleGuests = femaleGuestEntries.length;
+      const totalMalePeople = maleGuestEntries.reduce((sum, g) => sum + (g.maleCount || 0), 0);
+      const totalFemalePeople = femaleGuestEntries.reduce((sum, g) => sum + (g.femaleCount || 0), 0);
+      
+      const seatedMale = maleGuestEntries.filter(g => {
+        const idToCheck = g.originalId || g._id;
+        return seatedGuestIds.has(idToCheck) || seatedGuestIds.has(g._id);
+      });
+      
+      const seatedFemale = femaleGuestEntries.filter(g => {
+        const idToCheck = g.originalId || g._id;
+        return seatedGuestIds.has(idToCheck) || seatedGuestIds.has(g._id);
+      });
+      
+      const seatedMalePeople = seatedMale.reduce((sum, g) => sum + (g.maleCount || 0), 0);
+      const seatedFemalePeople = seatedFemale.reduce((sum, g) => sum + (g.femaleCount || 0), 0);
+      
+      if (genderFilter === 'male') {
+        return {
+          total: totalMaleGuests,
+          totalPeople: totalMalePeople,
+          seated: seatedMale.length,
+          seatedPeople: seatedMalePeople,
+          unseated: totalMaleGuests - seatedMale.length,
+          unseatedPeople: totalMalePeople - seatedMalePeople
+        };
+      } else if (genderFilter === 'female') {
+        return {
+          total: totalFemaleGuests,
+          totalPeople: totalFemalePeople,
+          seated: seatedFemale.length,
+          seatedPeople: seatedFemalePeople,
+          unseated: totalFemaleGuests - seatedFemale.length,
+          unseatedPeople: totalFemalePeople - seatedFemalePeople
+        };
+      } else {
+        return {
+          total: totalMaleGuests + totalFemaleGuests,
+          totalPeople: totalMalePeople + totalFemalePeople,
+          seated: seatedMale.length + seatedFemale.length,
+          seatedPeople: seatedMalePeople + seatedFemalePeople,
+          unseated: (totalMaleGuests - seatedMale.length) + (totalFemaleGuests - seatedFemale.length),
+          unseatedPeople: (totalMalePeople - seatedMalePeople) + (totalFemalePeople - seatedFemalePeople)
+        };
+      }
+    } else {
+      const totalGuests = guests.length;
+      const totalPeople = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+      
+      const seatedGuests = groupedGuests.seated.length;
+      const seatedPeople = groupedGuests.seated.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+      
+      const unseatedGuests = groupedGuests.unseated.length;
+      const unseatedPeople = groupedGuests.unseated.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+      
+      return {
+        total: totalGuests,
+        totalPeople,
+        seated: seatedGuests,
+        seatedPeople,
+        unseated: unseatedGuests,
+        unseatedPeople
+      };
+    }
+  }, [guests, groupedGuests, isSeparatedSeating, genderFilter, filteredGuests, seatedGuestIds]);
 
   return (
     <div className="guests-list-container">
       <div className="guests-list-header">
         <h3>{t('seating.guestsList.title')}</h3>
-        <div className="guests-stats-summary">
-          <span className="stat">
-            {t('seating.guestsList.totalGuests')}: {stats.total} ({stats.totalPeople})
-          </span>
-          <span className="stat seated">
-            {t('seating.guestsList.seated')}: {stats.seated} ({stats.seatedPeople})
-          </span>
-          <span className="stat unseated">
-            {t('seating.guestsList.unseated')}: {stats.unseated} ({stats.unseatedPeople})
-          </span>
-        </div>
         
         {syncNotification && (
           <div className={`sync-notification-banner ${syncNotification.type}`}>
@@ -259,6 +466,20 @@ const GuestsList = ({
             className="search-input"
           />
         </div>
+
+        {isSeparatedSeating && (
+          <div className="group-filter">
+            <select
+              value={genderFilter}
+              onChange={(e) => onGenderFilterChange?.(e.target.value)}
+              className="group-select"
+            >
+              <option value="all">{t('seating.filters.allGuests')}</option>
+              <option value="male">{t('seating.filters.maleOnly')}</option>
+              <option value="female">{t('seating.filters.femaleOnly')}</option>
+            </select>
+          </div>
+        )}
 
         <div className="group-filter">
           <select
@@ -315,6 +536,7 @@ const GuestsList = ({
                 const syncAction = getGuestSyncStatus(guest._id);
                 const syncIndicator = getSyncIndicator(syncAction);
                 const isHighlighted = isGuestHighlighted(guest._id);
+                const guestCount = getGuestCount(guest);
                 
                 return (
                   <div
@@ -326,10 +548,10 @@ const GuestsList = ({
                   >
                     <div className="guest-info">
                       <div className="guest-name">
-                        {guest.firstName} {guest.lastName}
-                        {guest.attendingCount > 1 && (
+                        {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
+                        {guestCount > 1 && (
                           <span className="attending-count">
-                            +{guest.attendingCount - 1}
+                            +{guestCount - 1}
                           </span>
                         )}
                         {syncIndicator && (
@@ -342,11 +564,6 @@ const GuestsList = ({
                         <span className="guest-group">
                           {getGroupDisplayName(guest)}
                         </span>
-                        {guest.attendingCount > 1 && (
-                          <span className="total-people">
-                            ({guest.attendingCount} {t('seating.guestsList.people')})
-                          </span>
-                        )}
                       </div>
                       {guest.guestNotes && (
                         <div className="guest-notes">
@@ -375,6 +592,7 @@ const GuestsList = ({
                 const syncAction = getGuestSyncStatus(guest._id);
                 const syncIndicator = getSyncIndicator(syncAction);
                 const isHighlighted = isGuestHighlighted(guest._id);
+                const guestCount = getGuestCount(guest);
                 
                 return (
                   <div
@@ -386,10 +604,10 @@ const GuestsList = ({
                   >
                     <div className="guest-info">
                       <div className="guest-name">
-                        {guest.firstName} {guest.lastName}
-                        {guest.attendingCount > 1 && (
+                        {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
+                        {guestCount > 1 && (
                           <span className="attending-count">
-                            +{guest.attendingCount - 1}
+                            +{guestCount - 1}
                           </span>
                         )}
                         {syncIndicator && (
@@ -405,11 +623,6 @@ const GuestsList = ({
                         <span className="table-assignment">
                           📍 {getTableName(tableId)}
                         </span>
-                        {guest.attendingCount > 1 && (
-                          <span className="total-people">
-                            ({guest.attendingCount} {t('seating.guestsList.people')})
-                          </span>
-                        )}
                       </div>
                       {guest.guestNotes && (
                         <div className="guest-notes">

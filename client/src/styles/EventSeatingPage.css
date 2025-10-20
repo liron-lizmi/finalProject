@@ -3769,3 +3769,85 @@
   border: 1px dashed #dee2e6;
   border-radius: 6px;
 }
+
+.gender-icon {
+  margin-left: 6px;
+  font-size: 1.1em;
+  opacity: 0.8;
+}
+
+.guest-item.unseated .gender-icon {
+  filter: grayscale(0.3);
+}
+
+.guest-item.seated .gender-icon {
+  filter: none;
+}
+
+.seating-canvas {
+  cursor: grab;
+}
+
+.seating-canvas.dragging-wrong-gender {
+  cursor: not-allowed;
+}
+
+.table-gender-mismatch {
+  filter: grayscale(0.7) brightness(0.8);
+  opacity: 0.6;
+}
+
+.table-gender-match {
+  filter: none;
+  opacity: 1;
+}
+
+.stat-sublabel {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.seating-gender-filter {
+  display: flex;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.seating-gender-filter .filter-button {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 14px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.seating-gender-filter .filter-button:hover {
+  background-color: #e0e0e0;
+}
+
+.seating-gender-filter .filter-button.active {
+  background-color: #2196f3;
+  color: white;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+@media (max-width: 768px) {
+  .seating-gender-filter {
+    width: 100%;
+  }
+  
+  .seating-gender-filter .filter-button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

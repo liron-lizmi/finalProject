@@ -31,6 +31,7 @@ const EventGuestsPage = () => {
   const [showGiftsModal, setShowGiftsModal] = useState(false);
   const [editingGiftsGuest, setEditingGiftsGuest] = useState(null);
   const [eventDate, setEventDate] = useState(null);
+  const [isSeparatedSeating, setIsSeparatedSeating] = useState(false);
 
   const [guestForm, setGuestForm] = useState({
     firstName: '',
@@ -63,7 +64,6 @@ const EventGuestsPage = () => {
     
     return value.slice(0, -1); 
   };
-
 
   const handleGroupChange = (e) => {
     const selectedGroup = e.target.value;
@@ -117,8 +117,7 @@ const EventGuestsPage = () => {
       await navigator.clipboard.writeText(rsvpLink);
       alert(t('guests.rsvp.linkCopied'));
     } catch (err) {
-      console.error('Failed to copy link:', err);
-    }
+      setError(t('errors.clipboardError'));}
   };
 
   const detectDuplicates = useCallback(() => {
@@ -166,7 +165,6 @@ const EventGuestsPage = () => {
       if (response.ok) {
         setGuests(prevGuests => prevGuests.filter(guest => guest._id !== guestId));
         setError('');
-        
       } else {
         const errorData = await response.json().catch(() => ({}));
         setError(errorData.message || t('errors.deleteGuest'));
@@ -252,7 +250,6 @@ const EventGuestsPage = () => {
           successCount++;
         } else {
           failedCount++;
-          console.error(`Failed to delete guest ${guestIds[index]}:`, result.reason);
         }
       });
 
@@ -385,97 +382,44 @@ const EventGuestsPage = () => {
   }, [getAuthToken, handleAuthError]);
 
   const fetchEventPermissions = useCallback(async () => {
-  try {
-    const response = await makeApiRequest(`/api/events/${eventId}`);
-    if (response && response.ok) {
-      const eventData = await response.json();
-      setCanEdit(eventData.canEdit || false);
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}`);
+      if (response && response.ok) {
+        const eventData = await response.json();
+        setCanEdit(eventData.canEdit || false);
+        setIsSeparatedSeating(eventData.isSeparatedSeating || false);
+      }
+    } catch (err) {
+      console.error('Error fetching event permissions:', err);
     }
-  } catch (err) {
-    console.error('Error fetching event permissions:', err);
-  }
-}, [eventId, makeApiRequest]);
+  }, [eventId, makeApiRequest]);
 
-const fetchEventDate = useCallback(async () => {
-  try {
-    const response = await makeApiRequest(`/api/events/${eventId}`);
-    if (response && response.ok) {
-      const event = await response.json();
-      setEventDate(new Date(event.date));
-    }
-  } catch (err) {
-    console.error('Error fetching event date:', err);
-  }
-}, [eventId, makeApiRequest]);
+  const fetchEventDate = useCallback(async () => {
+    try {
+      const response = await makeApiRequest(`/api/events/${eventId}`);
+      if (response && response.ok) {
+        const event = await response.json();
+        setEventDate(new Date(event.date));
+      }
+    } catch (err) {
+      console.error('Error fetching event date:', err);}
+  }, [eventId, makeApiRequest]);
 
-const hasEventPassed = () => {
-  if (!eventDate) return false;
-  return new Date() > eventDate;
-};
+  const hasEventPassed = () => {
+    if (!eventDate) return false;
+    return new Date() > eventDate;
+  };
 
-const handleGiftUpdate = async (guestId, giftData) => {
-
-  if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
-
-  try {
-    const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}/gift`, {
-      method: 'PUT',
-      body: JSON.stringify(giftData)
-    });
-
-    if (!response) return;
-
-    if (response.ok) {
-      const updatedGuest = await response.json();
-      setGuests(prevGuests => 
-        prevGuests.map(guest => 
-          guest._id === guestId ? updatedGuest : guest
-        )
-      );
-      setError('');
-      setShowGiftsModal(false);
-      setEditingGiftsGuest(null);
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      setError(errorData.message || t('errors.updateGuest'));
-    }
-  } catch (err) {
-    setError(t('errors.networkError'));
-  }
-};
-
-const handleEditGifts = useCallback((guest) => {
-  if (!hasEventPassed()) {
-    return;
-  }
-  setEditingGiftsGuest(guest);
-  setShowGiftsModal(true);
-}, [hasEventPassed]);
-
-const handlePhoneChange = (e) => {
-  const formattedPhone = formatPhoneNumber(e.target.value);
-  setGuestForm({...guestForm, phone: formattedPhone});
-};
-
-
-  const handleManualRSVPUpdate = async (guestData) => {
-
+  const handleGiftUpdate = async (guestId, giftData) => {
     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
+      setError(t('events.accessDenied'));
+      return;
+    }
 
     try {
-      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestData.guestId}/rsvp`, {
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}/gift`, {
         method: 'PUT',
-        body: JSON.stringify({
-          rsvpStatus: guestData.rsvpStatus,
-          guestNotes: guestData.guestNotes,
-          attendingCount: guestData.attendingCount
-        })
+        body: JSON.stringify(giftData)
       });
 
       if (!response) return;
@@ -484,15 +428,64 @@ const handlePhoneChange = (e) => {
         const updatedGuest = await response.json();
         setGuests(prevGuests => 
           prevGuests.map(guest => 
-            guest._id === guestData.guestId ? { 
-              ...guest, 
-              rsvpStatus: guestData.rsvpStatus,
-              guestNotes: guestData.guestNotes,
-              attendingCount: guestData.attendingCount,
-              rsvpReceivedAt: Date.now()
-            } : guest
+            guest._id === guestId ? updatedGuest : guest
           )
         );
+        setError('');
+        setShowGiftsModal(false);
+        setEditingGiftsGuest(null);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || t('errors.updateGuest'));
+      }
+    } catch (err) {
+      setError(t('errors.networkError'));
+    }
+  };
+
+  const handleEditGifts = useCallback((guest) => {
+    if (!hasEventPassed()) {
+      return;
+    }
+    setEditingGiftsGuest(guest);
+    setShowGiftsModal(true);
+  }, [hasEventPassed]);
+
+  const handlePhoneChange = (e) => {
+    const formattedPhone = formatPhoneNumber(e.target.value);
+    setGuestForm({...guestForm, phone: formattedPhone});
+  };
+
+  const handleManualRSVPUpdate = async (guestData) => {
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+
+    try {
+      const requestBody = {
+        rsvpStatus: guestData.rsvpStatus,
+        guestNotes: guestData.guestNotes
+      };
+
+      if (isSeparatedSeating) {
+        requestBody.maleCount = guestData.maleCount || 0;
+        requestBody.femaleCount = guestData.femaleCount || 0;
+        requestBody.attendingCount = guestData.attendingCount || 0;
+      } else {
+        requestBody.attendingCount = guestData.attendingCount || 0;
+      }
+
+      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestData.guestId}/rsvp`, {
+        method: 'PUT',
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response) return;
+
+      if (response.ok) {
+        const updatedGuest = await response.json();
+        await fetchGuests();
         setError('');
         setShowRSVPModal(false);
         setEditingRSVPGuest(null);
@@ -513,14 +506,14 @@ const handlePhoneChange = (e) => {
   const handleAddGuest = async (e) => {
     e.preventDefault();
 
-  if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
 
-  if (!validateForm()) {
-    return;
-  }
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       let finalGroup = guestForm.group;
@@ -548,7 +541,9 @@ const handlePhoneChange = (e) => {
 
       if (response.ok) {
         const newGuest = await response.json();
-        setGuests([...guests, newGuest]);
+        
+        await fetchGuests();
+        
         setGuestForm({
           firstName: '',
           lastName: '',
@@ -569,19 +564,19 @@ const handlePhoneChange = (e) => {
 
   const handleEditGuest = (guest) => {
     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
-  
-  setEditingGuest(guest._id);
-  setGuestForm({
-    firstName: guest.firstName,
-    lastName: guest.lastName,
-    phone: guest.phone,
-    group: guest.customGroup ? 'other' : guest.group,
-    customGroup: guest.customGroup || ''
-  });
-  setError('');
+      setError(t('events.accessDenied'));
+      return;
+    }
+    
+    setEditingGuest(guest._id);
+    setGuestForm({
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      phone: guest.phone,
+      group: guest.customGroup ? 'other' : guest.group,
+      customGroup: guest.customGroup || ''
+    });
+    setError('');
   };
 
   const handleUpdateGuest = async (e) => {
@@ -616,10 +611,8 @@ const handlePhoneChange = (e) => {
       if (!response) return;
 
       if (response.ok) {
-        const updatedGuest = await response.json();
-        setGuests(guests.map(guest => 
-          guest._id === editingGuest ? updatedGuest : guest
-        ));
+        await fetchGuests();
+        
         setEditingGuest(null);
         setGuestForm({
           firstName: '',
@@ -651,11 +644,10 @@ const handlePhoneChange = (e) => {
   };
 
   const handleImportGuests = async (importedGuests) => {
-
     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
+      setError(t('events.accessDenied'));
+      return;
+    }
 
     try {
       if (!importedGuests || importedGuests.length === 0) {
@@ -696,15 +688,12 @@ const handlePhoneChange = (e) => {
 
       if (response && response.ok) {
         const result = await response.json();
-
         await fetchGuests();
 
         if (result.imported > 0) {
           setError('');
-          
         } else if (result.duplicates > 0 && result.imported === 0) {
           setError('');
-          
         } else if (result.failed > 0) {
           setError(`${t('import.errors.importFailed')}: ${result.errors?.slice(0, 2).join(', ')}${result.errors?.length > 2 ? '...' : ''}`);
         } else {
@@ -714,22 +703,20 @@ const handlePhoneChange = (e) => {
         const errorData = await response?.json().catch(() => ({}));
         setError(errorData.message || t('import.errors.importFailed'));
       }
-
     } catch (err) {
-      console.error('Bulk import error:', err);
       setError(t('import.errors.importFailed'));
     } finally {
       setLoading(false);
     }
-};
+  };
 
   const handleDeleteGuest = async (guestId) => {
-     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
-  
-  if (!window.confirm(t('guests.confirmDelete'))) return;
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+    
+    if (!window.confirm(t('guests.confirmDelete'))) return;
 
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
@@ -790,8 +777,8 @@ const handlePhoneChange = (e) => {
   }, [eventId]);
 
   useEffect(() => {
-  fetchEventDate();
-}, [fetchEventDate]);
+    fetchEventDate();
+  }, [fetchEventDate]);
 
   const totalDuplicates = duplicates.phone.length;
 
@@ -1144,10 +1131,28 @@ const handlePhoneChange = (e) => {
                         {t('guests.guestNote')}: {guest.guestNotes}
                       </div>
                     )}
-                    {guest.rsvpStatus === 'confirmed' && guest.attendingCount > 1 && (
-                      <div className="guest-attending-count">
-                        {t('guests.rsvp.attendingCount')}: {guest.attendingCount}
-                      </div>
+                    {guest.rsvpStatus === 'confirmed' && (
+                      <>
+                        {isSeparatedSeating ? (
+                          (guest.maleCount > 0 || guest.femaleCount > 0) && (
+                            <div className="guest-attending-count">
+                              {guest.maleCount > 0 && (
+                                <span>{t('guests.maleCount')}: {guest.maleCount}</span>
+                              )}
+                              {guest.maleCount > 0 && guest.femaleCount > 0 && <span> | </span>}
+                              {guest.femaleCount > 0 && (
+                                <span>{t('guests.femaleCount')}: {guest.femaleCount}</span>
+                              )}
+                            </div>
+                          )
+                        ) : (
+                          guest.attendingCount > 1 && (
+                            <div className="guest-attending-count">
+                              {t('guests.rsvp.attendingCount')}: {guest.attendingCount}
+                            </div>
+                          )
+                        )}
+                      </>
                     )}
                   </div>
                   
@@ -1246,6 +1251,7 @@ const handlePhoneChange = (e) => {
           guest={editingRSVPGuest}
           onUpdateRSVP={handleManualRSVPUpdate}
           getGroupDisplayName={getGroupDisplayName}
+          isSeparatedSeating={isSeparatedSeating}
         />
         
         <GiftsModal

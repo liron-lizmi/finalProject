@@ -13,7 +13,8 @@ const CreateEventPage = () => {
   const [eventData, setEventData] = useState({
     eventName: '',
     eventDate: '',
-    eventTime: ''
+    eventTime: '',
+    isSeparatedSeating: false
   });
   const [displayDate, setDisplayDate] = useState('');
   const [dateError, setDateError] = useState('');
@@ -160,11 +161,11 @@ const CreateEventPage = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     if (name !== 'eventDate') {
       setEventData(prev => ({
         ...prev,
-        [name]: value
+        [name]: type === 'checkbox' ? checked : value
       }));
     }
   };
@@ -299,7 +300,8 @@ const CreateEventPage = () => {
           date: eventData.eventDate,
           time: timeToSubmit,
           type: 'other',
-          guestCount: 0
+          guestCount: 0,
+          isSeparatedSeating: eventData.isSeparatedSeating
         },
         {
           headers: {
@@ -312,7 +314,6 @@ const CreateEventPage = () => {
       navigate('/dashboard?refresh=true');
       
     } catch (err) {
-      console.error('Error creating event:', err);
       setError(err.response?.data?.message || t('errors.eventCreationFailed'));
     } finally {
       setLoading(false);
@@ -553,6 +554,24 @@ const CreateEventPage = () => {
               {renderTimePicker()}
             </div>
             {timeError && <div className="field-error">{timeError}</div>}
+          </div>
+
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="isSeparatedSeating"
+                checked={eventData.isSeparatedSeating}
+                onChange={handleInputChange}
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">
+                {t('events.isSeparatedSeating')}
+              </span>
+            </label>
+            <p className="checkbox-description">
+              {t('events.separatedSeatingDescription')}
+            </p>
           </div>
           
           <div className={`form-actions ${isRTL ? 'rtl' : 'ltr'}`}>

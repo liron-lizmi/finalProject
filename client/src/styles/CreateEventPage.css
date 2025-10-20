@@ -111,10 +111,10 @@ html, body {
 }
 
 .form-group label {
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 8px;
   color: #333;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .form-input, .date-display-input, .time-input {
@@ -636,8 +636,8 @@ html, body {
 }
 
 .cancel-button {
-  background-color: #f5f5f5;
-  color: #555;
+  background-color: #000 !important;
+  color: #fff;
   border: 1px solid #e0e0e0;
 }
 
@@ -648,7 +648,7 @@ html, body {
 }
 
 .submit-button {
-  background-color: #000;
+  background-color: #000 !important;
   color: #fff;
   border: none;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
@@ -657,8 +657,8 @@ html, body {
 .submit-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
-  background: #222;
-    transform: none;
+  background: #222 !important;
+  transform: none;
 
 }
 
@@ -737,6 +737,78 @@ html, body {
 
 .create-event-container.ltr {
   direction: ltr;
+}
+
+.checkbox-group {
+  margin-top: 1.5rem;
+  padding: 0;
+  background-color: transparent;
+  border-radius: 0;
+  border: none;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox-input {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  accent-color: #d4b99e;
+  flex-shrink: 0;
+  position: relative;
+  top: 0;
+  vertical-align: middle;
+}
+
+.rtl .checkbox-input {
+  margin: 0;
+}
+
+.checkbox-text {
+  font-size: 16px;
+  user-select: none;
+  line-height: 20px;
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.checkbox-description {
+  display: none;
+}
+
+.create-event-container .form-group label {
+  font-weight: 600;
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.event-form .form-group label {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+label[for="eventName"],
+label[for="eventDate"],
+label[for="eventTime"] {
+  font-weight: 600;
+  font-size: 18px;
+  color: #333;
 }
 
 @keyframes spin {
@@ -841,5 +913,4 @@ html, body {
     right: 15px; 
     max-width: calc(100% - 20px); 
   }
-
 }

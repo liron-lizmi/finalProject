@@ -2,19 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/RSVPManualModal.css';
 
-const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplayName  }) => {
+const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplayName, isSeparatedSeating }) => {
   const { t } = useTranslation();
   const [rsvpStatus, setRsvpStatus] = useState('pending');
   const [attendingCount, setAttendingCount] = useState(1);
+  const [maleCount, setMaleCount] = useState(0);
+  const [femaleCount, setFemaleCount] = useState(0);
   const [guestNotes, setGuestNotes] = useState('');
 
   useEffect(() => {
     if (guest) {
       setRsvpStatus(guest.rsvpStatus || 'pending');
-      setAttendingCount(guest.attendingCount && guest.attendingCount > 0 ? guest.attendingCount : 1);
+      
+      if (isSeparatedSeating) {
+        setMaleCount(guest.maleCount || 0);
+        setFemaleCount(guest.femaleCount || 0);
+        setAttendingCount((guest.maleCount || 0) + (guest.femaleCount || 0));
+      } else {
+        setAttendingCount(guest.attendingCount && guest.attendingCount > 0 ? guest.attendingCount : 1);
+      }
+      
       setGuestNotes(guest.guestNotes || '');
     }
-  }, [guest]);
+  }, [guest, isSeparatedSeating]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,9 +34,16 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
     const updatedData = {
       guestId: guest._id,
       rsvpStatus,
-      guestNotes,
-      attendingCount: rsvpStatus === 'confirmed' ? Math.max(1, attendingCount) : 0
+      guestNotes
     };
+
+    if (isSeparatedSeating) {
+      updatedData.maleCount = rsvpStatus === 'confirmed' ? Math.max(0, maleCount) : 0;
+      updatedData.femaleCount = rsvpStatus === 'confirmed' ? Math.max(0, femaleCount) : 0;
+      updatedData.attendingCount = rsvpStatus === 'confirmed' ? (maleCount + femaleCount) : 0;
+    } else {
+      updatedData.attendingCount = rsvpStatus === 'confirmed' ? Math.max(1, attendingCount) : 0;
+    }
 
     onUpdateRSVP(updatedData);
   };
@@ -34,6 +51,18 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
   const handleAttendingCountChange = (newCount) => {
     const validCount = Math.max(1, Math.min(10, newCount));
     setAttendingCount(validCount);
+  };
+
+  const handleMaleCountChange = (newCount) => {
+    const validCount = Math.max(0, Math.min(10, newCount));
+    setMaleCount(validCount);
+    setAttendingCount(validCount + femaleCount);
+  };
+
+  const handleFemaleCountChange = (newCount) => {
+    const validCount = Math.max(0, Math.min(10, newCount));
+    setFemaleCount(validCount);
+    setAttendingCount(maleCount + validCount);
   };
 
   if (!isOpen || !guest) return null;
@@ -101,43 +130,131 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
             </div>
 
             {rsvpStatus === 'confirmed' && (
-              <div className="rsvp-form-group">
-                <label htmlFor="attending-count">
-                  {t('guests.rsvp.attendingCount')}
-                </label>
-                <div className="count-input-container">
-                  <button
-                    type="button"
-                    className="count-button decrease"
-                    onClick={() => handleAttendingCountChange(attendingCount - 1)}
-                    disabled={attendingCount <= 1}
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    id="attending-count"
-                    value={attendingCount}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (!isNaN(value) && value >= 1) {
-                        handleAttendingCountChange(value);
-                      }
-                    }}
-                    min="1"
-                    max="10"
-                    className="count-input"
-                  />
-                  <button
-                    type="button"
-                    className="count-button increase"
-                    onClick={() => handleAttendingCountChange(attendingCount + 1)}
-                    disabled={attendingCount >= 10}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+              <>
+                {isSeparatedSeating ? (
+                  <>
+                    <div className="rsvp-form-group">
+                      <label htmlFor="male-count">
+                        {t('guests.rsvp.maleCount')}
+                      </label>
+                      <div className="count-input-container">
+                        <button
+                          type="button"
+                          className="count-button decrease"
+                          onClick={() => handleMaleCountChange(maleCount - 1)}
+                          disabled={maleCount <= 0}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          id="male-count"
+                          value={maleCount}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value) && value >= 0) {
+                              handleMaleCountChange(value);
+                            }
+                          }}
+                          min="0"
+                          max="10"
+                          className="count-input"
+                        />
+                        <button
+                          type="button"
+                          className="count-button increase"
+                          onClick={() => handleMaleCountChange(maleCount + 1)}
+                          disabled={maleCount >= 10}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rsvp-form-group">
+                      <label htmlFor="female-count">
+                        {t('guests.rsvp.femaleCount')}
+                      </label>
+                      <div className="count-input-container">
+                        <button
+                          type="button"
+                          className="count-button decrease"
+                          onClick={() => handleFemaleCountChange(femaleCount - 1)}
+                          disabled={femaleCount <= 0}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          id="female-count"
+                          value={femaleCount}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value) && value >= 0) {
+                              handleFemaleCountChange(value);
+                            }
+                          }}
+                          min="0"
+                          max="10"
+                          className="count-input"
+                        />
+                        <button
+                          type="button"
+                          className="count-button increase"
+                          onClick={() => handleFemaleCountChange(femaleCount + 1)}
+                          disabled={femaleCount >= 10}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rsvp-form-group">
+                      <div className="total-count-display">
+                        {t('guests.rsvp.totalAttending')}: {attendingCount}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rsvp-form-group">
+                    <label htmlFor="attending-count">
+                      {t('guests.rsvp.attendingCount')}
+                    </label>
+                    <div className="count-input-container">
+                      <button
+                        type="button"
+                        className="count-button decrease"
+                        onClick={() => handleAttendingCountChange(attendingCount - 1)}
+                        disabled={attendingCount <= 1}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        id="attending-count"
+                        value={attendingCount}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!isNaN(value) && value >= 1) {
+                            handleAttendingCountChange(value);
+                          }
+                        }}
+                        min="1"
+                        max="10"
+                        className="count-input"
+                      />
+                      <button
+                        type="button"
+                        className="count-button increase"
+                        onClick={() => handleAttendingCountChange(attendingCount + 1)}
+                        disabled={attendingCount >= 10}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             <div className="rsvp-form-group">

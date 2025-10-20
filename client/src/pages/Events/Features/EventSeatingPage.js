@@ -50,6 +50,13 @@ const EventSeatingPage = () => {
   const [pendingSyncTriggers, setPendingSyncTriggers] = useState([]);
   const [isSyncOptionsModalOpen, setIsSyncOptionsModalOpen] = useState(false);
   
+  const [isSeparatedSeating, setIsSeparatedSeating] = useState(false);
+  const [maleTables, setMaleTables] = useState([]);
+  const [femaleTables, setFemaleTables] = useState([]);
+  const [maleArrangement, setMaleArrangement] = useState({});
+  const [femaleArrangement, setFemaleArrangement] = useState({});
+  const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
+  
   const canvasRef = useRef(null);
   const [canEdit, setCanEdit] = useState(true);
   const syncTimeoutRef = useRef(null);
@@ -118,12 +125,12 @@ const EventSeatingPage = () => {
       if (response && response.ok) {
         const eventData = await response.json();
         setCanEdit(eventData.canEdit || false);
+        setIsSeparatedSeating(eventData.isSeparatedSeating || false);
       }
     } catch (err) {
       console.error('Error fetching event permissions:', err);
     }
   }, [eventId, makeApiRequest]);
-
 
   const showSyncNotification = useCallback((type, message) => {
     setSyncNotification({ type, message });
@@ -131,15 +138,23 @@ const EventSeatingPage = () => {
   }, []);
 
   const getNextTableNumber = useCallback(() => {
-    if (tables.length === 0) return 1;
-    
-    const tableNumbers = tables.map(table => {
-      const match = table.name.match(/(\d+)/);
-      return match ? parseInt(match[1], 10) : 0;
-    });
-    
-    return Math.max(...tableNumbers) + 1;
-  }, [tables]);
+    if (isSeparatedSeating) {
+      const allTables = [...maleTables, ...femaleTables];
+      if (allTables.length === 0) return 1;
+      const tableNumbers = allTables.map(table => {
+        const match = table.name.match(/(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
+      return Math.max(...tableNumbers) + 1;
+    } else {
+      if (tables.length === 0) return 1;
+      const tableNumbers = tables.map(table => {
+        const match = table.name.match(/(\d+)/);
+        return match ? parseInt(match[1], 10) : 0;
+      });
+      return Math.max(...tableNumbers) + 1;
+    }
+  }, [tables, maleTables, femaleTables, isSeparatedSeating]);
 
   const isTableNameManuallyEdited = useCallback((tableId, currentName) => {
     if (manuallyEditedTableNames.has(tableId)) {
@@ -233,7 +248,8 @@ const EventSeatingPage = () => {
       attendingCount: guest.attendingCount || 1,
       firstName: guest.firstName,
       lastName: guest.lastName,
-      group: guest.customGroup || guest.group
+      group: guest.customGroup || guest.group,
+      gender: guest.gender
     }));
   }, []);
 
@@ -316,7 +332,6 @@ const EventSeatingPage = () => {
         const syncStatus = await syncResponse.json();
         
         if (syncStatus.syncRequired && syncStatus.pendingTriggers > 0) {
-          
           const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
             method: 'POST'
           });
@@ -332,8 +347,15 @@ const EventSeatingPage = () => {
               
               showSyncNotification('info', t('seating.sync.pendingChangesDetected'));
             } else if (processResult.hasChanges && processResult.seating) {
-              setTables(processResult.seating.tables || []);
-              setSeatingArrangement(processResult.seating.arrangement || {});
+              if (isSeparatedSeating) {
+                setMaleTables(processResult.seating.maleTables || []);
+                setFemaleTables(processResult.seating.femaleTables || []);
+                setMaleArrangement(processResult.seating.maleArrangement || {});
+                setFemaleArrangement(processResult.seating.femaleArrangement || {});
+              } else {
+                setTables(processResult.seating.tables || []);
+                setSeatingArrangement(processResult.seating.arrangement || {});
+              }
               
               if (!skipFingerprintUpdate) {
                 const currentGuestData = await fetchConfirmedGuests();
@@ -349,11 +371,12 @@ const EventSeatingPage = () => {
         }
       }
     } catch (error) {
+      // Silent error handling
     }
-  }, [autoSyncEnabled, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
+  }, [autoSyncEnabled, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
   const fetchSeatingArrangement = useCallback(async () => {
-    try {
+    try {      
       const response = await makeApiRequest(`/api/events/${eventId}/seating`);
       if (!response) {
         return;
@@ -362,53 +385,117 @@ const EventSeatingPage = () => {
       if (response.ok) {
         const data = await response.json();
         
-        const tablesData = data.tables || [];
-        const arrangementData = data.arrangement || {};
-        
-        const cleanedTables = tablesData.filter(table => {
-          const hasGuests = arrangementData[table.id] && arrangementData[table.id].length > 0;
-          const isManualTable = !table.autoCreated && !table.createdForSync;
+        const isEventSeparated = data.isSeparatedSeating || false;
+                
+        if (isEventSeparated) {
           
-          if (!hasGuests && (table.autoCreated || table.createdForSync)) {
-            delete arrangementData[table.id];
-            return false;
+          const maleTablesData = data.maleTables || [];
+          const femaleTablesData = data.femaleTables || [];
+          const maleArrangementData = data.maleArrangement || {};
+          const femaleArrangementData = data.femaleArrangement || {};
+          
+          setMaleTables(maleTablesData);
+          
+          setFemaleTables(femaleTablesData);
+          
+          setMaleArrangement(maleArrangementData);
+          
+          setFemaleArrangement(femaleArrangementData);
+          
+          setTables([]);
+          setSeatingArrangement({});
+                    
+          const preferencesData = data.preferences || {
+            groupTogether: [],
+            keepSeparate: [],
+            specialRequests: []
+          };
+          
+          setPreferences(preferencesData);
+          
+          if (data.layoutSettings) {
+            setCanvasScale(data.layoutSettings.canvasScale || 1);
+            setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
           }
-          return true;
-        });
-        
-        const cleanedArrangement = {};
-        Object.keys(arrangementData).forEach(tableId => {
-          const tableExists = cleanedTables.some(t => t.id === tableId);
-          if (tableExists) {
-            cleanedArrangement[tableId] = arrangementData[tableId];
+          
+          const hasExistingArrangement = (maleTablesData.length > 0 || femaleTablesData.length > 0);
+                    
+          if (hasExistingArrangement) {
+            await checkAndHandlePendingSync(true);
           }
-        });
-        
-        const preferencesData = data.preferences || {
-          groupTogether: [],
-          keepSeparate: [],
-          specialRequests: []
-        };
-        
-        setTables(cleanedTables);
-        setSeatingArrangement(cleanedArrangement);
-        setPreferences(preferencesData);
-        
-        if (data.layoutSettings) {
-          setCanvasScale(data.layoutSettings.canvasScale || 1);
-          setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
-        }
-        
-        const hasExistingArrangement = cleanedTables.length > 0 || Object.keys(cleanedArrangement).length > 0;
-        
-        if (hasExistingArrangement) {
-          await checkAndHandlePendingSync(true);
+                    
+        } else {          
+          const tablesData = data.tables || [];
+          const arrangementData = data.arrangement || {};
+          
+          const cleanedTables = tablesData.filter(table => {
+            const hasGuests = arrangementData[table.id] && arrangementData[table.id].length > 0;
+            const isManualTable = !table.autoCreated && !table.createdForSync;
+            
+            if (!hasGuests && (table.autoCreated || table.createdForSync)) {
+              delete arrangementData[table.id];
+              return false;
+            }
+            return true;
+          });
+          
+          const cleanedArrangement = {};
+          Object.keys(arrangementData).forEach(tableId => {
+            const tableExists = cleanedTables.some(t => t.id === tableId);
+            if (tableExists) {
+              cleanedArrangement[tableId] = arrangementData[tableId];
+            }
+          });
+
+          setTables(cleanedTables);
+          
+          setSeatingArrangement(cleanedArrangement);
+          
+          setMaleTables([]);
+          setFemaleTables([]);
+          setMaleArrangement({});
+          setFemaleArrangement({});
+                    
+          const preferencesData = data.preferences || {
+            groupTogether: [],
+            keepSeparate: [],
+            specialRequests: []
+          };
+          
+          setPreferences(preferencesData);
+          
+          if (data.layoutSettings) {
+            setCanvasScale(data.layoutSettings.canvasScale || 1);
+            setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
+          }
+          
+          const hasExistingArrangement = cleanedTables.length > 0;
+                    
+          if (hasExistingArrangement) {
+            await checkAndHandlePendingSync(true);
+          }
+          
         }
         
         return data;
+        
       } else if (response.status === 404) {
-        setTables([]);
-        setSeatingArrangement({});
+        
+        if (isSeparatedSeating) {
+          setMaleTables([]);
+          setFemaleTables([]);
+          setMaleArrangement({});
+          setFemaleArrangement({});
+          setTables([]);
+          setSeatingArrangement({});
+        } else {
+          setTables([]);
+          setSeatingArrangement({});
+          setMaleTables([]);
+          setFemaleTables([]);
+          setMaleArrangement({});
+          setFemaleArrangement({});
+        }
         setPreferences({
           groupTogether: [],
           keepSeparate: [],
@@ -426,19 +513,31 @@ const EventSeatingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, makeApiRequest, t, checkAndHandlePendingSync]);
+  }, [eventId, makeApiRequest, t, checkAndHandlePendingSync, isSeparatedSeating]);
 
   const saveSeatingArrangement = useCallback(async (immediateData = null) => {
     try {
-      const dataToSave = immediateData || {
-        tables,
-        arrangement: seatingArrangement,
+      const dataToSave = immediateData || (isSeparatedSeating ? {
+        maleTables,
+        femaleTables,
+        maleArrangement,
+        femaleArrangement,
+        isSeparatedSeating: true,
         preferences,
         layoutSettings: {
           canvasScale,
           canvasOffset
         }
-      };
+      } : {
+        tables,
+        arrangement: seatingArrangement,
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
 
       const response = await makeApiRequest(`/api/events/${eventId}/seating`, {
         method: 'POST',
@@ -461,7 +560,7 @@ const EventSeatingPage = () => {
       setError(t('errors.networkError'));
       return false;
     }
-  }, [eventId, makeApiRequest, tables, seatingArrangement, preferences, canvasScale, canvasOffset, t]);
+  }, [eventId, makeApiRequest, tables, seatingArrangement, maleTables, femaleTables, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, t, isSeparatedSeating]);
 
   const autoSave = useCallback(
     (() => {
@@ -470,402 +569,37 @@ const EventSeatingPage = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           saveSeatingArrangement(data);
-        }, 3000); 
+        }, 3000);
       };
     })(),
     [saveSeatingArrangement]
   );
 
-  const findAvailableTable = useCallback((guestSize, currentTables, currentArrangement, excludeTableIds = []) => {
-    return currentTables.find(table => {
-      if (excludeTableIds.includes(table.id)) return false;
-      
-      const tableGuests = currentArrangement[table.id] || [];
-      const currentOccupancy = tableGuests.reduce((sum, guestId) => {
-        const guest = confirmedGuests.find(g => g._id === guestId);
-        return sum + (guest?.attendingCount || 1);
-      }, 0);
-      
-      return (table.capacity - currentOccupancy) >= guestSize;
-    });
-  }, [confirmedGuests]);
-
-  const createNewTable = useCallback((capacity, tableNumber) => {
-    return {
-      id: `auto_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name: `${t('seating.tableName')} ${tableNumber}`,
-      type: capacity <= 8 ? 'round' : 'rectangular',
-      capacity: capacity,
-      position: {
-        x: 300 + ((tableNumber - 1) % 3) * 200,
-        y: 300 + Math.floor((tableNumber - 1) / 3) * 200
-      },
-      rotation: 0,
-      size: capacity <= 8 ? 
-        { width: 120, height: 120 } : 
-        { width: 160, height: 100 }
-    };
-  }, [t]);
-
-  const optimizeTableArrangement = useCallback((currentTables, currentArrangement, confirmedGuestsList) => {
-    const optimizedTables = [...currentTables];
-    const optimizedArrangement = { ...currentArrangement };
-    let tablesRemoved = false;
-
-    currentTables.forEach(table => {
-      const tableGuests = optimizedArrangement[table.id] || [];
-      const tableOccupancy = tableGuests.reduce((sum, guestId) => {
-        const guest = confirmedGuestsList.find(g => g._id === guestId);
-        return sum + (guest?.attendingCount || 1);
-      }, 0);
-
-      if (tableOccupancy === 0) {
-        const tableIndex = optimizedTables.findIndex(t => t.id === table.id);
-        if (tableIndex !== -1) {
-          optimizedTables.splice(tableIndex, 1);
-          delete optimizedArrangement[table.id];
-          tablesRemoved = true;
-        }
-      }
-      else if (tableOccupancy <= table.capacity / 3 && optimizedTables.length > 1) {
-        const availableTable = findAvailableTable(
-          tableOccupancy, 
-          optimizedTables, 
-          optimizedArrangement, 
-          [table.id]
-        );
-        
-        if (availableTable) {
-          if (!optimizedArrangement[availableTable.id]) {
-            optimizedArrangement[availableTable.id] = [];
-          }
-          optimizedArrangement[availableTable.id].push(...tableGuests);
-          
-          const tableIndex = optimizedTables.findIndex(t => t.id === table.id);
-          if (tableIndex !== -1) {
-            optimizedTables.splice(tableIndex, 1);
-            delete optimizedArrangement[table.id];
-            tablesRemoved = true;
-          }
-        }
-      }
-    });
-
-    return { 
-      tables: optimizedTables, 
-      arrangement: optimizedArrangement, 
-      wasOptimized: tablesRemoved 
-    };
-  }, [findAvailableTable]);
-
-  const applySyncChanges = useCallback(async (changes, currentTables, currentArrangement, confirmedGuestsList) => {
-    let updatedTables = [...currentTables];
-    let updatedArrangement = { ...currentArrangement };
-    let syncActions = [];
-
-    for (const change of changes) {
-      switch (change.type) {
-        case 'new_confirmed':
-        case 'became_confirmed':
-          const guestSize = change.guest.attendingCount;
-          let availableTable = findAvailableTable(guestSize, updatedTables, updatedArrangement);
-          
-          if (!availableTable) {
-            const newTableNumber = updatedTables.length + 1;
-            const optimalCapacity = Math.max(8, Math.ceil(guestSize * 1.5));
-            const newTable = createNewTable(optimalCapacity, newTableNumber);
-            updatedTables.push(newTable);
-            availableTable = newTable;
-            syncActions.push({
-              action: 'table_created',
-              tableName: newTable.name,
-              capacity: newTable.capacity
-            });
-          }
-          
-          if (!updatedArrangement[availableTable.id]) {
-            updatedArrangement[availableTable.id] = [];
-          }
-          updatedArrangement[availableTable.id].push(change.guestId);
-          
-          syncActions.push({
-            action: 'guest_seated',
-            guestName: `${change.guest.firstName} ${change.guest.lastName}`,
-            tableName: availableTable.name,
-            attendingCount: guestSize
-          });
-          break;
-
-        case 'no_longer_confirmed':
-        case 'guest_removed':
-          Object.keys(updatedArrangement).forEach(tableId => {
-            const guestIndex = updatedArrangement[tableId].indexOf(change.guestId);
-            if (guestIndex !== -1) {
-              updatedArrangement[tableId].splice(guestIndex, 1);
-              if (updatedArrangement[tableId].length === 0) {
-                delete updatedArrangement[tableId];
-              }
-              
-              const table = updatedTables.find(t => t.id === tableId);
-              syncActions.push({
-                action: 'guest_removed',
-                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
-                tableName: table?.name || t('seating.unknownTable')
-              });
-            }
-          });
-          break;
-
-        case 'attending_count_changed':
-          let guestTableId = null;
-          Object.keys(updatedArrangement).forEach(tableId => {
-            if (updatedArrangement[tableId].includes(change.guestId)) {
-              guestTableId = tableId;
-            }
-          });
-
-          if (guestTableId) {
-            const currentTable = updatedTables.find(t => t.id === guestTableId);
-            const tableGuests = updatedArrangement[guestTableId] || [];
-            const otherGuestsSize = tableGuests
-              .filter(id => id !== change.guestId)
-              .reduce((sum, guestId) => {
-                const guest = confirmedGuestsList.find(g => g._id === guestId);
-                return sum + (guest?.attendingCount || 1);
-              }, 0);
-            
-            const newTotalSize = otherGuestsSize + change.newCount;
-            
-            if (newTotalSize <= currentTable.capacity) {
-              syncActions.push({
-                action: 'guest_updated',
-                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
-                tableName: currentTable.name,
-                oldCount: change.oldCount,
-                newCount: change.newCount
-              });
-            } else {
-              const guestIndex = updatedArrangement[guestTableId].indexOf(change.guestId);
-              if (guestIndex !== -1) {
-                updatedArrangement[guestTableId].splice(guestIndex, 1);
-                if (updatedArrangement[guestTableId].length === 0) {
-                  delete updatedArrangement[guestTableId];
-                }
-              }
-
-              let newTable = findAvailableTable(change.newCount, updatedTables, updatedArrangement);
-              
-              if (!newTable) {
-                const newTableNumber = updatedTables.length + 1;
-                const optimalCapacity = Math.max(8, Math.ceil(change.newCount * 1.5));
-                newTable = createNewTable(optimalCapacity, newTableNumber);
-                updatedTables.push(newTable);
-                syncActions.push({
-                  action: 'table_created',
-                  tableName: newTable.name,
-                  capacity: newTable.capacity
-                });
-              }
-
-              if (!updatedArrangement[newTable.id]) {
-                updatedArrangement[newTable.id] = [];
-              }
-              updatedArrangement[newTable.id].push(change.guestId);
-              
-              syncActions.push({
-                action: 'guest_moved',
-                guestName: `${change.guest.firstName} ${change.guest.lastName}`,
-                fromTable: currentTable.name,
-                toTable: newTable.name,
-                oldCount: change.oldCount,
-                newCount: change.newCount
-              });
-            }
-          }
-          break;
-      }
-    }
-
-    const { tables: optimizedTables, arrangement: optimizedArrangement, wasOptimized } = 
-      optimizeTableArrangement(updatedTables, updatedArrangement, confirmedGuestsList);
-
-    if (wasOptimized) {
-      syncActions.push({
-        action: 'arrangement_optimized',
-        message: t('seating.sync.arrangementOptimized')
-      });
-    }
-
-    return {
-      tables: optimizedTables,
-      arrangement: optimizedArrangement,
-      actions: syncActions
-    };
-  }, [findAvailableTable, createNewTable, optimizeTableArrangement, t]);
-
-  const performSync = useCallback(async (newGuestData) => {
-    if (!autoSyncEnabled || syncInProgress) return;
-
-    const { confirmed: newConfirmedGuests } = newGuestData;
-    const newFingerprint = createGuestFingerprint(newConfirmedGuests);
-    
-    if (!lastSyncData) {
-      setLastSyncData(newFingerprint);
-      return;
-    }
-
-    const { hasChanges, changes } = detectGuestChanges(newFingerprint, lastSyncData);
-    
-    if (!hasChanges) {
-      setLastSyncData(newFingerprint);
-      return;
-    }
-
-    setSyncInProgress(true);
-    
-    try {
-      const { tables: updatedTables, arrangement: updatedArrangement, actions } = 
-        await applySyncChanges(changes, tables, seatingArrangement, newConfirmedGuests);
-
-      const tablesWithGroupNames = updateTableNamesWithGroups(updatedTables, updatedArrangement);
-
-      setTables(tablesWithGroupNames);
-      setSeatingArrangement(updatedArrangement);
-
-      const saveData = {
-        tables: tablesWithGroupNames,
-        arrangement: updatedArrangement,
-        preferences,
-        layoutSettings: { canvasScale, canvasOffset }
-      };
-
-      await saveSeatingArrangement(saveData);
-      setLastSyncData(newFingerprint);
-
-      const actionSummary = actions.map(action => {
-        switch (action.action) {
-          case 'guest_seated':
-            return t('seating.sync.guestSeated', { 
-              guestName: action.guestName, 
-              tableName: action.tableName 
-            });
-          case 'guest_removed':
-            return t('seating.sync.guestRemoved', { 
-              guestName: action.guestName, 
-              tableName: action.tableName 
-            });
-          case 'guest_moved':
-            return t('seating.sync.guestMoved', { 
-              guestName: action.guestName, 
-              fromTable: action.fromTable, 
-              toTable: action.toTable 
-            });
-          case 'guest_updated':
-            return t('seating.sync.guestUpdated', { 
-              guestName: action.guestName, 
-              tableName: action.tableName 
-            });
-          case 'table_created':
-            return t('seating.sync.tableCreated', { 
-              tableName: action.tableName 
-            });
-          case 'arrangement_optimized':
-            return action.message;
-          default:
-            return '';
-        }
-      }).filter(Boolean);
-
-      if (actionSummary.length > 0) {
-        showSyncNotification('success', t('seating.sync.changesApplied', { 
-          count: actionSummary.length 
-        }));
-      }
-
-    } catch (error) {
-      showSyncNotification('error', t('seating.sync.syncFailed'));
-      setLastSyncData(newFingerprint);
-    } finally {
-      setSyncInProgress(false);
-    }
-  }, [
-    autoSyncEnabled, 
-    syncInProgress, 
-    lastSyncData, 
-    tables, 
-    seatingArrangement, 
-    preferences, 
-    canvasScale, 
-    canvasOffset,
-    createGuestFingerprint,
-    detectGuestChanges,
-    applySyncChanges,
-    updateTableNamesWithGroups,
-    saveSeatingArrangement,
-    showSyncNotification,
-    t
-  ]);
-
-  useEffect(() => {
-    if (!autoSyncEnabled) return;
-
-    const pollForChanges = async () => {
-      if (syncInProgress) return;
-      
-      try {
-        const syncResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/status`);
-        if (syncResponse && syncResponse.ok) {
-          const syncStatus = await syncResponse.json();
-          
-          if (syncStatus.syncRequired && syncStatus.pendingTriggers > 0) {
-            const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
-              method: 'POST'
-            });
-            
-            if (processResponse && processResponse.ok) {
-              const processResult = await processResponse.json();
-              
-              if (processResult.requiresUserDecision) {
-                setSyncOptions(processResult.options || []);
-                setAffectedGuests(processResult.affectedGuests || []);
-                setPendingSyncTriggers(processResult.pendingTriggers || []);
-                setIsSyncOptionsModalOpen(true);
-                
-                showSyncNotification('info', t('seating.sync.newChangesDetected'));
-              } else if (processResult.hasChanges && processResult.seating) {
-                setTables(processResult.seating.tables || []);
-                setSeatingArrangement(processResult.seating.arrangement || {});
-                
-                showSyncNotification('success', processResult.message);
-              }
-            }
-          }
-        }
-      } catch (error) {
-      }
-    };
-
-    syncTimeoutRef.current = setInterval(pollForChanges, 20000);
-
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearInterval(syncTimeoutRef.current);
-      }
-    };
-  }, [autoSyncEnabled, syncInProgress, makeApiRequest, eventId, showSyncNotification, t]);
-
   const generateAISeating = useCallback(async (aiPreferences) => {
     try {
       setLoading(true);
       
-      const requestBody = {
+      const requestBody = isSeparatedSeating ? {
+        maleTables,
+        femaleTables,
+        preferences: { ...preferences, ...aiPreferences },
+        guests: confirmedGuests,
+        currentMaleArrangement: aiPreferences.preserveExisting ? maleArrangement : null,
+        currentFemaleArrangement: aiPreferences.preserveExisting ? femaleArrangement : null,
+        clearExisting: aiPreferences.clearExisting,
+        preserveExisting: aiPreferences.preserveExisting,
+        allMaleTables: aiPreferences.allMaleTables || maleTables,
+        allFemaleTables: aiPreferences.allFemaleTables || femaleTables,
+        isSeparatedSeating: true
+      } : {
         tables,
         preferences: { ...preferences, ...aiPreferences },
         guests: confirmedGuests,
         currentArrangement: aiPreferences.preserveExisting ? seatingArrangement : null,
         clearExisting: aiPreferences.clearExisting,
         preserveExisting: aiPreferences.preserveExisting,
-        allTables: aiPreferences.allTables || tables
+        allTables: aiPreferences.allTables || tables,
+        isSeparatedSeating: false
       };
       
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {
@@ -878,36 +612,77 @@ const EventSeatingPage = () => {
       if (response.ok) {
         const data = await response.json();
         
-        setSeatingArrangement(data.arrangement);
-        
-        let finalTables = data.tables || tables;
-        
-        if (data.arrangement && Object.keys(data.arrangement).length > 0) {
-          finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
+        if (isSeparatedSeating) {
+          setMaleArrangement(data.maleArrangement);
+          setFemaleArrangement(data.femaleArrangement);
+          
+          let finalMaleTables = data.maleTables || maleTables;
+          let finalFemaleTables = data.femaleTables || femaleTables;
+          
+          if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
+            finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
+          }
+          if (data.femaleArrangement && Object.keys(data.femaleArrangement).length > 0) {
+            finalFemaleTables = updateTableNamesWithGroups(finalFemaleTables, data.femaleArrangement);
+          }
+          
+          setMaleTables(finalMaleTables);
+          setFemaleTables(finalFemaleTables);
+          
+          const layoutData = {
+            maleTables: finalMaleTables,
+            femaleTables: finalFemaleTables,
+            maleArrangement: data.maleArrangement,
+            femaleArrangement: data.femaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          };
+          
+          autoSave(layoutData);
+        } else {
+          setSeatingArrangement(data.arrangement);
+          
+          let finalTables = data.tables || tables;
+          
+          if (data.arrangement && Object.keys(data.arrangement).length > 0) {
+            finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
+          }
+          
+          setTables(finalTables);
+          
+          const layoutData = {
+            tables: finalTables,
+            arrangement: data.arrangement,
+            isSeparatedSeating: false,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          };
+          
+          autoSave(layoutData);
         }
         
-        setTables(finalTables);
-        
-        const layoutData = {
-          tables: finalTables,
-          arrangement: data.arrangement,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        };
-        
-        autoSave(layoutData);
-        
         setError('');
-        
         setIsAIModalOpen(false);
         
         const newFingerprint = createGuestFingerprint(confirmedGuests);
         setLastSyncData(newFingerprint);
         
-        return { arrangement: data.arrangement, tables: finalTables };
+        return isSeparatedSeating ? {
+          maleArrangement: data.maleArrangement,
+          femaleArrangement: data.femaleArrangement,
+          maleTables: data.maleTables,
+          femaleTables: data.femaleTables
+        } : {
+          arrangement: data.arrangement,
+          tables: data.tables
+        };
       } else {
         const errorData = await response.json().catch(() => ({}));
         setError(errorData.message || t('seating.errors.aiGeneration'));
@@ -919,7 +694,7 @@ const EventSeatingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, makeApiRequest, tables, preferences, confirmedGuests, seatingArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint]);
+  }, [eventId, makeApiRequest, tables, maleTables, femaleTables, preferences, confirmedGuests, seatingArrangement, maleArrangement, femaleArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint, isSeparatedSeating]);
 
   const calculateTableSize = (type, capacity) => {
     const baseSize = Math.max(80, Math.min(200, 60 + (capacity * 8)));
@@ -939,7 +714,6 @@ const EventSeatingPage = () => {
   };
 
   const addTable = useCallback((event, type = 'round', capacity = 8) => {
-
     if (!canEdit) {
       setError(t('events.accessDenied'));
       return;
@@ -962,57 +736,129 @@ const EventSeatingPage = () => {
       capacity,
       position,
       rotation: 0,
-      size: calculateTableSize(type, capacity)
+      size: calculateTableSize(type, capacity),
+      gender: null
     };
     
-    const newTables = [...tables, newTable];
-    setTables(newTables);
-    setIsAddingTable(false);
-    
-    setSelectedTable(newTable);
-    setEditingTable(newTable);
-    setIsTableModalOpen(true);
-    
-    autoSave({
-      tables: newTables,
-      arrangement: seatingArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize, getNextTableNumber, canEdit]);
-
-  const handleAddTablesFromAI = useCallback(async (tablesToAdd) => {
-    try {
-      const newTables = [...tables, ...tablesToAdd];
-      
+    if (isSeparatedSeating) {
+      const newTables = [...tables, newTable];
       setTables(newTables);
-      
-      const layoutData = {
+      autoSave({
         tables: newTables,
         arrangement: seatingArrangement,
+        maleTables,
+        femaleTables,
+        maleArrangement,
+        femaleArrangement,
+        isSeparatedSeating: true,
         preferences,
         layoutSettings: {
           canvasScale,
           canvasOffset
         }
-      };
-      
-      const success = await saveSeatingArrangement(layoutData);
-      
-      if (success) {
-        return true;
+      });
+    } else {
+      const newTables = [...tables, newTable];
+      setTables(newTables);
+      autoSave({
+        tables: newTables,
+        arrangement: seatingArrangement,
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
+    }
+    
+    setIsAddingTable(false);
+    setSelectedTable(newTable);
+    setEditingTable(newTable);
+    setIsTableModalOpen(true);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, t, calculateTableSize, getNextTableNumber, canEdit, isSeparatedSeating]);
+
+  const handleAddTablesFromAI = useCallback(async (tablesToAdd, gender = null) => {
+    try {
+      if (isSeparatedSeating && gender) {
+        if (gender === 'male') {
+          const newMaleTables = [...maleTables, ...tablesToAdd];
+          setMaleTables(newMaleTables);
+          
+          const layoutData = {
+            maleTables: newMaleTables,
+            femaleTables,
+            maleArrangement,
+            femaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          };
+          
+          const success = await saveSeatingArrangement(layoutData);
+          if (success) {
+            return true;
+          } else {
+            setMaleTables(maleTables);
+            throw new Error(t('seating.errors.saveTablesFailed'));
+          }
+        } else {
+          const newFemaleTables = [...femaleTables, ...tablesToAdd];
+          setFemaleTables(newFemaleTables);
+          
+          const layoutData = {
+            maleTables,
+            femaleTables: newFemaleTables,
+            maleArrangement,
+            femaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          };
+          
+          const success = await saveSeatingArrangement(layoutData);
+          if (success) {
+            return true;
+          } else {
+            setFemaleTables(femaleTables);
+            throw new Error(t('seating.errors.saveTablesFailed'));
+          }
+        }
       } else {
-        setTables(tables);
-        throw new Error(t('seating.errors.saveTablesFailed'));
+        const newTables = [...tables, ...tablesToAdd];
+        setTables(newTables);
+        
+        const layoutData = {
+          tables: newTables,
+          arrangement: seatingArrangement,
+          isSeparatedSeating: false,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        };
+        
+        const success = await saveSeatingArrangement(layoutData);
+        
+        if (success) {
+          return true;
+        } else {
+          setTables(tables);
+          throw new Error(t('seating.errors.saveTablesFailed'));
+        }
       }
     } catch (err) {
       setError(t('seating.errors.addTablesError'));
       return false;
     }
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t]);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, isSeparatedSeating]);
 
   const handleAddTableFromView = useCallback((newTable) => {
     const nextTableNumber = getNextTableNumber();
@@ -1021,104 +867,291 @@ const EventSeatingPage = () => {
       name: `${t('seating.tableName')} ${nextTableNumber}`
     };
     
-    const newTables = [...tables, tableWithCorrectName];
-    setTables(newTables);
+    if (isSeparatedSeating && genderFilter !== 'all') {
+      if (genderFilter === 'male') {
+        const newMaleTables = [...maleTables, tableWithCorrectName];
+        setMaleTables(newMaleTables);
+        autoSave({
+          maleTables: newMaleTables,
+          femaleTables,
+          maleArrangement,
+          femaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      } else {
+        const newFemaleTables = [...femaleTables, tableWithCorrectName];
+        setFemaleTables(newFemaleTables);
+        autoSave({
+          maleTables,
+          femaleTables: newFemaleTables,
+          maleArrangement,
+          femaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      }
+    } else {
+      const newTables = [...tables, tableWithCorrectName];
+      setTables(newTables);
+      autoSave({
+        tables: newTables,
+        arrangement: seatingArrangement,
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
+    }
     
     setSelectedTable(tableWithCorrectName);
     setEditingTable(tableWithCorrectName);
     setIsTableModalOpen(true);
-    
-    autoSave({
-      tables: newTables,
-      arrangement: seatingArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, t, getNextTableNumber]);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, t, getNextTableNumber, isSeparatedSeating, genderFilter]);
 
   const updateTable = useCallback((tableId, updates) => {
-
     if (!canEdit) {
       setError(t('events.accessDenied'));
       return;
     }
 
-    let newTables;
-    let newArrangement = { ...seatingArrangement };
-    
-    if (updates === null) {
-      newTables = tables.filter(table => table.id !== tableId);
+    if (isSeparatedSeating) {
+      const isInMaleTables = maleTables.some(t => t.id === tableId);
+      const isInFemaleTables = femaleTables.some(t => t.id === tableId);
+      
+      if (isInMaleTables) {
+        let newMaleTables;
+        let newMaleArrangement = { ...maleArrangement };
+        
+        if (updates === null) {
+          newMaleTables = maleTables.filter(table => table.id !== tableId);
+          delete newMaleArrangement[tableId];
+          setSelectedTable(null);
+          
+          const newEditedNames = new Set(manuallyEditedTableNames);
+          newEditedNames.delete(tableId);
+          setManuallyEditedTableNames(newEditedNames);
+        } else {
+          const currentTable = maleTables.find(t => t.id === tableId);
+          
+          if (updates.name && currentTable && updates.name !== currentTable.name) {
+            const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
+            const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, maleArrangement);
+            
+            if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
+              const newEditedNames = new Set(manuallyEditedTableNames);
+              newEditedNames.add(tableId);
+              setManuallyEditedTableNames(newEditedNames);
+            }
+          }
+          
+          newMaleTables = maleTables.map(table => 
+            table.id === tableId ? { ...table, ...updates } : table
+          );
+        }
+        
+        setMaleTables(newMaleTables);
+        setMaleArrangement(newMaleArrangement);
+        
+        autoSave({
+          maleTables: newMaleTables,
+          femaleTables,
+          maleArrangement: newMaleArrangement,
+          femaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      } else if (isInFemaleTables) {
+        let newFemaleTables;
+        let newFemaleArrangement = { ...femaleArrangement };
+        
+        if (updates === null) {
+          newFemaleTables = femaleTables.filter(table => table.id !== tableId);
+          delete newFemaleArrangement[tableId];
+          setSelectedTable(null);
+          
+          const newEditedNames = new Set(manuallyEditedTableNames);
+          newEditedNames.delete(tableId);
+          setManuallyEditedTableNames(newEditedNames);
+        } else {
+          const currentTable = femaleTables.find(t => t.id === tableId);
+          
+          if (updates.name && currentTable && updates.name !== currentTable.name) {
+            const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
+            const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, femaleArrangement);
+            
+            if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
+              const newEditedNames = new Set(manuallyEditedTableNames);
+              newEditedNames.add(tableId);
+              setManuallyEditedTableNames(newEditedNames);
+            }
+          }
+          
+          newFemaleTables = femaleTables.map(table => 
+            table.id === tableId ? { ...table, ...updates } : table
+          );
+        }
+        
+        setFemaleTables(newFemaleTables);
+        setFemaleArrangement(newFemaleArrangement);
+        
+        autoSave({
+          maleTables,
+          femaleTables: newFemaleTables,
+          maleArrangement,
+          femaleArrangement: newFemaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      }
+    } else {
+      let newTables;
+      let newArrangement = { ...seatingArrangement };
+      
+      if (updates === null) {
+        newTables = tables.filter(table => table.id !== tableId);
+        delete newArrangement[tableId];
+        setSelectedTable(null);
+        
+        const newEditedNames = new Set(manuallyEditedTableNames);
+        newEditedNames.delete(tableId);
+        setManuallyEditedTableNames(newEditedNames);
+      } else {
+        const currentTable = tables.find(t => t.id === tableId);
+        
+        if (updates.name && currentTable && updates.name !== currentTable.name) {
+          const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
+          const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, seatingArrangement);
+          
+          if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
+            const newEditedNames = new Set(manuallyEditedTableNames);
+            newEditedNames.add(tableId);
+            setManuallyEditedTableNames(newEditedNames);
+          }
+        }
+        
+        newTables = tables.map(table => 
+          table.id === tableId ? { ...table, ...updates } : table
+        );
+      }
+      
+      setTables(newTables);
+      setSeatingArrangement(newArrangement);
+      
+      autoSave({
+        tables: newTables,
+        arrangement: newArrangement,
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
+        }
+      });
+    }
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, generateTableNameWithGroup, canEdit, isSeparatedSeating]);
+
+  const deleteTable = useCallback((tableId) => {
+    if (!canEdit) {
+      setError(t('events.accessDenied'));
+      return;
+    }
+
+    if (isSeparatedSeating) {
+      const isInMaleTables = maleTables.some(t => t.id === tableId);
+      const isInFemaleTables = femaleTables.some(t => t.id === tableId);
+      
+      if (isInMaleTables) {
+        const newMaleTables = maleTables.filter(table => table.id !== tableId);
+        const newMaleArrangement = { ...maleArrangement };
+        delete newMaleArrangement[tableId];
+        
+        const newEditedNames = new Set(manuallyEditedTableNames);
+        newEditedNames.delete(tableId);
+        setManuallyEditedTableNames(newEditedNames);
+        
+        setMaleTables(newMaleTables);
+        setMaleArrangement(newMaleArrangement);
+        
+        autoSave({
+          maleTables: newMaleTables,
+          femaleTables,
+          maleArrangement: newMaleArrangement,
+          femaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      } else if (isInFemaleTables) {
+        const newFemaleTables = femaleTables.filter(table => table.id !== tableId);
+        const newFemaleArrangement = { ...femaleArrangement };
+        delete newFemaleArrangement[tableId];
+        
+        const newEditedNames = new Set(manuallyEditedTableNames);
+        newEditedNames.delete(tableId);
+        setManuallyEditedTableNames(newEditedNames);
+        
+        setFemaleTables(newFemaleTables);
+        setFemaleArrangement(newFemaleArrangement);
+        
+        autoSave({
+          maleTables,
+          femaleTables: newFemaleTables,
+          maleArrangement,
+          femaleArrangement: newFemaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      }
+    } else {
+      const newTables = tables.filter(table => table.id !== tableId);
+      const newArrangement = { ...seatingArrangement };
       delete newArrangement[tableId];
-      setSelectedTable(null);
       
       const newEditedNames = new Set(manuallyEditedTableNames);
       newEditedNames.delete(tableId);
       setManuallyEditedTableNames(newEditedNames);
-    } else {
-      const currentTable = tables.find(t => t.id === tableId);
       
-      if (updates.name && currentTable && updates.name !== currentTable.name) {
-        const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
-        const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, seatingArrangement);
-        
-        if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
-          const newEditedNames = new Set(manuallyEditedTableNames);
-          newEditedNames.add(tableId);
-          setManuallyEditedTableNames(newEditedNames);
+      setTables(newTables);
+      setSeatingArrangement(newArrangement);
+      
+      autoSave({
+        tables: newTables,
+        arrangement: newArrangement,
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: {
+          canvasScale,
+          canvasOffset
         }
-      }
-      
-      newTables = tables.map(table => 
-        table.id === tableId ? { ...table, ...updates } : table
-      );
+      });
     }
-    
-    setTables(newTables);
-    setSeatingArrangement(newArrangement);
-    
-    autoSave({
-      tables: newTables,
-      arrangement: newArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, generateTableNameWithGroup ,canEdit]);
-
-
-  const deleteTable = useCallback((tableId) => {
-
-     if (!canEdit) {
-        setError(t('events.accessDenied'));
-        return;
-      }
-
-    const newTables = tables.filter(table => table.id !== tableId);
-    const newArrangement = { ...seatingArrangement };
-    delete newArrangement[tableId];
-    
-    const newEditedNames = new Set(manuallyEditedTableNames);
-    newEditedNames.delete(tableId);
-    setManuallyEditedTableNames(newEditedNames);
-    
-    setTables(newTables);
-    setSeatingArrangement(newArrangement);
-    
-    autoSave({
-      tables: newTables,
-      arrangement: newArrangement,
-      preferences,
-      layoutSettings: {
-        canvasScale,
-        canvasOffset
-      }
-    });
-  }, [tables, seatingArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, canEdit]);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, canEdit, isSeparatedSeating]);
 
   const seatGuest = useCallback((guestId, tableId) => {
 
@@ -1127,134 +1160,545 @@ const EventSeatingPage = () => {
       return false;
     }
 
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return false;
-
-    const currentSeatedAtTable = seatingArrangement[tableId] || [];
-    const guest = confirmedGuests.find(g => g._id === guestId);
-    if (!guest) return false;
-
-    const totalPeople = guest.attendingCount || 1;
-    const currentOccupancy = currentSeatedAtTable.reduce((sum, guestId) => {
-      const g = confirmedGuests.find(guest => guest._id === guestId);
-      return sum + (g?.attendingCount || 1);
-    }, 0);
-
-    if (currentOccupancy + totalPeople > table.capacity) {
-      setError(t('seating.errors.tableOvercapacity', { 
-        table: table.name, 
-        capacity: table.capacity,
-        needed: totalPeople,
-        available: table.capacity - currentOccupancy
-      }));
+    let draggedGender = null;
+    if (guestId.endsWith('_male')) {
+      draggedGender = 'male';
+    } else if (guestId.endsWith('_female')) {
+      draggedGender = 'female';
+    }
+    
+    const actualGuestId = guestId.replace('_male', '').replace('_female', '');
+    
+    let guest;
+    
+    if (draggedGuest) {
+      if (draggedGuest._id === guestId || draggedGuest.originalId === actualGuestId) {
+        guest = draggedGuest;
+        
+        if (!draggedGender && guest.displayGender) {
+          draggedGender = guest.displayGender;
+        } else if (!draggedGender && guest.gender) {
+          draggedGender = guest.gender;
+        }
+      }
+    }
+    
+    if (!guest) {
+      const baseGuest = confirmedGuests.find(g => g._id === actualGuestId);
+      
+      if (!baseGuest) {
+        return false;
+      }
+      
+      if (isSeparatedSeating) {
+        if (!draggedGender) {
+          if (baseGuest.maleCount > 0 && (!baseGuest.femaleCount || baseGuest.femaleCount === 0)) {
+            draggedGender = 'male';
+          } else if (baseGuest.femaleCount > 0 && (!baseGuest.maleCount || baseGuest.maleCount === 0)) {
+            draggedGender = 'female';
+          } else if (baseGuest.gender) {
+            draggedGender = baseGuest.gender;
+          } else {
+            setError(t('seating.errors.cannotDetermineGender'));
+            return false;
+          }
+        }
+        
+        guest = {
+          ...baseGuest,
+          _id: `${baseGuest._id}_${draggedGender}`,
+          originalId: baseGuest._id,
+          displayGender: draggedGender,
+          gender: draggedGender,
+          attendingCount: draggedGender === 'male' ? (baseGuest.maleCount || 0) : (baseGuest.femaleCount || 0),
+          maleCount: draggedGender === 'male' ? (baseGuest.maleCount || 0) : 0,
+          femaleCount: draggedGender === 'female' ? (baseGuest.femaleCount || 0) : 0
+        };
+      } else {
+        guest = baseGuest;
+      }
+    }
+    
+    if (!guest) {
       return false;
     }
 
-    const newArrangement = { ...seatingArrangement };
-    
-    Object.keys(newArrangement).forEach(tId => {
-      newArrangement[tId] = newArrangement[tId].filter(id => id !== guestId);
-      if (newArrangement[tId].length === 0) {
-        delete newArrangement[tId];
+    if (isSeparatedSeating) {
+      
+      if (!draggedGender) {
+        setError(t('seating.errors.cannotDetermineGender'));
+        return false;
       }
-    });
+      
+      let table = tables.find(t => t.id === tableId);
+      let isNeutralTable = !!table;
+      let isInMaleTables = false;
+      let isInFemaleTables = false;
+      let currentTables = tables;
+      let currentArrangement = seatingArrangement || {};
+      
+      if (!table) {
+        table = maleTables.find(t => t.id === tableId);
+        if (table) {
+          isInMaleTables = true;
+          currentTables = maleTables;
+          currentArrangement = maleArrangement || {};
+        } else {
+          table = femaleTables.find(t => t.id === tableId);
+          if (table) {
+            isInFemaleTables = true;
+            currentTables = femaleTables;
+            currentArrangement = femaleArrangement || {};
+          }
+        }
+      }
+      
+      if (!table) {
+        setError(t('seating.errors.tableNotFound'));
+        return false;
+      }
+      
+      if (isNeutralTable) {
+        const seatedGuests = currentArrangement[tableId] || [];
+        
+        if (seatedGuests.length === 0) {
+          
+          const newTables = tables.filter(t => t.id !== tableId);
+          const tableWithGender = { ...table, gender: draggedGender };
+          
+          if (draggedGender === 'male') {
+            const newMaleTables = [...maleTables, tableWithGender];
+            const newMaleArrangement = { ...maleArrangement, [tableId]: [actualGuestId] };
+            
+            setTables(newTables);
+            setMaleTables(newMaleTables);
+            setMaleArrangement(newMaleArrangement);
+            
+            setTimeout(() => {
+              const updatedTables = updateTableNamesWithGroups(newMaleTables, newMaleArrangement);
+              setMaleTables(updatedTables);
+              
+              autoSave({
+                tables: newTables,
+                arrangement: seatingArrangement,
+                maleTables: updatedTables,
+                femaleTables,
+                maleArrangement: newMaleArrangement,
+                femaleArrangement,
+                isSeparatedSeating: true,
+                preferences,
+                layoutSettings: {
+                  canvasScale,
+                  canvasOffset
+                }
+              });
 
-    if (!newArrangement[tableId]) {
-      newArrangement[tableId] = [];
+              if (!lastSyncData) {
+                const newFingerprint = createGuestFingerprint(confirmedGuests);
+                setLastSyncData(newFingerprint);
+              }
+            }, 100);
+            
+            setError('');
+            return true;
+          } else {
+            const newFemaleTables = [...femaleTables, tableWithGender];
+            const newFemaleArrangement = { ...femaleArrangement, [tableId]: [actualGuestId] };
+            
+            setTables(newTables);
+            setFemaleTables(newFemaleTables);
+            setFemaleArrangement(newFemaleArrangement);
+            
+            setTimeout(() => {
+              const updatedTables = updateTableNamesWithGroups(newFemaleTables, newFemaleArrangement);
+              setFemaleTables(updatedTables);
+              
+              autoSave({
+                tables: newTables,
+                arrangement: seatingArrangement,
+                maleTables,
+                femaleTables: updatedTables,
+                maleArrangement,
+                femaleArrangement: newFemaleArrangement,
+                isSeparatedSeating: true,
+                preferences,
+                layoutSettings: {
+                  canvasScale,
+                  canvasOffset
+                }
+              });
+
+              if (!lastSyncData) {
+                const newFingerprint = createGuestFingerprint(confirmedGuests);
+                setLastSyncData(newFingerprint);
+              }
+            }, 100);
+            
+            setError('');
+            return true;
+          }
+        } else {
+          setError(t('seating.errors.neutralTableOccupied'));
+          return false;
+        }
+      }
+      
+      if ((draggedGender === 'male' && !isInMaleTables) || 
+          (draggedGender === 'female' && !isInFemaleTables)) {
+        setError(t('seating.errors.genderMismatch'));
+        return false;
+      }
+
+      const currentSeatedAtTable = currentArrangement[tableId] || [];
+      
+      const currentOccupancy = currentSeatedAtTable.reduce((sum, seatedGuestId) => {
+        const g = confirmedGuests.find(guest => guest._id === seatedGuestId);
+        if (!g) return sum;
+        
+        if (draggedGender === 'male') {
+          return sum + (g.maleCount || 0);
+        } else {
+          return sum + (g.femaleCount || 0);
+        }
+      }, 0);
+      
+      const peopleToAdd = guest.attendingCount || 1;
+
+      if (currentOccupancy + peopleToAdd > table.capacity) {
+        setError(t('seating.errors.tableOvercapacity', { 
+          table: table.name, 
+          capacity: table.capacity,
+          needed: peopleToAdd,
+          available: table.capacity - currentOccupancy
+        }));
+        return false;
+      }
+
+      const newArrangement = { ...currentArrangement };
+      
+      Object.keys(newArrangement).forEach(tId => {
+        newArrangement[tId] = newArrangement[tId].filter(id => id !== actualGuestId);
+        if (newArrangement[tId].length === 0) {
+          delete newArrangement[tId];
+        }
+      });
+
+      if (!newArrangement[tableId]) {
+        newArrangement[tableId] = [];
+      }
+      
+      if (!newArrangement[tableId].includes(actualGuestId)) {
+        newArrangement[tableId].push(actualGuestId);
+      }
+      
+      if (draggedGender === 'male') {
+        setMaleArrangement(newArrangement);
+        
+        setTimeout(() => {
+          const updatedTables = updateTableNamesWithGroups(currentTables, newArrangement);
+          setMaleTables(updatedTables);
+          
+          autoSave({
+            tables,
+            arrangement: seatingArrangement,
+            maleTables: updatedTables,
+            femaleTables,
+            maleArrangement: newArrangement,
+            femaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          });
+
+          if (!lastSyncData) {
+            const newFingerprint = createGuestFingerprint(confirmedGuests);
+            setLastSyncData(newFingerprint);
+          }
+        }, 100);
+      } else {
+        setFemaleArrangement(newArrangement);
+        
+        setTimeout(() => {
+          const updatedTables = updateTableNamesWithGroups(currentTables, newArrangement);
+          setFemaleTables(updatedTables);
+          
+          autoSave({
+            tables,
+            arrangement: seatingArrangement,
+            maleTables,
+            femaleTables: updatedTables,
+            maleArrangement,
+            femaleArrangement: newArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          });
+
+          if (!lastSyncData) {
+            const newFingerprint = createGuestFingerprint(confirmedGuests);
+            setLastSyncData(newFingerprint);
+          }
+        }, 100);
+      }
+      
+      setError('');
+      return true;
+      
+    } else {
+      
+      const table = tables.find(t => t.id === tableId);
+      if (!table) {
+        return false;
+      }
+
+      const currentSeatedAtTable = seatingArrangement[tableId] || [];
+      const totalPeople = guest.attendingCount || 1;
+      const currentOccupancy = currentSeatedAtTable.reduce((sum, guestId) => {
+        const g = confirmedGuests.find(guest => guest._id === guestId);
+        return sum + (g?.attendingCount || 1);
+      }, 0);
+
+      if (currentOccupancy + totalPeople > table.capacity) {
+        setError(t('seating.errors.tableOvercapacity', { 
+          table: table.name, 
+          capacity: table.capacity,
+          needed: totalPeople,
+          available: table.capacity - currentOccupancy
+        }));
+        return false;
+      }
+
+      const newArrangement = { ...seatingArrangement };
+      
+      Object.keys(newArrangement).forEach(tId => {
+        newArrangement[tId] = newArrangement[tId].filter(id => id !== actualGuestId);
+        if (newArrangement[tId].length === 0) {
+          delete newArrangement[tId];
+        }
+      });
+
+      if (!newArrangement[tableId]) {
+        newArrangement[tableId] = [];
+      }
+      newArrangement[tableId].push(actualGuestId);
+
+      setSeatingArrangement(newArrangement);
+      setError('');
+      
+      setTimeout(() => {
+        const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
+        setTables(updatedTables);
+        
+        autoSave({
+          tables: updatedTables,
+          arrangement: newArrangement,
+          isSeparatedSeating: false,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+
+        if (!lastSyncData) {
+          const newFingerprint = createGuestFingerprint(confirmedGuests);
+          setLastSyncData(newFingerprint);
+        }
+      }, 100);
+      
+      return true;
     }
-    newArrangement[tableId].push(guestId);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, canEdit, isSeparatedSeating, lastSyncData, createGuestFingerprint, draggedGuest]);
 
-    setSeatingArrangement(newArrangement);
-    setError('');
+  const unseatGuest = useCallback((guestId, tableId = null) => {
     
-    setTimeout(() => {
-      const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
-      setTables(updatedTables);
+    const guest = confirmedGuests.find(g => g._id === guestId);
+    if (!guest) {
+      return;
+    }
+
+    if (isSeparatedSeating) {
       
-      autoSave({
-        tables: updatedTables,
-        arrangement: newArrangement,
-        preferences,
-        layoutSettings: {
-          canvasScale,
-          canvasOffset
+      let guestGender = guest.gender;
+      
+      if (tableId) {
+        const isMaleTable = maleTables && maleTables.some(t => t.id === tableId);
+        const isFemaleTable = femaleTables && femaleTables.some(t => t.id === tableId);
+        
+        if (isMaleTable) {
+          guestGender = 'male';
+        } else if (isFemaleTable) {
+          guestGender = 'female';
+        }
+      }
+            
+      if (guestGender === 'male' || guest.maleCount > 0) {
+        const newMaleArrangement = { ...maleArrangement };
+        Object.keys(newMaleArrangement).forEach(tId => {
+          newMaleArrangement[tId] = newMaleArrangement[tId].filter(id => id !== guestId);
+          if (newMaleArrangement[tId].length === 0) {
+            delete newMaleArrangement[tId];
+          }
+        });
+        
+        setMaleArrangement(newMaleArrangement);
+        
+        setTimeout(() => {
+          const updatedMaleTables = updateTableNamesWithGroups(maleTables, newMaleArrangement);
+          setMaleTables(updatedMaleTables);
+          
+          autoSave({
+            tables,
+            arrangement: seatingArrangement,
+            maleTables: updatedMaleTables,
+            femaleTables,
+            maleArrangement: newMaleArrangement,
+            femaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          });
+
+          if (!lastSyncData) {
+            const newFingerprint = createGuestFingerprint(confirmedGuests);
+            setLastSyncData(newFingerprint);
+          }
+        }, 100);
+        
+      }
+      
+      if (guestGender === 'female' || guest.femaleCount > 0) {
+        const newFemaleArrangement = { ...femaleArrangement };
+        Object.keys(newFemaleArrangement).forEach(tId => {
+          newFemaleArrangement[tId] = newFemaleArrangement[tId].filter(id => id !== guestId);
+          if (newFemaleArrangement[tId].length === 0) {
+            delete newFemaleArrangement[tId];
+          }
+        });
+        
+        setFemaleArrangement(newFemaleArrangement);
+        
+        setTimeout(() => {
+          const updatedFemaleTables = updateTableNamesWithGroups(femaleTables, newFemaleArrangement);
+          setFemaleTables(updatedFemaleTables);
+          
+          autoSave({
+            tables,
+            arrangement: seatingArrangement,
+            maleTables,
+            femaleTables: updatedFemaleTables,
+            maleArrangement,
+            femaleArrangement: newFemaleArrangement,
+            isSeparatedSeating: true,
+            preferences,
+            layoutSettings: {
+              canvasScale,
+              canvasOffset
+            }
+          });
+
+          if (!lastSyncData) {
+            const newFingerprint = createGuestFingerprint(confirmedGuests);
+            setLastSyncData(newFingerprint);
+          }
+        }, 100);
+        
+      }
+    } else {
+      const newArrangement = { ...seatingArrangement };
+      Object.keys(newArrangement).forEach(tId => {
+        newArrangement[tId] = newArrangement[tId].filter(id => id !== guestId);
+        if (newArrangement[tId].length === 0) {
+          delete newArrangement[tId];
         }
       });
-
-      if (!lastSyncData) {
-        const newFingerprint = createGuestFingerprint(confirmedGuests);
-        setLastSyncData(newFingerprint);
-      }
-    }, 100);
-    
-    return true;
-  }, [tables, seatingArrangement, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, canEdit]);
-
-  const unseatGuest = useCallback((guestId) => {
-    const newArrangement = { ...seatingArrangement };
-    Object.keys(newArrangement).forEach(tableId => {
-      newArrangement[tableId] = newArrangement[tableId].filter(id => id !== guestId);
-      if (newArrangement[tableId].length === 0) {
-        delete newArrangement[tableId];
-      }
-    });
-    
-    setSeatingArrangement(newArrangement);
-    
-    setTimeout(() => {
-      const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
-      setTables(updatedTables);
       
-      autoSave({
-        tables: updatedTables,
-        arrangement: newArrangement,
-        preferences,
-        layoutSettings: {
-          canvasScale,
-          canvasOffset
-        }
-      });
+      setSeatingArrangement(newArrangement);
+      
+      setTimeout(() => {
+        const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
+        setTables(updatedTables);
+        
+        autoSave({
+          tables: updatedTables,
+          arrangement: newArrangement,
+          isSeparatedSeating: false,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
 
-      if (!lastSyncData) {
-        const newFingerprint = createGuestFingerprint(confirmedGuests);
-        setLastSyncData(newFingerprint);
-      }
-    }, 100);
-  }, [seatingArrangement, tables, preferences, canvasScale, canvasOffset, autoSave, updateTableNamesWithGroups]);
+        if (!lastSyncData) {
+          const newFingerprint = createGuestFingerprint(confirmedGuests);
+          setLastSyncData(newFingerprint);
+        }
+      }, 100);
+      
+    }
+  }, [seatingArrangement, maleArrangement, femaleArrangement, tables, maleTables, femaleTables, confirmedGuests, preferences, canvasScale, canvasOffset, autoSave, updateTableNamesWithGroups, isSeparatedSeating, lastSyncData, createGuestFingerprint]);
 
   const clearAllSeating = useCallback(() => {
-
     if (!canEdit) {
       setError(t('events.accessDenied'));
       return;
     }
 
     if (window.confirm(t('seating.confirmClearAll'))) {
-      const newArrangement = {};
-      const newTables = [];
+      if (isSeparatedSeating) {
+        setMaleArrangement({});
+        setFemaleArrangement({});
+        setMaleTables([]);
+        setFemaleTables([]);
+        
+        autoSave({
+          maleTables: [],
+          femaleTables: [],
+          maleArrangement: {},
+          femaleArrangement: {},
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      } else {
+        const newArrangement = {};
+        const newTables = [];
+        
+        setSeatingArrangement(newArrangement);
+        setTables(newTables);
+        
+        autoSave({
+          tables: newTables,
+          arrangement: newArrangement,
+          isSeparatedSeating: false,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      }
       
-      setSeatingArrangement(newArrangement);
-      setTables(newTables);
       setSelectedTable(null);
       setEditingTable(null);
       setError('');
-      
       setManuallyEditedTableNames(new Set());
-      
       setLastSyncData(null);
-      
-      autoSave({
-        tables: newTables,
-        arrangement: newArrangement,
-        preferences,
-        layoutSettings: {
-          canvasScale,
-          canvasOffset
-        }
-      });
     }
-  }, [preferences, canvasScale, canvasOffset, autoSave, t, canEdit]);
-
+  }, [preferences, canvasScale, canvasOffset, autoSave, t, canEdit, isSeparatedSeating]);
 
   const handleCanvasClick = useCallback((event) => {
     if (!isAddingTable) return;
@@ -1286,13 +1730,23 @@ const EventSeatingPage = () => {
 
   const exportSeatingChart = useCallback(async (format) => {
     try {
+      const exportData = isSeparatedSeating ? {
+        maleTables,
+        femaleTables,
+        maleArrangement,
+        femaleArrangement,
+        guests: confirmedGuests,
+        isSeparatedSeating: true
+      } : {
+        tables,
+        arrangement: seatingArrangement,
+        guests: confirmedGuests,
+        isSeparatedSeating: false
+      };
+
       const response = await makeApiRequest(`/api/events/${eventId}/seating/export?format=${format}`, {
         method: 'POST',
-        body: JSON.stringify({
-          tables,
-          arrangement: seatingArrangement,
-          guests: confirmedGuests
-        })
+        body: JSON.stringify(exportData)
       });
 
       if (!response) return;
@@ -1311,36 +1765,64 @@ const EventSeatingPage = () => {
     } catch (err) {
       setError(t('seating.errors.exportFailed'));
     }
-  }, [eventId, makeApiRequest, tables, seatingArrangement, confirmedGuests, t]);
+  }, [eventId, makeApiRequest, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, confirmedGuests, t, isSeparatedSeating]);
 
   const handleCanvasOffsetChange = useCallback((newOffset) => {
     setCanvasOffset(newOffset);
     
-    autoSave({
-      tables,
-      arrangement: seatingArrangement,
+    const saveData = isSeparatedSeating ? {
+      maleTables,
+      femaleTables,
+      maleArrangement,
+      femaleArrangement,
+      isSeparatedSeating: true,
       preferences,
       layoutSettings: {
         canvasScale,
         canvasOffset: typeof newOffset === 'function' ? newOffset(canvasOffset) : newOffset
       }
-    });
-  }, [canvasScale, canvasOffset, tables, seatingArrangement, preferences, autoSave]);
+    } : {
+      tables,
+      arrangement: seatingArrangement,
+      isSeparatedSeating: false,
+      preferences,
+      layoutSettings: {
+        canvasScale,
+        canvasOffset: typeof newOffset === 'function' ? newOffset(canvasOffset) : newOffset
+      }
+    };
+    
+    autoSave(saveData);
+  }, [canvasScale, canvasOffset, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, autoSave, isSeparatedSeating]);
 
   const handleCanvasScaleChange = useCallback((newScale) => {
     const actualScale = typeof newScale === 'function' ? newScale(canvasScale) : newScale;
     setCanvasScale(actualScale);
     
-    autoSave({
-      tables,
-      arrangement: seatingArrangement,
+    const saveData = isSeparatedSeating ? {
+      maleTables,
+      femaleTables,
+      maleArrangement,
+      femaleArrangement,
+      isSeparatedSeating: true,
       preferences,
       layoutSettings: {
         canvasScale: actualScale,
         canvasOffset
       }
-    });
-  }, [canvasScale, canvasOffset, tables, seatingArrangement, preferences, autoSave]);
+    } : {
+      tables,
+      arrangement: seatingArrangement,
+      isSeparatedSeating: false,
+      preferences,
+      layoutSettings: {
+        canvasScale: actualScale,
+        canvasOffset
+      }
+    };
+    
+    autoSave(saveData);
+  }, [canvasScale, canvasOffset, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, autoSave, isSeparatedSeating]);
 
   const toggleAutoSync = useCallback(() => {
     setAutoSyncEnabled(prev => {
@@ -1374,8 +1856,15 @@ const EventSeatingPage = () => {
           setPendingSyncTriggers(result.pendingTriggers);
           setIsSyncOptionsModalOpen(true);
         } else if (result.hasChanges) {
-          setTables(result.seating.tables);
-          setSeatingArrangement(result.seating.arrangement);
+          if (isSeparatedSeating) {
+            setMaleTables(result.seating.maleTables || []);
+            setFemaleTables(result.seating.femaleTables || []);
+            setMaleArrangement(result.seating.maleArrangement || {});
+            setFemaleArrangement(result.seating.femaleArrangement || {});
+          } else {
+            setTables(result.seating.tables);
+            setSeatingArrangement(result.seating.arrangement);
+          }
           
           showSyncNotification('success', result.message);
           
@@ -1392,137 +1881,194 @@ const EventSeatingPage = () => {
     } finally {
       setSyncInProgress(false);
     }
-  }, [syncInProgress, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests]);
+  }, [syncInProgress, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, isSeparatedSeating]);
 
-const handleApplySyncOption = useCallback(async (optionId, customArrangement = null) => {
-  try {
-    setSyncInProgress(true);
-    
-    const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/apply-option`, {
-      method: 'POST',
-      body: JSON.stringify({
-        optionId,
-        customArrangement
-      })
-    });
-
-    if (!response) return;
-
-    if (response.ok) {
-      const result = await response.json();
+  const handleApplySyncOption = useCallback(async (optionId, customArrangement = null) => {
+    try {
+      setSyncInProgress(true);
       
-      setTables(result.seating.tables);
-      setSeatingArrangement(result.seating.arrangement);
-      setIsSyncOptionsModalOpen(false);
-      
-      showSyncNotification('success', result.message);
-      
-      const currentGuestData = await fetchConfirmedGuests();
-      if (currentGuestData) {
-        const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
-        setLastSyncData(newFingerprint);
-      }
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      showSyncNotification('error', errorData.message || t('seating.sync.applyOptionFailed'));
-    }
-  } catch (error) {
-    showSyncNotification('error', t('seating.sync.applyOptionFailed'));
-  } finally {
-    setSyncInProgress(false);
-  }
-}, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
+      const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/apply-option`, {
+        method: 'POST',
+        body: JSON.stringify({
+          optionId,
+          customArrangement,
+          isSeparatedSeating
+        })
+      });
 
-const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds) => {
-  try {
-    setSyncInProgress(true);
-    
-    const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/move-to-unassigned`, {
-      method: 'POST',
-      body: JSON.stringify({
-        affectedGuestIds
-      })
-    });
+      if (!response) return;
 
-    if (!response) return;
-
-    if (response.ok) {
-      const result = await response.json();
-      
-      setTables(result.seating.tables);
-      setSeatingArrangement(result.seating.arrangement);
-      setIsSyncOptionsModalOpen(false);
-      
-      showSyncNotification('success', result.message);
-      
-      const currentGuestData = await fetchConfirmedGuests();
-      if (currentGuestData) {
-        const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
-        setLastSyncData(newFingerprint);
-      }
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      showSyncNotification('error', errorData.message || t('seating.sync.moveGuestsFailed'));
-    }
-  } catch (error) {
-    showSyncNotification('error', t('seating.sync.moveGuestsFailed'));
-  } finally {
-    setSyncInProgress(false);
-  }
-}, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint]);
-
-  // useEffect(() => {
-  //   const initializeData = async () => {
-  //     const guestData = await fetchConfirmedGuests();
-      
-  //     if (guestData) {
-  //     } else {
-  //     }
-      
-  //     const seatingData = await fetchSeatingArrangement();
-  //   };
-
-  //   initializeData();
-  // }, [fetchConfirmedGuests, fetchSeatingArrangement]);
-
-    useEffect(() => {
-      const initializeData = async () => {
-        // First, we load the permissions.
-        await fetchEventPermissions();
+      if (response.ok) {
+        const result = await response.json();
         
-        const guestData = await fetchConfirmedGuests();
-        
-        if (guestData) {
+        if (isSeparatedSeating) {
+          setMaleTables(result.seating.maleTables);
+          setFemaleTables(result.seating.femaleTables);
+          setMaleArrangement(result.seating.maleArrangement);
+          setFemaleArrangement(result.seating.femaleArrangement);
         } else {
+          setTables(result.seating.tables);
+          setSeatingArrangement(result.seating.arrangement);
         }
+        setIsSyncOptionsModalOpen(false);
         
-        const seatingData = await fetchSeatingArrangement();
-      };
+        showSyncNotification('success', result.message);
+        
+        const currentGuestData = await fetchConfirmedGuests();
+        if (currentGuestData) {
+          const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+          setLastSyncData(newFingerprint);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showSyncNotification('error', errorData.message || t('seating.sync.applyOptionFailed'));
+      }
+    } catch (error) {
+      showSyncNotification('error', t('seating.sync.applyOptionFailed'));
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
-      initializeData();
-    }, [fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement]);
+  const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds) => {
+    try {
+      setSyncInProgress(true);
+      
+      const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/move-to-unassigned`, {
+        method: 'POST',
+        body: JSON.stringify({
+          affectedGuestIds
+        })
+      });
 
-  const stats = (() => {
-    const totalGuests = confirmedGuests.reduce((sum, guest) => {
-      const count = guest.attendingCount || 1;
-      return sum + count;
-    }, 0);
+      if (!response) return;
 
-    const seatedIds = Object.values(seatingArrangement).flat();
-    const seatedGuests = seatedIds.reduce((sum, guestId) => {
-      const guest = confirmedGuests.find(g => g._id === guestId);
-      const attendingCount = guest?.attendingCount || 1;
-      return sum + attendingCount;
-    }, 0);
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (isSeparatedSeating) {
+          setMaleTables(result.seating.maleTables);
+          setFemaleTables(result.seating.femaleTables);
+          setMaleArrangement(result.seating.maleArrangement);
+          setFemaleArrangement(result.seating.femaleArrangement);
+        } else {
+          setTables(result.seating.tables);
+          setSeatingArrangement(result.seating.arrangement);
+        }
+        setIsSyncOptionsModalOpen(false);
+        
+        showSyncNotification('success', result.message);
+        
+        const currentGuestData = await fetchConfirmedGuests();
+        if (currentGuestData) {
+          const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+          setLastSyncData(newFingerprint);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showSyncNotification('error', errorData.message || t('seating.sync.moveGuestsFailed'));
+      }
+    } catch (error) {
+      showSyncNotification('error', t('seating.sync.moveGuestsFailed'));
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
-    const result = {
-      totalGuests,
-      seatedGuests,
-      totalTables: tables.length,
-      occupiedTables: Object.keys(seatingArrangement).length
+  useEffect(() => {
+    const initializeData = async () => {
+      await fetchEventPermissions();
+      const guestData = await fetchConfirmedGuests();
+      const seatingData = await fetchSeatingArrangement();
     };
 
-    return result;
+    initializeData();
+  }, [fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement]);
+
+  const getCurrentTables = useCallback(() => {
+    if (isSeparatedSeating) {
+      if (genderFilter === 'male') return maleTables;
+      if (genderFilter === 'female') return femaleTables;
+      return [...tables, ...maleTables, ...femaleTables];
+    }
+    return tables;
+  }, [isSeparatedSeating, genderFilter, tables, maleTables, femaleTables]);
+
+  const getCurrentArrangement = useCallback(() => {
+    if (isSeparatedSeating) {
+      if (genderFilter === 'male') return maleArrangement;
+      if (genderFilter === 'female') return femaleArrangement;
+      return { ...seatingArrangement, ...maleArrangement, ...femaleArrangement };
+    }
+    return seatingArrangement;
+  }, [isSeparatedSeating, genderFilter, seatingArrangement, maleArrangement, femaleArrangement]);
+
+  const getFilteredGuests = useCallback(() => {
+    if (!isSeparatedSeating) {
+      return confirmedGuests;
+    }
+
+    return confirmedGuests;
+  }, [confirmedGuests, isSeparatedSeating]);
+
+  const stats = (() => {
+    if (isSeparatedSeating) {
+      const totalMaleGuests = confirmedGuests.reduce((sum, g) => sum + (g.maleCount || 0), 0);
+      const totalFemaleGuests = confirmedGuests.reduce((sum, g) => sum + (g.femaleCount || 0), 0);
+      const totalGuests = totalMaleGuests + totalFemaleGuests;
+      
+      const allMaleSeatedIds = Object.values(maleArrangement).flat();
+      const allFemaleSeatedIds = Object.values(femaleArrangement).flat();
+      
+      const maleSeatedPeople = allMaleSeatedIds.reduce((sum, guestId) => {
+        const guest = confirmedGuests.find(g => g._id === guestId);
+        if (!guest) return sum;
+        return sum + (guest.maleCount || 0);
+      }, 0);
+      
+      const femaleSeatedPeople = allFemaleSeatedIds.reduce((sum, guestId) => {
+        const guest = confirmedGuests.find(g => g._id === guestId);
+        if (!guest) return sum;
+        return sum + (guest.femaleCount || 0);
+      }, 0);
+      
+      const unseatedMaleGuests = Math.max(0, totalMaleGuests - maleSeatedPeople);
+      const unseatedFemaleGuests = Math.max(0, totalFemaleGuests - femaleSeatedPeople);
+
+      return {
+        totalGuests,
+        totalMaleGuests,
+        totalFemaleGuests,
+        seatedGuests: maleSeatedPeople + femaleSeatedPeople,
+        maleSeatedGuests: maleSeatedPeople,
+        femaleSeatedGuests: femaleSeatedPeople,
+        unseatedMaleGuests, 
+        unseatedFemaleGuests,
+        totalTables: tables.length + maleTables.length + femaleTables.length,
+        maleTables: maleTables.length,
+        femaleTables: femaleTables.length,
+        occupiedTables: Object.keys(maleArrangement).length + Object.keys(femaleArrangement).length
+      };
+    } else {
+      const totalGuests = confirmedGuests.reduce((sum, guest) => {
+        const count = guest.attendingCount || 1;
+        return sum + count;
+      }, 0);
+
+      const seatedIds = Object.values(seatingArrangement).flat();
+      const seatedGuests = seatedIds.reduce((sum, guestId) => {
+        const guest = confirmedGuests.find(g => g._id === guestId);
+        const attendingCount = guest?.attendingCount || 1;
+        return sum + attendingCount;
+      }, 0);
+
+      return {
+        totalGuests,
+        seatedGuests,
+        totalTables: tables.length,
+        occupiedTables: Object.keys(seatingArrangement).length
+      };
+    }
   })();
 
   if (loading) {
@@ -1581,6 +2127,29 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
             </button>
           </div>
 
+          {isSeparatedSeating && (
+            <div className="seating-gender-filter">
+              <button
+                className={`filter-button ${genderFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setGenderFilter('all')}
+              >
+                {t('seating.genderFilter.all')}
+              </button>
+              <button
+                className={`filter-button ${genderFilter === 'male' ? 'active' : ''}`}
+                onClick={() => setGenderFilter('male')}
+              >
+                {t('seating.genderFilter.male')}
+              </button>
+              <button
+                className={`filter-button ${genderFilter === 'female' ? 'active' : ''}`}
+                onClick={() => setGenderFilter('female')}
+              >
+                {t('seating.genderFilter.female')}
+              </button>
+            </div>
+          )}
+
           <div className="seating-sync-controls">
             <div className="sync-status">
               <span className={`sync-indicator ${autoSyncEnabled ? 'enabled' : 'disabled'}`}>
@@ -1633,7 +2202,12 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
             <button
               className="seating-action-button clear-all-button"
               onClick={clearAllSeating}
-              disabled={tables.length === 0 && Object.keys(seatingArrangement).length === 0 || !canEdit}
+              disabled={
+                (isSeparatedSeating 
+                  ? (maleTables.length === 0 && femaleTables.length === 0)
+                  : (tables.length === 0 && Object.keys(seatingArrangement).length === 0)
+                ) || !canEdit
+              }
               title={t('seating.clearAllTooltip')}
             >
               🗑️ {t('seating.clearAll')}
@@ -1669,14 +2243,29 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
           <div className="stat-card">
             <div className="stat-number">{stats.totalGuests}</div>
             <div className="stat-label">{t('seating.stats.totalGuests')}</div>
+            {isSeparatedSeating && (
+              <div className="stat-sublabel">
+                {t('seating.stats.maleGuests')}: {stats.totalMaleGuests} | {t('seating.stats.femaleGuests')}: {stats.totalFemaleGuests}
+              </div>
+            )}
           </div>
           <div className="stat-card">
             <div className="stat-number">{stats.seatedGuests}</div>
             <div className="stat-label">{t('seating.stats.seatedGuests')}</div>
+            {isSeparatedSeating && (
+              <div className="stat-sublabel">
+                {t('seating.stats.maleGuests')}: {stats.maleSeatedGuests} | {t('seating.stats.femaleGuests')}: {stats.femaleSeatedGuests}
+              </div>
+            )}
           </div>
           <div className="stat-card">
             <div className="stat-number">{stats.totalTables}</div>
             <div className="stat-label">{t('seating.stats.totalTables')}</div>
+            {isSeparatedSeating && (
+              <div className="stat-sublabel">
+                {t('seating.stats.maleGuests')}: {stats.maleTables} | {t('seating.stats.femaleGuests')}: {stats.femaleTables}
+              </div>
+            )}
           </div>
           <div className="stat-card">
             <div className="stat-number">{stats.occupiedTables}</div>
@@ -1725,49 +2314,66 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
                   </div>
                 </div>
 
-                <SeatingCanvas
-                  ref={canvasRef}
-                  tables={tables}
-                  seatingArrangement={seatingArrangement}
-                  guests={confirmedGuests}
-                  scale={canvasScale}
-                  offset={canvasOffset}
-                  isAddingTable={isAddingTable}
-                  tableType={tableType}
-                  selectedTable={selectedTable}
-                  draggedGuest={draggedGuest}
-                  onCanvasClick={handleCanvasClick}
-                  onTableClick={handleTableClick}
-                  onTableDrop={handleTableDrop}
-                  onTableUpdate={updateTable}
-                  onOffsetChange={handleCanvasOffsetChange}
-                />
+              <SeatingCanvas
+                ref={canvasRef}
+                tables={getCurrentTables()}
+                seatingArrangement={getCurrentArrangement()}
+                maleArrangement={maleArrangement}
+                femaleArrangement={femaleArrangement}
+                guests={getFilteredGuests()}
+                scale={canvasScale}
+                offset={canvasOffset}
+                isAddingTable={isAddingTable}
+                tableType={tableType}
+                selectedTable={selectedTable}
+                draggedGuest={draggedGuest}
+                onCanvasClick={handleCanvasClick}
+                onTableClick={handleTableClick}
+                onTableDrop={handleTableDrop}
+                onTableUpdate={updateTable}
+                onOffsetChange={handleCanvasOffsetChange}
+                isSeparatedSeating={isSeparatedSeating}
+                genderFilter={genderFilter}
+                maleTables={maleTables}
+                femaleTables={femaleTables}
+              />
               </div>
 
               <div className="seating-sidebar">
                 <GuestsList
-                  guests={confirmedGuests}
-                  tables={tables}
-                  seatingArrangement={seatingArrangement}
+                  guests={getFilteredGuests()}
+                  tables={getCurrentTables()}
+                  seatingArrangement={getCurrentArrangement()}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onUnseatGuest={unseatGuest}
                   syncNotification={syncNotification}
+                  isSeparatedSeating={isSeparatedSeating}
+                  genderFilter={genderFilter}
+                  onGenderFilterChange={setGenderFilter}
+                  maleArrangement={maleArrangement}
+                  femaleArrangement={femaleArrangement}
                 />
               </div>
             </>
           ) : (
             <div className="seating-table-view-container">
               <SeatingTableView
-                tables={tables}
-                guests={confirmedGuests}
-                seatingArrangement={seatingArrangement}
+                tables={getCurrentTables()}
+                guests={getFilteredGuests()}
+                seatingArrangement={getCurrentArrangement()}
                 onSeatGuest={seatGuest}
                 onUnseatGuest={unseatGuest}
                 onEditTable={handleTableClick}
                 onAddTable={handleAddTableFromView}
                 onDeleteTable={deleteTable}
                 canEdit={canEdit}
+                isSeparatedSeating={isSeparatedSeating}
+                genderFilter={genderFilter}
+                maleTables={maleTables}
+                femaleTables={femaleTables}
+                maleArrangement={maleArrangement}
+                femaleArrangement={femaleArrangement}
               />
             </div>
           )}
@@ -1776,8 +2382,8 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
         <TableDetailsModal
           isOpen={isTableModalOpen}
           table={editingTable}
-          guests={confirmedGuests}
-          seatingArrangement={seatingArrangement}
+          guests={getFilteredGuests()}
+          seatingArrangement={getCurrentArrangement()}
           onClose={() => {
             setIsTableModalOpen(false);
             setEditingTable(null);
@@ -1787,14 +2393,25 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
           onDeleteTable={deleteTable}
           onSeatGuest={seatGuest}
           onUnseatGuest={unseatGuest}
+          isSeparatedSeating={isSeparatedSeating}
+          genderFilter={genderFilter}
+          maleTables={maleTables}
+          femaleTables={femaleTables}
+          maleArrangement={maleArrangement}
+          femaleArrangement={femaleArrangement}
         />
 
         <AISeatingModal
           isOpen={isAIModalOpen}
           guests={confirmedGuests}
           tables={tables}
+          maleTables={maleTables}
+          femaleTables={femaleTables}
           preferences={preferences}
           seatingArrangement={seatingArrangement}
+          maleArrangement={maleArrangement}
+          femaleArrangement={femaleArrangement}
+          isSeparatedSeating={isSeparatedSeating}
           onClose={() => setIsAIModalOpen(false)}
           onGenerate={generateAISeating}
           onAddTables={handleAddTablesFromAI}
@@ -1809,6 +2426,7 @@ const handleMoveAffectedGuestsToUnassigned = useCallback(async (affectedGuestIds
           pendingTriggers={pendingSyncTriggers}
           onApplyOption={handleApplySyncOption}
           onMoveToUnassigned={handleMoveAffectedGuestsToUnassigned}
+          isSeparatedSeating={isSeparatedSeating}
         />
       </div>
     </FeaturePageTemplate>

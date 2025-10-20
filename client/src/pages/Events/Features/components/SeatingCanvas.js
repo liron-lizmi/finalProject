@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 const SeatingCanvas = forwardRef(({
   tables,
   seatingArrangement,
+  maleArrangement,
+  femaleArrangement,
   guests,
   scale,
   offset,
@@ -15,7 +17,11 @@ const SeatingCanvas = forwardRef(({
   onTableClick,
   onTableDrop,
   onTableUpdate,
-  onOffsetChange
+  onOffsetChange,
+  isSeparatedSeating,
+  genderFilter,
+  maleTables,
+  femaleTables
 }, ref) => {
   const { t } = useTranslation();
   const canvasRef = useRef(null);
@@ -27,6 +33,18 @@ const SeatingCanvas = forwardRef(({
   const [contextMenu, setContextMenu] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [dragOverTable, setDragOverTable] = useState(null);
+
+  const getTableGender = useCallback((table) => {
+    if (!isSeparatedSeating) return null;
+    
+    if (maleTables && maleTables.some(t => t.id === table.id)) {
+      return 'male';
+    }
+    if (femaleTables && femaleTables.some(t => t.id === table.id)) {
+      return 'female';
+    }
+    return null;
+  }, [isSeparatedSeating, maleTables, femaleTables]);
 
   const CANVAS_WIDTH = 2400;  
   const CANVAS_HEIGHT = 1600; 
@@ -99,15 +117,51 @@ const SeatingCanvas = forwardRef(({
 
   const drawTable = useCallback((ctx, table, isSelected = false, isHovered = false) => {
     const { position, size, type, capacity, rotation = 0 } = table;
-    const seatedGuests = seatingArrangement[table.id] || [];
+    
+    const tableGender = getTableGender(table);
+    
+    let tableArrangement = {};
+    
+    if (isSeparatedSeating) {
+      if (tableGender === 'male') {
+        tableArrangement = maleArrangement || {};
+      } else if (tableGender === 'female') {
+        tableArrangement = femaleArrangement || {};
+      } else {
+        tableArrangement = seatingArrangement || {};
+      }
+    } else {
+      tableArrangement = seatingArrangement || {};
+    }
+    
+    const seatedGuests = tableArrangement[table.id] || [];
+    
     const occupancy = seatedGuests.reduce((sum, guestId) => {
-      const guest = guests.find(g => g._id === guestId);
-      return sum + (guest?.attendingCount || 1);
+      const actualGuestId = guestId.replace('_male', '').replace('_female', '');
+      const guest = guests.find(g => g._id === actualGuestId);
+      if (!guest) return sum;
+      
+      if (isSeparatedSeating) {
+        if (tableGender === 'male') {
+          return sum + (guest.maleCount || 0);
+        } else if (tableGender === 'female') {
+          return sum + (guest.femaleCount || 0);
+        }
+      }
+      
+      return sum + (guest.attendingCount || 1);
     }, 0);
 
     const isDraggedOver = draggedGuest && dragOverTable === table.id;
     const guestSize = draggedGuest?.attendingCount || 1;
-    const canAcceptGuest = draggedGuest && (occupancy + guestSize <= capacity);
+    let canAcceptGuest = draggedGuest && (occupancy + guestSize <= capacity);
+
+    if (canAcceptGuest && isSeparatedSeating && draggedGuest && tableGender) {
+      const guestGender = draggedGuest.displayGender || draggedGuest.gender;
+      if (guestGender !== tableGender) {
+        canAcceptGuest = false;
+      }
+    }
 
     ctx.save();
     
@@ -119,6 +173,14 @@ const SeatingCanvas = forwardRef(({
     let fillColor = '#f8f9fa';
     let strokeColor = '#dee2e6';
     let strokeWidth = 2;
+    
+    if (tableGender === 'male') {
+      fillColor = '#e3f2fd';
+      strokeColor = '#90caf9';
+    } else if (tableGender === 'female') {
+      fillColor = '#fce4ec';
+      strokeColor = '#f48fb1';
+    }
     
     if (isDraggedOver) {
       if (canAcceptGuest) {
@@ -139,11 +201,27 @@ const SeatingCanvas = forwardRef(({
         fillColor = '#ffebee';
         strokeColor = '#e57373';
       } else if (occupancy === capacity) {
-        fillColor = '#e8f5e8';
-        strokeColor = '#81c784';
+        if (tableGender === 'male') {
+          fillColor = '#bbdefb';
+          strokeColor = '#64b5f6';
+        } else if (tableGender === 'female') {
+          fillColor = '#f8bbd0';
+          strokeColor = '#ec407a';
+        } else {
+          fillColor = '#e8f5e8';
+          strokeColor = '#81c784';
+        }
       } else if (occupancy > 0) {
-        fillColor = '#fff3e0';
-        strokeColor = '#ffb74d';
+        if (tableGender === 'male') {
+          fillColor = '#e3f2fd';
+          strokeColor = '#90caf9';
+        } else if (tableGender === 'female') {
+          fillColor = '#fce4ec';
+          strokeColor = '#f48fb1';
+        } else {
+          fillColor = '#fff3e0';
+          strokeColor = '#ffb74d';
+        }
       }
 
       if (isSelected) {
@@ -213,8 +291,8 @@ const SeatingCanvas = forwardRef(({
     }
     
     ctx.fillStyle = isDraggedOver ? 
-                   (canAcceptGuest ? '#4caf50' : '#f44336') :
-                   (occupancy > capacity ? '#f44336' : 
+                  (canAcceptGuest ? '#4caf50' : '#f44336') :
+                  (occupancy > capacity ? '#f44336' : 
                     occupancy === capacity ? '#ff9800' : '#666');
     ctx.fillText(occupancyText, 0, 8);
 
@@ -328,7 +406,7 @@ const SeatingCanvas = forwardRef(({
     }
 
     ctx.restore();
-  }, [seatingArrangement, guests, draggedGuest, dragOverTable]);
+  }, [seatingArrangement, maleArrangement, femaleArrangement, guests, draggedGuest, dragOverTable, isSeparatedSeating, genderFilter, maleTables, femaleTables, getTableGender]);
 
   const drawGrid = useCallback((ctx) => {
     const gridSize = 50;
@@ -749,11 +827,32 @@ const SeatingCanvas = forwardRef(({
     setContextMenu(null);
     setDragOverTable(null);
     
-    const table = getTableAtPosition(event.clientX, event.clientY);
-    if (table && draggedGuest) {
-      onTableDrop(table.id);
+    if (!draggedGuest) {
+      return;
     }
-  }, [getTableAtPosition, draggedGuest, onTableDrop]);
+    
+    const table = getTableAtPosition(event.clientX, event.clientY);
+    
+    if (!table) {
+      return;
+    }
+    
+    if (isSeparatedSeating) {
+      const guestGender = draggedGuest.displayGender || draggedGuest.gender;
+      
+      if (!guestGender) {
+        return;
+      }
+
+      const tableGender = getTableGender(table);
+      
+      if (tableGender && tableGender !== guestGender) {
+        return;
+      }
+    }
+    
+    onTableDrop(table.id);
+  }, [getTableAtPosition, draggedGuest, onTableDrop, isSeparatedSeating, getTableGender]);
 
   useEffect(() => {
     if (!draggedGuest) {

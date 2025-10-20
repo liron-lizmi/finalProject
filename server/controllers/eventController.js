@@ -39,7 +39,7 @@ const getUserEvents = async (req, res) => {
 // Create a new event
 const createEvent = async (req, res) => {
   try {
-    const { title, date, time, type, guestCount, notes, venues, vendors } = req.body;
+    const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     const validTime = time && timeRegex.test(time) ? time : '18:00';
     
@@ -51,7 +51,8 @@ const createEvent = async (req, res) => {
       guestCount: guestCount || 0,
       notes,
       venues: venues || [],
-      vendors: vendors || [], 
+      vendors: vendors || [],
+      isSeparatedSeating: Boolean(isSeparatedSeating), // ADDED: Support for separated seating
       user: req.userId
     });
     
@@ -73,7 +74,7 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, date, time, type, guestCount, notes, venues, vendors } = req.body;
+    const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
     
     // Check if user owns the event or has edit permission
     let event = await Event.findOne({ _id: id, user: req.userId });
@@ -129,6 +130,7 @@ const updateEvent = async (req, res) => {
     if (type !== undefined) event.type = type;
     if (guestCount !== undefined) event.guestCount = guestCount;
     if (notes !== undefined) event.notes = notes;
+    if (isSeparatedSeating !== undefined) event.isSeparatedSeating = Boolean(isSeparatedSeating); // ADDED
     
     if (venues !== undefined) {
       if (venues === null) {
