@@ -71,12 +71,17 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  align-items: flex-end;
+  align-items: flex-start;
+  margin-bottom: 10px;
 }
 
 .input-group {
   flex: 1;
   min-width: 200px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
 }
 
 .input-label {
@@ -85,6 +90,17 @@
   font-weight: 600;
   color: #333;
   margin-bottom: 6px;
+}
+
+.email-error {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 5px;
+  text-align: right;
+  font-weight: 500;
+  display: block;
+  min-height: 20px;
+  line-height: 1.4;
 }
 
 .email-input,

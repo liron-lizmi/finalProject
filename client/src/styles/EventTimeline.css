@@ -1448,6 +1448,11 @@
   margin-bottom: 20px;
 }
 
+.form-group-with-error-space {
+   margin-bottom: 50px;
+  position: relative;
+}
+
 .fixed-height-form-group {
   min-height: 110px;
   display: flex;
@@ -1472,10 +1477,18 @@
   position: relative;
   width: 100%;
   min-height: 40px;
-  flex: 1;
-  margin-bottom: 25px;
 }
 
+.task-date-input-container {
+  position: relative;
+  width: 65%;
+  min-height: 40px;
+}
+
+.time-input-container {
+  position: relative;
+  width: 30%;
+}
 
 .form-label {
   display: block;
@@ -1533,13 +1546,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
-}
-
-.task-date-input-container {
-  position: relative;
-  width: 100%;
-  min-height: 40px;
-  flex: 1;
 }
 
 .task-date-display-wrapper {
@@ -1792,14 +1798,19 @@
   font-size: 0.8rem;
   text-align: right;
   font-weight: 500;
-  position: relative;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 .field-error-space {
-  height: 25px;
-  margin-top: 4px;
-  display: flex;
-  align-items: flex-start;
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  width: 100%;
+  min-height: 20px;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .modal-actions {

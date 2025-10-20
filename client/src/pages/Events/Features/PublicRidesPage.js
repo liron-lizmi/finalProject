@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useModal } from '../../../hooks/useModal';
 import '../../../styles/PublicRidesPage.css';
 
 const PublicRidesPage = () => {
@@ -26,6 +27,8 @@ const PublicRidesPage = () => {
   const [contactHistory, setContactHistory] = useState([]);
   const [hasConfirmedRSVP, setHasConfirmedRSVP] = useState(true);
   const [currentStatus, setCurrentStatus] = useState('not_set');
+
+  const { showSuccessModal, Modal } = useModal();
 
   useEffect(() => {
     fetchEventInfo();
@@ -288,7 +291,7 @@ const handleRideInfoSubmit = async (e) => {
         setActiveTab('seeking');
       }
       
-      alert(t('events.features.rides.updateSuccess'));
+      showSuccessModal(t('events.features.rides.updateSuccess'));
       } else {
       const errorData = await response.json();
       setError(errorData.message || t('events.features.rides.errors.updateFailed'));
@@ -359,7 +362,7 @@ const handleRideInfoSubmit = async (e) => {
           await fetchSuggestedRides();
         }
         
-        alert(t('events.features.rides.rideCancelled'));
+        showSuccessModal(t('events.features.rides.rideCancelled'));
       }
     } catch (err) {
       console.error('Error cancelling ride:', err);
@@ -850,7 +853,9 @@ const handleRideInfoSubmit = async (e) => {
           </div>
         )}
       </div>
-    </div>
+
+      {Modal}
+      </div>
   );
 };
 

@@ -303,13 +303,6 @@ html[dir="ltr"] .feature-card::before {
   opacity: 1;
 }
 
-.feature-card:nth-child(odd) {
-  background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-}
-
-.feature-card:nth-child(even) {
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-}
 
 html[dir="rtl"] .feature-card::before {
   right: 0;

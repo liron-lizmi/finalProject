@@ -105,7 +105,6 @@ const Dashboard = () => {
           setLoading(false);
           
           try {
-            await new Promise(resolve => setTimeout(resolve, 500));
             
             const session = await account.getSession('current');
             console.log("Current session details:", {

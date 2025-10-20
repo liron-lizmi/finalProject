@@ -258,8 +258,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         contact.id === contactId 
           ? { 
               ...contact, 
-              group: newGroup,
-              customGroup: newGroup === 'custom' ? customGroupName : undefined
+              group: (newGroup === 'custom' || newGroup === 'other') ? (customGroupName || newGroup) : newGroup,
+              customGroup: (newGroup === 'custom' || newGroup === 'other') ? customGroupName : undefined
             }
           : contact
       )
@@ -270,8 +270,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const handleBulkGroupChange = () => {
     if (!bulkGroupValue) return;
 
-    const finalGroup = bulkGroupValue === 'custom' ? bulkCustomGroupName : bulkGroupValue;
-    const finalCustomGroup = bulkGroupValue === 'custom' ? bulkCustomGroupName : undefined;
+  const finalGroup = (bulkGroupValue === 'custom' || bulkGroupValue === 'other') ? bulkCustomGroupName : bulkGroupValue;
+  const finalCustomGroup = (bulkGroupValue === 'custom' || bulkGroupValue === 'other') ? bulkCustomGroupName : undefined;
 
     setGoogleContacts(prev => 
       prev.map(contact => 
@@ -303,8 +303,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         contact.id === contactId 
           ? { 
               ...contact, 
-              group: newGroup,
-              customGroup: newGroup === 'custom' ? customGroupName : undefined
+              group: (newGroup === 'custom' || newGroup === 'other') ? (customGroupName || newGroup) : newGroup,
+              customGroup: (newGroup === 'custom' || newGroup === 'other') ? customGroupName : undefined
             }
           : contact
       )
@@ -315,8 +315,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const handleVcfBulkGroupChange = () => {
     if (!vcfBulkGroupValue) return;
 
-    const finalGroup = vcfBulkGroupValue === 'custom' ? vcfBulkCustomGroupName : vcfBulkGroupValue;
-    const finalCustomGroup = vcfBulkGroupValue === 'custom' ? vcfBulkCustomGroupName : undefined;
+    const finalGroup = (vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') ? vcfBulkCustomGroupName : vcfBulkGroupValue;
+    const finalCustomGroup = (vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') ? vcfBulkCustomGroupName : undefined;
 
     setVcfContacts(prev => 
       prev.map(contact => 
@@ -964,7 +964,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                         <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                       </select>
                       
-                      {bulkGroupValue === 'custom' && (
+                      {(bulkGroupValue === 'custom' || bulkGroupValue === 'other') && (
                         <input
                           type="text"
                           value={bulkCustomGroupName}
@@ -973,11 +973,11 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                           className="bulk-custom-group-input"
                         />
                       )}
-                      
+
                       <button
                         onClick={handleBulkGroupChange}
                         className="apply-bulk-button"
-                        disabled={!bulkGroupValue || (bulkGroupValue === 'custom' && !bulkCustomGroupName.trim())}
+                        disabled={!bulkGroupValue || ((bulkGroupValue === 'custom' || bulkGroupValue === 'other') && !bulkCustomGroupName.trim())}
                       >
                         {t('import.googleInstructions.applyToAll')}
                       </button>
@@ -1001,8 +1001,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                             <select
                               value={contact.group === contact.customGroup ? 'custom' : contact.group}
                               onChange={(e) => {
-                                if (e.target.value === 'custom') {
-                                  handleContactGroupChange(contact.id, 'custom', contact.customGroup || '');
+                                if (e.target.value === 'custom' || e.target.value === 'other') {
+                                  handleContactGroupChange(contact.id, e.target.value, contact.customGroup || '');
                                 } else {
                                   handleContactGroupChange(contact.id, e.target.value);
                                 }
@@ -1016,7 +1016,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                               <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                             </select>
                             
-                            {(contact.group === contact.customGroup || contact.group === 'custom') && (
+                            {(contact.group === contact.customGroup || contact.group === 'custom' || contact.group === 'other') && (
                               <input
                                 type="text"
                                 value={contact.customGroup || ''}
@@ -1159,7 +1159,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                         <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                       </select>
                       
-                      {vcfBulkGroupValue === 'custom' && (
+                      {(vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') && (
                         <input
                           type="text"
                           value={vcfBulkCustomGroupName}
@@ -1168,11 +1168,11 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                           className="bulk-custom-group-input"
                         />
                       )}
-                      
+
                       <button
                         onClick={handleVcfBulkGroupChange}
                         className="apply-bulk-button"
-                        disabled={!vcfBulkGroupValue || (vcfBulkGroupValue === 'custom' && !vcfBulkCustomGroupName.trim())}
+                        disabled={!vcfBulkGroupValue || ((vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') && !vcfBulkCustomGroupName.trim())}
                       >
                         {t('import.googleInstructions.applyToAll')}
                       </button>
@@ -1196,8 +1196,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                             <select
                               value={contact.group === contact.customGroup ? 'custom' : contact.group}
                               onChange={(e) => {
-                                if (e.target.value === 'custom') {
-                                  handleVcfContactGroupChange(contact.id, 'custom', contact.customGroup || '');
+                                if (e.target.value === 'custom' || e.target.value === 'other') {
+                                  handleVcfContactGroupChange(contact.id, e.target.value, contact.customGroup || '');
                                 } else {
                                   handleVcfContactGroupChange(contact.id, e.target.value);
                                 }
@@ -1211,7 +1211,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                               <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                             </select>
                             
-                            {(contact.group === contact.customGroup || contact.group === 'custom') && (
+                            {(contact.group === contact.customGroup || contact.group === 'custom' || contact.group === 'other') && (
                               <input
                                 type="text"
                                 value={contact.customGroup || ''}

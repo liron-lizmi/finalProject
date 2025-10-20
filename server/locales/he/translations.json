@@ -250,7 +250,14 @@
     },
     "export": {
       "title": "תרשים סידור מקומות", 
-      "seatingChart": "תרשים סידור מקומות"
+      "seatingChart": "תרשים סידור מקומות",
+      "tableName": "שם שולחן",
+      "capacity": "קיבולת",
+      "guestCount": "מספר אורחים",
+      "totalPeople": "סה\"כ אנשים",
+      "guests": "אורחים",
+      "noGuests": "אין אורחים",
+      "statistics": "סטטיסטיקה"
     }
   }
 }

@@ -630,7 +630,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group-with-error-space">
               <label className="form-label">{t('events.features.tasks.form.dueDate')} *</label>
               <div className="task-date-input-container">
                 <div className="task-date-display-wrapper">
@@ -718,7 +718,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group-with-error-space">
               <label className="form-label">{t('events.features.tasks.form.reminderDate')}</label>
               <div className="task-date-input-container">
                 <div className="task-date-display-wrapper">

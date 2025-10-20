@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useModal } from '../../../../../hooks/useModal';
 
 const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => {
   const { t } = useTranslation();
+  const { showConfirmModal, Modal } = useModal();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -113,11 +115,13 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
     setShowAddForm(true);
   };
 
-  const handleDelete = async (expenseId) => {
-    if (!window.confirm(t('events.features.budget.confirmDeleteExpense'))) {
-      return;
-    }
+  const handleDeleteClick = (expenseId) => {
+    showConfirmModal(t('events.features.budget.confirmDeleteExpense'), async () => {
+      await executeDelete(expenseId);
+    });
+  };
 
+  const executeDelete = async (expenseId) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/events/${eventId}/budget/expenses/${expenseId}`, {
@@ -413,7 +417,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
                   </button>
                   
                   <button
-                    onClick={() => handleDelete(expense._id)}
+                    onClick={() => handleDeleteClick(expense._id)}
                     className="delete-button"
                     title={t('events.features.budget.deleteExpense')}
                     disabled={!canEdit}
@@ -426,7 +430,11 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
           ))
         )}
       </div>
+
+      {Modal}
+      
     </div>
+
   );
 };
 

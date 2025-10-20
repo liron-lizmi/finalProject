@@ -250,7 +250,14 @@
     },
     "export": {
       "title": "Seating Chart",
-      "seatingChart": "Seating Chart"
+      "seatingChart": "Seating Chart",
+      "tableName": "Table Name",
+      "capacity": "Capacity",
+      "guestCount": "Number of Guests",
+      "totalPeople": "Total People",
+      "guests": "Guests",
+      "noGuests": "No Guests",
+      "statistics": "Statistics"
     }
   }
 }

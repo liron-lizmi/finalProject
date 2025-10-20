@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useModal } from '../../../hooks/useModal';
 import axios from 'axios';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import '../../../styles/EventRidesPage.css';
@@ -25,6 +26,7 @@ const EventRidesPage = ({ permissionLoading = false }) => {
 
   const [canEdit, setCanEdit] = useState(true);
   const [userPermission, setUserPermission] = useState('edit');
+  const { showSuccessModal, Modal } = useModal();
 
   useEffect(() => {
     fetchEventData();
@@ -88,11 +90,10 @@ const EventRidesPage = ({ permissionLoading = false }) => {
 };
 
   const copyRideLink = () => {
-    // תמיד השתמש ב-ID המקורי של האירוע
     const actualEventId = event.originalEvent || eventId;
     const rideLink = `${window.location.origin}/rides/${actualEventId}`;
     navigator.clipboard.writeText(rideLink).then(() => {
-      alert(t('events.features.rides.linkCopied'));
+      showSuccessModal(t('events.features.rides.linkCopied'));
     });
   };
 
@@ -280,6 +281,8 @@ const EventRidesPage = ({ permissionLoading = false }) => {
           )}
         </div>
       </div>
+
+      {Modal}
     </FeaturePageTemplate>
   );
 };
