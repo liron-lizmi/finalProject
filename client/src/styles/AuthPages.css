@@ -487,12 +487,6 @@ body {
   margin: 20px auto;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .auth-button.secondary {
   background: #f5f5f5;
   color: #555;

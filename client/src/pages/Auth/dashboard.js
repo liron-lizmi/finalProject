@@ -366,7 +366,6 @@ const Dashboard = () => {
       <div className="auth-container">
         <div className="auth-box loading-center">
           <h2>{t('general.loading')}</h2>
-          <div className="loading-spinner"></div>
         </div>
       </div>
     );

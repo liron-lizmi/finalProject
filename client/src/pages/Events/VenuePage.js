@@ -603,10 +603,7 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                       disabled={loadingPage}
                     >
                       {loadingPage ? (
-                        <>
-                          <span className="loading-spinner-inline"></span>
-                          {t('common.loading')}
-                        </>
+                        t('common.loading')
                       ) : (
                         t('common.loadMore')
                       )}
@@ -835,7 +832,6 @@ const VenueCardWithImage = ({ venue, isSelected, onClick, t }) => {
           <>
             {!imageLoaded && !imageError && (
               <div className="image-loading">
-                <div className="loading-spinner-small"></div>
               </div>
             )}
             <img
@@ -857,9 +853,7 @@ const VenueCardWithImage = ({ venue, isSelected, onClick, t }) => {
             
           </>
         ) : (
-          <div className="image-placeholder">
-            <span>טוען...</span>
-          </div>
+          <div className="image-placeholder"></div>
         )}
       </div>
       

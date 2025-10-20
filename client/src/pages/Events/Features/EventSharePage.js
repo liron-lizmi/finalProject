@@ -222,7 +222,6 @@ const EventSharePage = () => {
       <div className="share-content">
         {initialLoading ? (
           <div className="loading-container">
-            <div className="loading-spinner"></div>
             <p>טוען...</p>
           </div>
         ) : (
@@ -290,11 +289,7 @@ const EventSharePage = () => {
                       className="share-submit-btn"
                       disabled={loading || !shareEmail.trim()}
                     >
-                      {loading ? (
-                        <span className="loading-spinner-small"></span>
-                      ) : (
-                        <span className="btn-icon">📤</span>
-                      )}
+                      <span className="btn-icon">📤</span>
                       {loading ? t('common.loading') : t('events.features.share.shareButton')}
                     </button>
                   </div>

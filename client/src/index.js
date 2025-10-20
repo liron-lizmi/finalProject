@@ -5,17 +5,6 @@ import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
 import './i18n'; 
 
-const Loading = () => (
-  <div className="loading-container" style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    height: '100vh' 
-  }}>
-    <div className="loading-spinner"></div>
-  </div>
-);
-
 axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 axios.interceptors.request.use(
@@ -38,7 +27,7 @@ axios.interceptors.request.use(
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={null}>
       <App />
     </Suspense>
   </React.StrictMode>

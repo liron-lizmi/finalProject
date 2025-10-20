@@ -2536,10 +2536,7 @@ const AISeatingModal = ({
                 disabled={isGenerating || !canEdit}
               >
                 {isGenerating ? (
-                  <>
-                    <span className="loading-spinner"></span>
-                    {t('seating.ai.creatingTablesAndArranging')}
-                  </>
+                  t('seating.ai.creatingTablesAndArranging')
                 ) : (
                   isSeparatedSeating ? (
                     (maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0) > 0) ||
@@ -2573,10 +2570,7 @@ const AISeatingModal = ({
                 }
               >
                 {isGenerating ? (
-                  <>
-                    <span className="loading-spinner"></span>
-                    {t('seating.ai.generating')}
-                  </>
+                  t('seating.ai.generating')
                 ) : (
                   <>
                     {existingArrangementAction === 'continue' 

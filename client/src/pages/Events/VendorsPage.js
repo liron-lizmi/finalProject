@@ -936,7 +936,6 @@ const searchVendors = async (shouldAppend = false) => {
            
             {loading ? (
               <div className="loading-indicator">
-                <div className="loading-spinner"></div>
                 <p>{t('vendors.loading')}</p>
               </div>
             ) : displayedVendors.length === 0 ? (

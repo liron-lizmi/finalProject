@@ -2487,7 +2487,6 @@
 }
 
 .loading-spinner {
-  animation: spin 1s linear infinite;
   display: inline-block;
 }
 
@@ -2506,11 +2505,6 @@
   cursor: not-allowed;
   background-color: #f0f0f0 !important;
   color: #999 !important;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 1200px) {
@@ -3230,16 +3224,6 @@
 [dir="rtl"] .add-rule-form,
 [dir="rtl"] .add-mix-rule-form {
   flex-direction: row-reverse;
-}
-
-.loading-spinner {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .seating-rules-section .rule-group:last-child {

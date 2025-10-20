@@ -430,9 +430,6 @@ const handleRideInfoSubmit = async (e) => {
     return (
       <div className="public-rides-page">
         <div className="rides-container">
-          <div className="loading-spinner">
-            {t('events.features.rides.loading')}
-          </div>
         </div>
       </div>
     );

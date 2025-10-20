@@ -51,16 +51,6 @@
   font-weight: 500;
 }
 
-.loading-spinner {
-  text-align: center;
-  padding: 3rem;
-  color: #6c757d;
-  font-size: 1.1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
-
 /* Phone Step Styling */
 .phone-step {
   background: white;

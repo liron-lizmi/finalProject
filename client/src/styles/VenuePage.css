@@ -668,15 +668,6 @@ html[dir="ltr"] .review-rating {
   background-color: #f5f5f5;
 }
 
-.loading-spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 .venue-image {
   position: relative;
   overflow: hidden;
@@ -828,11 +819,6 @@ html[dir="ltr"] .error-close-btn {
 .venue-image img.loaded {
   opacity: 1;
   transition: opacity 0.2s ease;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 @media (min-width: 576px) {
