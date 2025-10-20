@@ -111,6 +111,7 @@
     "eventPassed": "The event has already taken place",
     "planningProgress": "Event Planning Progress",
     "eventNotFound": "Event not found",
+    "isSeparatedSeating": "The event has separate seating (men and women separately)",
     "features": {
       "venues": {
           "title": "Venue Selection",
@@ -149,6 +150,7 @@
             "outdoor": "Outdoor",
             "urban": "Outdoor/Garden",
             "luxury": "Luxury",
+            "outside/garden": "חוץ/גן",
             "capacityLabel": "Capacity",
             "selectCapacity": "Select Capacity",
             "upTo50": "Up to 50 people",
@@ -215,6 +217,8 @@
           "categoryLabel": "Category",
           "allCategories": "All Categories",
           "amenitiesLabel": "Amenities",
+          "vegan": "Vegan",
+          "discount": "Offers Discount",
           "applyButton": "Apply Filters"
         },
         "categories": {
@@ -494,7 +498,7 @@
         },
         "tabs": {
           "overview": "Overview",
-          "expenses": "Expenses", 
+          "expenses": "Expenses",
           "charts": "Charts",
           "offering": "Offers",
           "seeking": "Seekers"
@@ -531,7 +535,7 @@
         "updateBudget": "Update Budget",
         "chartsTitle": "Charts & Visuals",
         "pieChart": "Pie Chart",
-        "barChart": "Bar Chart", 
+        "barChart": "Bar Chart",
         "timelineChart": "Timeline",
         "insights": "Insights",
         "topSpendingCategory": "{{category}} is the category with the highest spending - ₪{{amount}} ({{percentage}}%)",
@@ -552,7 +556,7 @@
           "venue": "Venue/Hall",
           "catering": "Catering",
           "photography": "Photography & Video",
-          "music": "Music & Entertainment", 
+          "music": "Music & Entertainment",
           "decoration": "Decoration & Event Production",
           "makeup": "Makeup",
           "clothing": "Clothing & Beauty",
@@ -562,7 +566,7 @@
         },
         "tabs": {
           "overview": "Overview",
-          "expenses": "Expenses", 
+          "expenses": "Expenses",
           "charts": "Charts",
           "settings": "Settings"
         },
@@ -586,7 +590,7 @@
         "allCategories": "All Categories",
         "sortByDate": "Sort by Date",
         "sortByAmount": "Sort by Amount",
-        "sortByCategory": "Sort by Category", 
+        "sortByCategory": "Sort by Category",
         "sortByDescription": "Sort by Description",
         "editExpense": "Edit Expense",
         "category": "Category",
@@ -755,7 +759,8 @@
       },
       "timeline": {
         "title": "Precise Schedule Management",
-        "description": "Plan your event with a smart schedule for every step. Get notifications about payment deadlines, vendor meetings, and important tasks. Our tool ensures you don't miss any important details on the way to the perfect event, offers rides to event attendees, and allows you to share your schedule with family or a professional event planner.",        "cta": "Manage Schedule"
+        "description": "Plan your event with a smart schedule for every step. Get notifications about payment deadlines, vendor meetings, and important tasks. Our tool ensures you don't miss any important details on the way to the perfect event, offers rides to event attendees, and allows you to share your schedule with family or a professional event planner.",
+        "cta": "Manage Schedule"
       },
       "budget": {
         "title": "Smart Budget Management",
@@ -1051,6 +1056,9 @@
     "deleteDuplicate": "Delete duplicate",
     "confirmDeleteDuplicate": "Are you sure you want to delete this guest? (duplicate)",
     "group": "Group",
+    "maleCount": "women",
+    "femaleCount": "men",
+    "people": "people",
     "stats": {
       "total": "Total Guests",
       "confirmed": "Confirmed",
@@ -1123,7 +1131,15 @@
       "updateFailed": "Error updating RSVP",
       "eventNotFound": "Event not found",
       "editRSVP": "Edit RSVP",
-      "editRSVPFor": "Edit RSVP for {{name}}"
+      "editRSVPFor": "Edit RSVP for {{name}}",
+      "maleCount": "Number of women",
+      "femaleCount": "Number of men",
+      "howManyMales": "How many men are attending?",
+      "howManyFemales": "How many women are attending?",
+      "totalAttending": "Total attending",
+      "separatedSeatingNotice": "This event has separate seating - please specify separately how many men and how many women will attend",
+      "atLeastOneRequired": "At least one person must be specified",
+      "confirmationSuccessSeparated": "Thank you {{name}}! You have confirmed attendance for {{males}} men and {{females}} women"
     },
     "gifts": {
       "editGifts": "Edit Gifts",
@@ -1149,7 +1165,7 @@
     "save": "Save",
     "formats": {
       "pdf": "PDF",
-      "excel": "Excel", 
+      "excel": "Excel",
       "png": "PNG"
     },
     "export": "Export",
@@ -1246,7 +1262,7 @@
       "pleaseFix": "Please correct the phone numbers and upload the file again.",
       "skippedInvalid": "Contacts with invalid phones will not be imported.",
       "invalidPhoneFormat972": "A number with +972 must be 13 digits and start with 5",
-      "invalidPhoneFormat05": "A number starting with 05 must be 10 digits", 
+      "invalidPhoneFormat05": "A number starting with 05 must be 10 digits",
       "invalidPhoneStart": "A phone number must start with +972 or 05",
       "invalidPhone": "Invalid phone",
       "contactInvalidPhone": "The contact \"{{name}}\" contains an invalid phone number ({{phone}})",
@@ -1265,6 +1281,11 @@
       "manual": "Manual",
       "ai": "Artificial Intelligence"
     },
+    "filters": {
+      "allGuests": "All guests",
+      "maleOnly": "Men only",
+      "femaleOnly": "Women only"
+    },
     "view": {
       "visual": "Visual View",
       "table": "Table View"
@@ -1277,6 +1298,17 @@
       "editTable": "Edit Table",
       "deleteTable": "Delete Table",
       "duplicateTable": "Duplicate Table"
+    },
+    "separatedSeating": {
+      "title": "Separated Seating Arrangements",
+      "maleSection": "Men's Section",
+      "femaleSection": "Women's Section",
+      "switchToMale": "Switch to Men's Section",
+      "switchToFemale": "Switch to Women's Section",
+      "maleGuests": "Men",
+      "femaleGuests": "Women",
+      "totalMales": "Total Men",
+      "totalFemales": "Total Women"
     },
     "keyboardShortcuts": {
       "title": "Keyboard Shortcuts",
@@ -1342,7 +1374,13 @@
       "totalGuests": "Total Guests",
       "seatedGuests": "Seated Guests",
       "totalTables": "Total Tables",
-      "occupiedTables": "Occupied Tables"
+      "occupiedTables": "Occupied Tables",
+      "maleSeated": "Seated Men",
+      "femaleSeated": "Seated Women",
+      "maleTables": "Men's Tables",
+      "femaleTables": "Women's Tables",
+      "maleGuests": "Men",
+      "femaleGuests": "Women"
     },
     "tableTypes": {
       "round": "Round",
@@ -1405,7 +1443,11 @@
       "filters": {
         "seatedOnly": "Seated",
         "unseatedOnly": "Unseated"
-      }
+      },
+      "maleSymbol": "♂",
+      "femaleSymbol": "♀",
+      "maleGuests": "Male Guests",
+      "femaleGuests": "Female Guests"
     },
     "preferences": {
       "title": "Seating Preferences",
@@ -1482,7 +1524,6 @@
       "step3Description": "Assigns groups to tables while respecting preferences",
       "step4Title": "Optimization",
       "step4Description": "Optimizes the arrangement for best results",
-      "estimatedTime": "Estimated Time",
       "seconds": "Seconds",
       "generating": "Generating arrangement...",
       "generateSeating": "Generate Seating",
@@ -1505,8 +1546,6 @@
       "startOver": "Start Over",
       "clearDescription": "Clear the existing arrangement and create a new one from scratch for all guests",
       "enoughCapacityExisting": "✅ Enough seats in existing tables",
-      "directContinue": "🚀 Continue directly with existing arrangement",
-      "directContinueNote": "There are enough available seats for all unseated guests",
       "createAdditionalTables": "Create Additional Tables",
       "needAdditionalTablesForUnseated": "Additional tables are needed for unseated guests.",
       "availableSeats": "Available Seats in Existing Tables",
@@ -1531,10 +1570,6 @@
       "notEnoughSeatsForAll": "❌ Not enough seats for all guests",
       "enoughSeats": "✅ Enough Seats",
       "notEnoughSeats": "❌ Not Enough Seats",
-      "prioritizeGroupsTitle": "Group Guests Together",
-      "prioritizeGroupsDescription": "Try to seat families and friends together at the same table",
-      "balanceTableSizesTitle": "Balance Table Sizes",
-      "balanceTableSizesDescription": "Try to fill tables evenly",
       "considerSpecialNeedsTitle": "Consider Special Needs",
       "considerSpecialNeedsDescription": "Take into account preferences and special requirements",
       "mixGroupsTitle": "Mix Groups",
@@ -1576,7 +1611,47 @@
       "policySeparate": "Must Sit Separately",
       "policyMixableDesc": "This group can sit with other groups",
       "policySeparateDesc": "This group will get a separate table, remainders won't mix",
-      "allGroupsInMixingRules": "All groups are already defined in the mixing rules above. Groups that appear in mixing rules behave according to the rules you defined."
+      "allGroupsInMixingRules": "All groups are already defined in the mixing rules above. Groups that appear in mixing rules behave according to the rules you defined.",
+      "maleTables": "Men's Tables",
+      "femaleTables": "Women's Tables",
+      "totalMaleGuests": "Total Male Guests",
+      "totalFemaleGuests": "Total Female Guests",
+      "maleCapacity": "Male Capacity",
+      "femaleCapacity": "Female Capacity",
+      "maleUtilization": "Male Utilization",
+      "femaleUtilization": "Female Utilization",
+      "seatedMaleGuests": "Seated Men",
+      "seatedFemaleGuests": "Seated Women",
+      "unseatedMaleGuests": "Unassigned Men",
+      "unseatedFemaleGuests": "Unassigned Women",
+      "existingMaleTablesNotEnough": "{{tablesCount}} existing men's tables ({{capacity}} seats) are not sufficient",
+      "existingFemaleTablesNotEnough": "{{tablesCount}} existing women's tables ({{capacity}} seats) are not sufficient",
+      "noMaleTablesYet": "No men's tables yet. Let's create them!",
+      "noFemaleTablesYet": "No women's tables yet. Let's create them!",
+      "needAdditionalTablesForUnseatedMale": "Additional tables are needed for unassigned men",
+      "needAdditionalTablesForUnseatedFemale": "Additional tables are needed for unassigned women",
+      "existingMaleTables": "Existing Men's Tables",
+      "existingFemaleTables": "Existing Women's Tables",
+      "plannedNewMaleTables": "Planned New Men's Tables",
+      "plannedNewFemaleTables": "Planned New Women's Tables",
+      "totalMaleCapacity": "Total Male Capacity",
+      "totalFemaleCapacity": "Total Female Capacity",
+      "enoughSeatsForAllMale": "✓ Enough seats for all men",
+      "notEnoughSeatsForAllMale": "⚠ Not enough seats for all men",
+      "enoughSeatsForAllFemale": "✓ Enough seats for all women",
+      "notEnoughSeatsForAllFemale": "⚠ Not enough seats for all women",
+      "enoughCapacityExistingSeparated": "✓ Existing tables have enough capacity",
+      "needMoreTablesSeparated": "⚠ Additional tables are needed",
+      "populatedMaleTables": "Occupied Men's Tables",
+      "populatedFemaleTables": "Occupied Women's Tables",
+      "createTablesAndArrangeSeparated": "Create tables and arrange separate seating",
+      "startArrangingWithExistingTablesSeparated": "Arrange with existing tables (separated)",
+      "existingArrangementDescriptionSeparated": "You have {{maleTablesCount}} men's tables and {{femaleTablesCount}} women's tables with {{seatedMaleGuests}}/{{totalMaleGuests}} men and {{seatedFemaleGuests}}/{{totalFemaleGuests}} women already seated."
+    },
+    "genderFilter": {
+      "all": "All Tables",
+      "male": "Men's Tables",
+      "female": "Women's Tables"
     },
     "exportChart": {
       "title": "Seating Arrangement Chart",
@@ -1657,7 +1732,8 @@
         "seated": "Seated",
         "removed": "Removed",
         "moved": "Moved",
-        "updated": "Updated"
+        "updated": "Updated",
+        "gender": "Gender"
       },
       "pendingChangesDetected": "Pending changes detected in the guest list",
       "newChangesDetected": "New changes detected in the guest list",
@@ -1712,7 +1788,10 @@
       "duplicateGuest": "Guest {{guestId}} is assigned to multiple tables",
       "validationFailed": "Validation failed",
       "noConfirmedGuests": "No confirmed guests",
-      "noTables": "No tables defined"
+      "noTables": "No tables defined",
+      "noMaleTables": "No tables for male guests",
+      "noFemaleTables": "No tables for female guests",
+      "genderMismatch": "Cannot seat a guest at a table of the opposite gender"
     }
   },
   "notifications": {

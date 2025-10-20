@@ -111,6 +111,7 @@
     "eventPassed": "האירוע התקיים",
     "planningProgress": "התקדמות תכנון האירוע",
     "eventNotFound": "האירוע לא נמצא",
+    "isSeparatedSeating": "האירוע בהפרדה (גברים ונשים בנפרד)",
     "features": {
       "venues": {
           "title": "בחירת מקום",
@@ -143,7 +144,7 @@
             "park": "גן אירועים",
             "museum": "מוזיאון",
             "styleLabel": "סגנון",
-            "allStyles": "הכל", 
+            "allStyles": "הכל",
             "modern": "מודרני",
             "classic": "קלאסי",
             "outdoor": "חוץ",
@@ -429,6 +430,10 @@
           "taskOverdue": "המשימה באיחור"
         }
       },
+      "timeline": {
+        "title": "לוח זמנים ומשימות",
+        "description": "תכנן לוחות זמנים ונהל משימות"
+      },
       "rides": {
         "title": "טרמפים",
         "description": "תיאום טרמפים בין משתתפי האירוע",
@@ -530,7 +535,7 @@
         "updateBudget": "עדכן תקציב",
         "chartsTitle": "גרפים וחזותיים",
         "pieChart": "גרף עוגה",
-        "barChart": "גרף עמודות", 
+        "barChart": "גרף עמודות",
         "timelineChart": "ציר זמן",
         "insights": "תובנות",
         "topSpendingCategory": "{{category}} היא הקטגוריה עם ההוצאה הגבוהה ביותר - ₪{{amount}} ({{percentage}}%)",
@@ -551,7 +556,7 @@
           "venue": "מקום/אולם",
           "catering": "קייטרינג",
           "photography": "צילום ווידאו",
-          "music": "מוזיקה ובידור", 
+          "music": "מוזיקה ובידור",
           "decoration": "עיצוב והפקת אירועים",
           "makeup": "איפור",
           "clothing": "בגדים ויופי",
@@ -561,7 +566,7 @@
         },
         "tabs": {
           "overview": "סקירה",
-          "expenses": "הוצאות", 
+          "expenses": "הוצאות",
           "charts": "גרפים",
           "settings": "הגדרות"
         },
@@ -585,7 +590,7 @@
         "allCategories": "כל הקטגוריות",
         "sortByDate": "מיון לפי תאריך",
         "sortByAmount": "מיון לפי סכום",
-        "sortByCategory": "מיון לפי קטגוריה", 
+        "sortByCategory": "מיון לפי קטגוריה",
         "sortByDescription": "מיון לפי תיאור",
         "editExpense": "ערוך הוצאה",
         "category": "קטגוריה",
@@ -1051,6 +1056,9 @@
     "deleteDuplicate": "מחק כפילות",
     "confirmDeleteDuplicate": "האם אתה בטוח שברצונך למחוק מוזמן זה? (כפילות)",
     "group": "קבוצה",
+    "maleCount": "נשים",
+    "femaleCount": "גברים",
+    "people": "אנשים",
     "stats": {
       "total": "סה״כ מוזמנים",
       "confirmed": "אישרו הגעה",
@@ -1123,14 +1131,22 @@
       "updateFailed": "שגיאה בעדכון אישור ההגעה",
       "eventNotFound": "האירוע לא נמצא",
       "editRSVP": "ערוך אישור הגעה",
-      "editRSVPFor": "עריכת אישור הגעה עבור {{name}}"
+      "editRSVPFor": "עריכת אישור הגעה עבור {{name}}",
+      "maleCount": "מספר נשים",
+      "femaleCount": "מספר גברים",
+      "howManyMales": "כמה גברים מגיעים?",
+      "howManyFemales": "כמה נשים מגיעות?",
+      "totalAttending": "סה\"כ מגיעים",
+      "separatedSeatingNotice": "אירוע זה בהפרדה - נא לציין בנפרד כמה גברים וכמה נשים",
+      "atLeastOneRequired": "חובה לציין לפחות אדם אחד",
+      "confirmationSuccessSeparated": "תודה {{name}}! אישרת הגעה של {{males}} גברים ו-{{females}} נשים"
     },
     "gifts": {
-      "editGifts": "עריכת מתנות", 
+      "editGifts": "עריכת מתנות",
       "availableAfterEvent": "ניתן להוסיף מתנות רק לאחר שהאירוע התקיים",
       "giftReceived": "מתנה התקבלה",
       "hasGift": "הביא מתנה",
-      "noGift": "לא הביא מתנה", 
+      "noGift": "לא הביא מתנה",
       "giftDescription": "תיאור המתנה",
       "giftValue": "ערך המתנה",
       "optional": "אופציונלי",
@@ -1149,7 +1165,7 @@
     "save": "שמירה",
     "formats": {
       "pdf": "PDF",
-      "excel": "Excel", 
+      "excel": "Excel",
       "png": "PNG"
     },
     "export": "ייצוא",
@@ -1171,7 +1187,7 @@
     "title": "ייבוא מוזמנים",
     "importGuests": "ייבוא מוזמנים",
     "csv": "CSV/טקסט",
-    "excel": "Excel", 
+    "excel": "Excel",
     "google": "Google Contacts",
     "csvDescription": "העלה קובץ CSV או הדבק נתונים. תומך בפורמטים שונים כולל קבוצות מותאמות.",
     "excelDescription": "העלה קובץ Excel עם העמודות: שם פרטי, שם משפחה, טלפון, קבוצה",
@@ -1222,7 +1238,7 @@
     "imported": "יובאו",
     "failed": "נכשלו",
     "selectContacts": "בחר אנשי קשר",
-    "contactsFound": "אנשי קשר נמצאו", 
+    "contactsFound": "אנשי קשר נמצאו",
     "selectAll": "בחר הכל",
     "deselectAll": "בטל בחירה",
     "confirmSelection": "אשר בחירה",
@@ -1238,7 +1254,7 @@
       "excelNotSupported": "קובץ Excel לא נתמך. אנא שמור כ-CSV והעלה בלשונית CSV",
       "importFailed": "הייבוא נכשל",
       "googleConnectionError": "שגיאה בהתחברות לגוגל אנשי קשר",
-      "googleContactsFailed": "שגיאה בטעינת אנשי קשר מגוגל", 
+      "googleContactsFailed": "שגיאה בטעינת אנשי קשר מגוגל",
       "googleDisconnectFailed": "שגיאה בהתנתקות מגוגל",
       "vcfProcessingError": "שגיאה בעיבוד קובץ אנשי הקשר",
       "noValidContacts": "לא נמצאו אנשי קשר תקינים בקובץ",
@@ -1246,7 +1262,7 @@
       "pleaseFix": "אנא תקן את מספרי הטלפון והעלה את הקובץ שוב",
       "skippedInvalid": "אנשי קשר עם טלפונים לא תקינים לא יובאו",
       "invalidPhoneFormat972": "מספר עם +972 צריך להיות 13 ספרות ולהתחיל ב-5",
-      "invalidPhoneFormat05": "מספר שמתחיל ב-05 צריך להיות 10 ספרות", 
+      "invalidPhoneFormat05": "מספר שמתחיל ב-05 צריך להיות 10 ספרות",
       "invalidPhoneStart": "מספר טלפון חייב להתחיל ב-+972 או ב-05",
       "invalidPhone": "טלפון לא תקין",
       "contactInvalidPhone": "איש הקשר \"{{name}}\" מכיל מספר טלפון לא תקין ({{phone}})",
@@ -1265,6 +1281,11 @@
       "manual": "ידני",
       "ai": "בינה מלאכותית"
     },
+    "filters": {
+      "allGuests": "כל המוזמנים",
+      "maleOnly": "גברים בלבד",
+      "femaleOnly": "נשים בלבד"
+    },
     "view": {
       "visual": "תצוגה ויזואלית",
       "table": "תצוגה טבלאית"
@@ -1277,6 +1298,17 @@
       "editTable": "ערוך שולחן",
       "deleteTable": "מחק שולחן",
       "duplicateTable": "שכפל שולחן"
+    },
+    "separatedSeating": {
+      "title": "סידורי הושבה בהפרדה",
+      "maleSection": "אגף גברים",
+      "femaleSection": "אגף נשים",
+      "switchToMale": "עבור לאגף גברים",
+      "switchToFemale": "עבור לאגף נשים",
+      "maleGuests": "גברים",
+      "femaleGuests": "נשים",
+      "totalMales": "סה\"כ גברים",
+      "totalFemales": "סה\"כ נשים"
     },
     "keyboardShortcuts": {
       "title": "קיצורי מקלדת",
@@ -1342,7 +1374,13 @@
       "totalGuests": "סה״כ מוזמנים",
       "seatedGuests": "מוזמנים ששובצו",
       "totalTables": "סה״כ שולחנות",
-      "occupiedTables": "שולחנות תפוסים"
+      "occupiedTables": "שולחנות תפוסים",
+      "maleSeated": "גברים מושבים",
+      "femaleSeated": "נשים מושבות",
+      "maleTables": "שולחנות גברים",
+      "femaleTables": "שולחנות נשים",
+      "maleGuests": "גברים",
+      "femaleGuests": "נשים"
     },
     "tableTypes": {
       "round": "עגול",
@@ -1405,7 +1443,11 @@
       "filters": {
         "seatedOnly": "שובצו",
         "unseatedOnly": "לא שובצו"
-      }
+      },
+      "maleSymbol": "♂",
+      "femaleSymbol": "♀",
+      "maleGuests": "מוזמנים גברים",
+      "femaleGuests": "מוזמנות נשים"
     },
     "preferences": {
       "title": "העדפות סידור",
@@ -1482,7 +1524,6 @@
       "step3Description": "משבץ קבוצות בשולחנות תוך התחשבות בהעדפות",
       "step4Title": "אופטימיזציה",
       "step4Description": "משפר את הסידור לקבלת התוצאה הטובה ביותר",
-      "estimatedTime": "זמן משוער",
       "seconds": "שניות",
       "generating": "יוצר סידור...",
       "generateSeating": "צור סידור הושבה",
@@ -1505,8 +1546,6 @@
       "startOver": "התחל מחדש",
       "clearDescription": "מחק את הסידור הקיים וצור סידור חדש מאפס לכל האורחים",
       "enoughCapacityExisting": "✅ יש מספיק מקומות בשולחנות הקיימים",
-      "directContinue": "🚀 המשך ישירות עם הסידור הקיים",
-      "directContinueNote": "יש מספיק מקומות פנויים לכל האורחים שלא שובצו",
       "createAdditionalTables": "יצירת שולחנות נוספים",
       "needAdditionalTablesForUnseated": "יש צורך ביצירת שולחנות נוספים לאורחים שעדיין לא שובצו.",
       "availableSeats": "מקומות פנויים בשולחנות קיימים",
@@ -1531,10 +1570,6 @@
       "notEnoughSeatsForAll": "❌ לא מספיק מקומות לכל האורחים",
       "enoughSeats": "✅ מספיק מקומות",
       "notEnoughSeats": "❌ לא מספיק מקומות",
-      "prioritizeGroupsTitle": "קבץ קבוצות יחד",
-      "prioritizeGroupsDescription": "נסה לשבץ משפחות וחברים באותו שולחן",
-      "balanceTableSizesTitle": "איזן גדלי שולחנות",
-      "balanceTableSizesDescription": "נסה למלא שולחנות באופן אחיד",
       "considerSpecialNeedsTitle": "התחשב בצרכים מיוחדים",
       "considerSpecialNeedsDescription": "קח בחשבון העדפות וצרכים מיוחדים",
       "mixGroupsTitle": "ערבב קבוצות",
@@ -1576,7 +1611,47 @@
       "policySeparate": "חייבת לשבת לבד",
       "policyMixableDesc": "קבוצה זו יכולה לשבת עם קבוצות אחרות",
       "policySeparateDesc": "קבוצה זו תקבל שולחן נפרד, יתרה שלה לא תתערבב",
-      "allGroupsInMixingRules": "כל הקבוצות כבר מוגדרות בכללי הערבוב למעלה. קבוצות שמופיעות בכללי ערבוב מתנהגות לפי הכללים שהגדרת."
+      "allGroupsInMixingRules": "כל הקבוצות כבר מוגדרות בכללי הערבוב למעלה. קבוצות שמופיעות בכללי ערבוב מתנהגות לפי הכללים שהגדרת.",
+      "maleTables": "שולחנות גברים",
+      "femaleTables": "שולחנות נשים",
+      "totalMaleGuests": "סה״כ אורחים גברים",
+      "totalFemaleGuests": "סה״כ אורחות נשים",
+      "maleCapacity": "קיבולת גברים",
+      "femaleCapacity": "קיבולת נשים",
+      "maleUtilization": "תפוסה גברים",
+      "femaleUtilization": "תפוסה נשים",
+      "seatedMaleGuests": "גברים מושבים",
+      "seatedFemaleGuests": "נשים מושבות",
+      "unseatedMaleGuests": "גברים ללא שיבוץ",
+      "unseatedFemaleGuests": "נשים ללא שיבוץ",
+      "existingMaleTablesNotEnough": "{{tablesCount}} שולחנות גברים קיימים ({{capacity}} מקומות) אינם מספיקים",
+      "existingFemaleTablesNotEnough": "{{tablesCount}} שולחנות נשים קיימים ({{capacity}} מקומות) אינם מספיקים",
+      "noMaleTablesYet": "אין עדיין שולחנות גברים. בואו ניצור אותם!",
+      "noFemaleTablesYet": "אין עדיין שולחנות נשים. בואו ניצור אותם!",
+      "needAdditionalTablesForUnseatedMale": "נדרשים שולחנות נוספים לגברים ללא שיבוץ",
+      "needAdditionalTablesForUnseatedFemale": "נדרשים שולחנות נוספים לנשים ללא שיבוץ",
+      "existingMaleTables": "שולחנות גברים קיימים",
+      "existingFemaleTables": "שולחנות נשים קיימים",
+      "plannedNewMaleTables": "שולחנות גברים חדשים מתוכננים",
+      "plannedNewFemaleTables": "שולחנות נשים חדשים מתוכננים",
+      "totalMaleCapacity": "קיבולת גברים כוללת",
+      "totalFemaleCapacity": "קיבולת נשים כוללת",
+      "enoughSeatsForAllMale": "✓ מספיק מקומות לכל הגברים",
+      "notEnoughSeatsForAllMale": "⚠ לא מספיק מקומות לכל הגברים",
+      "enoughSeatsForAllFemale": "✓ מספיק מקומות לכל הנשים",
+      "notEnoughSeatsForAllFemale": "⚠ לא מספיק מקומות לכל הנשים",
+      "enoughCapacityExistingSeparated": "✓ לשולחנות הקיימים יש מספיק קיבולת",
+      "needMoreTablesSeparated": "⚠ יש להוסיף שולחנות נוספים",
+      "populatedMaleTables": "שולחנות גברים מאוכלסים",
+      "populatedFemaleTables": "שולחנות נשים מאוכלסות",
+      "createTablesAndArrangeSeparated": "צור שולחנות וסדר הושבה מופרדת",
+      "startArrangingWithExistingTablesSeparated": "סדר עם שולחנות קיימים (הפרדה)",
+      "existingArrangementDescriptionSeparated": "יש לך {{maleTablesCount}} שולחנות גברים ו-{{femaleTablesCount}} שולחנות נשים עם {{seatedMaleGuests}}/{{totalMaleGuests}} גברים ו-{{seatedFemaleGuests}}/{{totalFemaleGuests}} נשים כבר מושבים."
+    },
+    "genderFilter": {
+      "all": "כל השולחנות",
+      "male": "שולחנות גברים",
+      "female": "שולחנות נשים"
     },
     "exportChart": {
       "title": "תרשים סידורי הושבה",
@@ -1657,7 +1732,8 @@
         "seated": "הושב",
         "removed": "הוסר",
         "moved": "הועבר",
-        "updated": "עודכן"
+        "updated": "עודכן",
+        "gender": "מגדר"
       },
       "pendingChangesDetected": "זוהו שינויים ממתינים ברשימת המוזמנים",
       "newChangesDetected": "זוהו שינויים חדשים ברשימת המוזמנים",
@@ -1712,7 +1788,10 @@
       "duplicateGuest": "מוזמן {{guestId}} משובץ במספר שולחנות",
       "validationFailed": "ולידציה נכשלה",
       "noConfirmedGuests": "אין מוזמנים שאישרו הגעה",
-      "noTables": "לא הוגדרו שולחנות"
+      "noTables": "לא הוגדרו שולחנות",
+      "noMaleTables": "אין שולחנות לאורחים גברים",
+      "noFemaleTables": "אין שולחנות לאורחות נשים",
+      "genderMismatch": "לא ניתן להושיב אורח בשולחן של המין השני"
     }
   },
   "notifications": {
