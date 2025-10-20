@@ -21,7 +21,8 @@ const SeatingCanvas = forwardRef(({
   isSeparatedSeating,
   genderFilter,
   maleTables,
-  femaleTables
+  femaleTables,
+  canEdit = true
 }, ref) => {
   const { t } = useTranslation();
   const canvasRef = useRef(null);
@@ -585,7 +586,7 @@ const SeatingCanvas = forwardRef(({
   }, [tables, seatingArrangement, guests, selectedTable, draggedGuest, isAddingTable, tableType, scale, offset, drawGrid, drawTable, hoveredTable, mousePosition, constrainPosition]);
 
   const handleCanvasClick = useCallback((event) => {
-    if (!isAddingTable) return;
+    if (!isAddingTable || !canEdit) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const displayWidth = rect.width;
@@ -611,6 +612,7 @@ const SeatingCanvas = forwardRef(({
 
   const handleMouseDown = useCallback((event) => {
     try {
+      if (!canEdit) return;
       const table = getTableAtPosition(event.clientX, event.clientY);
 
       if (event.button === 2) { 

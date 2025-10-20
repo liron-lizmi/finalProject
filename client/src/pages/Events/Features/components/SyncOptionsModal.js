@@ -8,7 +8,8 @@ const SyncOptionsModal = ({
   affectedGuests = [],
   pendingTriggers = [],
   onApplyOption,
-  onMoveToUnassigned
+  onMoveToUnassigned,
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState(null);
@@ -162,6 +163,7 @@ const SyncOptionsModal = ({
             <button 
               className="move-to-unassigned-button"
               onClick={handleMoveToUnassigned}
+              disabled={!canEdit}
             >
               {t('seating.sync.moveAllToUnassigned')}
             </button>
@@ -175,7 +177,7 @@ const SyncOptionsModal = ({
           <button 
             className="apply-button"
             onClick={handleApplyOption}
-            disabled={!selectedOption}
+            disabled={!canEdit || !selectedOption}
           >
             {t('seating.sync.applySelected')}
           </button>

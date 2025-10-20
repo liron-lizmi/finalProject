@@ -15,7 +15,8 @@ const AISeatingModal = ({
   maleTables = [],
   femaleTables = [],
   maleArrangement = {},
-  femaleArrangement = {}
+  femaleArrangement = {},
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   const [aiPreferences, setAiPreferences] = useState({
@@ -2525,14 +2526,14 @@ const AISeatingModal = ({
 
         <div className="modal-footer">
           <div className="footer-actions">
-            <button className="cancel-button" onClick={onClose} disabled={isGenerating}>
+            <button className="cancel-button" onClick={onClose} disabled={isGenerating || !canEdit}>
               {t('common.cancel')}
             </button>
             {showExistingArrangementWarning ? null : showTableCreation ? (
               <button 
                 className="create-tables-btn" 
                 onClick={handleCreateTables}
-                disabled={isGenerating}
+                disabled={isGenerating || !canEdit}
               >
                 {isGenerating ? (
                   <>
@@ -2563,6 +2564,7 @@ const AISeatingModal = ({
                   await handleGenerate();
                 }}
                 disabled={
+                  !canEdit ||
                   isGenerating || 
                   (isSeparatedSeating 
                     ? (maleTables.length === 0 && femaleTables.length === 0) 

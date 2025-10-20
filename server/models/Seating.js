@@ -602,12 +602,14 @@ SeatingSchema.methods.getStatistics = function(guests) {
         return sum + (guest ? (guest.attendingCount || 1) : 0);
       }, 0) : 0;
 
+      const tableUtilizationRate = (occupancy / table.capacity) * 100;
+
       maleStats.tableUtilization.push({
         tableId: table.id,
         tableName: table.name,
         capacity: table.capacity,
         occupancy,
-        utilizationRate: (occupancy / table.capacity) * 100,
+        utilizationRate: tableUtilizationRate,
         isOvercapacity: occupancy > table.capacity,
         autoCreated: table.autoCreated || false,
         createdForSync: table.createdForSync || false,
@@ -622,12 +624,14 @@ SeatingSchema.methods.getStatistics = function(guests) {
         return sum + (guest ? (guest.attendingCount || 1) : 0);
       }, 0) : 0;
 
+      const tableUtilizationRate = (occupancy / table.capacity) * 100;
+
       femaleStats.tableUtilization.push({
         tableId: table.id,
         tableName: table.name,
         capacity: table.capacity,
         occupancy,
-        utilizationRate,
+        utilizationRate: tableUtilizationRate,
         isOvercapacity: occupancy > table.capacity,
         autoCreated: table.autoCreated || false,
         createdForSync: table.createdForSync || false,
@@ -699,13 +703,13 @@ SeatingSchema.methods.getStatistics = function(guests) {
         return sum + (guest ? (guest.attendingCount || 1) : 0);
       }, 0) : 0;
 
-      const utilizationRate = (occupancy / table.capacity) * 100;
+      const tableUtilizationRate = (occupancy / table.capacity) * 100;
 
       if (occupancy > 0) {
         stats.occupiedTables++;
       }
 
-      if (utilizationRate >= 100) {
+      if (tableUtilizationRate >= 100) {
         stats.fullyOccupiedTables++;
       }
 
@@ -714,7 +718,7 @@ SeatingSchema.methods.getStatistics = function(guests) {
         tableName: table.name,
         capacity: table.capacity,
         occupancy,
-        utilizationRate: (occupancy / table.capacity) * 100,
+        utilizationRate: tableUtilizationRate,
         isOvercapacity: occupancy > table.capacity,
         autoCreated: table.autoCreated || false,
         createdForSync: table.createdForSync || false

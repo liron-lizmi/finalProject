@@ -51,6 +51,8 @@ const EventSeatingPage = () => {
   const [isSyncOptionsModalOpen, setIsSyncOptionsModalOpen] = useState(false);
   
   const [isSeparatedSeating, setIsSeparatedSeating] = useState(false);
+  const [lastServerUpdate, setLastServerUpdate] = useState(null);
+  const [isPolling, setIsPolling] = useState(true);
   const [maleTables, setMaleTables] = useState([]);
   const [femaleTables, setFemaleTables] = useState([]);
   const [maleArrangement, setMaleArrangement] = useState({});
@@ -476,6 +478,10 @@ const EventSeatingPage = () => {
           }
           
         }
+
+        if (data.updatedAt) {
+          setLastServerUpdate(new Date(data.updatedAt).getTime());
+        }
         
         return data;
         
@@ -507,6 +513,7 @@ const EventSeatingPage = () => {
         setError(errorData.message || t('seating.errors.fetchArrangement'));
         return null;
       }
+      
     } catch (err) {
       setError(t('errors.networkError'));
       return null;
@@ -743,6 +750,9 @@ const EventSeatingPage = () => {
     if (isSeparatedSeating) {
       const newTables = [...tables, newTable];
       setTables(newTables);
+      
+      setIsPolling(false);
+      
       autoSave({
         tables: newTables,
         arrangement: seatingArrangement,
@@ -757,9 +767,14 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       });
+      
+      setTimeout(() => setIsPolling(true), 2000);
     } else {
       const newTables = [...tables, newTable];
       setTables(newTables);
+      
+      setIsPolling(false);
+      
       autoSave({
         tables: newTables,
         arrangement: seatingArrangement,
@@ -770,8 +785,10 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       });
+      
+      setTimeout(() => setIsPolling(true), 2000);
     }
-    
+
     setIsAddingTable(false);
     setSelectedTable(newTable);
     setEditingTable(newTable);
@@ -2407,6 +2424,52 @@ const EventSeatingPage = () => {
     }
   })();
 
+  useEffect(() => {
+    if (!isPolling || !canEdit === false) {
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await makeApiRequest(`/api/events/${eventId}/seating`);
+        if (!response || !response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const serverUpdatedAt = new Date(data.updatedAt).getTime();
+        
+        if (!lastServerUpdate) {
+          setLastServerUpdate(serverUpdatedAt);
+          return;
+        }
+
+        if (serverUpdatedAt > lastServerUpdate) {
+          setLastServerUpdate(serverUpdatedAt);
+          
+          if (data.isSeparatedSeating) {
+            setMaleTables(data.maleTables || []);
+            setFemaleTables(data.femaleTables || []);
+            setMaleArrangement(data.maleArrangement || {});
+            setFemaleArrangement(data.femaleArrangement || {});
+          } else {
+            setTables(data.tables || []);
+            setSeatingArrangement(data.arrangement || {});
+          }
+          
+          if (data.layoutSettings) {
+            setCanvasScale(data.layoutSettings.canvasScale || 1);
+            setCanvasOffset(data.layoutSettings.canvasOffset || { x: 0, y: 0 });
+          }
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [eventId, makeApiRequest, lastServerUpdate, isPolling, canEdit, isSeparatedSeating]);
+
   if (loading) {
     return (
       <FeaturePageTemplate
@@ -2458,6 +2521,7 @@ const EventSeatingPage = () => {
             <button
               className={`mode-button ${mode === 'ai' ? 'active' : ''}`}
               onClick={() => setMode('ai')}
+              disabled={!canEdit}
             >
               {t('seating.mode.ai')}
             </button>
@@ -2503,7 +2567,8 @@ const EventSeatingPage = () => {
             <button
               className="sync-toggle-button"
               onClick={toggleAutoSync}
-              title={t(`seating.sync.${autoSyncEnabled ? 'disable' : 'enable'}`)}
+              disabled={!canEdit}
+              title={!canEdit ? t('general.viewOnlyMode') : t(`seating.sync.${autoSyncEnabled ? 'disable' : 'enable'}`)}
             >
               {t(`seating.sync.${autoSyncEnabled ? 'disable' : 'enable'}`)}
             </button>
@@ -2627,17 +2692,26 @@ const EventSeatingPage = () => {
                   </div>
 
                   <div className="canvas-controls">
-                    <button onClick={() => handleCanvasScaleChange(prev => Math.min(prev + 0.1, 2))}>
+                    <button 
+                      onClick={() => handleCanvasScaleChange(prev => Math.min(prev + 0.1, 2))}
+                      disabled={!canEdit}
+                    >
                       🔍+
                     </button>
                     <span>{Math.round(canvasScale * 100)}%</span>
-                    <button onClick={() => handleCanvasScaleChange(prev => Math.max(prev - 0.1, 0.5))}>
+                    <button 
+                      onClick={() => handleCanvasScaleChange(prev => Math.max(prev - 0.1, 0.5))}
+                      disabled={!canEdit}
+                    >
                       🔍-
                     </button>
-                    <button onClick={() => { 
-                      handleCanvasScaleChange(1); 
-                      handleCanvasOffsetChange({ x: 0, y: 0 }); 
-                    }}>
+                    <button 
+                      onClick={() => { 
+                        handleCanvasScaleChange(1); 
+                        handleCanvasOffsetChange({ x: 0, y: 0 }); 
+                      }}
+                      disabled={!canEdit}
+                    >
                       🎯 {t('seating.resetView')}
                     </button>
                   </div>
@@ -2665,6 +2739,7 @@ const EventSeatingPage = () => {
                 genderFilter={genderFilter}
                 maleTables={maleTables}
                 femaleTables={femaleTables}
+                canEdit={canEdit}
               />
               </div>
 
@@ -2682,6 +2757,7 @@ const EventSeatingPage = () => {
                   onGenderFilterChange={setGenderFilter}
                   maleArrangement={maleArrangement}
                   femaleArrangement={femaleArrangement}
+                  canEdit={canEdit}
                 />
               </div>
             </>

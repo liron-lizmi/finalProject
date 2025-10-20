@@ -6,7 +6,8 @@ const SeatingPreferencesModal = ({
   preferences,
   guests,
   onClose,
-  onSave
+  onSave,
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   const [localPreferences, setLocalPreferences] = useState({
@@ -205,7 +206,7 @@ const SeatingPreferencesModal = ({
                 <button
                   className="add-rule-button"
                   onClick={handleAddGroupRule}
-                  disabled={!newGroupRule.name.trim() || newGroupRule.guestIds.length < 2}
+                  disabled={!canEdit || !newGroupRule.name.trim() || newGroupRule.guestIds.length < 2}
                 >
                   ➕ {t('seating.preferences.addRule')}
                 </button>
@@ -301,7 +302,7 @@ const SeatingPreferencesModal = ({
                 <button
                   className="add-rule-button"
                   onClick={handleAddSeparateRule}
-                  disabled={!newSeparateRule.guest1Id || !newSeparateRule.guest2Id}
+                  disabled={!canEdit || !newSeparateRule.guest1Id || !newSeparateRule.guest2Id}
                 >
                   ➕ {t('seating.preferences.addRule')}
                 </button>
@@ -394,7 +395,7 @@ const SeatingPreferencesModal = ({
                 <button
                   className="add-rule-button"
                   onClick={handleAddSpecialRequest}
-                  disabled={!newSpecialRequest.guestId || !newSpecialRequest.request.trim()}
+                  disabled={!canEdit || !newSpecialRequest.guestId || !newSpecialRequest.request.trim()}
                 >
                   ➕ {t('seating.preferences.addRequest')}
                 </button>
@@ -436,10 +437,19 @@ const SeatingPreferencesModal = ({
         </div>
 
         <div className="modal-footer">
-          <button className="cancel-button" onClick={onClose}>
+          <button
+           className="cancel-button"
+           onClick={onClose}
+           disabled={!canEdit}
+          >
             {t('common.cancel')}
           </button>
-          <button className="save-button" onClick={handleSave}>
+
+          <button
+            className="save-button"
+            onClick={handleSave}
+            disabled={!canEdit}
+          >
             {t('common.save')}
           </button>
         </div>

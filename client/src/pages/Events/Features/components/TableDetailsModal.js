@@ -16,7 +16,8 @@ const TableDetailsModal = ({
   maleTables,
   femaleTables,
    maleArrangement,
-  femaleArrangement
+  femaleArrangement,
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   
@@ -244,6 +245,7 @@ const TableDetailsModal = ({
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="form-input"
                 placeholder={t('seating.table.name')}
+                disabled={!canEdit}
               />
             </div>
 
@@ -254,6 +256,7 @@ const TableDetailsModal = ({
                   value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
                   className="form-select"
+                  disabled={!canEdit}
                 >
                   <option value="round">{t('seating.tableTypes.round')}</option>
                   <option value="rectangular">{t('seating.tableTypes.rectangular')}</option>
@@ -270,6 +273,7 @@ const TableDetailsModal = ({
                   value={formData.capacity}
                   onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
                   className="form-input"
+                  disabled={!canEdit}
                 />
               </div>
             </div>
@@ -282,6 +286,7 @@ const TableDetailsModal = ({
                 className="form-textarea"
                 rows="3"
                 placeholder={t('seating.table.notesPlaceholder')}
+                disabled={!canEdit}
               />
             </div>
           </div>
@@ -309,7 +314,7 @@ const TableDetailsModal = ({
           <div className="seated-guests-section">
             <div className="section-header-with-action">
               <h4>{t('seating.table.seatedGuests')} ({seatedGuests.length})</h4>
-              {availableGuests.length > 0 && (
+              {availableGuests.length > 0 && canEdit && (
                 <button
                   className="add-guests-button"
                   onClick={() => setShowAddGuests(!showAddGuests)}
@@ -444,6 +449,7 @@ const TableDetailsModal = ({
                         className="remove-guest-button"
                         onClick={() => handleRemoveGuest(guest._id)}
                         title={t('seating.table.removeGuest')}
+                        disabled={!canEdit}
                       >
                         ❌
                       </button>
@@ -491,6 +497,7 @@ const TableDetailsModal = ({
             <button
               className="delete-button"
               onClick={handleDelete}
+              disabled={!canEdit}
             >
               🗑️ {t('seating.table.deleteTable')}
             </button>
@@ -505,6 +512,7 @@ const TableDetailsModal = ({
             <button
               className="save-button"
               onClick={handleSave}
+              disabled={!canEdit}
             >
               {t('common.save')}
             </button>

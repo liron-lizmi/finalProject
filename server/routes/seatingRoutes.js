@@ -45,11 +45,11 @@ router.get('/suggestions', checkViewPermission, getSeatingSubjestions);
 router.post('/clone', checkEditPermission, cloneSeatingArrangement); 
 
 // Sync functionality - new routes
-router.post('/sync/process', processSeatingSync);
-router.post('/sync/propose-options', proposeSyncOptions);
-router.post('/sync/apply-option', applySyncOption);
-router.post('/sync/move-to-unassigned', moveAffectedGuestsToUnassigned);
-router.put('/sync/settings', updateSyncSettings);
-router.get('/sync/status', getSyncStatus);
+router.post('/sync/process', checkEditPermission, processSeatingSync);
+router.post('/sync/propose-options', checkViewPermission, proposeSyncOptions);
+router.post('/sync/apply-option', checkEditPermission, applySyncOption);
+router.post('/sync/move-to-unassigned', checkEditPermission, moveAffectedGuestsToUnassigned);
+router.put('/sync/settings', checkEditPermission, updateSyncSettings);
+router.get('/sync/status', checkViewPermission, getSyncStatus);
 
 module.exports = router;
