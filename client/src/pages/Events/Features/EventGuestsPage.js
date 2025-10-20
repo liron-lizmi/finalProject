@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useModal } from '../../../hooks/useModal';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import ImportModal from '../../components/ImportModal';
 import GiftsModal from './components/GiftsModal';
@@ -42,6 +43,7 @@ const EventGuestsPage = () => {
   });
 
   const [canEdit, setCanEdit] = useState(true);
+  const { showSuccessModal, showErrorModal, showConfirmModal, Modal } = useModal();
 
   const formatPhoneNumber = (value) => {
     const cleanedValue = value.replace(/\D/g, '');
@@ -115,7 +117,7 @@ const EventGuestsPage = () => {
   const copyRSVPLink = async () => {
     try {
       await navigator.clipboard.writeText(rsvpLink);
-      alert(t('guests.rsvp.linkCopied'));
+      showSuccessModal(t('guests.rsvp.linkCopied'));
     } catch (err) {
       setError(t('errors.clipboardError'));}
   };
@@ -153,8 +155,12 @@ const EventGuestsPage = () => {
   }, [guests]);
 
   const handleDeleteDuplicate = async (guestId, duplicateType, duplicateValue) => {
-    if (!window.confirm(t('guests.confirmDeleteDuplicate'))) return;
+    showConfirmModal(t('guests.confirmDeleteDuplicate'), async () => {
+      await executeDeleteDuplicate(guestId, duplicateType, duplicateValue);
+    });
+  };
 
+  const executeDeleteDuplicate = async (guestId, duplicateType, duplicateValue) => {
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
         method: 'DELETE'
@@ -228,9 +234,13 @@ const EventGuestsPage = () => {
   const handleBulkDelete = async () => {
     if (selectedGuests.size === 0) return;
 
-    const confirmMessage = t('guests.confirmBulkDelete', { count: selectedGuests.size });
-    if (!window.confirm(confirmMessage)) return;
+  const confirmMessage = t('guests.confirmBulkDelete', { count: selectedGuests.size });
+    showConfirmModal(confirmMessage, async () => {
+      await executeBulkDelete();
+    });
+  };
 
+  const executeBulkDelete = async () => {
     try {
       setLoading(true);
       const guestIds = Array.from(selectedGuests);
@@ -716,7 +726,12 @@ const EventGuestsPage = () => {
       return;
     }
     
-    if (!window.confirm(t('guests.confirmDelete'))) return;
+    showConfirmModal(t('guests.confirmDelete'), async () => {
+      await executeDeleteGuest(guestId);
+    });
+  };
+
+    const executeDeleteGuest = async (guestId) => {
 
     try {
       const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
@@ -1264,6 +1279,9 @@ const EventGuestsPage = () => {
           onUpdateGift={handleGiftUpdate}
         />
       </div>
+
+      {Modal}
+      
     </FeaturePageTemplate>
   );
 };

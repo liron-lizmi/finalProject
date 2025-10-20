@@ -19,7 +19,10 @@
     "showingResults": "Showing {{start}}-{{end}} of {{total}} results",
     "loadingPage": "Loading page {{page}}...",
     "dismiss": "Dismiss",
-    "viewOnlyMode": "View only mode - you do not have editing permissions"
+    "viewOnlyMode": "View only mode - you do not have editing permissions",
+    "success": "Success",
+    "error": "Error",
+    "confirm": "Confirm"
   },
   "auth": {
     "email": "Email",
@@ -501,7 +504,8 @@
           "expenses": "Expenses",
           "charts": "Charts",
           "offering": "Offers",
-          "seeking": "Seekers"
+          "seeking": "Seekers",
+          "myInfo": "My Info"
         },
         "updateSuccess": "Information updated successfully",
         "contactRecorded": "Action recorded successfully",
@@ -552,6 +556,7 @@
         "alertOverBudget": "Alert: {category} has exceeded the budget by {percentage}%",
         "alertNearLimit": "Alert: {category} has reached {percentage}% of the budget (Alert threshold: {threshold}%)",
         "efficiency": "Budget Efficiency",
+        "confirmDelete":"confirmDelete",
         "categories": {
           "venue": "Venue/Hall",
           "catering": "Catering",
@@ -635,6 +640,7 @@
         "shareButton": "Share",
         "sharedWith": "Shared With",
         "removeAccess": "Remove Access",
+        "removeAccessTitle": "Removing access to the event",
         "updatePermission": "Update Permissions",
         "shareSuccess": "The event was shared successfully",
         "acceptSuccess": "The event was accepted successfully",

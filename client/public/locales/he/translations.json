@@ -19,7 +19,10 @@
     "showingResults": "מציג {{start}}-{{end}} מתוך {{total}} תוצאות",
     "loadingPage": "טוען את הדף {{page}}...",
     "dismiss": "סגור",
-    "viewOnlyMode": "מצב תצוגה בלבד - אין לך הרשאות עריכה"
+    "viewOnlyMode": "מצב תצוגה בלבד - אין לך הרשאות עריכה",
+    "success": "הצלחה",
+    "error": "שגיאה",
+    "confirm": "אישור"
   },
   "auth": {
     "email": "אימייל",
@@ -501,7 +504,8 @@
           "expenses": "הוצאות",
           "charts": "תרשימים",
           "offering": "מציעים",
-          "seeking": "מחפשים"
+          "seeking": "מחפשים",
+          "myInfo": "המידע שלי"
         },
         "updateSuccess": "המידע עודכן בהצלחה",
         "contactRecorded": "הפעולה נרשמה בהצלחה",
@@ -552,6 +556,7 @@
         "alertOverBudget": "התראה: {category} חרגה מהתקציב ב-{percentage}%",
         "alertNearLimit": "התראה: {category} הגיעה ל-{percentage}% מהתקציב (סף התראה: {threshold}%)",
         "efficiency": "יעילות תקציב",
+        "confirmDelete":"אישור מחיקה",
         "categories": {
           "venue": "מקום/אולם",
           "catering": "קייטרינג",
@@ -635,6 +640,7 @@
         "shareButton": "שתף",
         "sharedWith": "משותף עם",
         "removeAccess": "הסר גישה",
+        "removeAccessTitle": "הסרת גישה לאירוע",
         "updatePermission": "עדכן הרשאות",
         "shareSuccess": "האירוע שותף בהצלחה",
         "acceptSuccess": "האירוע התקבל בהצלחה",
