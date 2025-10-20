@@ -286,12 +286,8 @@ const EventVenuePage = () => {
     setShowManualForm(true);
   };
 
-  if (loading) {
-    return (
-      <div className="feature-page-container">
-        <div className="loading-spinner"></div>
-      </div>
-    );
+  if (loading || !event) {
+    return null;
   }
 
   if (error) {

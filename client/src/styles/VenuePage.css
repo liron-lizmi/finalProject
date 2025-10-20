@@ -224,29 +224,6 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
   color: #666;
 }
 
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #000;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-.loading-spinner.small {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-  margin: 0 8px 0 0;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-html[dir="rtl"] .loading-spinner.small {
-  margin: 0 0 0 8px;
-}
-
 .venues-grid {
   display: grid;
   grid-template-columns: 1fr;

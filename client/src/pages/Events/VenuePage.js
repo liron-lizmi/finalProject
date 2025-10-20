@@ -574,7 +574,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
            
             {loading ? (
               <div className="loading-indicator">
-                <div className="loading-spinner"></div>
                 <p>{t('events.features.venues.loading')}</p>
               </div>
             ) : venues.length === 0 ? (
