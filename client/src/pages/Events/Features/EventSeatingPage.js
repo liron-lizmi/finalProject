@@ -569,7 +569,7 @@ const EventSeatingPage = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           saveSeatingArrangement(data);
-        }, 3000);
+        }, 1500);
       };
     })(),
     [saveSeatingArrangement]
@@ -1752,20 +1752,356 @@ const EventSeatingPage = () => {
       if (!response) return;
 
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `seating-chart.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const data = await response.json();
+      
+        switch (format) {
+          case 'pdf':
+            handlePrintExport(data);
+            break;
+          case 'excel':
+            handleCSVExport(data);
+            break;
+          case 'png':
+            handlePNGExport();
+            break;
+          default:
+            setError(t('seating.errors.invalidFormat'));
+        }
       }
     } catch (err) {
       setError(t('seating.errors.exportFailed'));
     }
-  }, [eventId, makeApiRequest, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, confirmedGuests, t, isSeparatedSeating]);
+  }, [eventId, makeApiRequest, t, isSeparatedSeating, maleTables, femaleTables, maleArrangement, femaleArrangement, confirmedGuests, tables, seatingArrangement]);
+
+  const handlePrintExport = useCallback((data) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      setError(t('seating.errors.popupBlocked'));
+      return;
+    }
+
+    const isSeparated = data.isSeparatedSeating;
+    
+    let tableRows = '';
+    let actualOccupiedTables = 0;
+    let actualTotalTables = 0;
+    let actualSeatedPeople = 0;
+    
+    if (isSeparated) {
+      const maleTableRows = (data.maleTables || []).map(table => {
+        const guestsList = table.guests.map(guest =>
+          `${guest.name} (${guest.attendingCount})`
+        ).join(', ');
+      
+        const totalPeople = table.guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+        
+        if (table.guests.length > 0) actualOccupiedTables++;
+        actualSeatedPeople += totalPeople;
+      
+        return `
+          <tr>
+            <td>${table.name}</td>
+            <td>${t('seating.genderFilter.male')}</td>
+            <td>${table.capacity}</td>
+            <td>${totalPeople}</td>
+            <td>${guestsList || t('seating.export.noGuests')}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      const femaleTableRows = (data.femaleTables || []).map(table => {
+        const guestsList = table.guests.map(guest =>
+          `${guest.name} (${guest.attendingCount})`
+        ).join(', ');
+      
+        const totalPeople = table.guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+        
+        if (table.guests.length > 0) actualOccupiedTables++;
+        actualSeatedPeople += totalPeople;
+      
+        return `
+          <tr>
+            <td>${table.name}</td>
+            <td>${t('seating.genderFilter.female')}</td>
+            <td>${table.capacity}</td>
+            <td>${totalPeople}</td>
+            <td>${guestsList || t('seating.export.noGuests')}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      tableRows = maleTableRows + femaleTableRows;
+      actualTotalTables = (data.maleTables || []).length + (data.femaleTables || []).length;
+      
+    } else {
+      tableRows = data.tables.map(table => {
+        const guestsList = table.guests.map(guest =>
+          `${guest.name} (${guest.attendingCount})`
+        ).join(', ');
+      
+        const totalPeople = table.guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+      
+        return `
+          <tr>
+            <td>${table.name}</td>
+            <td>${table.capacity}</td>
+            <td>${totalPeople}</td>
+            <td>${guestsList || t('seating.export.noGuests')}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      actualOccupiedTables = data.tables.filter(table => 
+        table.guests && table.guests.length > 0
+      ).length;
+      
+      actualTotalTables = data.tables.length;
+      
+      actualSeatedPeople = data.tables.reduce((sum, table) => 
+        sum + table.guests.reduce((guestSum, g) => guestSum + (g.attendingCount || 1), 0), 0
+      );
+    }
+
+    const eventDate = data.event.date ? new Date(data.event.date).toLocaleDateString('he-IL') : '';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="he">
+      <head>
+        <meta charset="UTF-8">
+        <title>${t('seating.export.title')} - ${data.event.name || ''}</title>
+        <style>
+          @media print {
+            body { margin: 0; padding: 20px; }
+            .no-print { display: none !important; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .header h1 {
+            margin: 10px 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+          }
+          th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+          }
+          .print-button {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+          }
+          .print-button:hover {
+            background: #0056b3;
+          }
+          .statistics {
+            margin-top: 30px;
+          }
+          .statistics h3 {
+            margin-bottom: 15px;
+          }
+          .statistics p {
+            margin: 8px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <button onclick="window.print()" class="print-button no-print">
+          ${t('seating.export.print')}
+        </button>
+        <div class="header">
+          <h1>${t('seating.export.title')}</h1>
+          ${data.event.name ? `<h2>${data.event.name}</h2>` : ''}
+          ${eventDate ? `<p>${eventDate}</p>` : ''}
+          ${isSeparated ? `<p><strong>${t('seating.separatedSeating.label')}</strong></p>` : ''}
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>${t('seating.export.tableName')}</th>
+              ${isSeparated ? `<th>${t('seating.gender')}</th>` : ''}
+              <th>${t('seating.export.capacity')}</th>
+              <th>${t('seating.export.totalPeople')}</th>
+              <th>${t('seating.export.guests')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+        <div class="statistics">
+          <h3>${t('seating.export.statistics')}</h3>
+          <p>${t('seating.stats.totalTables')}: ${actualTotalTables}</p>
+          <p>${t('seating.stats.occupiedTables')}: ${actualOccupiedTables}</p>
+          <p>${t('seating.stats.totalGuests')}: ${data.statistics.totalPeople || 0}</p>
+          <p>${t('seating.stats.seatedGuests')}: ${actualSeatedPeople}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  }, [t]);
+
+  const handleCSVExport = useCallback((data) => {
+    const BOM = '\uFEFF';
+
+    const isSeparated = data.isSeparatedSeating;
+    let allTables = [];
+    
+    if (isSeparated) {
+      allTables = [...(data.maleTables || []), ...(data.femaleTables || [])];
+    } else {
+      allTables = data.tables || [];
+    }
+    
+    if (allTables.length === 0) {
+      setError(t('seating.errors.noTables'));
+      return;
+    }
+
+    const headers = allTables.map(table => {
+      if (isSeparated) {
+        const gender = (data.maleTables || []).some(t => t.name === table.name) 
+          ? t('seating.genderFilter.male') 
+          : t('seating.genderFilter.female');
+        return `${table.name} (${gender})`;
+      }
+      return table.name;
+    });
+
+    const maxGuestsInTable = Math.max(...allTables.map(table => table.guests.length), 0);
+
+    const rows = [];
+    for (let i = 0; i < maxGuestsInTable; i++) {
+      const row = allTables.map(table => {
+        if (table.guests[i]) {
+          const guest = table.guests[i];
+          return `${guest.name} (${guest.attendingCount})`;
+        }
+        return '';
+      });
+      rows.push(row);
+    }
+
+    const summaryRow = allTables.map(table => {
+      const totalPeople = table.guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+      return `="${totalPeople}/${table.capacity}"`;
+    });
+
+    const csvContent = BOM + [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+      summaryRow.join(',')
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `seating-chart-${data.event.name || 'event'}-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, [t]);
+
+  const handlePNGExport = useCallback(() => {
+    const canvasContainer = document.querySelector('.seating-canvas-container');
+    if (!canvasContainer) {
+      setError(t('seating.errors.canvasNotFound'));
+      return;
+    }
+
+    const canvas = canvasContainer.querySelector('canvas');
+    if (!canvas) {
+      const svgElement = canvasContainer.querySelector('svg');
+      if (svgElement) {
+        exportSVGAsPNG(svgElement);
+        return;
+      }
+      setError(t('seating.errors.canvasNotFound'));
+      return;
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setError(t('seating.errors.exportFailed'));
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `seating-chart-${new Date().toISOString().split('T')[0]}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    }, 'image/png');
+  }, [t]);
+
+  const exportSVGAsPNG = useCallback((svgElement) => {
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = svgElement.getBoundingClientRect().width * 2;
+      canvas.height = svgElement.getBoundingClientRect().height * 2;
+    
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setError(t('seating.errors.exportFailed'));
+          return;
+        }
+
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `seating-chart-${new Date().toISOString().split('T')[0]}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      }, 'image/png');
+    
+      URL.revokeObjectURL(url);
+    };
+  
+    img.onerror = () => {
+      setError(t('seating.errors.exportFailed'));
+      URL.revokeObjectURL(url);
+    };
+  
+    img.src = url;
+  }, [t]);
 
   const handleCanvasOffsetChange = useCallback((newOffset) => {
     setCanvasOffset(newOffset);
@@ -2211,13 +2547,6 @@ const EventSeatingPage = () => {
               title={t('seating.clearAllTooltip')}
             >
               🗑️ {t('seating.clearAll')}
-            </button>
-
-            <button
-              className="seating-action-button"
-              onClick={() => saveSeatingArrangement()}
-            >
-              💾 {t('seating.save')}
             </button>
 
             <div className="export-dropdown">

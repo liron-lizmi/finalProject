@@ -1,9 +1,6 @@
 const Seating = require('../models/Seating');
 const Event = require('../models/Event');
 const Guest = require('../models/Guest');
-const PDFDocument = require('pdfkit');
-const ExcelJS = require('exceljs');
-const { createCanvas } = require('canvas');
 
 const getSeatingArrangement = async (req, res) => {
   try {
@@ -5268,63 +5265,148 @@ const exportSeatingChart = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { format } = req.query;
-    const { tables, arrangement, guests } = req.body;
    
     const event = await Event.findOne({ _id: eventId, user: req.userId });
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
-
-    switch (format) {
-      case 'pdf':
-        await exportToPDF(res, event, tables, arrangement, guests, req);
-        break;
-      case 'excel':
-        await exportToExcel(res, event, tables, arrangement, guests, req);
-        break;
-      case 'png':
-        await exportToPNG(res, event, tables, arrangement, guests, req);
-        break;
-      default:
-        return res.status(400).json({ message: req.t('seating.errors.invalidFormat') });
+    
+    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    if (!seating) {
+      return res.status(404).json({ message: req.t('seating.notFound') });
     }
+
+    const guests = await Guest.find({
+      event: eventId,
+      user: req.userId,
+      rsvpStatus: 'confirmed'
+    });
+
+    const isSeparated = seating.isSeparatedSeating || false;
+    
+    if (isSeparated) {
+      const maleGuests = guests.filter(g => g.maleCount && g.maleCount > 0);
+      const femaleGuests = guests.filter(g => g.femaleCount && g.femaleCount > 0);
+      
+      const maleTablesWithGuests = (seating.maleTables || []).map(table => ({
+        id: table.id,
+        name: table.name,
+        capacity: table.capacity,
+        type: table.type,
+        gender: 'male',
+        guests: (seating.maleArrangement[table.id] || []).map(guestId => {
+          const guest = guests.find(g => g._id.toString() === guestId);
+          return guest ? {
+            id: guest._id,
+            name: `${guest.firstName} ${guest.lastName}`,
+            attendingCount: guest.maleCount || 0,
+            group: guest.customGroup || guest.group
+          } : null;
+        }).filter(Boolean)
+      }));
+      
+      const femaleTablesWithGuests = (seating.femaleTables || []).map(table => ({
+        id: table.id,
+        name: table.name,
+        capacity: table.capacity,
+        type: table.type,
+        gender: 'female',
+        guests: (seating.femaleArrangement[table.id] || []).map(guestId => {
+          const guest = guests.find(g => g._id.toString() === guestId);
+          return guest ? {
+            id: guest._id,
+            name: `${guest.firstName} ${guest.lastName}`,
+            attendingCount: guest.femaleCount || 0,
+            group: guest.customGroup || guest.group
+          } : null;
+        }).filter(Boolean)
+      }));
+      
+      const allTablesForExport = [...maleTablesWithGuests, ...femaleTablesWithGuests];
+      
+      const totalMalePeople = maleGuests.reduce((sum, g) => sum + (g.maleCount || 0), 0);
+      const totalFemalePeople = femaleGuests.reduce((sum, g) => sum + (g.femaleCount || 0), 0);
+      
+      const seatedMalePeople = Object.values(seating.maleArrangement).flat().reduce((sum, guestId) => {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest ? (guest.maleCount || 0) : 0);
+      }, 0);
+      
+      const seatedFemalePeople = Object.values(seating.femaleArrangement).flat().reduce((sum, guestId) => {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest ? (guest.femaleCount || 0) : 0);
+      }, 0);
+      
+      const exportData = {
+        event: {
+          name: event.eventName || event.name || '',
+          date: event.eventDate || event.date || new Date()
+        },
+        isSeparatedSeating: true,
+        maleTables: maleTablesWithGuests,
+        femaleTables: femaleTablesWithGuests,
+        tables: allTablesForExport,
+        statistics: {
+          totalTables: maleTablesWithGuests.length + femaleTablesWithGuests.length,
+          maleTables: maleTablesWithGuests.length,
+          femaleTables: femaleTablesWithGuests.length,
+          occupiedTables: maleTablesWithGuests.filter(t => t.guests.length > 0).length + 
+                         femaleTablesWithGuests.filter(t => t.guests.length > 0).length,
+          totalPeople: totalMalePeople + totalFemalePeople,
+          totalMalePeople,
+          totalFemalePeople,
+          seatedPeople: seatedMalePeople + seatedFemalePeople,
+          seatedMalePeople,
+          seatedFemalePeople
+        },
+        format
+      };
+
+      res.json(exportData);
+      
+    } else {
+      const statistics = seating.getStatistics(guests);
+
+      const exportData = {
+        event: {
+          name: event.eventName || event.name || '',
+          date: event.eventDate || event.date || new Date()
+        },
+        isSeparatedSeating: false,
+        tables: seating.tables.map(table => ({
+          id: table.id,
+          name: table.name,
+          capacity: table.capacity,
+          type: table.type,
+          guests: (seating.arrangement[table.id] || []).map(guestId => {
+            const guest = guests.find(g => g._id.toString() === guestId);
+            return guest ? {
+              id: guest._id,
+              name: `${guest.firstName} ${guest.lastName}`,
+              attendingCount: guest.attendingCount || 1,
+              group: guest.customGroup || guest.group
+            } : null;
+          }).filter(Boolean)
+        })),
+        statistics: {
+          totalTables: statistics.totalTables || 0,
+          occupiedTables: statistics.occupiedTables || 0,
+          fullyOccupiedTables: statistics.fullyOccupiedTables || 0,
+          seatedGuests: statistics.seatedGuests || 0,
+          seatedPeople: statistics.seatedPeople || 0,
+          totalPeople: statistics.totalPeople || 0
+        },
+        format
+      };
+
+      res.json(exportData);
+    }
+    
   } catch (err) {
+    console.error('Export error:', err);
     res.status(500).json({ message: req.t('seating.errors.exportFailed') });
   }
 };
-
-async function exportToPDF(res, event, tables, arrangement, guests, req) {
-  const doc = new PDFDocument({ size: 'A4', margin: 50 });
- 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="seating-chart-${event.eventName}.pdf"`);
- 
-  doc.pipe(res);
-  doc.fontSize(20).text(req.t('seating.export.title'), { align: 'center' });
-  doc.end();
-}
-
-async function exportToExcel(res, event, tables, arrangement, guests, req) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet(req.t('seating.export.seatingChart'));
- 
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="seating-chart-${event.eventName}.xlsx"`);
- 
-  await workbook.xlsx.write(res);
-  res.end();
-}
-
-async function exportToPNG(res, event, tables, arrangement, guests, req) {
-  const canvas = createCanvas(1200, 800);
-  const ctx = canvas.getContext('2d');
- 
-  const buffer = canvas.toBuffer('image/png');
- 
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Content-Disposition', `attachment; filename="seating-chart-${event.eventName}.png"`);
-  res.send(buffer);
-}
 
 const getSeatingStatistics = async (req, res) => {
   try {

@@ -627,7 +627,7 @@ SeatingSchema.methods.getStatistics = function(guests) {
         tableName: table.name,
         capacity: table.capacity,
         occupancy,
-        utilizationRate: (occupancy / table.capacity) * 100,
+        utilizationRate,
         isOvercapacity: occupancy > table.capacity,
         autoCreated: table.autoCreated || false,
         createdForSync: table.createdForSync || false,
@@ -698,6 +698,16 @@ SeatingSchema.methods.getStatistics = function(guests) {
         const guest = guests.find(g => g._id.toString() === guestId);
         return sum + (guest ? (guest.attendingCount || 1) : 0);
       }, 0) : 0;
+
+      const utilizationRate = (occupancy / table.capacity) * 100;
+
+      if (occupancy > 0) {
+        stats.occupiedTables++;
+      }
+
+      if (utilizationRate >= 100) {
+        stats.fullyOccupiedTables++;
+      }
 
       stats.tableUtilization.push({
         tableId: table.id,

@@ -3851,3 +3851,25 @@
     font-size: 13px;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+ 
+  .seating-print-content,
+  .seating-print-content * {
+    visibility: visible;
+  }
+ 
+  .seating-print-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+ 
+  .no-print {
+    display: none !important;
+  }
+}

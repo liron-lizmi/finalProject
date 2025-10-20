@@ -1272,11 +1272,22 @@
   "seating": {
     "title": "Seating Arrangements",
     "description": "Plan your event seating arrangements easily and conveniently",
-    "save": "Save",
     "clearAll": "Clear All",
     "clearAllTooltip": "Clear all tables and arrangements",
     "confirmClearAll": "Are you sure you want to clear all arrangements and tables? This action cannot be undone.",
     "generateAI": "Generate AI Seating",
+    "export": {
+      "title": "Seating Arrangements",
+      "print": "Print",
+      "tableName": "Table Name",
+      "capacity": "Capacity",
+      "guestCount": "Number of guests at the table",
+      "totalPeople": "Total People",
+      "guests": "Guests",
+      "noGuests": "No Guests",
+      "statistics": "Statistics"
+    },
+    "gender": "Gender",
     "mode": {
       "manual": "Manual",
       "ai": "Artificial Intelligence"
@@ -1301,6 +1312,7 @@
     },
     "separatedSeating": {
       "title": "Separated Seating Arrangements",
+      "label": "Separated Seating",
       "maleSection": "Men's Section",
       "femaleSection": "Women's Section",
       "switchToMale": "Switch to Men's Section",
@@ -1789,6 +1801,8 @@
       "validationFailed": "Validation failed",
       "noConfirmedGuests": "No confirmed guests",
       "noTables": "No tables defined",
+      "popupBlocked": "The print window was blocked. Please allow pop-ups.",
+      "canvasNotFound": "No canvas found for export.",
       "noMaleTables": "No tables for male guests",
       "noFemaleTables": "No tables for female guests",
       "genderMismatch": "Cannot seat a guest at a table of the opposite gender"

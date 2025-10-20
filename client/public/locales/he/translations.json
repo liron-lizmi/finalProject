@@ -1272,11 +1272,22 @@
   "seating": {
     "title": "סידורי הושבה",
     "description": "תכנן את סידורי הישיבה באירוע שלך בצורה פשוטה ונוחה",
-    "save": "שמור",
     "clearAll": "מחק הכל",
     "clearAllTooltip": "מחק את כל השולחנות והסידור",
     "confirmClearAll": "האם אתה בטוח שברצונך למחוק את כל הסידור והשולחנות? פעולה זו לא ניתנת לביטול.",
     "generateAI": "יצירת סידור AI",
+     "export": {
+      "title": "סידורי הושבה",
+      "print": "הדפס",
+      "tableName": "שם שולחן",
+      "capacity": "קיבולת",
+      "guestCount": "מספר אורחים בשולחן",
+      "totalPeople": "סה\"כ אנשים",
+      "guests": "אורחים",
+      "noGuests": "אין אורחים",
+      "statistics": "סטטיסטיקה"
+    },
+    "gender": "מגדר",
     "mode": {
       "manual": "ידני",
       "ai": "בינה מלאכותית"
@@ -1301,6 +1312,7 @@
     },
     "separatedSeating": {
       "title": "סידורי הושבה בהפרדה",
+      "label": "הושבה בהפרדה",
       "maleSection": "אגף גברים",
       "femaleSection": "אגף נשים",
       "switchToMale": "עבור לאגף גברים",
@@ -1788,7 +1800,9 @@
       "duplicateGuest": "מוזמן {{guestId}} משובץ במספר שולחנות",
       "validationFailed": "ולידציה נכשלה",
       "noConfirmedGuests": "אין מוזמנים שאישרו הגעה",
-      "noTables": "לא הוגדרו שולחנות",
+      "noTables": "לא הוגדרו שולחנות",   
+      "popupBlocked": "חלון ההדפסה נחסם. אנא אפשר חלונות קופצים.",
+      "canvasNotFound": "לא נמצא קנבס לייצוא",
       "noMaleTables": "אין שולחנות לאורחים גברים",
       "noFemaleTables": "אין שולחנות לאורחות נשים",
       "genderMismatch": "לא ניתן להושיב אורח בשולחן של המין השני"
