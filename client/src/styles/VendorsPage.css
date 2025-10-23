@@ -600,13 +600,15 @@
   }
  
   .success-message {
-    background-color: #dff2bf;
-    color: #4f8a10;
-    padding: 10px 15px;
-    margin-bottom: 20px;
-    border-radius: 4px;
+    background-color: #f0f4f0;
+    color: #4a7c59;
+    padding: 15px 30px;
+    border-radius: 10px;
     text-align: center;
-    font-weight: bold;
+    margin-bottom: 40px;
+    font-size: 1rem;
+    font-weight: 500;
+    border: 1px solid #c3d9cc;
   }
  
   .manual-vendor-form {
@@ -975,6 +977,136 @@
   }
  
  
+  /* ====== VENDORS BUTTON STYLING - MATCHING VENUE STYLE ====== */
+
+/* Main action buttons - "חפש ספקים" and "הוסף ספק ידנית" */
+.select-vendor-button,
+.add-manual-vendor-button {
+  padding: 16px 36px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 350px !important;
+}
+
+.select-vendor-button:hover,
+.add-manual-vendor-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
+  background-color: transparent !important;
+  color: #a68b76 !important;
+}
+
+/* Save vendor button in manual form */
+.save-vendor-button {
+  padding: 14px 32px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+}
+
+.save-vendor-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
+  background-color: transparent !important;
+  color: #a68b76 !important;
+}
+
+/* Cancel button in manual form - new class name */
+.manual-form-cancel-button {
+  padding: 16px 36px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+}
+
+.manual-form-cancel-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
+  background-color: transparent !important;
+  color: #a68b76 !important;
+}
+
+/* Change and Delete vendor buttons */
+.change-vendor-button,
+.delete-vendor-button {
+  padding: 14px 24px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 350px !important;
+}
+
+.change-vendor-button:hover,
+.delete-vendor-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
+  background-color: transparent !important;
+  color: #a68b76 !important;
+}
+
+.vendors-header p {
+  display: none !important;
+}
+
+
+/* Add another vendor button */
+.add-vendor-button {
+  padding: 14px 24px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+}
+
+.add-vendor-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
+  background-color: transparent !important;
+  color: #a68b76 !important;
+}
+
+.feature-page-container .event-name,
+.feature-page-header p,
+.feature-header p {
+  display: none !important;
+}
+
   @media (max-width: 768px) {
     .vendor-details-content {
       padding: 15px;
@@ -1152,42 +1284,186 @@
   [dir="rtl"] .pagination-next {
     font-size: 18px;
   }
- 
-  @media (max-width: 768px) {
-    .vendors-list-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
-   
-    .results-info {
-      font-size: 0.8rem;
-    }
-   
-    .pagination {
-      gap: 4px;
-    }
-   
-    .pagination-btn {
-      min-width: 35px;
-      height: 35px;
-      padding: 6px 8px;
-      font-size: 13px;
-    }
-   
-    .pagination-prev,
-    .pagination-next {
-      font-size: 16px;
-    }
+
+  /* Select vendor button in vendor details popup - black and square */
+  .vendor-details .select-vendor-button {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 12px 24px !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s !important;
   }
- 
-  .vendor-price {
-    display: none !important;
+
+  .vendor-details .select-vendor-button:hover {
+    background-color: #333 !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
- 
-  .price-details {
-    display: none !important;
+
+  
+    @media (max-width: 768px) {
+      .vendors-list-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    
+      .results-info {
+        font-size: 0.8rem;
+      }
+    
+      .pagination {
+        gap: 4px;
+      }
+    
+      .pagination-btn {
+        min-width: 35px;
+        height: 35px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+    
+      .pagination-prev,
+      .pagination-next {
+        font-size: 16px;
+      }
+    }
+  
+    .vendor-price {
+      display: none !important;
+    }
+  
+    .price-details {
+      display: none !important;
+    }
+
+    .feature-page-container {
+    background-color: transparent !important;
   }
+
+  .feature-main-content {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh !important;
+  }
+
+  .feature-page-container {
+    background-color: transparent !important;
+    min-height: 100vh !important;
+  }
+
+  .manual-vendor-form .form-group label {
+    display: block;
+    font-size: 1rem;
+    color: #697d5f;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.8px;
+  }
+
+  .vendor-details-card {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), rgba(252, 250, 247, 0.8)) !important;
+    border-radius: 20px !important;
+    padding: 40px 30px !important;
+    margin: 20px 0 !important;
+    box-shadow: 0 8px 30px rgba(107, 84, 68, 0.12) !important;
+    border: 2px solid transparent !important;
+    background-clip: padding-box !important;
+    position: relative !important;
+    transition: all 0.3s ease !important;
+  }
+
+  vendor-details-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  padding: 2px;
+  background: linear-gradient(135deg, #8b9d83, #d4b99e, #6b5444);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+}
+
+.vendor-details-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 40px rgba(107, 84, 68, 0.18) !important;
+}
+
+.vendor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px !important;
+  padding-bottom: 20px !important;
+  border-bottom: 2px solid rgba(139, 157, 131, 0.2) !important;
+}
+
+.vendor-icon-name {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.vendor-icon {
+  font-size: 40px !important;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+}
+
+.vendor-card-header h4 {
+  font-size: 1.6rem !important;
+  font-weight: 400 !important;
+  color: #333 !important;
+  letter-spacing: 0.5px !important;
+  margin: 0 !important;
+}
+
+.vendor-category {
+  background-color: rgba(139, 157, 131, 0.15) !important;
+  color: #697d5f !important;
+  padding: 8px 18px !important;
+  border-radius: 20px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.vendor-details-card p {
+  margin: 15px 0 !important;
+  font-size: 1.1rem !important;
+  color: #555 !important;
+  line-height: 1.6 !important;
+}
+
+.vendor-details-card strong {
+  color: #697d5f !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.selected-vendors h3 {
+  font-size: 1.8rem !important;
+  font-weight: 300 !important;
+  color: #333 !important;
+  text-align: center !important;
+  margin-bottom: 40px !important;
+  letter-spacing: 1px !important;
+}
+  
 
 @media (max-width: 768px) {
   .form-actions {
@@ -1198,13 +1474,13 @@
   }
 
   .save-vendor-button,
-  .cancel-button {
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    width: 100%;
-    max-width: 200px;
-    margin: 0 auto;
-  }
+    .manual-form-cancel-button {
+      padding: 10px 15px;
+      font-size: 0.9rem;
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto;
+    }
 
   .manual-vendor-form .form-actions {
     max-width: 600px;
@@ -1224,6 +1500,41 @@
     font-size: 0.9rem;
     max-width: 200px;
     margin: 0 auto;
+  }
+
+  .vendor-details-card {
+    text-align: center;
+  }
+
+  .vendor-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .vendor-icon-name {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .vendor-card-header h4 {
+    text-align: center;
+    margin: 0;
+  }
+
+  .vendor-category {
+    text-align: center;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .vendor-details-card p {
+    text-align: center;
   }
 }
 
@@ -1260,42 +1571,5 @@
   .vendor-actions {
     gap: 8px;
     margin-top: 12px;
-  }
-}
-
-@media (max-width: 768px) {
-  .vendor-details-card {
-    text-align: center;
-  }
-
-  .vendor-card-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 8px;
-    margin-bottom: 15px;
-  }
-
-  .vendor-icon-name {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-
-  .vendor-card-header h4 {
-    text-align: center;
-    margin: 0;
-  }
-
-  .vendor-category {
-    text-align: center;
-    margin: 0 auto;
-    display: block;
-  }
-
-  .vendor-details-card p {
-    text-align: center;
   }
 }

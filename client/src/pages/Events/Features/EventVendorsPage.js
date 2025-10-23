@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import FeaturePageTemplate from './FeaturePageTemplate';
 import VendorsPage from '../VendorsPage';
+import '../../../styles/VendorsPage.css';
 
 const EventVendorsPage = () => {
   const navigate = useNavigate();
@@ -472,7 +473,7 @@ const EventVendorsPage = () => {
               </button>
               <button
                 type="button"
-                className="cancel-button"
+                className="manual-form-cancel-button"
                 onClick={() => {
                   setShowManualForm(false);
                   setPhoneError('');
