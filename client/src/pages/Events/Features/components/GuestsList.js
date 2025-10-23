@@ -98,7 +98,6 @@ const GuestsList = ({
       Object.values(maleArrangement).forEach(guestIds => {
         if (Array.isArray(guestIds)) {
           guestIds.forEach(id => {
-            ids.add(id);
             ids.add(`${id}_male`);
           });
         }
@@ -107,7 +106,6 @@ const GuestsList = ({
       Object.values(femaleArrangement).forEach(guestIds => {
         if (Array.isArray(guestIds)) {
           guestIds.forEach(id => {
-            ids.add(id);
             ids.add(`${id}_female`);
           });
         }
@@ -133,7 +131,6 @@ const GuestsList = ({
         if (Array.isArray(guestIds)) {
           guestIds.forEach(guestId => {
             guestTableMap[`${guestId}_male`] = tableId;
-            guestTableMap[guestId] = tableId;
           });
         }
       });
@@ -142,9 +139,6 @@ const GuestsList = ({
         if (Array.isArray(guestIds)) {
           guestIds.forEach(guestId => {
             guestTableMap[`${guestId}_female`] = tableId;
-            if (!guestTableMap[guestId]) {
-              guestTableMap[guestId] = tableId;
-            }
           });
         }
       });
@@ -354,10 +348,10 @@ const GuestsList = ({
   };
 
   const handleUnseatGuest = useCallback((guestId) => {
-    const actualGuestId = guestId.replace('_male', '').replace('_female', '');
-    onUnseatGuest(actualGuestId);
-    
+    onUnseatGuest(guestId);
+
     if (onSyncStatusChange) {
+      const actualGuestId = guestId.replace('_male', '').replace('_female', '');
       onSyncStatusChange('manual_action', { guestId: actualGuestId, action: 'unseated' });
     }
   }, [onUnseatGuest, onSyncStatusChange]);

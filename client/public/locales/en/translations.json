@@ -1436,9 +1436,11 @@
       "searchGuestPlaceholder": "Search guest...",
       "noGuestsFound": "No matching guests found",
       "noAvailableGuests": "All guests are already assigned to tables",
-      "moreGuests": "and {count} more guests...",
       "cancelAddGuests": "Cancel",
-      "addGuests": "Add Guests"
+      "addGuests": "Add Guests",
+      "minCapacity": "Minimum table capacity",
+      "capacityTooSmall": "The requested capacity ({{requested}}) is too small. There are {{current}} guests already assigned.",
+      "cannotReduceCapacity": "Cannot reduce capacity — there are guests already assigned."
     },
     "guestsList": {
       "title": "Guest List",

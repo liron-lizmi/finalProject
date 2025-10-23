@@ -1436,9 +1436,11 @@
       "searchGuestPlaceholder": "חפש מוזמן...",
       "noGuestsFound": "לא נמצאו מוזמנים התואמים לחיפוש",
       "noAvailableGuests": "כל המוזמנים כבר משובצים לשולחנות",
-      "moreGuests": "ועוד {count} מוזמנים...",
       "cancelAddGuests": "ביטול",
-      "addGuests": "הוסף מוזמנים"
+      "addGuests": "הוסף מוזמנים",
+      "minCapacity": "קיבולת מינימלית לשולחן",
+      "capacityTooSmall": "הקיבולת המבוקשת ({{requested}}) קטנה מדי. יש {{current}} מוזמנים משובצים.",
+      "cannotReduceCapacity": "לא ניתן להקטין - יש מוזמנים משובצים"
     },
     "guestsList": {
       "title": "רשימת מוזמנים",

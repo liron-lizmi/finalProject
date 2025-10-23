@@ -26,9 +26,10 @@ const SeatingTableView = ({
   const [showEmptyTables, setShowEmptyTables] = useState(true);
   const [selectedTableForGuest, setSelectedTableForGuest] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
+  const [newTableCapacity, setNewTableCapacity] = useState(12);
 
   const getCurrentTablesAndArrangement = useMemo(() => {
-    
+
     if (!isSeparatedSeating) {
       return {
         currentTables: tables,
@@ -47,10 +48,14 @@ const SeatingTableView = ({
         currentArrangement: femaleArrangement
       };
     } else {
-      const combined = [...maleTables, ...femaleTables];
+      const allTables = [...tables, ...maleTables, ...femaleTables];
+      const uniqueTables = allTables.filter((table, index, self) => 
+        index === self.findIndex(t => t.id === table.id)
+      );
+            
       return {
-        currentTables: combined,
-        currentArrangement: { ...maleArrangement, ...femaleArrangement }
+        currentTables: uniqueTables,
+        currentArrangement: { ...seatingArrangement, ...maleArrangement, ...femaleArrangement }
       };
     }
   }, [isSeparatedSeating, genderFilter, tables, seatingArrangement, maleTables, femaleTables, maleArrangement, femaleArrangement]);
@@ -60,8 +65,9 @@ const SeatingTableView = ({
     
     if (maleTables.some(t => t.id === tableId)) return 'male';
     if (femaleTables.some(t => t.id === tableId)) return 'female';
+    if (tables.some(t => t.id === tableId)) return null;
     return null;
-  }, [isSeparatedSeating, maleTables, femaleTables]);
+  }, [isSeparatedSeating, maleTables, femaleTables, tables]);
 
   const tablesWithDetails = useMemo(() => {
     const { currentTables, currentArrangement } = getCurrentTablesAndArrangement;
@@ -180,8 +186,7 @@ const SeatingTableView = ({
   }, [guests, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating, genderFilter]);
 
   const filteredTables = useMemo(() => {
-    
-    let filtered = [...tablesWithDetails]; 
+    let filtered = [...tablesWithDetails];
 
     if (searchTerm.trim()) {
       const searchLower = searchTerm.trim().toLowerCase();
@@ -200,7 +205,6 @@ const SeatingTableView = ({
     }
 
     if (!showEmptyTables) {
-      const beforeFilter = filtered.length;
       filtered = filtered.filter(table => table.occupancy > 0);
     }
 
@@ -285,7 +289,7 @@ const SeatingTableView = ({
   };
 
   const calculateTableSize = (type, capacity) => {
-    const baseSize = Math.max(80, Math.min(200, 60 + (capacity * 8)));
+    const baseSize = Math.max(80, Math.min(250, 60 + (capacity * 6)));
     
     switch (type) {
       case 'round':
@@ -293,8 +297,8 @@ const SeatingTableView = ({
       case 'square':
         return { width: baseSize, height: baseSize };
       case 'rectangular':
-        const width = Math.max(120, baseSize * 1.4);
-        const height = Math.max(60, baseSize * 0.7);
+        const width = Math.max(140, baseSize * 1.5);
+        const height = Math.max(70, baseSize * 0.8);
         return { width, height };
       default:
         return { width: baseSize, height: baseSize };
@@ -302,19 +306,38 @@ const SeatingTableView = ({
   };
 
   const handleAddTable = () => {
-    const capacity = 8;
+    if (!canEdit) {
+      return;
+    }
+
+    const capacity = Math.max(8, newTableCapacity);
     const size = calculateTableSize('round', capacity);
 
+    const canvasWidth = 1200;
+    const canvasHeight = 800;
+    const padding = 150;
+    
     const nextTableNum = getCurrentTablesAndArrangement.currentTables.length + 1;
+    
+    const tablesPerRow = 3;
+    const row = Math.floor((nextTableNum - 1) / tablesPerRow);
+    const col = (nextTableNum - 1) % tablesPerRow;
+    
+    const xSpacing = (canvasWidth - (2 * padding)) / Math.max(tablesPerRow - 1, 1);
+    const ySpacing = 200;
+    
+    const x = padding + (col * xSpacing);
+    const y = padding + (row * ySpacing);
 
     const newTable = {
       id: `table_${Date.now()}`,
       name: `${t('seating.tableName')} ${nextTableNum}`,
       type: 'round',
       capacity,
-      position: { x: 100, y: 100 },
+      position: { x, y },
       rotation: 0,
-      size
+      size,
+      gender: isSeparatedSeating && genderFilter !== 'all' ? genderFilter : null
     };
     
     onAddTable(newTable);
@@ -348,13 +371,27 @@ const SeatingTableView = ({
         </div>
 
         <div className="table-actions">
-          <button 
-            className="add-table-btn" 
-            onClick={handleAddTable}
-            disabled={!canEdit}
-          >
-            ➕ {t('seating.tableView.addTable')}
-          </button>
+          <div className="add-table-group">
+            <select
+              value={newTableCapacity}
+              onChange={(e) => setNewTableCapacity(parseInt(e.target.value))}
+              className="capacity-select"
+              disabled={!canEdit}
+            >
+              {[8, 10, 12, 14, 16, 18, 20, 22, 24].map(capacity => (
+                <option key={capacity} value={capacity}>
+                  {capacity} {t('seating.table.seats')}
+                </option>
+              ))}
+            </select>
+            <button 
+              className="add-table-btn" 
+              onClick={handleAddTable}
+              disabled={!canEdit}
+            >
+              ➕ {t('seating.tableView.addTable')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -392,7 +429,7 @@ const SeatingTableView = ({
           </div>
         </div>
 
-        <div className="tables-rows-container">
+        <div className="tables-rows-container" style={{ maxHeight: 'none', overflow: 'visible', height: 'auto'  }}>
           {filteredTables.length > 0 ? (
             filteredTables.map(table => (
               <div key={table.id} className={`table-row ${table.status}`}>
@@ -495,15 +532,6 @@ const SeatingTableView = ({
             ))
           ) : (
             <div className="no-tables-message">
-              <p style={{ color: 'red', fontWeight: 'bold' }}>
-                DEBUG: filteredTables.length = {filteredTables.length}
-              </p>
-              <p style={{ color: 'red' }}>
-                tablesWithDetails.length = {tablesWithDetails.length}
-              </p>
-              <p style={{ color: 'red' }}>
-                currentTables.length = {getCurrentTablesAndArrangement.currentTables.length}
-              </p>
               {searchTerm || !showEmptyTables ? 
                 t('seating.tableView.noTablesMatch') : 
                 t('seating.tableView.noTables')
@@ -521,40 +549,6 @@ const SeatingTableView = ({
         </div>
       </div>
 
-      {/* שאר הקוד נשאר זהה... */}
-      
-      <div className="table-view-summary">
-        <div className="summary-stats">
-          <div className="stat-item">
-            <span className="stat-label">{t('seating.tableView.totalTables')}</span>
-            <span className="stat-value">{getCurrentTablesAndArrangement.currentTables.length}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('seating.tableView.occupiedTables')}</span>
-            <span className="stat-value">
-              {Object.keys(getCurrentTablesAndArrangement.currentArrangement).filter(
-                tableId => getCurrentTablesAndArrangement.currentArrangement[tableId].length > 0
-              ).length}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('seating.tableView.totalCapacity')}</span>
-            <span className="stat-value">
-              {getCurrentTablesAndArrangement.currentTables.reduce((sum, table) => sum + table.capacity, 0)}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('seating.tableView.unassignedGuests')}</span>
-            <span className="stat-value">{unassignedGuests.length}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('seating.tableView.tablesShown')}</span>
-            <span className="stat-value">
-              {filteredTables.length} {t('seating.tableView.outOf')} {getCurrentTablesAndArrangement.currentTables.length}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
