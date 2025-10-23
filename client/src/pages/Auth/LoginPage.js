@@ -100,7 +100,6 @@ const LoginPage = () => {
   try {
     console.log('Starting Google login process...');
     
-    // נקה נתונים קיימים
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
