@@ -62,7 +62,6 @@ const shareEvent = async (req, res) => {
       });
       await targetUser.save();
       
-      console.log(`Notification created for user ${targetUser.email} about event ${originalEvent.title}`);
     }
 
     res.json({ message: req.t('events.share.shareSuccess') });

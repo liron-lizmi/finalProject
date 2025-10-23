@@ -40,9 +40,7 @@ const ForgotPassword = () => {
       
       const resetToken = response.data.resetToken;
       const resetURL = `${window.location.origin}/reset-password/${resetToken}`;
-      
-      console.log("Reset URL for testing:", resetURL); 
-      
+            
       const templateParams = {
         to_email: email,
         to_name: email.split('@')[0],
@@ -59,7 +57,6 @@ const ForgotPassword = () => {
           EMAILJS_USER_ID
         );
         
-        console.log('Email sent successfully:', emailResult.text);
       } catch (emailError) {
         console.error('Email sending error:', emailError);
       }

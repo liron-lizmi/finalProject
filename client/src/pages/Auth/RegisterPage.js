@@ -55,7 +55,6 @@ const RegisterPage = () => {
       };
 
       const result = await emailjs.send(serviceId, templateId, templateParams, userId);
-      console.log('Email sent successfully:', result.text);
       return true;
     } catch (error) {
       console.error('Error sending email:', error);

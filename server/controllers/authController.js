@@ -469,7 +469,6 @@ const getNotifications = async (req, res) => {
         return notifObj;
       });
     
-    console.log('Sending notifications:', JSON.stringify(unreadNotifications, null, 2));
     res.json(unreadNotifications);
   } catch (err) {
     console.error('Error in getNotifications:', err);

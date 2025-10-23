@@ -98,7 +98,6 @@ const LoginPage = () => {
 
  const handleGoogleLogin = async () => {
   try {
-    console.log('Starting Google login process...');
     
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -116,9 +115,7 @@ const LoginPage = () => {
     } catch (sessionError) {
       console.log('No sessions to delete');
     }
-    
-    console.log('Creating OAuth session...');
-    
+        
     await createOAuth2Session(
       'google', 
       `${window.location.origin}/dashboard?auth=google&direct=true&t=${Date.now()}`, 

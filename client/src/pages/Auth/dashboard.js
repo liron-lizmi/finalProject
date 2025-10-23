@@ -26,11 +26,6 @@ const Dashboard = () => {
 
   
   const getNotificationMessage = (notification) => {
-    console.log("=== NOTIFICATION DEBUG ===");
-    console.log("Full notification:", JSON.stringify(notification, null, 2));
-    console.log("sharerName:", notification.sharerName);
-    console.log("eventTitle:", notification.eventTitle);
-    console.log("========================");
     if (notification.type === 'event_shared') {
       return t('notifications.eventShared', {
         sharer: notification.sharerName,
@@ -42,28 +37,23 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    console.log("Dashboard mounted, search params:", location.search);
     
     const fetchEvents = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No token found');
           setEventsLoading(false);
           return;
         }
 
-        console.log("Fetching events...");
         const response = await axios.get('/api/events', {
           headers: {
             'x-auth-token': token
           }
         });
         
-        console.log("Events fetched:", response.data.length);
         setEvents(response.data);
       } catch (err) {
-        console.error('Error fetching events:', err);
         setError(t('errors.loadEventsFailed'));
       } finally {
         setEventsLoading(false);
@@ -75,21 +65,17 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        console.log("Fetching notifications...");
         const response = await axios.get('/api/events/notifications', {
           headers: { 'x-auth-token': token }
         });
         
-        console.log("Notifications response:", response.data);
         setNotifications(response.data);
         if (response.data.length > 0) {
-          console.log("Setting showNotifications to true");
           setShowNotifications(true);
         } else {
           console.log("No notifications found");
         }
       } catch (err) {
-        console.error('Error fetching notifications:', err);
       }
     };
 
@@ -99,53 +85,27 @@ const Dashboard = () => {
         const isGoogleAuth = urlParams.get('auth') === 'google';
         const isDirect = urlParams.get('direct') === 'true';
 
-        console.log('Dashboard parameters:', { isGoogleAuth, isDirect, url: location.search });
-
         if (isGoogleAuth && isDirect) {
           setLoading(false);
           
           try {
             
             const session = await account.getSession('current');
-            console.log("Current session details:", {
-              provider: session.provider,
-              userId: session.userId,
-              providerUid: session.providerUid,
-              expire: session.expire
-            });
             
             const userData = await account.get();
-            console.log("Full OAuth user data:", {
-              id: userData.$id,
-              email: userData.email,
-              name: userData.name,
-              provider: userData.provider,
-              providerUid: userData.providerUid
-            });
-            
+
             if (session && session.provider === 'google' && userData.email) {
               const actualUserEmail = userData.email.toLowerCase().trim();
-              
-              console.log("Processing OAuth for actual user email:", actualUserEmail);
-              
+                            
               const checkResponse = await axios.post('/api/auth/check-user-exists', { 
                 email: actualUserEmail 
               });
-              
-              console.log("Check user exists response:", checkResponse.data);
-              
+                            
               if (!checkResponse.data.exists) {
                 const names = userData.name ? userData.name.split(' ') : ['', ''];
                 const firstName = names[0] || '';
                 const lastName = names.slice(1).join(' ') || '';
-                
-                console.log("Registering new user:", { 
-                  email: actualUserEmail, 
-                  firstName, 
-                  lastName,
-                  providerId: userData.$id 
-                });
-                
+
                 const registerResponse = await axios.post('/api/auth/register-oauth', {
                   email: actualUserEmail,
                   firstName: firstName,
@@ -153,9 +113,7 @@ const Dashboard = () => {
                   provider: 'google',
                   providerId: userData.$id 
                 });
-                
-                console.log("Register response:", registerResponse.data);
-                
+                                
                 if (registerResponse.data.token) {
                   localStorage.setItem('token', registerResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
@@ -167,16 +125,13 @@ const Dashboard = () => {
                   return;
                 }
               } else {
-                console.log("Logging in existing user:", actualUserEmail);
                 
                 const loginResponse = await axios.post('/api/auth/login-oauth', {
                   email: actualUserEmail,
                   provider: 'google',
                   providerId: userData.$id 
                 });
-                
-                console.log("Login response:", loginResponse.data);
-                
+                                
                 if (loginResponse.data.token) {
                   localStorage.setItem('token', loginResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
@@ -189,11 +144,9 @@ const Dashboard = () => {
                 }
               }
             } else {
-              console.error("Invalid OAuth session or missing user data");
               throw new Error("Invalid OAuth session");
             }
           } catch (oauthError) {
-            console.error("OAuth session error:", oauthError);
             
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -221,7 +174,6 @@ const Dashboard = () => {
           }
         }
       } catch (error) {
-        console.error('Dashboard session check error:', error);
         navigate('/login', { replace: true });
       } finally {
         setLoading(false);
@@ -292,7 +244,6 @@ const Dashboard = () => {
       setShowDeleteModal(false);
       setEventToDelete(null);
     } catch (err) {
-      console.error('Error deleting event:', err);
       setError(t('errors.deleteEventFailed'));
       setShowDeleteModal(false);
       setEventToDelete(null);

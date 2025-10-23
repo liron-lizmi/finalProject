@@ -11,24 +11,17 @@ const account = new Account(client);
 
 const createOAuth2Session = async (provider, successUrl, failureUrl) => {
     try {
-        console.log('Creating OAuth2 session with:', {
-            provider,
-            successUrl,
-            failureUrl
-        });
-        
+
         if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             
             try {
                 const sessions = await account.listSessions();
-                console.log('Found existing sessions:', sessions.sessions.length);
                 
                 for (const session of sessions.sessions) {
                     try {
                         await account.deleteSession(session.$id);
-                        console.log('Deleted session:', session.$id);
                     } catch (deleteErr) {
                         console.log('Failed to delete session:', session.$id);
                     }
@@ -41,9 +34,7 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
             } catch (sessionCheckError) {
                 console.log('No sessions to check/delete');
             }
-            
-            console.log('Creating new OAuth session...');
-            
+                        
             try {
                 await account.createOAuth2Session(provider, successUrl, failureUrl);
             } catch (oauthError) {
@@ -54,7 +45,6 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
                     `&success=${encodeURIComponent(successUrl)}` +
                     `&failure=${encodeURIComponent(failureUrl)}`;
                 
-                console.log("Using manual OAuth URL:", oauthUrl);
                 window.location.href = oauthUrl;
             }
         }
@@ -67,15 +57,9 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
 const getCurrentSession = async () => {
     try {
         const session = await account.getSession('current');
-        console.log('Current Appwrite session:', {
-            provider: session.provider,
-            userId: session.userId,
-            expire: session.expire,
-            providerUid: session.providerUid
-        });
+
         return session;
     } catch (error) {
-        console.log('No current Appwrite session');
         return null;
     }
 };
@@ -83,19 +67,9 @@ const getCurrentSession = async () => {
 const getCurrentUser = async () => {
     try {
         const user = await account.get();
-        console.log('Current Appwrite user:', {
-            id: user.$id,
-            email: user.email,
-            name: user.name,
-            providerUid: user.providerUid,
-            provider: user.provider,
-            registration: user.registration,
-            status: user.status,
-            prefs: user.prefs
-        });
+
         return user;
     } catch (error) {
-        console.log('No current Appwrite user:', error.message);
         return null;
     }
 };
@@ -103,7 +77,6 @@ const getCurrentUser = async () => {
 const clearAllSessions = async () => {
     try {
         const sessions = await account.listSessions();
-        console.log('Clearing all sessions, found:', sessions.sessions.length);
         
         const deletePromises = sessions.sessions.map(session => 
             account.deleteSession(session.$id).catch(err => 
@@ -112,10 +85,8 @@ const clearAllSessions = async () => {
         );
         
         await Promise.all(deletePromises);
-        console.log('All sessions cleared successfully');
         return true;
     } catch (error) {
-        console.log('Error clearing sessions:', error.message);
         return false;
     }
 };

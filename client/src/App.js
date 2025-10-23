@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
@@ -27,6 +27,7 @@ import PublicRidesPage from './pages/Events/Features/PublicRidesPage';
 const App = () => {
   return (
     <Router>
+      <Suspense fallback={<div className="loading-spinner">טוען נתונים...</div>}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -57,7 +58,8 @@ const App = () => {
         <Route path="/rides/:eventId" element={<PublicRidesPage />} />
         
       </Routes>
-    </Router>
+    </Suspense>
+  </Router>
   );
 };
 

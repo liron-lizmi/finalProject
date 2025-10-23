@@ -343,21 +343,17 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   // Parse VCF data with improved name handling
   const parseVCFData = (vcfText) => {
-    console.log('VCF Text received:', vcfText.substring(0, 500));
     
     const data = [];
     const invalidContacts = [];
     
     const cleanText = vcfText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     const vcardBlocks = cleanText.split(/BEGIN:VCARD/i);
-    
-    console.log('Found vCard blocks:', vcardBlocks.length);
-    
+        
     for (let i = 1; i < vcardBlocks.length; i++) {
       const block = vcardBlocks[i];
       
       if (!block.includes('END:VCARD')) {
-        console.log('Block missing END:VCARD, skipping');
         continue;
       }
 
@@ -371,10 +367,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       let hasInvalidPhone = false;
       let invalidPhoneDetails = '';
 
-      console.log('Processing block with processed lines:', lines.length);
-
       lines.forEach(line => {
-        console.log('Processing line:', line);
         
         // Handle full name (FN)
         if (line.startsWith('FN')) {
@@ -398,7 +391,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
               lastName = nameParts.slice(1).join(' ');
             }
           }
-          console.log('Found FN:', firstName, lastName);
         }
         
         // Handle structured name (N)
@@ -424,7 +416,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
               contactName = `${firstName} ${lastName}`.trim();
             }
           }
-          console.log('Found N:', firstName, lastName);
         }
         
         // Handle phone
@@ -432,14 +423,11 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
           const phoneMatch = line.match(/:([+\d\s\-\(\)\*]+)/);
           if (phoneMatch && !phone) {
             const rawPhone = phoneMatch[1].trim();
-            console.log('Raw phone found:', rawPhone);
             
             const phoneValidation = validatePhoneNumber(rawPhone);
             if (phoneValidation.valid) {
               phone = phoneValidation.formatted;
-              console.log('Valid formatted phone:', phone);
             } else {
-              console.log('Invalid phone:', rawPhone, phoneValidation.message);
               hasInvalidPhone = true;
               invalidPhoneDetails = `${rawPhone} - ${phoneValidation.message}`;
             }
@@ -467,14 +455,10 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
             selected: false
           };
           
-          console.log('Adding contact:', contact);
           data.push(contact);
         }
       }
     }
-
-    console.log('Total contacts found:', data.length);
-    console.log('Invalid contacts found:', invalidContacts.length);
 
     // Show warning for invalid contacts but still show table
     if (invalidContacts.length > 0) {

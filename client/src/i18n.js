@@ -24,7 +24,6 @@ i18n
     },
     react: {
       useSuspense: true,
-      wait: true  
     },
     debug: true
   });
@@ -34,7 +33,6 @@ export const changeLanguage = (lng) => {
     document.documentElement.dir = i18n.dir();
     document.documentElement.lang = lng;
     localStorage.setItem('language', lng);
-    console.log(`Language changed to ${lng}, direction: ${i18n.dir()}`);
     
     window.dispatchEvent(new Event('languageChanged'));
   });
