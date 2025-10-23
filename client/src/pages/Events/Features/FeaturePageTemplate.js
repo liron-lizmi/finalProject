@@ -78,28 +78,10 @@ const FeaturePageTemplate = ({
               <div className="feature-icon">{icon}</div>
               <h1>{title}</h1>
             </div>
-            <p className="feature-description">{description}</p>
           </div>
         </div>
 
         <div className="feature-page-content">
-          <div className="event-info-panel">
-            <h2>{event.title}</h2>
-            <p className="event-date">
-              {isRTL 
-                ? new Date(event.date).toLocaleDateString('he-IL', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })
-                : new Date(event.date).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  }).toUpperCase()
-              }
-            </p>
-          </div>
          
           <div className="feature-main-content">
             {children}
