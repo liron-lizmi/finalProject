@@ -306,40 +306,44 @@ const SeatingTableView = ({
   };
 
   const handleAddTable = () => {
-    if (!canEdit) {
-      return;
+    if (!canEdit) return;
+    
+    const currentGender = isSeparatedSeating ? genderFilter : null;
+    
+    let position;
+    
+    if (isSeparatedSeating && currentGender && currentGender !== 'all') {
+      const relevantTables = currentGender === 'male' ? maleTables : femaleTables;
+      const tableCounter = relevantTables.length;
+
+      position = {
+        x: 300 + (tableCounter % 3) * 200,
+        y: 300 + Math.floor(tableCounter / 3) * 200
+      };
+    } else {
+      const tableCounter = tables.length;
+      position = {
+        x: 300 + (tableCounter % 3) * 200,
+        y: 300 + Math.floor(tableCounter / 3) * 200
+      };
     }
-
-    const capacity = Math.max(8, newTableCapacity);
-    const size = calculateTableSize('round', capacity);
-
-    const canvasWidth = 1200;
-    const canvasHeight = 800;
-    const padding = 150;
     
-    const nextTableNum = getCurrentTablesAndArrangement.currentTables.length + 1;
+    const type = 'round';
+    const capacity = newTableCapacity;
+    const size = capacity <= 10 
+      ? { width: 120, height: 120 }
+      : { width: 160, height: 100 };
     
-    const tablesPerRow = 3;
-    const row = Math.floor((nextTableNum - 1) / tablesPerRow);
-    const col = (nextTableNum - 1) % tablesPerRow;
-    
-    const xSpacing = (canvasWidth - (2 * padding)) / Math.max(tablesPerRow - 1, 1);
-    const ySpacing = 200;
-    
-    const x = padding + (col * xSpacing);
-    const y = padding + (row * ySpacing);
-
     const newTable = {
-      id: `table_${Date.now()}`,
-      name: `${t('seating.tableName')} ${nextTableNum}`,
-      type: 'round',
+      id: `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type,
       capacity,
-      position: { x, y },
+      position,
       rotation: 0,
       size,
-      gender: isSeparatedSeating && genderFilter !== 'all' ? genderFilter : null
+      gender: currentGender && currentGender !== 'all' ? currentGender : null
     };
-    
+
     onAddTable(newTable);
   };
 
