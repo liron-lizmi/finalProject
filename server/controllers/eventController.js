@@ -76,44 +76,33 @@ const updateEvent = async (req, res) => {
     const { id } = req.params;
     const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
     
-    // Check if user owns the event or has edit permission
     let event = await Event.findOne({ _id: id, user: req.userId });
     let isSharedEvent = false;
     let originalEventId = null;
+    let userSharedCopyId = id;
 
     if (!event) {
-      // Check if it's a shared event with edit permission
-      const originalEvent = await Event.findOne({
-        _id: id,
-        'sharedWith.userId': req.userId
-      });
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
 
+    if (event.originalEvent) {
+      isSharedEvent = true;
+      originalEventId = event.originalEvent;
+      userSharedCopyId = event._id;
+      
+      const originalEvent = await Event.findById(event.originalEvent);
       if (!originalEvent) {
         return res.status(404).json({ message: req.t('events.notFound') });
       }
-
+      
       const shareInfo = originalEvent.sharedWith.find(
         share => share.userId?.toString() === req.userId
       );
-
+      
       if (!shareInfo || shareInfo.permission !== 'edit') {
         return res.status(403).json({ message: req.t('events.editDenied') });
       }
-
-      // Find user's shared copy
-      event = await Event.findOne({
-        user: req.userId,
-        originalEvent: id
-      });
-
-      if (!event) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-
-      isSharedEvent = true;
-      originalEventId = id;
       
-      // Update the original event instead
       event = originalEvent;
     }
     
@@ -130,7 +119,7 @@ const updateEvent = async (req, res) => {
     if (type !== undefined) event.type = type;
     if (guestCount !== undefined) event.guestCount = guestCount;
     if (notes !== undefined) event.notes = notes;
-    if (isSeparatedSeating !== undefined) event.isSeparatedSeating = Boolean(isSeparatedSeating); // ADDED
+    if (isSeparatedSeating !== undefined) event.isSeparatedSeating = Boolean(isSeparatedSeating);
     
     if (venues !== undefined) {
       if (venues === null) {
@@ -178,17 +167,12 @@ const updateEvent = async (req, res) => {
     
     const updatedEvent = await event.save();
     
-    // Sync with shared events if this is an original event
-    if (updatedEvent.isShared && !updatedEvent.originalEvent) {
+    if (updatedEvent.isShared) {
       await syncSharedEvents(updatedEvent._id);
     }
     
-    // If this was a shared event update, return the user's shared copy
     if (isSharedEvent) {
-      const userSharedCopy = await Event.findOne({
-        user: req.userId,
-        originalEvent: originalEventId
-      });
+      const userSharedCopy = await Event.findById(userSharedCopyId);
       return res.json(userSharedCopy || updatedEvent);
     }
     

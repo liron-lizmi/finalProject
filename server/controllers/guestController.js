@@ -1,3 +1,4 @@
+// server/controllers/guestController.js
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
 const Seating = require('../models/Seating');
@@ -63,6 +64,8 @@ const addGuest = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
+    const targetEventId = event.originalEvent || eventId;
+
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
 
@@ -83,7 +86,7 @@ const addGuest = async (req, res) => {
       lastName: lastName.trim(),
       phone: phone.trim(),
       group: finalGroup,
-      event: eventId,
+      event: targetEventId,
       user: req.userId,
       attendingCount: 1
     };
@@ -92,7 +95,8 @@ const addGuest = async (req, res) => {
       guestData.customGroup = finalCustomGroup;
     }
 
-    if (event.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
+    const targetEvent = await Event.findById(targetEventId);
+    if (targetEvent && targetEvent.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
       guestData.gender = gender;
     }
 
@@ -100,7 +104,7 @@ const addGuest = async (req, res) => {
     const savedGuest = await newGuest.save();
     
     if (savedGuest.rsvpStatus === 'confirmed') {
-      await triggerSeatingSync(eventId, req.userId, 'guest_added', {
+      await triggerSeatingSync(targetEventId, req.userId, 'guest_added', {
         guestId: savedGuest._id,
         guest: savedGuest
       });
@@ -306,6 +310,8 @@ const deleteGuest = async (req, res) => {
 const updateGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
+    const event = await Event.findById(eventId);
+    const targetEventId = event?.originalEvent || eventId;
     const { firstName, lastName, phone, group, customGroup } = req.body;
     
     let guest = await Guest.findById(guestId);
@@ -906,8 +912,7 @@ const updateGuestGift = async (req, res) => {
     
     const guest = await Guest.findOne({ 
       _id: guestId, 
-      event: eventId, 
-      user: req.userId 
+      event: targetEventId
     });
     
     if (!guest) {

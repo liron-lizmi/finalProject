@@ -825,28 +825,26 @@ const EventGuestsPage = () => {
         )}
 
         {/* RSVP Link Section */}
+        {canEdit && (
         <div className="guests-rsvp-link-section">
           <h3>📨 {t('guests.rsvp.shareLink')}</h3>
           <p>{t('guests.rsvp.shareLinkDescription')}</p>
           <div className="rsvp-link-container">
-            {canEdit && (
-              <input
-                type="text"
-                className="rsvp-link-input"
-                value={rsvpLink}
-                readOnly
-              />
-            )}
+            <input
+              type="text"
+              className="rsvp-link-input"
+              value={rsvpLink}
+              readOnly
+            />
             <button
-              className={`rsvp-copy-button ${!canEdit ? 'disabled' : ''}`}
-              onClick={canEdit ? copyRSVPLink : undefined}
-              disabled={!canEdit}
-              title={!canEdit ? t('general.viewOnlyMode') : undefined}
+              className="rsvp-copy-button"
+              onClick={copyRSVPLink}
             >
               📋 {t('guests.rsvp.copyLink')}
             </button>
           </div>
         </div>
+      )}
 
         {totalDuplicates > 0 && (
           <div className="guests-duplicates-warning">
@@ -1117,7 +1115,9 @@ const EventGuestsPage = () => {
         <div className="guests-list">
           {filteredGuests.length === 0 ? (
             <div className="guests-empty-message">
-              {guests.length === 0 ? t('guests.noGuests') : t('guests.noFilteredGuests')}
+              {guests.length === 0 
+                ? (canEdit ? t('guests.noGuests') : t('guests.noGuestsViewOnly'))
+                : t('guests.noFilteredGuests')}
             </div>
           ) : (
             <div className="guests-table">

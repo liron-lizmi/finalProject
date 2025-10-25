@@ -23,7 +23,8 @@
     "validationError": "שגיאת ולידציה",
     "missingParameters": "חסרים פרמטרים נדרשים",
     "databaseError": "שגיאת מסד נתונים",
-    "invalidEventId": "מזהה אירוע לא תקין"
+    "invalidEventId": "מזהה אירוע לא תקין",
+    "userNotInSystem": "משתמש לא קיים במערכת"
   },
   "success": {
     "passwordReset": "הסיסמה עודכנה בהצלחה",

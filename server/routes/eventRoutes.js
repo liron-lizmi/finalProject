@@ -21,7 +21,7 @@ const {
 } = require('../controllers/shareController');
 
 const auth = require('../middleware/auth');
-const { checkEditPermission: checkEditPermissionMiddleware, checkViewPermission } = require('../middleware/checkPermissions');
+const { checkEditPermission: checkEditPermissionMiddleware, checkViewPermission, checkIsEventOwner } = require('../middleware/checkPermissions');
 
 // Import nested routers
 const guestRoutes = require('./guestRoutes');
@@ -47,10 +47,10 @@ router.delete('/:id', deleteEvent);
 router.get('/:id/edit-permission', checkEditPermission);
 
 // Sharing routes
-router.post('/:eventId/share', checkEditPermissionMiddleware, shareEvent);
+router.post('/:eventId/share', checkIsEventOwner, shareEvent);
 router.get('/:eventId/shared-users', checkViewPermission, getSharedUsers);
-router.delete('/:eventId/share/:shareId', checkEditPermissionMiddleware, removeShare);
-router.put('/:eventId/share/:shareId', checkEditPermissionMiddleware, updateSharePermission);
+router.delete('/:eventId/share/:shareId', checkIsEventOwner, removeShare);
+router.put('/:eventId/share/:shareId', checkIsEventOwner, updateSharePermission);
 
 // Nested routes with permission checking
 router.use('/:eventId/guests', guestRoutes);

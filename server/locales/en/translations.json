@@ -23,7 +23,8 @@
     "googleClientIdNotConfigured": "Google Client ID is not configured in environment variables",
     "unknownError": "Unknown error",
     "googleNotConnected": "Not connected to Google",
-    "invalidEventId": "Invalid event ID"
+    "invalidEventId": "Invalid event ID",
+    "userNotInSystem": "User does not exist in the system"
   },
   "success": {
     "passwordReset": "Password updated successfully",

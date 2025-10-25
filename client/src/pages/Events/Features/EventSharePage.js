@@ -16,6 +16,7 @@ const EventSharePage = () => {
   const [eventInfo, setEventInfo] = useState(null);
   const [canEdit, setCanEdit] = useState(null); 
   const [emailError, setEmailError] = useState('');
+  const [isOwner, setIsOwner] = useState(false);
   const { showSuccessModal, showErrorModal, showConfirmModal, Modal } = useModal();
 
   useEffect(() => {
@@ -62,12 +63,14 @@ const EventSharePage = () => {
       });
 
       if (response.ok) {
-        const users = await response.json();
-        setSharedUsers(users);
+        const data = await response.json();
+        setSharedUsers(data.sharedWith || []);
+        setIsOwner(data.isOwner || false);
       }
     } catch (error) {
       console.error('Error loading shared users:', error);
       setSharedUsers([]);
+      setIsOwner(false);
     }
   };
 
@@ -236,7 +239,7 @@ const EventSharePage = () => {
               </div>
             )}
 
-            {canEdit && (
+            {isOwner && (
               <div className="share-form-section">
                 <h3 className="section-title">
                   <span className="title-icon">➕</span>
@@ -340,7 +343,7 @@ const EventSharePage = () => {
                         </div>
 
                         <div className="user-actions">
-                          {canEdit ? (
+                          {isOwner ? (
                             <>
                               <div className="permission-control">
                                 <select

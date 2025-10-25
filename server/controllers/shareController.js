@@ -31,38 +31,39 @@ const shareEvent = async (req, res) => {
     // Find users
     const targetUser = await User.findOne({ email });
     const currentUser = await User.findById(req.userId);
-    
+
     if (!currentUser) {
       return res.status(404).json({ message: req.t('errors.userNotFound') });
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ message: req.t('errors.userNotInSystem') });
     }
 
     // Add to shared list in original event
     originalEvent.sharedWith.push({
       email,
-      userId: targetUser ? targetUser._id : null,
+      userId: targetUser._id,
       permission,
       accepted: false
     });
     originalEvent.isShared = true;
     await originalEvent.save();
 
-    // If target user exists, create shared event copy and notification
-    if (targetUser) {
-      await createSharedEventCopy(originalEvent, targetUser._id, permission, req.userId);
-      
-      // Add notification to target user
-      const sharerName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email;
-       targetUser.notifications.push({
-        type: 'event_shared',
-        eventId: originalEvent._id,
-        sharedBy: req.userId,
-        read: false,
-        sharerName: sharerName,
-        eventTitle: originalEvent.title
-      });
-      await targetUser.save();
-      
-    }
+    // Create shared event copy and notification
+    await createSharedEventCopy(originalEvent, targetUser._id, permission, req.userId);
+
+    // Add notification to target user
+    const sharerName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email;
+    targetUser.notifications.push({
+      type: 'event_shared',
+      eventId: originalEvent._id,
+      sharedBy: req.userId,
+      read: false,
+      sharerName: sharerName,
+      eventTitle: originalEvent.title
+    });
+    await targetUser.save();
 
     res.json({ message: req.t('events.share.shareSuccess') });
   } catch (err) {
@@ -141,7 +142,12 @@ const getSharedUsers = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    res.json(event.sharedWith);
+    const isOwner = !event.originalEvent;
+    
+    res.json({
+      sharedWith: event.sharedWith,
+      isOwner: isOwner
+    });
   } catch (err) {
     console.error('Error getting shared users:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
@@ -228,23 +234,34 @@ const syncSharedEvents = async (originalEventId) => {
     const originalEvent = await Event.findById(originalEventId);
     if (!originalEvent || !originalEvent.isShared) return;
 
-    // Find all shared copies
     const sharedEvents = await Event.find({ originalEvent: originalEventId });
 
-    // Update each shared copy with original event data
     for (const sharedEvent of sharedEvents) {
-      const updateData = {
-        ...originalEvent.toObject(),
-        _id: sharedEvent._id,
-        user: sharedEvent.user,
-        originalEvent: sharedEvent.originalEvent,
-        isShared: sharedEvent.isShared,
-        sharedWith: sharedEvent.sharedWith,
-        createdAt: sharedEvent.createdAt,
-        updatedAt: new Date()
-      };
+      sharedEvent.title = originalEvent.title;
+      sharedEvent.date = originalEvent.date;
+      sharedEvent.time = originalEvent.time;
+      sharedEvent.type = originalEvent.type;
+      sharedEvent.isSeparatedSeating = originalEvent.isSeparatedSeating;
+      sharedEvent.guestCount = originalEvent.guestCount;
+      sharedEvent.notes = originalEvent.notes;
+      
+      sharedEvent.venues = originalEvent.venues.map(v => ({
+        name: v.name,
+        address: v.address,
+        phone: v.phone,
+        website: v.website,
+        _id: v._id
+      }));
+      
+      sharedEvent.vendors = originalEvent.vendors.map(v => ({
+        name: v.name,
+        category: v.category,
+        phone: v.phone,
+        notes: v.notes,
+        _id: v._id
+      }));
 
-      await Event.findByIdAndUpdate(sharedEvent._id, updateData);
+      await sharedEvent.save();
     }
   } catch (err) {
     console.error('Error syncing shared events:', err);

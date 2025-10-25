@@ -90,7 +90,29 @@ const checkViewPermission = async (req, res, next) => {
   }
 };
 
+const checkIsEventOwner = async (req, res, next) => {
+  try {
+    const eventId = req.params.eventId || req.params.id;
+    
+    if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ message: req.t('errors.invalidEventId') });
+    }
+    
+    const ownedEvent = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!ownedEvent || ownedEvent.originalEvent) {
+      return res.status(403).json({ message: req.t('events.onlyOwnerCanShare') });
+    }
+    
+    req.isEventOwner = true;
+    return next();
+  } catch (err) {
+    console.error('Error checking event ownership:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = { 
   checkEditPermission,
-  checkViewPermission 
+  checkViewPermission,
+  checkIsEventOwner
 };

@@ -664,7 +664,8 @@
         "emailLabel": "Email Address",
         "shareToCollaborate": "Share this event with others to work together on the planning.",
         "viewPermissionInfo": "Users with viewing permission can see the event but not change it.",
-        "editPermissionInfo": "Users with edit permission can change the event details."
+        "editPermissionInfo": "Users with edit permission can change the event details.",
+        "onlyOwnerCanShare": "Only the event owner can share."
       }
     }
   },
@@ -1038,6 +1039,7 @@
     "addNewGuest": "Add New Guest",
     "searchPlaceholder": "Search guests...",
     "noGuests": "No guests yet. Add your first guest!",
+    "noGuestsViewOnly": "No guests yet",
     "noFilteredGuests": "No guests found with current filters",
     "confirmDelete": "Are you sure you want to delete this guest?",
     "guestNote": "Guest note",
