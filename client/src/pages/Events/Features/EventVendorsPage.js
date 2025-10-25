@@ -28,7 +28,8 @@ const EventVendorsPage = () => {
   const [showVendorSelectionModal, setShowVendorSelectionModal] = useState(false);
   const [vendorActionType, setVendorActionType] = useState(null);
   const [vendorToChangeIndex, setVendorToChangeIndex] = useState(null);
- 
+  const [canEdit, setCanEdit] = useState(true);
+
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
   const validatePhone = (phoneNumber) => {
@@ -57,6 +58,7 @@ const EventVendorsPage = () => {
         });
 
         setEvent(response.data);
+        setCanEdit(response.data.canEdit !== false);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
@@ -64,13 +66,19 @@ const EventVendorsPage = () => {
         setLoading(false);
       }
     };
-
-    fetchEventDetails();
-  }, [id, navigate, t, i18n.language, isRTL]);
+      
+        fetchEventDetails();
+      }, [id, navigate, t, i18n.language, isRTL]);
 
   // Handles vendor selection from API search - adds or replaces vendor in event
   const handleVendorSelect = async (vendor) => {
     try {
+
+      if (!canEdit) {
+        setError(t('general.viewOnlyMode'));
+        return;
+      }
+    
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -146,6 +154,11 @@ const EventVendorsPage = () => {
   // Submits manually entered vendor data to event with validation
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
+
+    if (!canEdit) {
+      setError(t('general.viewOnlyMode'));
+      return;
+    }
      
     if (!manualVendor.phone || manualVendor.phone.trim() === '') {
       setPhoneError(t('errors.invalidPhoneFormat'));
@@ -223,6 +236,12 @@ const EventVendorsPage = () => {
   // Deletes a vendor from the event by index
   const handleDeleteVendor = async (index) => {
     try {
+
+      if (!canEdit) {
+        setError(t('general.viewOnlyMode'));
+        return;
+      }
+
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -376,12 +395,14 @@ const EventVendorsPage = () => {
               <button
                 className="select-vendor-button"
                 onClick={handleSelectAPIVendors}
+                disabled={!canEdit}
               >
                 {t('events.features.vendors.searchAndFilterButton')}
               </button>
               <button
                 className="add-manual-vendor-button"
                 onClick={handleSelectManualVendor}
+                disabled={!canEdit}
               >
                 {t('events.features.vendors.addManuallyButton')}
               </button>
@@ -468,7 +489,11 @@ const EventVendorsPage = () => {
               />
           </div>
             <div className="form-actions">
-              <button type="submit" className="save-vendor-button">
+              <button
+               type="submit"
+               className="save-vendor-button"
+               disabled={!canEdit}
+              >
                 {t('general.save')}
               </button>
               <button
@@ -516,10 +541,15 @@ const EventVendorsPage = () => {
                 <button
                   className="change-vendor-button"
                   onClick={() => handleShowVendorOptions('change', index)}
+                  disabled={!canEdit}
                 >
                   {t('events.features.vendors.changeVendor')}
                 </button>
-                <button className="delete-vendor-button" onClick={() => handleDeleteVendor(index)}>
+                <button
+                 className="delete-vendor-button"
+                 onClick={() => handleDeleteVendor(index)}
+                 disabled={!canEdit}
+                 >
                   {t('events.features.vendors.deleteVendor')}
                 </button>
               </div>
@@ -530,6 +560,7 @@ const EventVendorsPage = () => {
             <button
               className="add-vendor-button"
               onClick={() => handleShowVendorOptions('add')}
+              disabled={!canEdit}
             >
               {t('events.features.vendors.addAnotherVendor')}
             </button>
@@ -539,10 +570,18 @@ const EventVendorsPage = () => {
         <div className="no-vendor-selected">
           <p>{t('events.features.vendors.noVendorSelected')}</p>
           <div className="vendor-selection-options">
-            <button className="select-vendor-button" onClick={handleDirectAPIVendors}>
+            <button
+             className="select-vendor-button"
+             onClick={handleDirectAPIVendors}
+             disabled={!canEdit}
+             >
               {t('events.features.vendors.searchAndFilterButton')}
             </button>
-            <button className="add-manual-vendor-button" onClick={handleDirectManualVendor}>
+            <button 
+              className="add-manual-vendor-button"
+              onClick={handleDirectManualVendor}
+              disabled={!canEdit}
+              >
               {t('events.features.vendors.addManuallyButton')}
             </button>
           </div>
