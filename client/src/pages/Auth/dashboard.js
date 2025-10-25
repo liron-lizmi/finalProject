@@ -331,13 +331,7 @@ const Dashboard = () => {
               <img src="/images/logo.png" alt={t('general.appLogo')} />
             </div>
           </div>
-          <div className="header-center">
-            <div className="user-greeting">
-              <span className="greeting-icon">👋</span>
-              <span>{t('dashboard.welcome')}</span>
-              <h2>{user?.name || user?.firstName || user?.email}</h2>
-            </div>
-          </div>
+
           <div className={`header-${isRTL ? 'left' : 'right'}`}>
             <button className="logout-btn" onClick={handleLogout}>
               <span className="logout-icon">
@@ -355,6 +349,12 @@ const Dashboard = () => {
 
       <main className="dashboard-main">
         <div className="container">
+          <div className={`user-greeting-standalone ${isRTL ? 'rtl' : 'ltr'}`}>
+            <span className="greeting-icon">👋</span>
+            <span>{t('dashboard.welcome')}</span>
+            <h2>{user?.name || user?.firstName || user?.email}</h2>
+          </div>
+
           {showNotifications && notifications.length > 0 && (
             <div className="notifications-banner">
               <div className="notifications-content">
