@@ -26,6 +26,8 @@ const EventVenuePage = () => {
   const [showVenueSelectionModal, setShowVenueSelectionModal] = useState(false);
   const [venueActionType, setVenueActionType] = useState(null);
   const [venueErrors, setVenueErrors] = useState({});
+  const [canEdit, setCanEdit] = useState(true);
+
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
 
   const validateVenueField = (name, value) => {
@@ -68,6 +70,7 @@ const EventVenuePage = () => {
         });
 
         setEvent(response.data);
+        setCanEdit(response.data.canEdit !== false);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching event details:', err);
@@ -76,11 +79,15 @@ const EventVenuePage = () => {
       }
     };
 
-    fetchEventDetails();
-  }, [id, navigate, t, i18n.language, isRTL]);
+        fetchEventDetails();
+      }, [id, navigate, t, i18n.language, isRTL]);
 
   const handleVenueSelect = async (venue) => {
     try {
+      if (!canEdit) {
+        setError(t('general.viewOnlyMode'));
+        return;
+      }
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -144,6 +151,11 @@ const EventVenuePage = () => {
 
   const handleManualVenueSubmit = async (e) => {
     e.preventDefault();
+
+    if (!canEdit) {
+      setError(t('general.viewOnlyMode'));
+      return;
+    }
    
     const allErrors = {};
    
@@ -222,6 +234,11 @@ const EventVenuePage = () => {
 
   const handleDeleteVenue = async () => {
     try {
+
+      if (!canEdit) {
+        setError(t('general.viewOnlyMode'));
+        return;
+      }
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -348,12 +365,16 @@ const EventVenuePage = () => {
                 <button
                   className="venue-btn"
                   onClick={handleSelectAPIVenues}
+                  disabled={!canEdit}
+                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
                 >
                   {t('venues.searchAndFilterButton')}
                 </button>
                 <button
                   className="venue-btn"
                   onClick={handleSelectManualVenue}
+                  disabled={!canEdit}
+                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
                 >
                   {t('venues.addManuallyButton')}
                 </button>
@@ -430,7 +451,12 @@ const EventVenuePage = () => {
                 />
               </div>
               <div className="form-actions">
-                <button type="submit" className="save-venue-button">
+                <button 
+                  type="submit" 
+                  className="save-venue-button"
+                  disabled={!canEdit}
+                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
+                >
                   {t('general.save')}
                 </button>
                 <button
@@ -485,12 +511,16 @@ const EventVenuePage = () => {
               <button
                 className="change-venue-button"
                 onClick={() => handleShowVenueOptions('change')}
+                disabled={!canEdit}
+                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.changeVenue')}
               </button>
               <button
                 className="delete-venue-button"
                 onClick={handleDeleteVenue}
+                disabled={!canEdit}
+                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.deleteVenue')}
               </button>
@@ -506,10 +536,20 @@ const EventVenuePage = () => {
               {t('events.features.venues.description')}
             </p>
             <div className="venue-action-buttons">
-              <button className="venue-btn" onClick={handleDirectAPIVenues}>
+              <button 
+                className="venue-btn" 
+                onClick={handleDirectAPIVenues}
+                disabled={!canEdit}
+                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
+              >
                 {t('venues.searchAndFilterButton')}
               </button>
-              <button className="venue-btn" onClick={handleDirectManualVenue}>
+              <button 
+                className="venue-btn" 
+                onClick={handleDirectManualVenue}
+                disabled={!canEdit}
+                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
+              >
                 {t('venues.addManuallyButton')}
               </button>
             </div>
