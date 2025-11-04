@@ -1,7 +1,8 @@
+// client/src/pages/Events/Features/components/InternalCalendar.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => {
+const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true, onClose }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -103,7 +104,7 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
     const weeks = [];
     let currentWeekDate = new Date(startDate);
 
-    for (let week = 0; week < 4; week++) {
+    for (let week = 0; week < 5; week++) {
       const days = [];
       
       for (let day = 0; day < 7; day++) {
@@ -127,8 +128,6 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
                     onClick={() => canEdit && onTaskClick(task)}
                     style={{ 
                       borderLeftColor: getPriorityColor(task.priority),
-                      cursor: canEdit ? 'pointer' : 'not-allowed',
-                      opacity: canEdit ? 1 : 0.7
                     }}
                   >
                     <span className="task-title">{task.title}</span>
@@ -187,8 +186,6 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
                 ononClick={() => canEdit && onTaskClick(task)}
                 style={{ 
                   borderLeftColor: getPriorityColor(task.priority),
-                  cursor: canEdit ? 'pointer' : 'not-allowed',
-                  opacity: canEdit ? 1 : 0.7
                 }}
               >
                 <div className="task-title">{task.title}</div>
@@ -225,12 +222,19 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
   return (
     <div className={`internal-calendar ${isRTL ? 'rtl' : 'ltr'}`}>
       <div className="calendar-header">
+        <button 
+          className="internal-calendar-close-btn"
+          onClick={onClose}
+          title={t('general.close')}
+        >
+          ✕
+        </button>
         <div className="calendar-navigation">
           <button
             className="nav-btn"
             onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
           >
-            {isRTL ? '❯' : '❮'}
+            {isRTL ? '❮' : '❯'}
           </button>
           
           <div className="current-period">
@@ -247,7 +251,7 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
             className="nav-btn"
             onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
           >
-            {isRTL ? '❮' : '❯'}
+            {isRTL ? '❯' : '❮'}
           </button>
         </div>
 
@@ -350,8 +354,6 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true }) => 
                   }}
                   style={{ 
                     borderLeftColor: getPriorityColor(task.priority),
-                    cursor: canEdit ? 'pointer' : 'not-allowed',
-                    opacity: canEdit ? 1 : 0.7
                   }}
                 >
                   <div className="task-title">{task.title}</div>

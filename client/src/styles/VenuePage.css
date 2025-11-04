@@ -1,3 +1,4 @@
+/* VenuePage.css */
 :root {
   --gold-light: #d4b99e;
   --gold-dark: #a68b76;
@@ -468,6 +469,14 @@ html, body {
   background-color: transparent;
   border-color: #a68b76;
   color: #a68b76;
+}
+
+.form-actions .save-venue-button {
+  order: 2;
+}
+
+.form-actions .manual-form-cancel-button {
+  order: 1;
 }
 
 .venue-header {
@@ -1260,6 +1269,84 @@ html[dir="ltr"] .error-close-btn {
   transition: opacity 0.2s ease;
 }
 
+.venue-modal-btn {
+  padding: 16px 30px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+  display: block !important;
+}
+
+.venue-modal-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(164, 139, 118, 0.2) !important;
+  background-color: transparent !important;
+  border-color: #a68b76 !important;
+  color: #a68b76 !important;
+}
+
+.venue-modal-cancel-button {
+  padding: 16px 30px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+.venue-modal-cancel-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(164, 139, 118, 0.2) !important;
+  background-color: transparent !important;
+  border-color: #a68b76 !important;
+  color: #a68b76 !important;
+}
+
+/* Disabled Button Styles */
+button:disabled,
+.venue-btn:disabled,
+.venue-modal-btn:disabled,
+.venue-card-btn:disabled,
+.change-venue-button:disabled,
+.delete-venue-button:disabled,
+.save-venue-button:disabled,
+.manual-form-cancel-button:disabled,
+.venue-modal-cancel-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+button:disabled:hover,
+.venue-btn:disabled:hover,
+.venue-modal-btn:disabled:hover,
+.venue-card-btn:disabled:hover,
+.change-venue-button:disabled:hover,
+.delete-venue-button:disabled:hover,
+.save-venue-button:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background-color: #d4b99e !important;
+  color: #fff !important;
+  border-color: #d4b99e !important;
+}
+
+/* Responsive Design*/
 @media (min-width: 576px) {
   .venues-grid {
     grid-template-columns: repeat(2, 1fr);

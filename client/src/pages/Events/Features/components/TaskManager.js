@@ -37,6 +37,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [calendarMode, setCalendarMode] = useState('none');
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showGoogleSync, setShowGoogleSync] = useState(true);
   const messageTimeoutRef = useRef(null);
   const processedAuthState = useRef(false);
   const [canEdit, setCanEdit] = useState(true);
@@ -323,8 +324,13 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
     setCalendarMode(mode);
     if (mode === 'internal') {
       setShowCalendar(true);
+      setShowGoogleSync(false);
+    } else if (mode === 'google') {
+      setShowCalendar(false);
+      setShowGoogleSync(true);
     } else {
       setShowCalendar(false);
+      setShowGoogleSync(false);
     }
   };
 
@@ -426,7 +432,12 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
       </div>
 
       {calendarMode === 'google' && (
-        <GoogleCalendarSync eventId={actualEventId} canEdit={canEdit} />
+        <GoogleCalendarSync 
+          eventId={actualEventId} 
+          canEdit={canEdit}
+          isExpanded={showGoogleSync}
+          onClose={() => setShowGoogleSync(false)}
+        />
       )}
 
       {errorMessage && (
@@ -448,6 +459,10 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
             eventDate={eventData?.date}
             onTaskClick={handleEditTask}
             canEdit={canEdit}
+            onClose={() => {
+              setShowCalendar(false);
+              setCalendarMode('none');
+            }}
           />
         </div>
       )}

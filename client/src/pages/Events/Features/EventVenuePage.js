@@ -1,4 +1,4 @@
-// pages/Events/Features/EventVenuePage.js
+// client/src/pages/Events/Features/EventVenuePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -363,24 +363,22 @@ const EventVenuePage = () => {
               <h3>{t('venues.changeVenueOptions')}</h3>
               <div className="venue-selection-options">
                 <button
-                  className="venue-btn"
+                  className="venue-modal-btn"
                   onClick={handleSelectAPIVenues}
                   disabled={!canEdit}
-                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
                 >
                   {t('venues.searchAndFilterButton')}
                 </button>
                 <button
-                  className="venue-btn"
+                  className="venue-modal-btn"
                   onClick={handleSelectManualVenue}
                   disabled={!canEdit}
-                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
                 >
                   {t('venues.addManuallyButton')}
                 </button>
               </div>
               <button
-                className="cancel-button"
+                className="venue-modal-cancel-button"
                 onClick={() => {
                   setShowVenueSelectionModal(false);
                   setVenueActionType(null);
@@ -455,7 +453,6 @@ const EventVenuePage = () => {
                   type="submit" 
                   className="save-venue-button"
                   disabled={!canEdit}
-                  style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
                 >
                   {t('general.save')}
                 </button>
@@ -474,7 +471,6 @@ const EventVenuePage = () => {
             </form>
           </div>
         ) : event.venues && event.venues.length > 0 ? (
-          /* Venue Selected State */
           <div className="venue-selected-card">
             <div className="venue-card-icon">🏢</div>
             <h2 className="venue-card-title">{event.venues[0].name}</h2>
@@ -512,7 +508,6 @@ const EventVenuePage = () => {
                 className="change-venue-button"
                 onClick={() => handleShowVenueOptions('change')}
                 disabled={!canEdit}
-                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.changeVenue')}
               </button>
@@ -520,7 +515,6 @@ const EventVenuePage = () => {
                 className="delete-venue-button"
                 onClick={handleDeleteVenue}
                 disabled={!canEdit}
-                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.deleteVenue')}
               </button>
@@ -540,7 +534,6 @@ const EventVenuePage = () => {
                 className="venue-btn" 
                 onClick={handleDirectAPIVenues}
                 disabled={!canEdit}
-                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.searchAndFilterButton')}
               </button>
@@ -548,7 +541,6 @@ const EventVenuePage = () => {
                 className="venue-btn" 
                 onClick={handleDirectManualVenue}
                 disabled={!canEdit}
-                style={{ opacity: !canEdit ? 0.5 : 1, cursor: !canEdit ? 'not-allowed' : 'pointer' }}
               >
                 {t('venues.addManuallyButton')}
               </button>

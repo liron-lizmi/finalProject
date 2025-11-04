@@ -1,3 +1,4 @@
+// client/src/pages/Events/Features/PublicRidesPage.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +49,7 @@ const PublicRidesPage = () => {
     }
   }, [step, guest, rideInfo.status, rideInfo.address]);
 
-  // Formats phone number input to Israeli format (05X-XXXXXXX)
+  // Formats phone number input
   const formatPhoneNumber = (value) => {
     const cleanedValue = value.replace(/\D/g, '');
     
@@ -159,7 +160,7 @@ const PublicRidesPage = () => {
     }
   };
 
-//  Fetches other guests' ride information
+// Fetches other guests ride information
 const fetchOtherGuests = async () => {
   try {
     // Add cache buster to ensure fresh data
@@ -221,7 +222,7 @@ const fetchOtherGuests = async () => {
 };
 
 
-  //  Validates ride information form based on status
+  // Validates ride information form based on status
   const isFormValid = () => {
     if (!rideInfo.status || rideInfo.status === 'not_set' || rideInfo.status === '') {
       return false;
@@ -248,7 +249,7 @@ const fetchOtherGuests = async () => {
     return true;
   };
 
-//  Submits ride information update to the API
+// Submits ride information update to the API
 const handleRideInfoSubmit = async (e) => {
   e.preventDefault();
   
@@ -270,20 +271,16 @@ const handleRideInfoSubmit = async (e) => {
     if (response.ok) {
       const result = await response.json();
       
-      // Update guest data with the response
       if (result.guest) {
           setGuest(result.guest);
       }
       
-      // Refresh other guests data to get latest information
       await fetchOtherGuests();
       
-      // If user is seeking, fetch suggested rides
       if (rideInfo.status === 'seeking' && rideInfo.address) {
         await fetchSuggestedRides();
       }
       
-      // Update current status and switch to relevant tab ONLY after successful update
       setCurrentStatus(rideInfo.status);
       if (rideInfo.status === 'seeking') {
         setActiveTab('offering');
@@ -303,7 +300,7 @@ const handleRideInfoSubmit = async (e) => {
   }
 };
 
- //  Records contact action and updates status
+ // Records contact action and updates status
   const handleContactAction = async (contactedGuestId, action) => {
     try {
       const response = await fetch(`/api/rides/${eventId}/contact`, {
@@ -318,14 +315,11 @@ const handleRideInfoSubmit = async (e) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Update contact history
         if (data.contactHistory) {
             setContactHistory(data.contactHistory);
         }
-        // Refresh guests data to show updated statuses
         await fetchOtherGuests();
         
-        // Refresh suggested rides if applicable
         if (rideInfo.status === 'seeking' && rideInfo.address) {
           await fetchSuggestedRides();
         }
@@ -336,7 +330,7 @@ const handleRideInfoSubmit = async (e) => {
   };
 
 
-  //  Cancels an arranged ride
+  // Cancels an arranged ride
   const handleCancelRide = async (contactedGuestId) => {
     try {
       const response = await fetch(`/api/rides/${eventId}/cancel`, {
@@ -350,19 +344,15 @@ const handleRideInfoSubmit = async (e) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Update contact history
         if (data.contactHistory) {
             setContactHistory(data.contactHistory);
         }
-        // Refresh guests data to show updated statuses
         await fetchOtherGuests();
         
-        // Refresh suggested rides if applicable
         if (rideInfo.status === 'seeking' && rideInfo.address) {
           await fetchSuggestedRides();
         }
         
-        showSuccessModal(t('events.features.rides.rideCancelled'));
       }
     } catch (err) {
       console.error('Error cancelling ride:', err);
@@ -370,13 +360,13 @@ const handleRideInfoSubmit = async (e) => {
   };
 
 
- // Gets contact status for a specific guest
-  const getContactStatus = (guestId) => {
-    const contact = contactHistory.find(c => c.contactedGuestId === guestId);
-    return contact ? contact.action : null;
-  };
+  // Gets contact status for a specific guest
+    const getContactStatus = (guestId) => {
+      const contact = contactHistory.find(c => c.contactedGuestId === guestId);
+      return contact ? contact.action : null;
+    };
 
-//  Gets display status based on contact action
+  // Gets display status based on contact action
   const getContactStatusText = (status) => {
     switch (status) {
       case 'arranged_ride':
@@ -390,7 +380,7 @@ const handleRideInfoSubmit = async (e) => {
     }
   };
 
-//    Formats event date to Hebrew locale
+  // Formats event date to Hebrew locale
   const formatEventDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -402,7 +392,7 @@ const handleRideInfoSubmit = async (e) => {
     });
   };
 
-    // Filters guests offering rides
+  // Filters guests offering rides
   const getOfferingGuests = () => {
     if (!Array.isArray(otherGuests)) return [];
     return otherGuests.filter(g => {
@@ -414,7 +404,7 @@ const handleRideInfoSubmit = async (e) => {
     });
   };
 
-//   Filters guests seeking rides
+  // Filters guests seeking rides
   const getSeekingGuests = () => {
     if (!Array.isArray(otherGuests)) return [];
     return otherGuests.filter(g => {
@@ -440,7 +430,6 @@ const handleRideInfoSubmit = async (e) => {
       <div className="rides-container">
         <div className="rides-header">
           <h1 className="event-title">{eventInfo.eventName}</h1>
-          <h2 className="rides-title">{t('events.features.rides.title')}</h2>
           {eventInfo.eventDate && (
             <p className="event-date">
               {formatEventDate(eventInfo.eventDate)}
@@ -456,16 +445,12 @@ const handleRideInfoSubmit = async (e) => {
 
         {step === 1 && (
           <div className="phone-step">
-            <h3>{t('events.features.rides.enterPhone')}</h3>
             <p className="step-description">
               {t('events.features.rides.enterPhoneDescription')}
             </p>
             
             <form onSubmit={handlePhoneSubmit} className="phone-form">
               <div className="form-group">
-                <label htmlFor="phone">
-                  {t('events.features.rides.form.phone')}
-                </label>
                 <input
                   type="tel"
                   id="phone"
@@ -525,11 +510,9 @@ const handleRideInfoSubmit = async (e) => {
             <div className="tab-content">
               {activeTab === 'my_info' && (
                 <div className="my-info-tab">
-                  <h4>{t('events.features.rides.myRideInfo')}</h4>
                   {!hasConfirmedRSVP && (
                     <div className="rsvp-warning">
                         <div className="warning-content">
-                        <span className="warning-icon">⚠️</span>
                         <span className="warning-text">
                             {t('events.features.rides.rsvpWarning')}
                         </span>

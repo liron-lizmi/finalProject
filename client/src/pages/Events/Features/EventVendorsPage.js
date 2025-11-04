@@ -1,4 +1,4 @@
-// pages/Events/Features/EventVendorsPage.js
+// client/src/pages/Events/Features/EventVenuePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +37,7 @@ const EventVendorsPage = () => {
     return phoneRegex.test(phoneNumber);
   };
 
-  // Fetches event details on component mount and sets RTL direction for Hebrew
+  // Fetches event details
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
@@ -70,7 +70,7 @@ const EventVendorsPage = () => {
         fetchEventDetails();
       }, [id, navigate, t, i18n.language, isRTL]);
 
-  // Handles vendor selection from API search - adds or replaces vendor in event
+  // Handles vendor selection from API search
   const handleVendorSelect = async (vendor) => {
     try {
 
@@ -133,7 +133,7 @@ const EventVendorsPage = () => {
     }
   };
 
-   // Handles manual vendor form field changes with phone validation
+   // Handles manual vendor form field changes 
   const handleManualVendorChange = (e) => {
     const { name, value } = e.target;
    
@@ -151,7 +151,7 @@ const EventVendorsPage = () => {
     }));
   };
 
-  // Submits manually entered vendor data to event with validation
+  // Submits manually entered vendor data to event
   const handleManualVendorSubmit = async (e) => {
     e.preventDefault();
 
@@ -384,42 +384,42 @@ const EventVendorsPage = () => {
       )}
      
       {showVendorSelectionModal && (
-        <div className="vendor-selection-modal">
-          <div className="vendor-selection-modal-content">
-            <h3>
-              {vendorActionType === 'change'
-                ? t('events.features.vendors.changeVendorOptions')
-                : t('events.features.vendors.addVendorOptions')}
-            </h3>
-            <div className="vendor-selection-options">
-              <button
-                className="select-vendor-button"
-                onClick={handleSelectAPIVendors}
-                disabled={!canEdit}
-              >
-                {t('events.features.vendors.searchAndFilterButton')}
-              </button>
-              <button
-                className="add-manual-vendor-button"
-                onClick={handleSelectManualVendor}
-                disabled={!canEdit}
-              >
-                {t('events.features.vendors.addManuallyButton')}
-              </button>
-            </div>
+      <div className="vendor-selection-modal">
+        <div className="vendor-selection-modal-content">
+          <h3>
+            {vendorActionType === 'change'
+              ? t('events.features.vendors.changeVendorOptions')
+              : t('events.features.vendors.addVendorOptions')}
+          </h3>
+          <div className="vendor-selection-options">
             <button
-              className="cancel-button"
-              onClick={() => {
-                setShowVendorSelectionModal(false);
-                setVendorActionType(null);
-                setVendorToChangeIndex(null);
-              }}
+              className="vendor-modal-btn"
+              onClick={handleSelectAPIVendors}
+              disabled={!canEdit}
             >
-              {t('general.cancel')}
+              {t('events.features.vendors.searchAndFilterButton')}
+            </button>
+            <button
+              className="vendor-modal-btn"
+              onClick={handleSelectManualVendor}
+              disabled={!canEdit}
+            >
+              {t('events.features.vendors.addManuallyButton')}
             </button>
           </div>
+          <button
+            className="vendor-modal-cancel-button"
+            onClick={() => {
+              setShowVendorSelectionModal(false);
+              setVendorActionType(null);
+              setVendorToChangeIndex(null);
+            }}
+          >
+            {t('general.cancel')}
+          </button>
         </div>
-      )}
+      </div>
+    )}
      
       {showManualForm ? (
         <div className={`manual-vendor-form ${isRTL ? 'rtl' : 'ltr'}`}>

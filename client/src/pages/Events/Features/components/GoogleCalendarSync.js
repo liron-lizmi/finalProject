@@ -1,12 +1,14 @@
+// client/src/pages/Events/Features/components/GoogleCalendarSync.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
-const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
+const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClose  }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -27,7 +29,10 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
   const checkConnectionStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setInitializing(false);
+        return;
+      }
 
       const response = await fetch('/api/tasks/google-calendar/status', {
         headers: {
@@ -42,18 +47,23 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
       }
     } catch (error) {
       console.error('Error checking connection status:', error);
+    } finally {
+      setInitializing(false);
     }
   };
 
   useEffect(() => {
+    if (location.state?.googleAuthSuccess) {
+      setIsConnected(true);
+      setInitializing(false);
+    }
     checkConnectionStatus();
-  }, []);
+  }, [location.state]);
 
   useEffect(() => {
     if (location.state?.googleAuthSuccess) {
-      setTimeout(() => {
-        checkConnectionStatus();
-      }, 1000);
+      setIsConnected(true);
+      checkConnectionStatus();
     }
     
     if (location.state?.googleAuthError) {
@@ -166,7 +176,22 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
   };
 
   return (
-    <div className="calendar-sync-container">
+    <>
+    {isExpanded && (
+      <div className="calendar-sync-container">
+        <button 
+          className="calendar-sync-close-btn"
+          onClick={onClose}
+          title={t('general.close')}
+        >
+          ✕
+        </button>
+      {initializing ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+        </div>
+      ) : (
+        <>
       {errorMessage && (
         <div className="error-message-notification">
           {errorMessage}
@@ -183,7 +208,6 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
         {!isConnected ? (
           <div className="not-connected">
             <div className="connection-status">
-              <span className="status-indicator offline"></span>
               <span>{t('events.features.tasks.calendar.sync.notConnected')}</span>
             </div>
             <p>{t('events.features.tasks.calendar.sync.connectDescription')}</p>
@@ -198,7 +222,6 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
         ) : (
           <div className="connected">
             <div className="connection-status">
-              <span className="status-indicator online"></span>
               <span>{t('events.features.tasks.calendar.sync.connected')}</span>
             </div>
             
@@ -258,7 +281,11 @@ const GoogleCalendarSync = ({ eventId, canEdit = true  }) => {
           </div>
         )}
       </div>
+      </>
+    )}
     </div>
+    )}
+    </>
   );
 };
 

@@ -1,71 +1,198 @@
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
+const axios = require('axios');
 
-//  Calculate distance between two addresses (simplified). 
-// In a real implementation, you would use Google Maps Distance Matrix API
-const calculateDistance = (address1, address2) => {
+// Cache for distance calculations 
+const distanceCache = new Map();
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Calculate distance using Google Distance Matrix API
+const calculateDistance = async (address1, address2) => {
+  // Create cache key
+  const cacheKey = `${address1.toLowerCase().trim()}|${address2.toLowerCase().trim()}`;
+  
+  const cachedResult = distanceCache.get(cacheKey);
+  if (cachedResult && Date.now() - cachedResult.timestamp < CACHE_DURATION) {
+    return cachedResult.distance;
+  }
+
+  // If addresses are identical or very similar
   const addr1Lower = address1.toLowerCase().trim();
   const addr2Lower = address2.toLowerCase().trim();
   
-  const cities = [
-    'תל אביב', 'ירושלים', 'חיפה', 'באר שבע', 'פתח תקווה', 'נתניה', 'רחובות', 
-    'מודיעין', 'רעננה', 'הרצליה', 'רמת גן', 'בני ברק', 'גבעתיים', 'אשדוד',
-    'אשקלון', 'עפולה', 'נצרת', 'טבריה', 'צפת', 'ביתר עילית', 'מעלה אדומים',
-    'בית שמש', 'אלעד', 'כפר סבא', 'הוד השרון', 'רמלה', 'לוד', 'קרית גת',
-    'קרית מלאכי', 'יבנה', 'גדרה', 'נס ציונה', 'ראשון לציון'
-  ];
-  
-  const commonStreets = [
-    'הרצל', 'בן גוריון', 'רוטשילד', 'דיזנגוף', 'קינג ג\'ורג\'', 'יפו', 'אלנבי',
-    'בגרוזנברג', 'ביאליק', 'פרישמן', 'בן יהודה', 'שדרות ירושלים', 'שדרות חיים בר לב'
-  ];
-  
-  let city1 = null;
-  let city2 = null;
-  
-  for (const city of cities) {
-    if (addr1Lower.includes(city.toLowerCase())) {
-      city1 = city;
-      break;
-    }
+  if (addr1Lower === addr2Lower) {
+    return 0.1;
   }
   
-  for (const city of cities) {
-    if (addr2Lower.includes(city.toLowerCase())) {
-      city2 = city;
-      break;
-    }
+  if (addr1Lower.includes(addr2Lower) || addr2Lower.includes(addr1Lower)) {
+    return 0.5;
   }
-  
-  if (city1 && city2 && city1 === city2) {
-    const hasCommonStreet = commonStreets.some(street => 
-      addr1Lower.includes(street.toLowerCase()) && addr2Lower.includes(street.toLowerCase())
-    );
+
+  // Call Google Distance Matrix API
+  try {
+    const apiKey = process.env.GOOGLE_DISTANCE_MATRIX_API_KEY;
     
-    if (hasCommonStreet) {
-      return Math.random() * 1 + 0.1; 
+    if (!apiKey) {
+      console.error('Google Maps API key is missing!');
+      return fallbackDistance(address1, address2); 
+    }
+
+    const url = 'https://maps.googleapis.com/maps/api/distancematrix/json';
+    const params = {
+      origins: address1,
+      destinations: address2,
+      key: apiKey,
+      language: 'he',
+      region: 'il'
+    };
+    
+    const response = await axios.get(url, { params });
+    
+    if (response.data.status === 'OK' && 
+        response.data.rows[0]?.elements[0]?.status === 'OK') {
+      
+      const distanceInMeters = response.data.rows[0].elements[0].distance.value;
+      const distanceInKm = distanceInMeters / 1000;
+      
+      // Save to cache
+      distanceCache.set(cacheKey, {
+        distance: distanceInKm,
+        timestamp: Date.now()
+      });
+      
+      return distanceInKm;
+      
+    } else {
+      console.warn('Google API returned no result, using fallback');
+      return fallbackDistance(address1, address2);
     }
     
-    return Math.random() * 3 + 0.5; 
+  } catch (error) {
+    console.error('Error calling Google Distance Matrix API:', error.message);
+    return fallbackDistance(address1, address2);
+  }
+};
+
+// Fallback distance calculation 
+const fallbackDistance = (address1, address2) => {
+  const addr1Lower = address1.toLowerCase().trim();
+  const addr2Lower = address2.toLowerCase().trim();
+  
+  const cityVariations = {
+    'תל אביב': ['תל אביב', 'ת"א', 'תל-אביב', 'tel aviv', 'תא', 'תל אביב יפו', 'tlv'],
+    'ירושלים': ['ירושלים', 'ירושלם', 'jerusalem', 'י-ם', 'ירוש', 'ים', 'jlm'],
+    'חיפה': ['חיפה', 'haifa', 'חיפא'],
+    'באר שבע': ['באר שבע', 'באר-שבע', 'beer sheva', 'ב"ש', 'be\'er sheva'],
+    'פתח תקווה': ['פתח תקווה', 'פתח-תקווה', 'פת"ק', 'petah tikva'],
+    'נתניה': ['נתניה', 'netanya'],
+    'רחובות': ['רחובות', 'rehovot'],
+    'מודיעין': ['מודיעין', 'modiin', 'מודיעין עילית', 'מודיעין מכבים רעות'],
+    'רעננה': ['רעננה', 'raanana'],
+    'הרצליה': ['הרצליה', 'herzliya'],
+    'רמת גן': ['רמת גן', 'רמת-גן', 'ramat gan'],
+    'בני ברק': ['בני ברק', 'בני-ברק', 'bnei brak'],
+    'גבעתיים': ['גבעתיים', 'givatayim'],
+    'אשדוד': ['אשדוד', 'ashdod'],
+    'אשקלון': ['אשקלון', 'ashkelon'],
+    'בית שמש': ['בית שמש', 'בית-שמש', 'bet shemesh'],
+    'ביתר עילית': ['ביתר עילית', 'ביתר', 'beitar illit', 'ביתר-עילית'],
+    'מעלה אדומים': ['מעלה אדומים', 'מעלה-אדומים', 'maale adumim'],
+    'אלעד': ['אלעד', 'elad'],
+    'כפר סבא': ['כפר סבא', 'כפר-סבא', 'kfar saba'],
+    'הוד השרון': ['הוד השרון', 'הוד-השרון', 'hod hasharon'],
+    'ראשון לציון': ['ראשון לציון', 'ראשון', 'rishon lezion'],
+    'אפרת': ['אפרת', 'efrat', 'אפרת'],
+    'גוש עציון': ['גוש עציון', 'gush etzion'],
+    'מעלות דפנה': ['מעלות דפנה', 'maalot dafna'],
+    'רמות': ['רמות', 'ramot'],
+    'גבעת זאב': ['גבעת זאב', 'givat zeev', 'גבעת-זאב'],
+    'מבשרת ציון': ['מבשרת ציון', 'mevaseret zion', 'מבשרת'],
+    'אבו גוש': ['אבו גוש', 'abu gosh'],
+    'קרית ארבע': ['קרית ארבע', 'kiryat arba'],
+    'חברון': ['חברון', 'hebron'],
+    'אריאל': ['אריאל', 'ariel'],
+    'מעלה אפרים': ['מעלה אפרים', 'maaleh efraim'],
+    'עפרה': ['עפרה', 'ofra'],
+    'בית אל': ['בית אל', 'beit el', 'bet el'],
+    'עלי': ['עלי', 'eli'],
+    'שילה': ['שילה', 'shilo'],
+    'עמנואל': ['עמנואל', 'emanuel'],
+    'כרמיאל': ['כרמיאל', 'karmiel'],
+    'צפת': ['צפת', 'safed', 'tzfat'],
+    'טבריה': ['טבריה', 'tiberias'],
+    'נצרת עילית': ['נצרת עילית', 'nof hagalil', 'נוף הגליל'],
+    'עכו': ['עכו', 'acre', 'akko'],
+    'נהריה': ['נהריה', 'nahariya'],
+    'קרית שמונה': ['קרית שמונה', 'kiryat shmona'],
+    'אילת': ['אילת', 'eilat'],
+    'דימונה': ['דימונה', 'dimona'],
+    'ערד': ['ערד', 'arad'],
+    'קרית גת': ['קרית גת', 'kiryat gat'],
+    'קרית מלאכי': ['קרית מלאכי', 'kiryat malachi'],
+    'יבנה': ['יבנה', 'yavne'],
+    'גדרה': ['גדרה', 'gedera'],
+    'נס ציונה': ['נס ציונה', 'nes ziona']
+  };
+  
+  const findCity = (address) => {
+    for (const [mainCity, variations] of Object.entries(cityVariations)) {
+      for (const variation of variations) {
+        if (address.includes(variation.toLowerCase())) {
+          return mainCity;
+        }
+      }
+    }
+    return null;
+  };
+  
+  const city1 = findCity(addr1Lower);
+  const city2 = findCity(addr2Lower);
+  
+  if (!city1 || !city2) {
+    return 12;
   }
   
-  const jerusalemAreas = ['ירושלים', 'ביתר עילית', 'מעלה אדומים', 'בית שמש'];
-  const isJerusalemArea1 = jerusalemAreas.some(area => addr1Lower.includes(area.toLowerCase()));
-  const isJerusalemArea2 = jerusalemAreas.some(area => addr2Lower.includes(area.toLowerCase()));
+  if (city1 === city2) {
+    return Math.random() * 3 + 0.5;
+  }
+  
+  const jerusalemAreas = ['ירושלים', 'בית שמש', 'מודיעין', 'ביתר עילית', 'מעלה אדומים', 
+                          'אפרת', 'גוש עציון', 'מעלות דפנה', 'רמות', 'גבעת זאב', 
+                          'מבשרת ציון', 'אבו גוש', 'קרית ארבע'];
+  const isJerusalemArea1 = jerusalemAreas.includes(city1);
+  const isJerusalemArea2 = jerusalemAreas.includes(city2);
   
   if (isJerusalemArea1 && isJerusalemArea2) {
-    return Math.random() * 12 + 8; 
+    return Math.random() * 12 + 8;
   }
   
-  const gushDanAreas = ['תל אביב', 'רמת גן', 'גבעתיים', 'בני ברק', 'פתח תקווה', 'רעננה', 'הרצליה', 'הוד השרון', 'כפר סבא'];
-  const isGushDan1 = gushDanAreas.some(area => addr1Lower.includes(area.toLowerCase()));
-  const isGushDan2 = gushDanAreas.some(area => addr2Lower.includes(area.toLowerCase()));
+  const gushDanAreas = ['תל אביב', 'רמת גן', 'גבעתיים', 'בני ברק', 'פתח תקווה', 
+                        'רעננה', 'הרצליה', 'הוד השרון', 'כפר סבא', 'ראשון לציון', 
+                        'רחובות', 'נס ציונה', 'גדרה', 'יבנה'];
+  const isGushDan1 = gushDanAreas.includes(city1);
+  const isGushDan2 = gushDanAreas.includes(city2);
   
   if (isGushDan1 && isGushDan2) {
-    return Math.random() * 15 + 10; 
+    return Math.random() * 15 + 5;
   }
   
-  return Math.random() * 50 + 30; 
+  const northAreas = ['חיפה', 'כרמיאל', 'צפת', 'טבריה', 'נצרת עילית', 'עכו', 'נהריה', 'קרית שמונה'];
+  const isNorth1 = northAreas.includes(city1);
+  const isNorth2 = northAreas.includes(city2);
+  
+  if (isNorth1 && isNorth2) {
+    return Math.random() * 20 + 10;
+  }
+  
+  const southAreas = ['באר שבע', 'אילת', 'דימונה', 'ערד', 'אשדוד', 'אשקלון', 'קרית גת', 'קרית מלאכי'];
+  const isSouth1 = southAreas.includes(city1);
+  const isSouth2 = southAreas.includes(city2);
+  
+  if (isSouth1 && isSouth2) {
+    return Math.random() * 25 + 15;
+  }
+  
+  return Math.random() * 50 + 30;
 };
 
 //  Retrieves basic event information for rides page
@@ -111,8 +238,7 @@ const checkPhoneForRides = async (req, res) => {
   }
 };
 
-// Retrieves all guests with ride information for public display
-//  Returns fresh data from database including both offering and seeking guests
+// Returns fresh data from database including both offering and seeking guests
 const getRidesGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -142,13 +268,11 @@ const getSuggestedRides = async (req, res) => {
       return res.status(400).json({ message: req.t('events.rides.validation.missingParameters') });
     }
 
-    // Find the requesting guest
     const requestingGuest = await Guest.findOne({ event: eventId, phone });
     if (!requestingGuest) {
       return res.status(404).json({ message: req.t('events.rides.phoneNotFound') });
     }
 
-    // Get all offering guests (excluding the requesting guest)
     const offeringGuests = await Guest.find({
       event: eventId,
       phone: { $ne: phone },
@@ -157,18 +281,25 @@ const getSuggestedRides = async (req, res) => {
       'rideInfo.address': { $exists: true, $ne: '' }
     }).select('firstName lastName phone rideInfo').lean();
 
-    // Calculate distances and sort by proximity
-    const guestsWithDistance = offeringGuests.map(guest => {
-      const distance = calculateDistance(userAddress, guest.rideInfo.address);
+    offeringGuests.forEach(g => {
+      console.log('Offering guest address:', g.rideInfo.address);
+    });
+
+    const guestsWithDistance = await Promise.all(
+      offeringGuests.map(async (guest) => {
+        const distance = await calculateDistance(userAddress, guest.rideInfo.address);
       return {
         ...guest,
         distance: `${distance.toFixed(1)} ק"מ`,
         numericDistance: distance
       };
-    }).sort((a, b) => a.numericDistance - b.numericDistance);
+    })
+  );
 
-    // Return only suggestions that are close (under 15km)
-    const closeSuggestions = guestsWithDistance.filter(guest => guest.numericDistance < 15);
+    const sortedGuests = guestsWithDistance.sort((a, b) => a.numericDistance - b.numericDistance);
+
+    const closeSuggestions = sortedGuests.filter(guest => guest.numericDistance < 25);
+    
     const suggestions = closeSuggestions.slice(0, 3);
 
     res.json({ suggestions });
@@ -179,8 +310,7 @@ const getSuggestedRides = async (req, res) => {
 };
 
 
-//  Updates guest ride information from public interface
-//  Handles both offering and seeking statuses with required fields
+// Updates guest ride information from interface
 const updateGuestRideInfo = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -203,35 +333,27 @@ const updateGuestRideInfo = async (req, res) => {
       lastUpdated: new Date()
     };
 
-    // Set available seats for offering rides
     if (rideInfo.status === 'offering') {
       updatedRideInfo.availableSeats = rideInfo.availableSeats || 1;
-      // Clear requiredSeats if previously set
       updatedRideInfo.requiredSeats = undefined;
     }
 
-    // Set required seats for seeking rides  
     if (rideInfo.status === 'seeking') {
       updatedRideInfo.requiredSeats = rideInfo.requiredSeats || 1;
-      // Clear availableSeats if previously set
       updatedRideInfo.availableSeats = undefined;
     }
 
-    // Preserve existing contact history
     if (guest.rideInfo && guest.rideInfo.contactHistory) {
       updatedRideInfo.contactHistory = guest.rideInfo.contactHistory;
     }
 
-    // Preserve contact status from other users' actions
     if (guest.rideInfo && guest.rideInfo.contactStatus) {
       updatedRideInfo.contactStatus = guest.rideInfo.contactStatus;
     }
 
-    // Update the guest's ride info
     guest.rideInfo = updatedRideInfo;
     await guest.save();
 
-    // Return updated guest data
     res.json({ 
       message: req.t('events.features.rides.updateSuccess'), 
       guest: guest 
@@ -307,7 +429,6 @@ const recordContact = async (req, res) => {
         contactedGuest.rideInfo.contactStatus = 'in_process';
         break;
       default:
-        // Keep existing status
         break;
     }
 
@@ -366,7 +487,7 @@ const cancelRide = async (req, res) => {
   }
 };
 
-//  Updates guest ride information by event owner (admin interface)
+//  Updates guest ride information by event owner 
 const updateGuestRideInfoByOwner = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
@@ -389,17 +510,14 @@ const updateGuestRideInfoByOwner = async (req, res) => {
       lastUpdated: new Date()
     };
 
-    // Set available seats for offering rides
     if (rideInfo.status === 'offering') {
       updatedRideInfo.availableSeats = rideInfo.availableSeats || 1;
     }
 
-    // Set required seats for seeking rides
     if (rideInfo.status === 'seeking') {
       updatedRideInfo.requiredSeats = rideInfo.requiredSeats || 1;
     }
 
-    // Preserve existing contact history and status
     if (guest.rideInfo && guest.rideInfo.contactHistory) {
       updatedRideInfo.contactHistory = guest.rideInfo.contactHistory;
     }

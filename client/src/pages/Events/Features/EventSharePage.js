@@ -1,3 +1,4 @@
+// client/src/pages/Events/Features/PublicRidesPage.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -196,7 +197,6 @@ const EventSharePage = () => {
       const data = await response.json();
       
       if (response.ok) {
-        showSuccessModal(data.message);
         loadSharedUsers();
       } else {
         showErrorModal(data.message || t('errors.serverError'));
@@ -225,10 +225,38 @@ const EventSharePage = () => {
       <div className="share-content">
         {initialLoading ? (
           <div className="loading-container">
-            <p>טוען...</p>
+            <p>{t('general.loading')}</p>
           </div>
         ) : (
           <>
+            {/* Info Section */}
+            <div className="info-section">
+              <div className="info-card">
+                <div className="info-header">
+                  <span className="info-icon">ℹ️</span>
+                  <h4>{t('events.features.share.importantInfo')}</h4>
+                </div>
+                <div className="info-content">
+                  <ul>
+                    <li>
+                      <span className="list-icon">👁️</span>
+                      {t('events.features.share.viewPermissionInfo')}
+                    </li>
+                    <li>
+                      <span className="list-icon">✏️</span>
+                      {t('events.features.share.editPermissionInfo')}
+                    </li>
+                    {eventInfo && eventInfo.originalEvent && (
+                      <li>
+                        <span className="list-icon">⚠️</span>
+                        {t('events.features.share.sharedEventNote')}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             {eventInfo && eventInfo.originalEvent && (
               <div className="shared-event-alert">
                 <div className="alert-icon">👥</div>
@@ -242,7 +270,6 @@ const EventSharePage = () => {
             {isOwner && (
               <div className="share-form-section">
                 <h3 className="section-title">
-                  <span className="title-icon">➕</span>
                   {t('events.features.share.shareWith')}
                 </h3>
                 
@@ -303,7 +330,6 @@ const EventSharePage = () => {
             {!eventInfo?.originalEvent && (
               <div className="shared-users-section">
                 <h3 className="section-title">
-                  <span className="title-icon">👥</span>
                   {t('events.features.share.sharedWith')}
                 </h3>
                 
@@ -381,33 +407,6 @@ const EventSharePage = () => {
                 )}
               </div>
             )}
-
-            <div className="info-section">
-              <div className="info-card">
-                <div className="info-header">
-                  <span className="info-icon">ℹ️</span>
-                  <h4>{t('events.features.share.importantInfo')}</h4>
-                </div>
-                <div className="info-content">
-                  <ul>
-                    <li>
-                      <span className="list-icon">👁️</span>
-                      {t('events.features.share.viewPermissionInfo')}
-                    </li>
-                    <li>
-                      <span className="list-icon">✏️</span>
-                      {t('events.features.share.editPermissionInfo')}
-                    </li>
-                    {eventInfo && eventInfo.originalEvent && (
-                      <li>
-                        <span className="list-icon">⚠️</span>
-                        {t('events.features.share.sharedEventNote')}
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
           </>
         )}
       </div>

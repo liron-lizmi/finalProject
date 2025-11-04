@@ -1,6 +1,6 @@
 /* EventDetailsPage.css */
 .event-page-wrapper {
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%);
   min-height: 100vh;
   font-family: 'Heebo', 'Arial', sans-serif;
   color: #333;
@@ -43,22 +43,29 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  background-color: transparent;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  color: #666;
-  font-size: 0.95rem;
+  padding: 15px 25px;
+  background: linear-gradient(135deg, #d4b99e, #c4a98e);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(212, 185, 158, 0.3);
+  position: relative;
+  z-index: 2;
 }
 
 .back-button:hover {
-  background-color: #f8f9fa;
-  border-color: #d4b99e;
-  color: #333;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 185, 158, 0.4);
+  background: linear-gradient(135deg, #c4a98e, #b49878);
+  color: white;
+}
+
+.back-button svg {
+  margin-top: 3px;
 }
 
 html[dir="rtl"] .back-icon svg {
@@ -98,24 +105,10 @@ html[dir="ltr"] .back-icon svg {
 }
 
 .event-title {
-  font-size: 2.2rem;
-  font-weight: 600;
-  margin: 0 0 25px 0;
-  color: #333;
-  position: relative;
-  display: inline-block;
-  text-align: center;
-}
-
-.event-title::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
-  background-color: #d4b99e;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #a68b76 !important;
+  margin: 0 0 0.5rem 0;
 }
 
 .event-meta {
@@ -155,6 +148,30 @@ html[dir="ltr"] .back-icon svg {
 
 .urgent .counter-icon svg {
   stroke: #e53e3e;
+}
+
+.counter-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.days-counter > span {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.date-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.event-datetime > span {
+  display: flex !important;
+  align-items: center !important;
 }
 
 .progress-container {
@@ -268,9 +285,9 @@ html[dir="ltr"] .progress-fill::after {
   width: 100%;
   min-width: 320px;
   max-width: 350px;
-  min-height: 140px;
-  max-height: 140px;
-  height: 140px;
+  min-height: 155px;
+  max-height: 155px;
+  height: 155px;
   box-sizing: border-box;
 }
 
@@ -337,7 +354,7 @@ html[dir="ltr"] .feature-emoji {
 }
 
 .feature-card:hover .feature-emoji {
-  transform: scale(1.15) rotate(5deg);
+  transform: none;
   background: linear-gradient(135deg, rgba(212, 185, 158, 0.2), rgba(212, 185, 158, 0.1));
   border-color: rgba(212, 185, 158, 0.3);
 }
@@ -540,6 +557,7 @@ html[dir="ltr"] .share-event-button svg {
   transform: scaleX(-1);
 }
 
+/* Responsive Design*/
 @media (max-width: 1100px) {
   .features-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -610,9 +628,9 @@ html[dir="ltr"] .share-event-button svg {
   .feature-card {
     min-width: 100%;
     max-width: 100%;
-    min-height: 120px;
-    max-height: 120px;
-    height: 120px;
+    min-height: 150px;
+    max-height: 150px;
+    height: 150px;
   }
   
   html[dir="rtl"] .feature-emoji {

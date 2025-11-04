@@ -1,4 +1,4 @@
-/* pages/Styles/VendorsPage.css */
+/* VendorsPage.css */
 .vendors-page {
     max-width: 1200px;
     margin: 0 auto;
@@ -86,23 +86,6 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-  }
- 
-  @media (min-width: 992px) {
-    .vendors-content {
-      flex-direction: row;
-    }
-   
-    .vendors-filters {
-      flex: 0 0 250px;
-      align-self: flex-start;
-      position: sticky;
-      top: 20px;
-    }
-   
-    .vendors-results-container {
-      flex: 1;
-    }
   }
  
   .vendors-filters {
@@ -223,12 +206,6 @@
     --map-water-color: #e0e0e0;
   }
  
-  @media (min-width: 768px) {
-    .vendors-map {
-      height: 400px;
-    }
-  }
- 
   .vendors-list {
     background-color: #fff;
     border-radius: 4px;
@@ -254,18 +231,6 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 20px;
-  }
- 
-  @media (min-width: 576px) {
-    .vendors-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
- 
-  @media (min-width: 992px) {
-    .vendors-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
   }
  
   .vendor-card {
@@ -660,7 +625,7 @@
     background-color: #f8f8f8;
   }
  
-  .form-group select:focus,
+.form-group select:focus,
 .form-group textarea:focus {
   background-color: #fff;
   outline: none;
@@ -705,6 +670,14 @@
     transform: none;
   }
  
+  .form-actions .save-vendor-button {
+    order: 2;
+  }
+
+  .form-actions .manual-form-cancel-button {
+    order: 1;
+  }
+
   .selected-vendors {
     margin-bottom: 20px;
   }
@@ -976,10 +949,6 @@
     width: auto;
   }
  
- 
-  /* ====== VENDORS BUTTON STYLING - MATCHING VENUE STYLE ====== */
-
-/* Main action buttons - "חפש ספקים" and "הוסף ספק ידנית" */
 .select-vendor-button,
 .add-manual-vendor-button {
   padding: 16px 36px !important;
@@ -1027,7 +996,7 @@
   color: #a68b76 !important;
 }
 
-/* Cancel button in manual form - new class name */
+/* Cancel button in manual form */
 .manual-form-cancel-button {
   padding: 16px 36px !important;
   border-radius: 30px !important;
@@ -1107,75 +1076,55 @@
   display: none !important;
 }
 
-  @media (max-width: 768px) {
-    .vendor-details-content {
-      padding: 15px;
-    }
-   
-    .main-photo {
-      height: 200px;
-    }
-   
-    .vendor-details-header h2 {
-      font-size: 1.3rem;
-    }
- 
-    .vendor-card-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
-    }
- 
-    .vendor-category {
-      margin-left: 30px;
-    }
- 
-    html[dir="rtl"] .vendor-category {
-      margin-left: 0;
-      margin-right: 30px;
-    }
- 
-    .vendor-selection-options,
-    .add-more-vendors,
-    .form-actions {
-      flex-direction: column;
-      gap: 10px;
-    }
- 
-    .vendor-actions {
-      flex-direction: column;
-      gap: 10px;
-    }
-   
-    html[dir="rtl"] .delete-vendor-button,
-    html[dir="ltr"] .delete-vendor-button,
-    html[dir="rtl"] .change-vendor-button,
-    html[dir="ltr"] .change-vendor-button {
-      order: initial;
-    }
- 
-    .vendors-filters {
-      max-height: 70vh;
-      overflow-y: auto;
-    }
- 
-    .checkbox-group {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
- 
-  @media (max-width: 500px) {
-    .vendor-actions {
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-   
-    .checkbox-group {
-      grid-template-columns: 1fr;
-    }
-  }
- 
+.vendor-modal-btn {
+  padding: 16px 30px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+  display: block !important;
+}
+
+.vendor-modal-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(164, 139, 118, 0.2) !important;
+  background-color: transparent !important;
+  border-color: #a68b76 !important;
+  color: #a68b76 !important;
+}
+
+.vendor-modal-cancel-button {
+  padding: 16px 30px !important;
+  border-radius: 30px !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important;
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 250px !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+.vendor-modal-cancel-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(164, 139, 118, 0.2) !important;
+  background-color: transparent !important;
+  border-color: #a68b76 !important;
+  color: #a68b76 !important;
+}
+
   .vendors-list-header {
     display: flex;
     justify-content: space-between;
@@ -1285,7 +1234,6 @@
     font-size: 18px;
   }
 
-  /* Select vendor button in vendor details popup - black and square */
   .vendor-details .select-vendor-button {
     background-color: #000 !important;
     color: #fff !important;
@@ -1303,36 +1251,7 @@
     transform: none !important;
     box-shadow: none !important;
   }
-
-  
-    @media (max-width: 768px) {
-      .vendors-list-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-    
-      .results-info {
-        font-size: 0.8rem;
-      }
-    
-      .pagination {
-        gap: 4px;
-      }
-    
-      .pagination-btn {
-        min-width: 35px;
-        height: 35px;
-        padding: 6px 8px;
-        font-size: 13px;
-      }
-    
-      .pagination-prev,
-      .pagination-next {
-        font-size: 16px;
-      }
-    }
-  
+ 
     .vendor-price {
       display: none !important;
     }
@@ -1463,9 +1382,92 @@
   margin-bottom: 40px !important;
   letter-spacing: 1px !important;
 }
-  
 
+/* Responsive Design*/
 @media (max-width: 768px) {
+  .vendors-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .results-info {
+    font-size: 0.8rem;
+  }
+
+  .pagination {
+    gap: 4px;
+  }
+
+  .pagination-btn {
+    min-width: 35px;
+    height: 35px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  .pagination-prev,
+  .pagination-next {
+    font-size: 16px;
+  }
+}
+  
+@media (max-width: 768px) {
+  .vendor-details-content {
+    padding: 15px;
+  }
+
+  .main-photo {
+    height: 200px;
+  }
+
+  .vendor-details-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .vendor-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .vendor-category {
+    margin-left: 30px;
+  }
+
+  html[dir="rtl"] .vendor-category {
+    margin-left: 0;
+    margin-right: 30px;
+  }
+
+  .vendor-selection-options,
+  .add-more-vendors,
+  .form-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .vendor-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  html[dir="rtl"] .delete-vendor-button,
+  html[dir="ltr"] .delete-vendor-button,
+  html[dir="rtl"] .change-vendor-button,
+  html[dir="ltr"] .change-vendor-button {
+    order: initial;
+  }
+
+  .vendors-filters {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .checkbox-group {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .form-actions {
     flex-direction: column;
     gap: 10px;
@@ -1536,6 +1538,10 @@
   .vendor-details-card p {
     text-align: center;
   }
+
+  .vendors-map {
+      height: 400px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1573,3 +1579,31 @@
     margin-top: 12px;
   }
 }
+
+ @media (min-width: 992px) {
+    .vendors-content {
+      flex-direction: row;
+    }
+   
+    .vendors-filters {
+      flex: 0 0 250px;
+      align-self: flex-start;
+      position: sticky;
+      top: 20px;
+    }
+   
+    .vendors-results-container {
+      flex: 1;
+    }
+
+    .vendors-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+    @media (min-width: 576px) {
+    .vendors-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+ 

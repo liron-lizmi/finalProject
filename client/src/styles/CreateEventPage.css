@@ -1,3 +1,4 @@
+/* CreateEventPage.css */
 html, body {
   overflow-x: hidden; 
   overflow-y: auto; 
@@ -130,6 +131,17 @@ html, body {
   transition: all 0.3s ease;
 }
 
+.form-input,
+.time-input {
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-group:has(#eventName) input,
+.form-group:has(#eventTime) .time-input {
+  max-width: 700px;
+}
+
 .rtl .form-input {
   text-align: right;
 }
@@ -177,32 +189,6 @@ html, body {
   background-color: rgba(231, 76, 60, 0.03);
 }
 
-.date-input-container {
-  position: relative;
-  width: 100%;
-}
-
-.date-display-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.rtl .date-display-input {
-  padding-left: 45px;
-  padding-right: 18px;
-  text-align: right;
-}
-
-.ltr .date-display-input {
-  padding-right: 45px;
-  padding-left: 18px;
-  text-align: left;
-}
-
-.date-display-input {
-  cursor: pointer;
-}
-
 .calendar-icon {
   position: absolute;
   top: 50%;
@@ -233,11 +219,13 @@ html, body {
   color: #777;
 }
 
+
 .time-input-container {
   position: relative;
   width: 100%;
   display: flex;
   align-items: center;
+  max-width: 700px;
 }
 
 .rtl .time-input {
@@ -286,6 +274,36 @@ html, body {
 
 .time-icon:hover {
   color: #777;
+}
+
+.form-group:has(#eventDateDisplay) .date-input-container,
+.form-group:has(#eventDateDisplay) .date-display-wrapper,
+.form-group:has(#eventDateDisplay) .task-date-input-container,
+.form-group:has(#eventDateDisplay) .task-date-display-wrapper {
+  width: 100% !important;
+  max-width: 700px !important;
+}
+
+.task-date-input-container {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 700px !important;
+}
+
+.create-event-container .task-calendar-icon.rtl {
+  left: 10px !important;
+  right: auto !important;
+}
+
+.create-event-container .task-calendar-icon.ltr {
+  right: 15px !important;
+  left: auto !important;
+}
+
+.task-date-display-wrapper {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 700px !important;
 }
 
 .calendar-dropdown {
@@ -608,65 +626,58 @@ html, body {
   background-color: rgba(212, 185, 158, 0.1);
 }
 
-.form-actions {
+.create-event-actions {
   display: flex;
-  gap: 15px;
+  gap: 5px !important;
   margin-top: 10px;
-}
-
-.rtl.form-actions,
-.ltr.form-actions {
   justify-content: flex-start;
 }
 
-.rtl.form-actions,
-.ltr.form-actions {
+.rtl.create-event-actions {
+  justify-content: flex-start;
   flex-direction: row-reverse;
+}
+
+.create-event-actions .submit-button {
+  margin-inline-end: 30px !important;
 }
 
 .cancel-button,
 .submit-button {
-  padding: 16px 24px;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 15px 30px !important;
+  font-size: 1rem !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  background: linear-gradient(135deg, #d4b99e, #c4a98e) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(212, 185, 158, 0.3) !important;
+  width: auto !important;
+  min-width: 130px !important;
+  max-width: 150px !important;
+  flex: 0 0 auto !important;
 }
 
-.cancel-button {
-  background-color: #000 !important;
-  color: #fff;
-  border: 1px solid #e0e0e0;
-}
-
-.cancel-button:hover {
-  background-color: #ebebeb;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
-}
-
-.submit-button {
-  background-color: #000 !important;
-  color: #fff;
-  border: none;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
-}
-
+.cancel-button:hover,
 .submit-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
-  background: #222 !important;
-  transform: none;
-
+  box-shadow: 0 6px 20px rgba(212, 185, 158, 0.4) !important;
+  background: linear-gradient(135deg, #c4a98e, #b49878) !important;
+  color: white !important;
+  transform: none !important;
 }
 
 .submit-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .error-message {

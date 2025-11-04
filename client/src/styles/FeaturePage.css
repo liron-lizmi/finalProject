@@ -98,18 +98,23 @@
 
 .back-button {
   padding: 0.6rem 1.1rem;
-  background-color: transparent;
-  border: 1px solid #000;
+  background: linear-gradient(135deg, #d4b99e, #c4a98e);
+  color: white;
+  border: none;
   border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(212, 185, 158, 0.3);
   position: relative;
   z-index: 2;
 }
 
 .back-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 185, 158, 0.4);
+  background: linear-gradient(135deg, #c4a98e, #b49878);
 }
 
 .feature-page-content {
@@ -481,6 +486,7 @@
   box-shadow: 0 0 0 1px rgba(211, 47, 47, 0.2);
 }
 
+/* Responsive Design*/
 @media (max-width: 768px) {
  
   .feature-page-header {

@@ -1,3 +1,4 @@
+// client/src/pages/HomePage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HomePage.css';
@@ -17,6 +18,7 @@ const HomePage = () => {
   const [scrolled, setScrolled] = useState(false);
   const featuresRef = useRef([]);
   const stepsRef = useRef([]);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   useEffect(() => {
     document.documentElement.dir = i18n.dir();
@@ -51,6 +53,14 @@ const HomePage = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [i18n.language, i18n.dir]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial(prev => prev === 3 ? 0 : prev + 1);
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const isElementInViewport = (el) => {
     const rect = el.getBoundingClientRect();
@@ -87,14 +97,14 @@ const HomePage = () => {
               className={`language-option ${i18n.language === 'he' ? 'active' : ''}`}
               onClick={() => handleLanguageChange('he')}
             >
-              עברית
+              {t('general.Hebrew')}
             </span>
             <span className="language-separator">|</span>
             <span 
               className={`language-option ${i18n.language === 'en' ? 'active' : ''}`}
               onClick={() => handleLanguageChange('en')}
             >
-              English
+              {t('general.English')}
             </span>
           </div>
           <button className="btn" onClick={() => navigate('/register')}>{t('general.signup')}</button>
@@ -300,18 +310,33 @@ const HomePage = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="section testimonials-section">
-        <h2 className="section-title">{t('home.testimonials.title')}</h2>
-        <div className="testimonial-container">
-          <div className="testimonial">
-            <p className="testimonial-text">
-              {t('home.testimonials.quote')}
-            </p>
-            <p className="testimonial-author">{t('home.testimonials.author')}</p>
-            <p className="testimonial-role">{t('home.testimonials.event')}</p>
+        <section id="testimonials" className="section testimonials-section">
+          <h2 className="section-title">{t('home.testimonials.title')}</h2>
+          <div className="testimonial-container">
+            <div className="testimonial">
+              <p className="testimonial-text">
+                {t(`home.testimonials.testimonial${currentTestimonial + 1}.quote`)}
+              </p>
+              <p className="testimonial-author">
+                {t(`home.testimonials.testimonial${currentTestimonial + 1}.author`)}
+              </p>
+              <p className="testimonial-role">
+                {t(`home.testimonials.testimonial${currentTestimonial + 1}.event`)}
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+          
+          <div className="testimonial-dots">
+            {[0, 1, 2, 3].map(index => (
+              <button
+                key={index}
+                className={`testimonial-dot ${currentTestimonial === index ? 'active' : ''}`}
+                onClick={() => setCurrentTestimonial(index)}
+                aria-label={`Go to testimonial ${index + 1}`}
+              />
+            ))}
+          </div>
+        </section>
 
       {/* CTA Section */}
       <section className="cta-section">
@@ -328,14 +353,6 @@ const HomePage = () => {
         <p className="footer-description">
           {t('home.footer.description')}
         </p>
-        <div className="footer-links">
-          <a href="#" className="footer-link">{t('home.footer.about')}</a>
-          <a href="#" className="footer-link">{t('home.footer.services')}</a>
-          <a href="#" className="footer-link">{t('home.footer.blog')}</a>
-          <a href="#" className="footer-link">{t('home.footer.contact')}</a>
-          <a href="#" className="footer-link">{t('home.footer.terms')}</a>
-          <a href="#" className="footer-link">{t('home.footer.privacy')}</a>
-        </div>
         <p className="copyright">{t('home.footer.copyright')}</p>
       </footer>
     </div>

@@ -1,3 +1,4 @@
+// client/src/pages/Auth/dashboard.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -262,6 +263,7 @@ const Dashboard = () => {
       for (const notification of notifications) {
         if (notification.type === 'event_shared') {
           await axios.put(`/api/events/notifications/${notification._id}/accept`, {}, {
+             
             headers: { 'x-auth-token': token }
           });
         } else {
@@ -331,7 +333,13 @@ const Dashboard = () => {
               <img src="/images/logo.png" alt={t('general.appLogo')} />
             </div>
           </div>
-
+          <div className="header-center">
+            <div className="user-greeting">
+              <span>{t('dashboard.welcome')}</span>
+              <h2>{user?.name || user?.firstName || user?.email}</h2>
+              <span className="greeting-icon">👋</span>
+            </div>
+          </div>
           <div className={`header-${isRTL ? 'left' : 'right'}`}>
             <button className="logout-btn" onClick={handleLogout}>
               <span className="logout-icon">
@@ -349,12 +357,6 @@ const Dashboard = () => {
 
       <main className="dashboard-main">
         <div className="container">
-          <div className={`user-greeting-standalone ${isRTL ? 'rtl' : 'ltr'}`}>
-            <span className="greeting-icon">👋</span>
-            <span>{t('dashboard.welcome')}</span>
-            <h2>{user?.name || user?.firstName || user?.email}</h2>
-          </div>
-
           {showNotifications && notifications.length > 0 && (
             <div className="notifications-banner">
               <div className="notifications-content">
@@ -388,9 +390,11 @@ const Dashboard = () => {
 
           <div className="create-event-card">
             <div className="create-event-content">
-              <div className="sparkle-icon">✨</div>
               <div className="create-event-text">
-                <h2>{t('dashboard.createEventTitle')}</h2>
+                <h2>
+                  {t('dashboard.createEventTitle')}
+                  <span className="sparkle-icon-inline">✨</span>
+                </h2>
                 <p>{t('dashboard.createEventDescription')}</p>
               </div>
             </div>
@@ -425,7 +429,6 @@ const Dashboard = () => {
                     <div key={event._id} className={`event-card ${event.originalEvent ? 'shared-event' : ''}`}>
                       {event.originalEvent && (
                         <div className="shared-badge">
-                          <span className="shared-icon">👥</span>
                           <span>{t('dashboard.sharedEvent')}</span>
                         </div>
                       )}

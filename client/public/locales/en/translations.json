@@ -22,7 +22,9 @@
     "viewOnlyMode": "View only mode - you do not have editing permissions",
     "success": "Success",
     "error": "Error",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "Hebrew": "Hebrew",
+    "English": "English"
   },
   "auth": {
     "email": "Email",
@@ -466,6 +468,7 @@
         "notAvailable": "Not available",
         "rsvpNote": "If participants appear on this page who are not on the external guest page, they probably have not RSVP'd",
         "rsvpWarning": "You have not yet confirmed attendance to the event, please confirm and return to this page",
+        "shareLinkDescription": "Send this link to your invitees so they can find a ride to the event.",
         "stats": {
           "offering": "Ride Offers",
           "seeking": "Ride Seekers"
@@ -800,10 +803,27 @@
       }
     },
     "testimonials": {
-      "title": "Customers Say",
-      "quote": "\"PlanIt simply changed our entire wedding planning experience. Instead of pressure and worries, we could actually enjoy the process. The budget management and guest list tools saved us a lot of time and money, and on the day of the event everything went perfectly!\"",
-      "author": "Ronit and Dan",
-      "event": "Garden Wedding, June 2024"
+      "title": "Customer Testimonials",
+      "testimonial1": {
+        "quote": "PlanIt completely changed our wedding planning experience. Instead of stress and worries, we could truly enjoy the process. The budget management and guest list tools saved us so much time and money, and on the event day everything went perfectly!",
+        "author": "Ronit and Dan",
+        "event": "Wedding at an Event Garden, June 2024"
+      },
+      "testimonial2": {
+        "quote": "Seating arrangements used to be my biggest headache. The system solved it within minutes – I just dragged people between tables, and everything was clear and organized. The guests even received a clear map showing where to sit.",
+        "author": "Michal Cohen",
+        "event": "Bat Mitzvah, September 2024"
+      },
+      "testimonial3": {
+        "quote": "I planned a business event for 200 people. The task list helped me make sure I didn’t miss anything. Everything was written down with dates, and I could easily see what was left to do. Without it, I would have lost my mind.",
+        "author": "Lior Shmueli",
+        "event": "Business Conference, December 2024"
+      },
+      "testimonial4": {
+        "quote": "Finding vendors used to be exhausting until I discovered PlanIt. All the vendors in one place with real reviews. I saved several options, compared prices, and chose the best ones for me. It saved me weeks of work.",
+        "author": "Ori and Shira Levi",
+        "event": "Wedding at a Hall, February 2024"
+      }
     },
     "cta": {
       "title": "Ready to Start?",

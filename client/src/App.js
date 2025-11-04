@@ -27,7 +27,7 @@ import PublicRidesPage from './pages/Events/Features/PublicRidesPage';
 const App = () => {
   return (
     <Router>
-      <Suspense fallback={<div className="loading-spinner">טוען נתונים...</div>}>
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

@@ -1,3 +1,4 @@
+// client/src/pages/Events/CreateEventPage.js
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -40,6 +41,7 @@ const CreateEventPage = () => {
   const dayNames = {
     en: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
     he: ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
+    ,
   };
 
   useEffect(() => {
@@ -329,10 +331,11 @@ const CreateEventPage = () => {
     const month = currentMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDay = new Date(year, month, 1).getDay();
+    const adjustedFirstDay = isRTL ? (6 - firstDay) : firstDay;
     
     const days = [];
     
-    for (let i = 0; i < firstDay; i++) {
+    for (let i = 0; i < adjustedFirstDay; i++) {
       days.push(<div key={`empty-${i}`} className="task-calendar-day empty"></div>);
     }
     
@@ -365,9 +368,9 @@ const CreateEventPage = () => {
           <button 
             type="button" 
             className="task-month-nav prev" 
-            onClick={handlePrevMonth}
+            onClick={handleNextMonth}
           >
-            {isRTL ? '❯' : '❮'}
+            {isRTL ? '❮' : '❯'}
           </button>
           <div className="task-current-month">
             {monthNames[lang][currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -375,9 +378,9 @@ const CreateEventPage = () => {
           <button 
             type="button" 
             className="task-month-nav next" 
-            onClick={handleNextMonth}
+            onClick={handlePrevMonth}
           >
-            {isRTL ? '❮' : '❯'}
+            {isRTL ? '❯' : '❮'}
           </button>
         </div>
         <div className="task-calendar-days-header">
@@ -574,7 +577,7 @@ const CreateEventPage = () => {
             </p>
           </div>
           
-          <div className={`form-actions ${isRTL ? 'rtl' : 'ltr'}`}>
+          <div className={`create-event-actions ${isRTL ? 'rtl' : 'ltr'}`}>
             <button 
               type="button" 
               className="cancel-button" 

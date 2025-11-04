@@ -1,3 +1,4 @@
+// client/src/pages/Events/Features/components/TaskModal.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -315,7 +316,6 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
     } else {
       setDisplayReminderDate('');
       setShowReminderCalendar(false);
-      // נקה גם את שעת התזכורת כשמנקים את התאריך
       setFormData(prev => ({ ...prev, reminderTime: '' }));
     }
   };
@@ -685,7 +685,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                 onChange={handleChange}
                 onFocus={() => handleFocus('priority')}
                 onBlur={handleBlur}
-                className={`form-select ${formData.priority && formData.priority !== 'medium' ? 'filled' : ''}`}
+                className={`form-select priority-select ${formData.priority && formData.priority !== 'medium' ? 'filled' : ''}`}
               >
                 <option value="low">{t('events.features.tasks.priority.low')}</option>
                 <option value="medium">{t('events.features.tasks.priority.medium')}</option>
@@ -769,23 +769,25 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
           </div>
 
           {/* Recurring Reminder Checkbox */}
-          <div className="form-group">
-            <div className="recurring-reminder-container">
-              <input
-                type="checkbox"
-                id="recurringReminder"
-                checked={recurringReminderEnabled}
-                onChange={handleRecurringCheckboxChange}
-                className="recurring-checkbox"
-              />
-              <label htmlFor="recurringReminder" className="recurring-label">
-                {t('events.features.tasks.form.recurringReminder')}
-              </label>
-              {formData.reminderRecurrence !== 'none' && (
-                <span className="recurring-selected">
-                  ({recurringOptions.find(opt => opt.value === formData.reminderRecurrence)?.label})
-                </span>
-              )}
+          <div className="form-row recurring-reminder-row">
+            <div className="form-group">
+              <div className="recurring-reminder-container">
+                {formData.reminderRecurrence !== 'none' && (
+                  <span className="recurring-selected">
+                    ({recurringOptions.find(opt => opt.value === formData.reminderRecurrence)?.label})
+                  </span>
+                )}
+                <label htmlFor="recurringReminder" className="recurring-label">
+                  {t('events.features.tasks.form.recurringReminder')}
+                </label>
+                <input
+                  type="checkbox"
+                  id="recurringReminder"
+                  checked={recurringReminderEnabled}
+                  onChange={handleRecurringCheckboxChange}
+                  className="recurring-checkbox"
+                />
+              </div>
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+// client/src/pages/Events/Features/components/budget/BudgetCharts.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -376,55 +377,6 @@ const BudgetCharts = ({ budget, eventId, chartColors }) => {
       <div id="chart-data-for-print" className="chart-content">
         {activeChart === 'pie' && createPieChart()}
         {activeChart === 'bar' && createBarChart()}
-      </div>
-
-      <div className="chart-insights">
-        <h4>{t('events.features.budget.insights')}</h4>
-        <div className="insights-list">
-          {(() => {
-            const categoriesWithSpending = summary.categoryBreakdown.filter(cat => cat.spent > 0);
-            
-            if (categoriesWithSpending.length === 0) {
-              return (
-                <div className="insight-item">
-                  <span className="insight-text">
-                    {t('events.features.budget.noSpendingYet')}
-                  </span>
-                </div>
-              );
-            }
-
-            const sortedBySpending = categoriesWithSpending.sort((a, b) => b.spent - a.spent);
-            const highestSpending = sortedBySpending[0];
-            const lowestSpending = sortedBySpending[sortedBySpending.length - 1];
-            
-            const insights = [];
-            
-            const highestCategoryName = t(`events.features.budget.categories.${highestSpending.category}`);
-            const highestPercentage = ((highestSpending.spent / summary.totalSpent) * 100).toFixed(1);
-            insights.push(
-              <div key="highest" className="insight-item">
-                <span className="insight-text">
-                  {highestCategoryName} {t('events.features.budget.isHighestSpendingCategory')} - ₪{highestSpending.spent.toLocaleString()} ({highestPercentage}%)
-                </span>
-              </div>
-            );
-
-            if (sortedBySpending.length > 1 && lowestSpending.spent !== highestSpending.spent) {
-              const lowestCategoryName = t(`events.features.budget.categories.${lowestSpending.category}`);
-              const lowestPercentage = ((lowestSpending.spent / summary.totalSpent) * 100).toFixed(1);
-              insights.push(
-                <div key="lowest" className="insight-item">
-                  <span className="insight-text">
-                    {lowestCategoryName} {t('events.features.budget.isLowestSpendingCategory')} - ₪{lowestSpending.spent.toLocaleString()} ({lowestPercentage}%)
-                  </span>
-                </div>
-              );
-            }
-
-            return insights;
-          })()}
-        </div>
       </div>
     </div>
   );
