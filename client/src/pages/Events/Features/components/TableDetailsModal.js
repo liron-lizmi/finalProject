@@ -122,6 +122,8 @@ const TableDetailsModal = ({
   }, [seatedGuestIds, guests]);
 
   const currentOccupancy = useMemo(() => {
+    if (!seatedGuests || seatedGuests.length === 0) return 0;
+    
     return seatedGuests.reduce((sum, guest) => {
       if (isSeparatedSeating && table && !tableInfo.isNeutral) {
         if (tableInfo.gender === 'male') {
@@ -131,9 +133,30 @@ const TableDetailsModal = ({
         }
       }
       
+      if (isSeparatedSeating && table && tableInfo.isNeutral) {
+        const isMaleInThisTable = maleArrangement && maleArrangement[table.id] && 
+                                  maleArrangement[table.id].includes(guest._id.toString());
+        const isFemaleInThisTable = femaleArrangement && femaleArrangement[table.id] && 
+                                    femaleArrangement[table.id].includes(guest._id.toString());
+        
+        let guestCount = 0;
+        if (isMaleInThisTable) {
+          guestCount += (guest.maleCount || 0);
+        }
+        if (isFemaleInThisTable) {
+          guestCount += (guest.femaleCount || 0);
+        }
+        
+        if (!isMaleInThisTable && !isFemaleInThisTable) {
+          guestCount = guest.attendingCount || 1;
+        }
+        
+        return sum + guestCount;
+      }
+      
       return sum + (guest.attendingCount || 1);
     }, 0);
-  }, [seatedGuests, isSeparatedSeating, table, tableInfo]);
+  }, [seatedGuests, isSeparatedSeating, table, tableInfo, maleArrangement, femaleArrangement]);
 
   const minAllowedCapacity = useMemo(() => {
     return Math.max(8, currentOccupancy);
@@ -167,7 +190,7 @@ const TableDetailsModal = ({
   if (!isOpen || !table) return null;
 
   const calculateTableSize = (type, capacity) => {
-    const baseSize = Math.max(80, Math.min(250, 60 + (capacity * 6)));
+    const baseSize = 120;
     
     switch (type) {
       case 'round':
@@ -175,8 +198,8 @@ const TableDetailsModal = ({
       case 'square':
         return { width: baseSize, height: baseSize };
       case 'rectangular':
-        const width = Math.max(140, baseSize * 1.5);
-        const height = Math.max(70, baseSize * 0.8);
+        const width = baseSize * 1.5;
+        const height = baseSize * 0.8;
         return { width, height };
       default:
         return { width: baseSize, height: baseSize };
@@ -228,15 +251,25 @@ const TableDetailsModal = ({
 
   const handleAddGuest = (guestIdParam) => {
     const guest = guests.find(g => g._id === guestIdParam || g._id.toString() === guestIdParam.toString().replace(/_male$|_female$/, ''));
-    if (!guest) return;
+    if (!guest) {
+      return;
+    }
 
     let guestSize = guest.attendingCount || 1;
     
-    if (isSeparatedSeating && !tableInfo.isNeutral) {
-      if (tableInfo.gender === 'male') {
-        guestSize = guest.maleCount || 0;
-      } else if (tableInfo.gender === 'female') {
-        guestSize = guest.femaleCount || 0;
+    if (isSeparatedSeating) {
+      if (!tableInfo.isNeutral) {
+        if (tableInfo.gender === 'male') {
+          guestSize = guest.maleCount || 0;
+        } else if (tableInfo.gender === 'female') {
+          guestSize = guest.femaleCount || 0;
+        }
+      } else {
+        if (guestIdParam.toString().includes('_male')) {
+          guestSize = guest.maleCount || 0;
+        } else if (guestIdParam.toString().includes('_female')) {
+          guestSize = guest.femaleCount || 0;
+        }
       }
     }
 
@@ -253,6 +286,24 @@ const TableDetailsModal = ({
   const handleRemoveGuest = (guestIdParam) => {
     const isGenderSpecific = guestIdParam.toString().includes('_male') || guestIdParam.toString().includes('_female');
     const guestId = isGenderSpecific ? guestIdParam.toString().replace(/_male$|_female$/, '') : guestIdParam.toString();
+    
+    const willBeEmpty = seatedGuestIds.length === 1;
+    
+    if (willBeEmpty && table.name && table.name.includes(' - ')) {
+      const tableNumberMatch = table.name.match(/\d+/);
+      if (tableNumberMatch) {
+        const tableNumber = tableNumberMatch[0];
+        const baseName = `${t('seating.tableName')} ${tableNumber}`;
+        
+        onUpdateTable(table.id, {
+          name: baseName,
+          capacity: table.capacity,
+          type: table.type,
+          notes: table.notes || '',
+          size: table.size
+        });
+      }
+    }
     
     if (isSeparatedSeating && !tableInfo.isNeutral) {
       if (tableInfo.gender === 'male') {

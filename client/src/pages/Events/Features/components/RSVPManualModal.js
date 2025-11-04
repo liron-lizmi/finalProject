@@ -49,18 +49,18 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
   };
 
   const handleAttendingCountChange = (newCount) => {
-    const validCount = Math.max(1, Math.min(10, newCount));
+    const validCount = Math.max(1, Math.min(20, newCount));
     setAttendingCount(validCount);
   };
 
   const handleMaleCountChange = (newCount) => {
-    const validCount = Math.max(0, Math.min(10, newCount));
+    const validCount = Math.max(0, Math.min(20, newCount));
     setMaleCount(validCount);
     setAttendingCount(validCount + femaleCount);
   };
 
   const handleFemaleCountChange = (newCount) => {
-    const validCount = Math.max(0, Math.min(10, newCount));
+    const validCount = Math.max(0, Math.min(20, newCount));
     setFemaleCount(validCount);
     setAttendingCount(maleCount + validCount);
   };
@@ -157,14 +157,14 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
                             }
                           }}
                           min="0"
-                          max="10"
+                          max="20"
                           className="count-input"
                         />
                         <button
                           type="button"
                           className="count-button increase"
                           onClick={() => handleMaleCountChange(maleCount + 1)}
-                          disabled={maleCount >= 10}
+                          disabled={maleCount >= 20}
                         >
                           +
                         </button>
@@ -195,14 +195,14 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
                             }
                           }}
                           min="0"
-                          max="10"
+                          max="20"
                           className="count-input"
                         />
                         <button
                           type="button"
                           className="count-button increase"
                           onClick={() => handleFemaleCountChange(femaleCount + 1)}
-                          disabled={femaleCount >= 10}
+                          disabled={femaleCount >= 20}
                         >
                           +
                         </button>
@@ -240,14 +240,14 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
                           }
                         }}
                         min="1"
-                        max="10"
+                        max="20"
                         className="count-input"
                       />
                       <button
                         type="button"
                         className="count-button increase"
                         onClick={() => handleAttendingCountChange(attendingCount + 1)}
-                        disabled={attendingCount >= 10}
+                        disabled={attendingCount >= 20}
                       >
                         +
                       </button>

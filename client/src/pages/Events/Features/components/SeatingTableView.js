@@ -305,43 +305,110 @@ const SeatingTableView = ({
     }
   };
 
+  const calculateNextAvailablePosition = useCallback((targetGender) => {
+    const relevantTables = targetGender === 'male' ? maleTables : femaleTables;
+    const startX = targetGender === 'male' ? 300 : 1200;
+    const startY = 250;
+    const spacing = 200;
+    const cols = 3;
+
+    if (!relevantTables || relevantTables.length === 0) {
+      return { x: startX, y: startY };
+    }
+
+    const occupiedPositions = new Set();
+    relevantTables.forEach(table => {
+      if (table.position) {
+        const posKey = `${Math.round(table.position.x)},${Math.round(table.position.y)}`;
+        occupiedPositions.add(posKey);
+      }
+    });
+
+    let position = 0;
+    while (position < 100) {
+      const row = Math.floor(position / cols);
+      const col = position % cols;
+      const x = startX + col * spacing;
+      const y = startY + row * spacing;
+      const posKey = `${x},${y}`;
+      
+      if (!occupiedPositions.has(posKey)) {
+        return { x, y };
+      }
+      position++;
+    }
+
+    const lastRow = Math.floor(relevantTables.length / cols);
+    const lastCol = relevantTables.length % cols;
+    return {
+      x: startX + lastCol * spacing,
+      y: startY + lastRow * spacing
+    };
+  }, [maleTables, femaleTables]);
+
+  const calculateNextNeutralPosition = useCallback((neutralTables) => {
+    const neutralStartX = 900;
+    const neutralStartY = 250;
+    const spacing = 200;
+    const cols = 2;
+    
+    if (!neutralTables || neutralTables.length === 0) {
+      return { x: neutralStartX, y: neutralStartY };
+    }
+    
+    const tableCounter = neutralTables.length;
+    return {
+      x: neutralStartX + (tableCounter % cols) * spacing,
+      y: neutralStartY + Math.floor(tableCounter / cols) * spacing
+    };
+  }, []);
+
   const handleAddTable = () => {
     if (!canEdit) return;
     
     const currentGender = isSeparatedSeating ? genderFilter : null;
     
+    let relevantTables;
     let position;
     
     if (isSeparatedSeating && currentGender && currentGender !== 'all') {
-      const relevantTables = currentGender === 'male' ? maleTables : femaleTables;
-      const tableCounter = relevantTables.length;
-
-      position = {
-        x: 300 + (tableCounter % 3) * 200,
-        y: 300 + Math.floor(tableCounter / 3) * 200
-      };
+      relevantTables = currentGender === 'male' ? maleTables : femaleTables;
+      position = calculateNextAvailablePosition(currentGender);
+    } else if (isSeparatedSeating) {
+      relevantTables = tables;
+      position = calculateNextNeutralPosition(tables);
     } else {
-      const tableCounter = tables.length;
+      relevantTables = tables;
+      const tableCounter = relevantTables.length;
       position = {
         x: 300 + (tableCounter % 3) * 200,
-        y: 300 + Math.floor(tableCounter / 3) * 200
+        y: 250 + Math.floor(tableCounter / 3) * 200
       };
     }
     
-    const type = 'round';
+    let type, size;
     const capacity = newTableCapacity;
-    const size = capacity <= 10 
-      ? { width: 120, height: 120 }
-      : { width: 160, height: 100 };
+    
+    if (capacity <= 12) {
+      type = 'round';
+      size = { width: 120, height: 120 };
+    } else {
+      type = 'rectangular';
+      size = { width: 200, height: 100 };
+    }
     
     const newTable = {
       id: `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: `${t('seating.table.defaultName')} ${relevantTables.length + 1}`,
       type,
       capacity,
       position,
       rotation: 0,
       size,
-      gender: currentGender && currentGender !== 'all' ? currentGender : null
+      gender: currentGender && currentGender !== 'all' ? currentGender : null,
+      fromTableView: true,
+      autoPositioned: true,
+      needsRepositioning: false
     };
 
     onAddTable(newTable);
@@ -382,7 +449,7 @@ const SeatingTableView = ({
               className="capacity-select"
               disabled={!canEdit}
             >
-              {[8, 10, 12, 14, 16, 18, 20, 22, 24].map(capacity => (
+              {[10, 12, 14, 16, 18, 20, 22, 24].map(capacity => (
                 <option key={capacity} value={capacity}>
                   {capacity} {t('seating.table.seats')}
                 </option>

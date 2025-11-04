@@ -19,7 +19,7 @@ const TableSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 2,
-    max: 20
+    max: 24
   },
   position: {
     x: {
@@ -247,7 +247,7 @@ const SeatingSchema = new mongoose.Schema({
       type: Number,
       default: 12,
       min: 6,
-      max: 20
+      max: 24
     }
   },
   syncTriggers: [SyncTriggerSchema],

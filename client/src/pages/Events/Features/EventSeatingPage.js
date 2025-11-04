@@ -385,8 +385,10 @@ const EventSeatingPage = () => {
   }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
   const fetchSeatingArrangement = useCallback(async () => {
-    try {      
+    try {
+      
       const response = await makeApiRequest(`/api/events/${eventId}/seating`);
+            
       if (!response) {
         return;
       }
@@ -396,7 +398,7 @@ const EventSeatingPage = () => {
        
         const isEventSeparated = data.isSeparatedSeating || false;
         setIsSeparatedSeating(isEventSeparated);
-               
+                       
         if (isEventSeparated) {
          
           setMaleTables(data.maleTables || []);
@@ -430,7 +432,7 @@ const EventSeatingPage = () => {
         if (data.updatedAt) {
           setLastServerUpdate(new Date(data.updatedAt).getTime());
         }
-       
+               
         return data;
        
       } else if (response.status === 404) {
@@ -462,14 +464,14 @@ const EventSeatingPage = () => {
 
   const saveSeatingArrangement = useCallback(async (immediateData = null) => {
     try {
-     
+
       const dataToSave = immediateData || (isSeparatedSeating ? {
-        tables: tables,
-        arrangement: seatingArrangement,
-        maleTables,
-        femaleTables,
-        maleArrangement,
-        femaleArrangement,
+        tables: tables || [],
+        arrangement: seatingArrangement || {},
+        maleTables: maleTables || [],
+        femaleTables: femaleTables || [],
+        maleArrangement: maleArrangement || {},
+        femaleArrangement: femaleArrangement || {},
         isSeparatedSeating: true,
         preferences,
         layoutSettings: {
@@ -477,8 +479,8 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       } : {
-        tables,
-        arrangement: seatingArrangement,
+        tables: tables || [],
+        arrangement: seatingArrangement || {},
         isSeparatedSeating: false,
         preferences,
         layoutSettings: {
@@ -487,9 +489,11 @@ const EventSeatingPage = () => {
         }
       });
 
+      const jsonString = JSON.stringify(dataToSave);
+
       const response = await makeApiRequest(`/api/events/${eventId}/seating`, {
         method: 'POST',
-        body: JSON.stringify(dataToSave)
+        body: jsonString
       });
 
       if (!response) {
@@ -647,21 +651,79 @@ const EventSeatingPage = () => {
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, preferences, confirmedGuests, seatingArrangement, maleArrangement, femaleArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint, isSeparatedSeating]);
 
   const calculateTableSize = useCallback((type, capacity) => {
-    const baseSize = Math.max(80, Math.min(250, 60 + (capacity * 6)));
-   
+    const baseSize = 120;
+       
     switch (type) {
       case 'round':
         return { width: baseSize, height: baseSize };
       case 'square':
         return { width: baseSize, height: baseSize };
       case 'rectangular':
-        const width = Math.max(140, baseSize * 1.5);
-        const height = Math.max(70, baseSize * 0.8);
+        const width = baseSize * 1.5;
+        const height = baseSize * 0.8;
         return { width, height };
       default:
         return { width: baseSize, height: baseSize };
     }
   }, []);
+
+  const checkTableCollision = useCallback((newPosition, newSize, allTables) => {
+    
+    const COLLISION_PADDING = 20;
+    
+    for (const existingTable of allTables) {
+      if (!existingTable.position || !existingTable.size) continue;
+      
+      const existingPos = existingTable.position;
+      const existingSize = existingTable.size;
+      
+      const newLeft = newPosition.x - (newSize.width / 2) - COLLISION_PADDING;
+      const newRight = newPosition.x + (newSize.width / 2) + COLLISION_PADDING;
+      const newTop = newPosition.y - (newSize.height / 2) - COLLISION_PADDING;
+      const newBottom = newPosition.y + (newSize.height / 2) + COLLISION_PADDING;
+      
+      const existingLeft = existingPos.x - (existingSize.width / 2);
+      const existingRight = existingPos.x + (existingSize.width / 2);
+      const existingTop = existingPos.y - (existingSize.height / 2);
+      const existingBottom = existingPos.y + (existingSize.height / 2);
+      
+      const hasCollision = !(newRight < existingLeft || 
+                             newLeft > existingRight || 
+                             newBottom < existingTop || 
+                             newTop > existingBottom);
+      
+      if (hasCollision) {
+        return { hasCollision: true, collidingTable: existingTable };
+      }
+    }
+    
+    return { hasCollision: false };
+  }, []);
+
+  const findNonCollidingPosition = useCallback((requestedPosition, tableSize, allTables) => {
+    
+    const collision = checkTableCollision(requestedPosition, tableSize, allTables);
+    if (!collision.hasCollision) {
+      return requestedPosition;
+    }
+    
+    const STEP = 50;
+    for (let radius = STEP; radius <= 500; radius += STEP) {
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+        const x = requestedPosition.x + Math.cos(angle) * radius;
+        const y = requestedPosition.y + Math.sin(angle) * radius;
+        
+        const testPosition = { x, y };
+        const testCollision = checkTableCollision(testPosition, tableSize, allTables);
+        
+        if (!testCollision.hasCollision) {
+          return testPosition;
+        }
+      }
+    }
+    
+    return requestedPosition;
+  }, [checkTableCollision]);
 
   const addTable = useCallback((event, type = null, capacity = null) => {
    
@@ -680,10 +742,15 @@ const EventSeatingPage = () => {
    
     const finalCapacity = capacity || tableCapacity;
     const finalType = type || tableType;
+    const tableSize = calculateTableSize(finalType, finalCapacity);
+    
        
     if (isSeparatedSeating) {
       setTables(prevTables => {
         const allTables = [...prevTables, ...maleTables, ...femaleTables];
+        
+        const finalPosition = findNonCollidingPosition(position, tableSize, allTables);
+        
         const tableNumbers = allTables.map(table => {
           const match = table.name.match(/(\d+)/);
           return match ? parseInt(match[1], 10) : 0;
@@ -695,9 +762,9 @@ const EventSeatingPage = () => {
           name: `${t('seating.tableName')} ${nextTableNumber}`,
           type: finalType,
           capacity: finalCapacity,
-          position,
+          position: finalPosition,
           rotation: 0,
-          size: calculateTableSize(finalType, finalCapacity),
+          size: tableSize,
           gender: null,
           notes: ''
         };
@@ -728,6 +795,8 @@ const EventSeatingPage = () => {
       });
     } else {
       setTables(prevTables => {
+        const finalPosition = findNonCollidingPosition(position, tableSize, prevTables);
+        
         const tableNumbers = prevTables.map(table => {
           const match = table.name.match(/(\d+)/);
           return match ? parseInt(match[1], 10) : 0;
@@ -739,9 +808,9 @@ const EventSeatingPage = () => {
           name: `${t('seating.tableName')} ${nextTableNumber}`,
           type: finalType,
           capacity: finalCapacity,
-          position,
+          position: finalPosition,
           rotation: 0,
-          size: calculateTableSize(finalType, finalCapacity),
+          size: tableSize,
           gender: null,
           notes: ''
         };
@@ -856,12 +925,22 @@ const EventSeatingPage = () => {
     
     const nextTableNumber = getNextTableNumber();
     
+    const allExistingTables = [...tables, ...maleTables, ...femaleTables];
+    const defaultPosition = { x: 1100, y: 300 };
+    const tableSize = newTable.size || { width: 100, height: 100 };
+    
+    const finalPosition = findNonCollidingPosition(defaultPosition, tableSize, allExistingTables);
+        
     const tableWithCorrectName = {
       ...newTable,
       name: `${t('seating.tableName')} ${nextTableNumber}`,
-      notes: newTable.notes || ''
+      notes: newTable.notes || '',
+      position: finalPosition,
+      size: tableSize,
+      fromTableView: true,
+      autoPositioned: false
     };
-    
+        
     if (isSeparatedSeating && genderFilter !== 'all') {
       if (genderFilter === 'male') {
         const newMaleTables = [...maleTables, tableWithCorrectName];
@@ -938,14 +1017,6 @@ const EventSeatingPage = () => {
     if (!canEdit) {
       setError(t('events.accessDenied'));
       return;
-    }
-
-    if (updates && updates.capacity !== undefined) {
-      const newSize = calculateTableSize(
-        updates.type || 'round',
-        updates.capacity
-      );
-      updates.size = newSize;
     }
 
     if (isSeparatedSeating) {
@@ -1243,43 +1314,71 @@ const EventSeatingPage = () => {
     }
   }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, canEdit, isSeparatedSeating]);
 
-  const repositionTableByGender = useCallback((table, newGender, existingGenderTables) => {
-    const CANVAS_WIDTH = 2400;
-    const CANVAS_HEIGHT = 1600;
-    const MARGIN = 150;
-    const FIXED_TABLE_SIZE = 100;
-   
-    const tableIndex = existingGenderTables.length;
-   
-    const tablesPerRow = 4;
-    const row = Math.floor(tableIndex / tablesPerRow);
-    const col = tableIndex % tablesPerRow;
-   
-    const canvasMidpoint = CANVAS_WIDTH / 2;
-   
-    let canvasStartX, canvasEndX;
-   
-    if (newGender === 'male') {
-      canvasStartX = MARGIN;
-      canvasEndX = canvasMidpoint - 50;
-    } else {
-      canvasStartX = canvasMidpoint + 50;
-      canvasEndX = CANVAS_WIDTH - MARGIN;
+  const repositionTableByGender = useCallback((table, newGender, existingGenderTables, shouldReposition = true) => {
+
+    if (!shouldReposition && !table.fromTableView) {
+      return {
+        ...table,
+        gender: newGender
+      };
     }
-   
-    const availableWidth = canvasEndX - canvasStartX;
-    const columnWidth = availableWidth / tablesPerRow;
-   
-    const x = canvasStartX + (columnWidth * col) + (columnWidth / 2);
-    const y = MARGIN + (row * 200) + 100;
-   
-    return {
+    
+    const calculateNextAvailablePosition = (targetGender) => {
+      const startX = targetGender === 'male' ? 300 : 1200;
+      const startY = 250;
+      const spacing = 200;
+      const cols = 3;
+
+      const allExistingTables = [
+        ...(tables || []),
+        ...(maleTables || []),
+        ...(femaleTables || [])
+      ];
+
+      const occupiedPositions = new Set();
+      allExistingTables.forEach(t => {
+        if (t.id === table.id) {
+          return;
+        }
+        
+        if (t.position) {
+          const posKey = `${Math.round(t.position.x)},${Math.round(t.position.y)}`;
+          occupiedPositions.add(posKey);
+        }
+      });
+
+      let position = 0;
+      while (position < 100) {
+        const row = Math.floor(position / cols);
+        const col = position % cols;
+        const x = startX + col * spacing;
+        const y = startY + row * spacing;
+        const posKey = `${x},${y}`;
+        
+        if (!occupiedPositions.has(posKey)) {
+          return { x, y };
+        }
+        position++;
+      }
+
+      const lastRow = Math.floor(allExistingTables.length / cols);
+      const lastCol = allExistingTables.length % cols;
+      return {
+        x: startX + lastCol * spacing,
+        y: startY + lastRow * spacing
+      };
+    };
+    
+    const newPosition = calculateNextAvailablePosition(newGender);
+    
+    const repositionedTable = {
       ...table,
       gender: newGender,
-      position: { x, y },
-      size: { width: FIXED_TABLE_SIZE, height: FIXED_TABLE_SIZE } // וודא שהגודל נשמר
+      position: newPosition
     };
-  }, []);
+  
+    return repositionedTable;
+  }, [tables, maleTables, femaleTables]); 
 
   const seatGuest = useCallback((guestId, tableId) => {
 
@@ -1387,17 +1486,24 @@ const EventSeatingPage = () => {
       }
      
       if (isNeutralTable) {
+        
         const seatedGuests = currentArrangement[tableId] || [];
        
         if (seatedGuests.length === 0) {
+          
           const newTables = tables.filter(t => t.id !== tableId);
-         
+          
+          const isManuallyPlaced = table.position && 
+            (table.position.x !== 300 || table.position.y !== 300) &&
+            !table.fromTableView;
+                   
           const tableWithGender = repositionTableByGender(
             table,
             draggedGender,
-            draggedGender === 'male' ? maleTables : femaleTables
+            draggedGender === 'male' ? maleTables : femaleTables,
+            !isManuallyPlaced
           );
-         
+                   
           if (draggedGender === 'male') {
             const newMaleTables = [...maleTables, tableWithGender];
             const newMaleArrangement = { ...maleArrangement, [tableId]: [actualGuestId] };
@@ -1690,21 +1796,31 @@ const EventSeatingPage = () => {
                        
             updatedNeutralTables.push(neutralTable);
             updatedMaleTables.splice(tableIndex, 1);
+            
+            if (editingTable && editingTable.id === tableId) {
+              setIsTableModalOpen(false);
+              setEditingTable(null);
+              setSelectedTable(null);
+            }
            
           }
         });
+        
+        updatedMaleTables = updateTableNamesWithGroups(updatedMaleTables, updatedMaleArrangement, 'male');
+        
+        updatedNeutralTables = updateTableNamesWithGroups(updatedNeutralTables, seatingArrangement, null);
        
         setMaleArrangement(updatedMaleArrangement);
         setMaleTables(updatedMaleTables);
         setTables(updatedNeutralTables);
-       
+               
         const dataToSave = {
-          tables: updatedNeutralTables,
-          arrangement: seatingArrangement,
-          maleTables: updatedMaleTables,
-          femaleTables,
-          maleArrangement: updatedMaleArrangement,
-          femaleArrangement,
+          tables: updatedNeutralTables || [],
+          arrangement: seatingArrangement || {},
+          maleTables: updatedMaleTables || [],
+          femaleTables: femaleTables || [],
+          maleArrangement: updatedMaleArrangement || {},
+          femaleArrangement: femaleArrangement || {},
           isSeparatedSeating: true,
           preferences,
           layoutSettings: { canvasScale, canvasOffset }
@@ -1749,21 +1865,31 @@ const EventSeatingPage = () => {
                        
             updatedNeutralTables.push(neutralTable);
             updatedFemaleTables.splice(tableIndex, 1);
+            
+            if (editingTable && editingTable.id === tableId) {
+              setIsTableModalOpen(false);
+              setEditingTable(null);
+              setSelectedTable(null);
+            }
            
           }
         });
+        
+        updatedFemaleTables = updateTableNamesWithGroups(updatedFemaleTables, updatedFemaleArrangement, 'female');
+        
+        updatedNeutralTables = updateTableNamesWithGroups(updatedNeutralTables, seatingArrangement, null);
        
         setFemaleArrangement(updatedFemaleArrangement);
         setFemaleTables(updatedFemaleTables);
         setTables(updatedNeutralTables);
        
         const dataToSave = {
-          tables: updatedNeutralTables,
-          arrangement: seatingArrangement,
-          maleTables,
-          femaleTables: updatedFemaleTables,
-          maleArrangement,
-          femaleArrangement: updatedFemaleArrangement,
+          tables: updatedNeutralTables || [],
+          arrangement: seatingArrangement || {},
+          maleTables: maleTables || [],
+          femaleTables: updatedFemaleTables || [],
+          maleArrangement: maleArrangement || {},
+          femaleArrangement: updatedFemaleArrangement || {},
           isSeparatedSeating: true,
           preferences,
           layoutSettings: { canvasScale, canvasOffset }
@@ -1790,7 +1916,7 @@ const EventSeatingPage = () => {
       };
       saveSeatingArrangement(dataToSave);
     }
-  }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement, saveSeatingArrangement, tables, maleTables, femaleTables, preferences, canvasScale, canvasOffset, t, manuallyEditedTableNames]);
+  }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement, saveSeatingArrangement, tables, maleTables, femaleTables, preferences, canvasScale, canvasOffset, t, manuallyEditedTableNames, updateTableNamesWithGroups, editingTable]);
 
   const clearAllSeating = useCallback(() => {
     if (!canEdit) {
