@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import '../../../../styles/SyncOptionsModal.css';
 
 const SyncOptionsModal = ({
   isOpen,
@@ -9,7 +10,8 @@ const SyncOptionsModal = ({
   pendingTriggers = [],
   onApplyOption,
   onMoveToUnassigned,
-  canEdit = true
+  canEdit = true,
+  isSeparatedSeating = false
 }) => {
   const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState(null);
@@ -18,15 +20,23 @@ const SyncOptionsModal = ({
   if (!isOpen) return null;
 
   const handleApplyOption = () => {
-    if (selectedOption && onApplyOption) {
-      onApplyOption(selectedOption.id);
+    if (selectedOption) {
+      if (selectedOption.id === 'unassigned') {
+        handleMoveToUnassigned();
+      } else if (onApplyOption) {
+        onApplyOption(selectedOption.id);
+      }
     }
   };
 
   const handleMoveToUnassigned = () => {
-    const guestIds = affectedGuests.map(guest => guest.id);
-    if (onMoveToUnassigned && guestIds.length > 0) {
-      onMoveToUnassigned(guestIds);
+    const guestsWithGender = affectedGuests.map(guest => ({
+      id: guest.id,
+      gender: guest.gender
+    }));
+    
+    if (onMoveToUnassigned && guestsWithGender.length > 0) {
+      onMoveToUnassigned(guestsWithGender);
     }
   };
 
@@ -40,147 +50,130 @@ const SyncOptionsModal = ({
   return (
     <div className="modal-overlay">
       <div className="sync-options-modal">
-        <div className="modal-header">
-          <h3>{t('seating.sync.modalTitle')}</h3>
-          <button className="modal-close-button" onClick={onClose}>
-            ×
-          </button>
-        </div>
-
-        <div className="modal-content">
-          <div className="sync-changes-summary">
-            <h4>{t('seating.sync.changesDetected')}</h4>
-            <div className="affected-guests-list">
-              <h5>{t('seating.sync.affectedGuests')} ({affectedGuests.length})</h5>
-              {affectedGuests.map(guest => (
+        <div className="sync-changes-summary">
+          <h4>{t('seating.sync.changesDetected')}</h4>
+          <div className="affected-guests-list">
+            <h5>{t('seating.sync.affectedGuests')} ({affectedGuests.length})</h5>
+            {affectedGuests.map(guest => {
+              let displayCount = guest.attendingCount || 1;
+              if (isSeparatedSeating && guest.gender) {
+                displayCount = guest.gender === 'male' 
+                  ? (guest.maleCount || 0) 
+                  : (guest.femaleCount || 0);
+              }
+              
+              return (
                 <div key={guest.id} className="affected-guest-item">
                   <span className="guest-name">{guest.name}</span>
-                  {guest.attendingCount > 1 && (
-                    <span className="attending-count">({guest.attendingCount})</span>
+                  {displayCount > 1 && (
+                    <span className="attending-count">({displayCount})</span>
+                  )}
+                  {guest.gender && isSeparatedSeating && (
+                    <span className="guest-gender">
+                      {t(`seating.genderFilter.${guest.gender}`)}
+                    </span>
                   )}
                   <span className="guest-group">{guest.group}</span>
                 </div>
-              ))}
-            </div>
-
-            {pendingTriggers.length > 0 && (
-              <div className="pending-triggers">
-                <h5>{t('seating.sync.pendingChanges')}</h5>
-                {pendingTriggers.map(trigger => (
-                  <div key={trigger.id} className="trigger-item">
-                    <span className="trigger-type">
-                      {t(`seating.sync.triggerTypes.${trigger.changeType}`)}
-                    </span>
-                    <span className="trigger-time">
-                      {new Date(trigger.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="sync-options">
-            <h4>{t('seating.sync.chooseOption')}</h4>
-            
-            {options.map(option => (
-              <div key={option.id} className="sync-option">
-                <div className="option-header">
-                  <label className="option-selector">
-                    <input
-                      type="radio"
-                      name="syncOption"
-                      value={option.id}
-                      checked={selectedOption?.id === option.id}
-                      onChange={() => setSelectedOption(option)}
-                    />
-                    <div className="option-info">
-                      <h5 className="option-title">
-                        {option.strategy === 'conservative' 
-                          ? t('seating.sync.conservativeTitle')
-                          : t('seating.sync.optimalTitle')
-                        }
-                      </h5>
-                      <p className="option-description">
-                        {option.strategy === 'conservative' 
-                          ? t('seating.sync.conservativeDescription')
-                          : t('seating.sync.optimalDescription')
-                        }
-                      </p>
-                    </div>
-                  </label>
-                  
-                  <button 
-                    className="details-toggle"
-                    onClick={() => toggleDetails(option.id)}
-                  >
-                    {showingDetails[option.id] 
-                      ? t('seating.sync.hideDetails')
-                      : t('seating.sync.showDetails')
-                    }
-                  </button>
-                </div>
-
-                {showingDetails[option.id] && (
-                  <div className="option-details">
-                    <div className="option-stats">
-                      <div className="stat">
-                        <span className="stat-label">{t('seating.stats.totalTables')}</span>
-                        <span className="stat-value">{option.stats?.totalTables || 0}</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-label">{t('seating.sync.utilization')}</span>
-                        <span className="stat-value">{option.stats?.utilizationRate || 0}%</span>
-                      </div>
-                      <div className="stat">
-                        <span className="stat-label">{t('seating.sync.seatedPeople')}</span>
-                        <span className="stat-value">{option.stats?.seatedPeople || 0}</span>
-                      </div>
-                    </div>
-
-                    <div className="actions-list">
-                      <h6>{t('seating.sync.plannedActions')}</h6>
-                      {option.actions?.map((action, index) => (
-                        <div key={index} className={`action-item ${action.action}`}>
-                          <span className="action-icon">
-                            {getActionIcon(action.action)}
-                          </span>
-                          <span className="action-description">
-                            {getActionDescription(action, t)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="alternative-actions">
-            <h4>{t('seating.sync.alternativeActions')}</h4>
-            <p>{t('seating.sync.alternativeDescription')}</p>
-            <button 
-              className="move-to-unassigned-button"
-              onClick={handleMoveToUnassigned}
-              disabled={!canEdit}
-            >
-              {t('seating.sync.moveAllToUnassigned')}
-            </button>
+              );
+            })}
           </div>
         </div>
 
-        <div className="modal-actions">
-          <button className="cancel-button" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
-          <button 
-            className="apply-button"
-            onClick={handleApplyOption}
-            disabled={!canEdit || !selectedOption}
-          >
-            {t('seating.sync.applySelected')}
-          </button>
+        <div className="sync-options">
+          {options.map(option => (
+            <div key={option.id} className="sync-option">
+              <div className="option-header">
+                <label className="option-selector">
+                  <input
+                    type="radio"
+                    name="syncOption"
+                    value={option.id}
+                    checked={selectedOption?.id === option.id}
+                    onChange={() => setSelectedOption(option)}
+                  />
+                  <span className="option-title">
+                      {option.strategy === 'conservative' 
+                        ? t('seating.sync.conservativeTitle')
+                        : t('seating.sync.optimalTitle')
+                      }
+                  </span>
+                </label>
+                
+                <button 
+                  className="details-toggle"
+                  onClick={() => toggleDetails(option.id)}
+                >
+                  {showingDetails[option.id] 
+                    ? t('seating.sync.hideDetails')
+                    : t('seating.sync.showDetails')
+                  }
+                </button>
+              </div>
+              
+              <div className="option-description">
+                {option.strategy === 'conservative' 
+                  ? t('seating.sync.conservativeDescription')
+                  : t('seating.sync.optimalDescription')
+                }
+              </div>
+
+              {showingDetails[option.id] && (
+                <div className="option-details">
+                  <div className="actions-list">
+                    <h6>{t('seating.sync.plannedActions')}</h6>
+                    {option.actions?.map((action, index) => (
+                      <div key={index} className={`action-item ${action.action}`}>
+                        <span className="action-icon">
+                          {getActionIcon(action.action)}
+                        </span>
+                        <span className="action-description">
+                          {getActionDescription(action, t)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          <div className="sync-option">
+            <div className="option-header">
+              <label className="option-selector">
+                <input
+                  type="radio"
+                  name="syncOption"
+                  value="unassigned"
+                  checked={selectedOption?.id === 'unassigned'}
+                  onChange={() => setSelectedOption({ id: 'unassigned', strategy: 'unassigned' })}
+                />
+                <span className="option-title">
+                  {t('seating.sync.moveAllToUnassigned')}
+                </span>
+              </label>
+            </div>
+            
+            <div className="option-description">
+              {t('seating.sync.alternativeDescription')}
+            </div>
+          </div>
+
+          <div className="sync-option-apply-wrapper">
+            <button 
+              className="apply-button"
+              onClick={() => {
+                if (selectedOption?.id === 'unassigned') {
+                  handleMoveToUnassigned();
+                } else {
+                  handleApplyOption();
+                }
+              }}
+              disabled={!canEdit || !selectedOption}
+            >
+              {t('seating.sync.applySelected')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

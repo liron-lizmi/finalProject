@@ -1084,8 +1084,8 @@
     "deleteDuplicate": "Delete duplicate",
     "confirmDeleteDuplicate": "Are you sure you want to delete this guest? (duplicate)",
     "group": "Group",
-    "maleCount": "women",
-    "femaleCount": "men",
+    "maleCount": "men",
+    "femaleCount": "women",
     "people": "people",
     "stats": {
       "total": "Total Guests",

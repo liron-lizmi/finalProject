@@ -670,7 +670,7 @@ const processSeatingSync = async (req, res) => {
     if (hasConflictingChanges) {
       const option1 = await generateSyncOption(seating, pendingTriggers, guests, req, 'conservative');
       const option2 = await generateSyncOption(seating, pendingTriggers, guests, req, 'optimal');
-      const affectedGuests = extractAffectedGuests(pendingTriggers, guests);
+      const affectedGuests = extractAffectedGuests(pendingTriggers, guests, seating);
 
       return res.json({
         message: req.t('seating.sync.userApprovalRequired'),
@@ -836,7 +836,8 @@ const processSeatingSync = async (req, res) => {
 
     res.json(responseData);
 
-  } catch (err) {    
+  } catch (err) {
+    
     if (err.name === 'VersionError') {
       try {
         const currentSeating = await Seating.findOne({ event: eventId, user: req.userId });
@@ -986,6 +987,7 @@ const saveSeatingWithRetry = async (seating, maxRetries = 3) => {
 };
 
 const cleanupEmptyTables = async (seating, guests, req) => {
+  const MAX_TABLE_CAPACITY = 24;
   const actions = [];
   const originalTablesCount = seating.tables.length;
   const originalArrangementKeys = Object.keys(seating.arrangement || {});
@@ -1085,7 +1087,7 @@ const cleanupEmptyTables = async (seating, guests, req) => {
           }
         } else {
           const tableNumber = seating.tables.length + 1;
-          const optimalCapacity = Math.max(12, Math.ceil(guestSize * 1.5));
+          const optimalCapacity = Math.min(Math.max(12, Math.ceil(guestSize * 1.5)), MAX_TABLE_CAPACITY);
           
           const newTable = createTableSimulation(seating, optimalCapacity, tableNumber, req);
          
@@ -1141,239 +1143,120 @@ const cleanupEmptyTables = async (seating, guests, req) => {
     });
   });
 
-  const tablesWithOverflow = [];
- 
-  for (const table of seating.tables) {
-    const tableGuests = seating.arrangement[table.id] || [];
-    const actualOccupancy = tableGuests.reduce((sum, guestId) => {
-      const guest = guests.find(g => g._id.toString() === guestId);
-      if (!guest) {
-        return sum;
-      }
-      return sum + (guest.attendingCount || 1);
-    }, 0);
-   
-    if (actualOccupancy > table.capacity) {
-      tablesWithOverflow.push({ table, actualOccupancy });
-    }
-  }
- 
-  for (const { table, actualOccupancy } of tablesWithOverflow) {
-    const excess = actualOccupancy - table.capacity;
-    const tableGuests = seating.arrangement[table.id] || [];
-    const guestsToMove = [];
-    let capacityToMove = 0;
-   
-    for (let i = tableGuests.length - 1; i >= 0 && capacityToMove < excess; i--) {
-      const guestId = tableGuests[i];
-      const guest = guests.find(g => g._id.toString() === guestId);
-      const guestSize = guest?.attendingCount || 1;
-     
-      guestsToMove.push({ guestId, guest, guestSize });
-      capacityToMove += guestSize;
-    }
-   
-    let targetTable = null;
-   
-    for (const candidateTable of seating.tables) {
-      if (candidateTable.id === table.id) continue;
-     
-      const candidateGuests = seating.arrangement[candidateTable.id] || [];
-      const candidateOccupancy = candidateGuests.reduce((sum, gId) => {
-        const g = guests.find(guest => guest._id.toString() === gId);
-        return sum + (g?.attendingCount || 1);
-      }, 0);
-     
-      const availableSpace = candidateTable.capacity - candidateOccupancy;
-     
-      if (availableSpace >= capacityToMove) {
-        targetTable = candidateTable;
-        break;
-      }
-    }
-   
-    if (!targetTable) {
-      const tableNumber = seating.tables.length + 1;
-      const optimalCapacity = Math.max(12, capacityToMove);
-      
-      targetTable = createTableSimulation(seating, optimalCapacity, tableNumber, req);
-     
-      actions.push({
-        action: 'table_created_for_overflow',
-        details: {
-          tableName: targetTable.name,
-          fromTable: table.name,
-          capacity: targetTable.capacity,
-          reason: req.t('seating.sync.tableCreatedForOverflow')
-        }
-      });
-    }
-   
-    if (!seating.arrangement[targetTable.id]) {
-      seating.arrangement[targetTable.id] = [];
-    }
-   
-    guestsToMove.forEach(({ guestId, guest }) => {
-      const guestIndex = seating.arrangement[table.id].indexOf(guestId);
-      if (guestIndex !== -1) {
-        seating.arrangement[table.id].splice(guestIndex, 1);
-        seating.arrangement[targetTable.id].push(guestId);
-      }
-    });
-   
-    const newOccupancy = (seating.arrangement[table.id] || []).reduce((sum, guestId) => {
-      const guest = guests.find(g => g._id.toString() === guestId);
-      return sum + (guest?.attendingCount || 1);
-    }, 0);
-   
-    actions.push({
-      action: 'guests_moved_for_capacity',
-      details: {
-        fromTable: table.name,
-        toTable: targetTable.name,
-        guestsCount: guestsToMove.length,
-        reason: req.t('seating.sync.guestsMovedForCapacity')
-      }
-    });
-  }
-
-  const finalTablesCount = seating.tables.length;
-  const finalArrangementKeys = Object.keys(seating.arrangement);
-  const hasChanges = originalTablesCount !== finalTablesCount ||
-                     originalArrangementKeys.length !== finalArrangementKeys.length ||
-                     !originalArrangementKeys.every(key => finalArrangementKeys.includes(key)) ||
-                     actions.length > 0;
- 
   return {
-    hasChanges,
+    hasChanges: actions.length > 0,
     actions,
-    tablesRemoved: originalTablesCount - finalTablesCount,
-    cleanupSummary: {
-      emptyTablesRemoved: emptyTables.length,
-      orphanedEntriesRemoved: orphanedArrangements.length,
-      guestsRescued: actions.filter(a => a.action === 'guest_rescued_to_existing_table' || a.action === 'table_created_for_rescue').length,
-      overflowTablesCreated: actions.filter(a => a.action === 'table_created_for_overflow').length
-    }
+    tables: seating.tables,
+    arrangement: seating.arrangement
   };
 };
 
 const checkForConflictingChanges = async (seating, triggers, guests) => {
+  const isSeparated = seating.isSeparatedSeating || false;
+  
   for (const trigger of triggers) {
     const { changeType, changeData } = trigger;
    
     if (changeType === 'guest_deleted' ||
         (changeType === 'rsvp_updated' && changeData.type === 'status_no_longer_confirmed')) {
-      continue;
+      return true;
     }
    
     if (changeType === 'rsvp_updated' && changeData.type === 'attending_count_changed') {
       const { guestId, newCount, oldCount } = changeData;
-     
       const changeAmount = newCount - oldCount;
      
       if (changeAmount >= 2) {
         return true;
       }
      
-      if (changeAmount === 1) {
-        const isGuestSeated = Object.values(seating.arrangement || {}).some(guestIds =>
-          Array.isArray(guestIds) && guestIds.includes(guestId)
-        );
-       
-        if (isGuestSeated) {
-          let guestTableId = null;
-          Object.keys(seating.arrangement).forEach(tableId => {
-            if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
-              guestTableId = tableId;
-            }
-          });
-
-          if (guestTableId) {
-            const currentTable = seating.tables.find(t => t.id === guestTableId);
-            if (currentTable) {
-              const tableGuests = seating.arrangement[guestTableId] || [];
-              const otherGuestsSize = tableGuests
-                .filter(id => id !== guestId)
-                .reduce((sum, gId) => {
-                  const guest = guests.find(g => g._id.toString() === gId);
-                  return sum + (guest?.attendingCount || 1);
-                }, 0);
-             
-              const newTotalSize = otherGuestsSize + newCount;
-             
-              if (newTotalSize > currentTable.capacity) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-           
-      const isGuestSeated = Object.values(seating.arrangement || {}).some(guestIds =>
-        Array.isArray(guestIds) && guestIds.includes(guestId)
-      );
-     
-      if (isGuestSeated) {
+      if (changeAmount >= 1) {
+        let isGuestSeated = false;
         let guestTableId = null;
-        Object.keys(seating.arrangement).forEach(tableId => {
-          if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
-            guestTableId = tableId;
-          }
-        });
-
-        if (guestTableId) {
-          const currentTable = seating.tables.find(t => t.id === guestTableId);
-          if (currentTable) {
-            const tableGuests = seating.arrangement[guestTableId] || [];
-            const otherGuestsSize = tableGuests
-              .filter(id => id !== guestId)
-              .reduce((sum, gId) => {
-                const guest = guests.find(g => g._id.toString() === gId);
-                return sum + (guest?.attendingCount || 1);
-              }, 0);
-           
-            const newTotalSize = otherGuestsSize + newCount;
-           
-            if (newTotalSize > currentTable.capacity) {
-              return true;
+        let currentTable = null;
+        
+        if (isSeparated) {
+          const guest = guests.find(g => g._id.toString() === guestId);
+          if (guest && guest.gender) {
+            const arrangement = guest.gender === 'male' ? seating.maleArrangement : seating.femaleArrangement;
+            const tables = guest.gender === 'male' ? seating.maleTables : seating.femaleTables;
+            
+            isGuestSeated = Object.values(arrangement || {}).some(guestIds =>
+              Array.isArray(guestIds) && guestIds.includes(guestId)
+            );
+            
+            if (isGuestSeated) {
+              Object.keys(arrangement).forEach(tableId => {
+                if (arrangement[tableId] && arrangement[tableId].includes(guestId)) {
+                  guestTableId = tableId;
+                }
+              });
+              
+              currentTable = tables.find(t => t.id === guestTableId);
             }
           }
-        }
-      } else {
-        const hasAvailableSpace = seating.tables.some(table => {
-          const tableGuests = seating.arrangement[table.id] || [];
-          const currentOccupancy = tableGuests.reduce((sum, guestId) => {
-            const guest = guests.find(g => g._id.toString() === guestId);
-            return sum + (guest?.attendingCount || 1);
-          }, 0);
+        } else {
+          isGuestSeated = Object.values(seating.arrangement || {}).some(guestIds =>
+            Array.isArray(guestIds) && guestIds.includes(guestId)
+          );
          
-          return (table.capacity - currentOccupancy) >= newCount;
-        });
-       
-        if (!hasAvailableSpace) {
-          return true;
+          if (isGuestSeated) {
+            Object.keys(seating.arrangement).forEach(tableId => {
+              if (seating.arrangement[tableId] && seating.arrangement[tableId].includes(guestId)) {
+                guestTableId = tableId;
+              }
+            });
+            
+            currentTable = seating.tables.find(t => t.id === guestTableId);
+          }
+        }
+        
+        if (isGuestSeated && currentTable) {
+          const arrangement = isSeparated 
+            ? (guests.find(g => g._id.toString() === guestId)?.gender === 'male' ? seating.maleArrangement : seating.femaleArrangement)
+            : seating.arrangement;
+            
+          const tableGuests = arrangement[guestTableId] || [];
+          const otherGuestsSize = tableGuests
+            .filter(id => id !== guestId)
+            .reduce((sum, gId) => {
+              const guest = guests.find(g => g._id.toString() === gId);
+              return sum + (guest?.attendingCount || 1);
+            }, 0);
+         
+          const newTotalSize = otherGuestsSize + newCount;
+         
+          if (newTotalSize > currentTable.capacity) {
+            return true;
+          }
+        } else {
+          const tables = isSeparated 
+            ? (guests.find(g => g._id.toString() === guestId)?.gender === 'male' ? seating.maleTables : seating.femaleTables)
+            : seating.tables;
+          const arrangement = isSeparated 
+            ? (guests.find(g => g._id.toString() === guestId)?.gender === 'male' ? seating.maleArrangement : seating.femaleArrangement)
+            : seating.arrangement;
+            
+          const hasAvailableSpace = tables.some(table => {
+            const tableGuests = arrangement[table.id] || [];
+            const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+              const guest = guests.find(g => g._id.toString() === guestId);
+              return sum + (guest?.attendingCount || 1);
+            }, 0);
+           
+            return (table.capacity - currentOccupancy) >= newCount;
+          });
+         
+          if (!hasAvailableSpace) {
+            return true;
+          }
         }
       }
     }
    
     if ((changeType === 'rsvp_updated' && changeData.type === 'status_became_confirmed') ||
         changeType === 'guest_added') {
-      const guest = changeData.guest;
-      const guestSize = guest.attendingCount || 1;
-     
-      const hasAvailableSpace = seating.tables.some(table => {
-        const tableGuests = seating.arrangement[table.id] || [];
-        const currentOccupancy = tableGuests.reduce((sum, guestId) => {
-          const g = guests.find(guest => guest._id.toString() === guestId);
-          return sum + (g?.attendingCount || 1);
-        }, 0);
-       
-        return (table.capacity - currentOccupancy) >= guestSize;
-      });
-     
-      if (!hasAvailableSpace) {
-        return true;
-      }
+      return true;
     }
   }
  
@@ -2248,6 +2131,7 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
  
   if (isSeparated) {
     optionSeating = {
+      tables: [],
       maleTables: JSON.parse(JSON.stringify(seating.maleTables || [])),
       femaleTables: JSON.parse(JSON.stringify(seating.femaleTables || [])),
       maleArrangement: JSON.parse(JSON.stringify(seating.maleArrangement || {})),
@@ -2273,24 +2157,30 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
 
     if (strategy === 'optimal' && seating.syncSettings?.autoOptimizeTables) {
       if (isSeparated) {
-        const maleOptimized = optimizeArrangementSimulation(
-          { tables: optionSeating.maleTables, arrangement: optionSeating.maleArrangement },
-          guests.filter(g => g.gender === 'male')
-        );
-        if (maleOptimized.wasOptimized) {
-          optionSeating.maleTables = maleOptimized.tables || optionSeating.maleTables;
-          optionSeating.maleArrangement = maleOptimized.arrangement || optionSeating.maleArrangement;
-          actions.push(...maleOptimized.actions);
+        const affectedGenders = getAffectedGendersFromTriggers(triggers);
+        
+        if (affectedGenders.has('male')) {
+          const maleOptimized = optimizeArrangementSimulation(
+            { tables: optionSeating.maleTables, arrangement: optionSeating.maleArrangement },
+            guests.filter(g => g.maleCount && g.maleCount > 0)
+          );
+          if (maleOptimized.wasOptimized) {
+            optionSeating.maleTables = maleOptimized.tables || optionSeating.maleTables;
+            optionSeating.maleArrangement = maleOptimized.arrangement || optionSeating.maleArrangement;
+            actions.push(...maleOptimized.actions);
+          }
         }
        
-        const femaleOptimized = optimizeArrangementSimulation(
-          { tables: optionSeating.femaleTables, arrangement: optionSeating.femaleArrangement },
-          guests.filter(g => g.gender === 'female')
-        );
-        if (femaleOptimized.wasOptimized) {
-          optionSeating.femaleTables = femaleOptimized.tables || optionSeating.femaleTables;
-          optionSeating.femaleArrangement = femaleOptimized.arrangement || optionSeating.femaleArrangement;
-          actions.push(...femaleOptimized.actions);
+        if (affectedGenders.has('female')) {
+          const femaleOptimized = optimizeArrangementSimulation(
+            { tables: optionSeating.femaleTables, arrangement: optionSeating.femaleArrangement },
+            guests.filter(g => g.femaleCount && g.femaleCount > 0)
+          );
+          if (femaleOptimized.wasOptimized) {
+            optionSeating.femaleTables = femaleOptimized.tables || optionSeating.femaleTables;
+            optionSeating.femaleArrangement = femaleOptimized.arrangement || optionSeating.femaleArrangement;
+            actions.push(...femaleOptimized.actions);
+          }
         }
       } else {
         const optimized = optimizeArrangementSimulation(optionSeating, guests);
@@ -2301,19 +2191,25 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
     }
 
     if (isSeparated) {
-      optionSeating.maleTables = updateTableNamesWithGroupsInSync(
-        optionSeating.maleTables,
-        optionSeating.maleArrangement,
-        guests.filter(g => g.gender === 'male'),
-        req
-      );
+      const affectedGenders = getAffectedGendersFromTriggers(triggers);
+      
+      if (affectedGenders.has('male')) {
+        optionSeating.maleTables = updateTableNamesWithGroupsInSync(
+          optionSeating.maleTables,
+          optionSeating.maleArrangement,
+          guests.filter(g => g.maleCount && g.maleCount > 0),
+          req
+        );
+      }
      
-      optionSeating.femaleTables = updateTableNamesWithGroupsInSync(
-        optionSeating.femaleTables,
-        optionSeating.femaleArrangement,
-        guests.filter(g => g.gender === 'female'),
-        req
-      );
+      if (affectedGenders.has('female')) {
+        optionSeating.femaleTables = updateTableNamesWithGroupsInSync(
+          optionSeating.femaleTables,
+          optionSeating.femaleArrangement,
+          guests.filter(g => g.femaleCount && g.femaleCount > 0),
+          req
+        );
+      }
     } else {
       optionSeating.tables = updateTableNamesWithGroupsInSync(
         optionSeating.tables,
@@ -2373,6 +2269,38 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
   }
 };
 
+const getAffectedGendersFromTriggers = (triggers) => {
+  const affectedGenders = new Set();
+  
+  for (const trigger of triggers) {
+    const { changeType, changeData } = trigger;
+    
+    if (changeType === 'guest_added' || changeType === 'rsvp_updated') {
+      if (changeData.changedGenders && changeData.changedGenders.length > 0) {
+        changeData.changedGenders.forEach(gender => affectedGenders.add(gender));
+      } else if (changeData.type === 'attending_count_changed') {
+        const { oldMaleCount, newMaleCount, oldFemaleCount, newFemaleCount } = changeData;
+        if (oldMaleCount !== newMaleCount) {
+          affectedGenders.add('male');
+        }
+        if (oldFemaleCount !== newFemaleCount) {
+          affectedGenders.add('female');
+        }
+      } else if (changeData.guest) {
+        if (changeData.guest.maleCount > 0) affectedGenders.add('male');
+        if (changeData.guest.femaleCount > 0) affectedGenders.add('female');
+      }
+    } else if (changeType === 'guest_deleted') {
+      if (changeData.guest) {
+        if (changeData.guest.maleCount > 0) affectedGenders.add('male');
+        if (changeData.guest.femaleCount > 0) affectedGenders.add('female');
+      }
+    }
+  }
+  
+  return affectedGenders;
+};
+
 const calculateArrangementStatsSeparated = (optionSeating, guests) => {
   const maleGuests = guests.filter(g => g.maleCount && g.maleCount > 0);
   const femaleGuests = guests.filter(g => g.femaleCount && g.femaleCount > 0);
@@ -2398,8 +2326,8 @@ const calculateArrangementStatsSeparated = (optionSeating, guests) => {
     if (guestIds.length > 0) {
       maleStats.occupiedTables++;
       maleStats.seatedPeople += guestIds.reduce((sum, guestId) => {
-        const guest = maleGuests.find(g => g._id.toString() === guestId);
-        return sum + (guest?.attendingCount || 1);
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest?.maleCount || 0);
       }, 0);
     }
   });
@@ -2409,8 +2337,8 @@ const calculateArrangementStatsSeparated = (optionSeating, guests) => {
     if (guestIds.length > 0) {
       femaleStats.occupiedTables++;
       femaleStats.seatedPeople += guestIds.reduce((sum, guestId) => {
-        const guest = femaleGuests.find(g => g._id.toString() === guestId);
-        return sum + (guest?.attendingCount || 1);
+        const guest = guests.find(g => g._id.toString() === guestId);
+        return sum + (guest?.femaleCount || 0);
       }, 0);
     }
   });
@@ -2438,26 +2366,25 @@ const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy
   const { changeType, changeData } = trigger;
   const actions = [];
   let success = true;
-  const isSeparated = seating.isSeparatedSeating || false;
 
   try {
     switch (changeType) {
       case 'guest_added':
       case 'rsvp_updated':
         if (changeData.type === 'status_became_confirmed') {
-          const result = await seatNewGuest(seating, changeData.guest, guests, req);
+          const result = await simulateSeatNewGuest(optionSeating, changeData.guest, guests, req, strategy);
           actions.push(...result.actions);
         } else if (changeData.type === 'status_no_longer_confirmed') {
-          const result = await unseatGuest(seating, changeData.guestId, guests, req);
+          const result = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
           actions.push(...result.actions);
         } else if (changeData.type === 'attending_count_changed') {
-          const result = await handleAttendingCountChangeOnly(seating, changeData, guests, req);
+          const result = await simulateAttendingCountChange(optionSeating, changeData, guests, req, strategy);
           actions.push(...result.actions);
         }
         break;
 
       case 'guest_deleted':
-        const deleteResult = await unseatGuest(seating, changeData.guestId, guests, req);
+        const deleteResult = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
         actions.push(...deleteResult.actions);
         break;
 
@@ -2481,27 +2408,64 @@ const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy
 
 const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strategy) => {
   const actions = [];
-  const guestSize = guest.attendingCount || 1;
   const isSeparated = optionSeating.isSeparatedSeating || false;
  
   if (isSeparated) {
     const guestGender = guest.gender;
+    
+    if (!guestGender || (guestGender !== 'male' && guestGender !== 'female')) {
+      return { 
+        actions: [{
+          action: 'error',
+          details: {
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            error: 'Guest gender not defined for separated seating'
+          }
+        }]
+      };
+    }
+    
+    const guestSize = guestGender === 'male' 
+      ? (guest.maleCount || 0) 
+      : (guest.femaleCount || 0);
+    
+    if (guestSize === 0) {
+      return { actions: [] };
+    }
+    
     const currentTables = guestGender === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
     const currentArrangement = guestGender === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
-    const genderGuests = allGuests.filter(g => g.gender === guestGender);
+    const genderGuests = allGuests.filter(g => {
+      if (guestGender === 'male') {
+        return g.maleCount && g.maleCount > 0;
+      } else {
+        return g.femaleCount && g.femaleCount > 0;
+      }
+    });
    
     let availableTable = findAvailableTableSimulation({ tables: currentTables, arrangement: currentArrangement }, guestSize, genderGuests);
    
     if (!availableTable) {
       const tableSize = determineOptimalTableSize(currentTables, guestSize, strategy);
-      const tableNumber = currentTables.length + 1;
+      const genderTables = guestGender === 'male' ? (optionSeating.maleTables || []) : (optionSeating.femaleTables || []);
+      
+      const highestTableNumber = genderTables.reduce((max, table) => {
+        const match = table.name.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0]);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const tableNumber = highestTableNumber + 1;
      
-      availableTable = createTableSimulation({ tables: currentTables, arrangement: currentArrangement }, tableSize, tableNumber, req);
+      availableTable = createTableSimulation(optionSeating, tableSize, tableNumber, req, guestGender);
      
       if (guestGender === 'male') {
-        optionSeating.maleTables = currentTables;
+        optionSeating.maleTables.push(availableTable);
       } else {
-        optionSeating.femaleTables = currentTables;
+        optionSeating.femaleTables.push(availableTable);
       }
      
       actions.push({
@@ -2541,6 +2505,7 @@ const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strate
       optionSeating.femaleArrangement = currentArrangement;
     }
   } else {
+    const guestSize = guest.attendingCount || 1;
     let availableTable = findAvailableTableSimulation(optionSeating, guestSize, allGuests);
    
     if (!availableTable) {
@@ -2652,130 +2617,20 @@ const simulateUnseatGuest = async (optionSeating, guestId, allGuests, req) => {
 };
 
 const simulateAttendingCountChange = async (optionSeating, changeData, allGuests, req, strategy) => {
+  const { guestId, guest, oldCount, newCount, oldMaleCount, newMaleCount, oldFemaleCount, newFemaleCount } = changeData;
   const actions = [];
-  const { guestId, guest, oldCount, newCount } = changeData;
   const isSeparated = optionSeating.isSeparatedSeating || false;
  
-  if (isSeparated) {
-    const guestGender = guest.gender;
-    const currentTables = guestGender === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
-    const currentArrangement = guestGender === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
-    const genderGuests = allGuests.filter(g => g.gender === guestGender);
-   
+  if (!isSeparated) {
     let guestTableId = null;
-    Object.keys(currentArrangement).forEach(tableId => {
-      if (currentArrangement[tableId].includes(guestId)) {
+    Object.keys(optionSeating.arrangement || {}).forEach(tableId => {
+      if ((optionSeating.arrangement[tableId] || []).includes(guestId)) {
         guestTableId = tableId;
       }
     });
 
     if (!guestTableId) {
-      const result = await simulateSeatNewGuest(optionSeating, guest, allGuests, req, strategy);
-      return result;
-    }
-
-    const currentTable = currentTables.find(t => t.id === guestTableId);
-    if (!currentTable) {
-      return { actions: [] };
-    }
-
-    const tableGuests = currentArrangement[guestTableId] || [];
-    const otherGuestsSize = tableGuests
-      .filter(id => id !== guestId)
-      .reduce((sum, gId) => {
-        const g = genderGuests.find(guest => guest._id.toString() === gId);
-        return sum + (g?.attendingCount || 1);
-      }, 0);
-   
-    const newTotalSize = otherGuestsSize + newCount;
-   
-    if (newTotalSize <= currentTable.capacity) {
-      actions.push({
-        action: 'guest_updated',
-        details: {
-          guestName: `${guest.firstName} ${guest.lastName}`,
-          tableName: currentTable.name,
-          gender: guestGender,
-          oldCount,
-          newCount,
-          reason: req.t('seating.sync.stayedAtTable')
-        }
-      });
-    } else {
-      const guestIndex = currentArrangement[guestTableId].indexOf(guestId);
-      if (guestIndex !== -1) {
-        currentArrangement[guestTableId].splice(guestIndex, 1);
-        if (currentArrangement[guestTableId].length === 0) {
-          delete currentArrangement[guestTableId];
-        }
-      }
-
-      let newTable = findAvailableTableSimulation({ tables: currentTables, arrangement: currentArrangement }, newCount, genderGuests);
-     
-      if (!newTable) {
-        const tableNumber = currentTables.length + 1;
-        const optimalCapacity = Math.max(
-          strategy === 'conservative' ? 12 : 12,
-          Math.ceil(newCount * 1.5)
-        );
-       
-        newTable = createTableSimulation({ tables: currentTables, arrangement: currentArrangement }, optimalCapacity, tableNumber, req);
-       
-        if (guestGender === 'male') {
-          optionSeating.maleTables = currentTables;
-        } else {
-          optionSeating.femaleTables = currentTables;
-        }
-       
-        actions.push({
-          action: 'table_created',
-          details: {
-            tableName: newTable.name,
-            capacity: newTable.capacity,
-            gender: guestGender,
-            reason: req.t('seating.sync.createdForResize')
-          }
-        });
-      }
-
-      if (!currentArrangement[newTable.id]) {
-        currentArrangement[newTable.id] = [];
-      }
-     
-      if (!currentArrangement[newTable.id].includes(guestId)) {
-        currentArrangement[newTable.id].push(guestId);
-       
-        actions.push({
-          action: 'guest_moved',
-          details: {
-            guestName: `${guest.firstName} ${guest.lastName}`,
-            fromTable: currentTable.name,
-            toTable: newTable.name,
-            gender: guestGender,
-            oldCount,
-            newCount,
-            reason: req.t('seating.sync.movedForResize')
-          }
-        });
-      }
-    }
-   
-    if (guestGender === 'male') {
-      optionSeating.maleArrangement = currentArrangement;
-    } else {
-      optionSeating.femaleArrangement = currentArrangement;
-    }
-  } else {
-    let guestTableId = null;
-    Object.keys(optionSeating.arrangement).forEach(tableId => {
-      if (optionSeating.arrangement[tableId].includes(guestId)) {
-        guestTableId = tableId;
-      }
-    });
-
-    if (!guestTableId) {
-      const result = await simulateSeatNewGuest(optionSeating, guest, allGuests, req, strategy);
-      return result;
+      return await simulateSeatNewGuest(optionSeating, guest, allGuests, req, strategy);
     }
 
     const currentTable = optionSeating.tables.find(t => t.id === guestTableId);
@@ -2790,9 +2645,9 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
         const g = allGuests.find(guest => guest._id.toString() === gId);
         return sum + (g?.attendingCount || 1);
       }, 0);
-   
+
     const newTotalSize = otherGuestsSize + newCount;
-   
+
     if (newTotalSize <= currentTable.capacity) {
       actions.push({
         action: 'guest_updated',
@@ -2814,15 +2669,12 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       }
 
       let newTable = findAvailableTableSimulation(optionSeating, newCount, allGuests);
-     
+
       if (!newTable) {
+        const tableSize = determineOptimalTableSize(optionSeating.tables, newCount, strategy);
         const tableNumber = optionSeating.tables.length + 1;
-        const optimalCapacity = Math.max(
-          strategy === 'conservative' ? 12 : 12,
-          Math.ceil(newCount * 1.5)
-        );
        
-        newTable = createTableSimulation(optionSeating, optimalCapacity, tableNumber, req);
+        newTable = createTableSimulation(optionSeating, tableSize, tableNumber, req);
        
         actions.push({
           action: 'table_created',
@@ -2837,23 +2689,350 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       if (!optionSeating.arrangement[newTable.id]) {
         optionSeating.arrangement[newTable.id] = [];
       }
-     
-      if (!optionSeating.arrangement[newTable.id].includes(guestId)) {
-        optionSeating.arrangement[newTable.id].push(guestId);
-       
-        actions.push({
-          action: 'guest_moved',
-          details: {
-            guestName: `${guest.firstName} ${guest.lastName}`,
-            fromTable: currentTable.name,
-            toTable: newTable.name,
-            oldCount,
-            newCount,
-            reason: req.t('seating.sync.movedForResize')
-          }
-        });
+      optionSeating.arrangement[newTable.id].push(guestId);
+
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.movedForResize')
+        }
+      });
+    }
+
+    return { actions };
+  }
+
+  const gendersToProcess = [];
+  if (oldMaleCount !== newMaleCount) {
+    gendersToProcess.push('male');
+  }
+  if (oldFemaleCount !== newFemaleCount) {
+    gendersToProcess.push('female');
+  }
+
+  for (const genderToProcess of gendersToProcess) {
+    const currentTables = genderToProcess === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
+    const currentArrangement = genderToProcess === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
+    const genderGuests = allGuests.filter(g => {
+      if (genderToProcess === 'male') {
+        return g.maleCount && g.maleCount > 0;
+      } else {
+        return g.femaleCount && g.femaleCount > 0;
+      }
+    });
+
+    let guestTableId = null;
+    Object.keys(currentArrangement || {}).forEach(tableId => {
+      if ((currentArrangement[tableId] || []).includes(guestId)) {
+        guestTableId = tableId;
+      }
+    });
+
+    const oldCount = genderToProcess === 'male' ? oldMaleCount : oldFemaleCount;
+    const newCount = genderToProcess === 'male' ? newMaleCount : newFemaleCount;
+
+    if (!guestTableId) {
+      if (newCount > 0) {
+        const guestForSeating = {
+          ...guest,
+          gender: genderToProcess,
+          attendingCount: newCount
+        };
+        const result = await simulateSeatNewGuest(
+          { ...optionSeating, isSeparatedSeating: true },
+          guestForSeating,
+          genderGuests,
+          req,
+          strategy
+        );
+        actions.push(...result.actions);
+
+        if (genderToProcess === 'male') {
+          optionSeating.maleArrangement = result.maleArrangement || optionSeating.maleArrangement;
+        } else {
+          optionSeating.femaleArrangement = result.femaleArrangement || optionSeating.femaleArrangement;
+        }
+      }
+      continue;
+    }
+
+    const currentTable = currentTables.find(t => t.id === guestTableId);
+    if (!currentTable) {
+      continue;
+    }
+
+    const tableGuests = currentArrangement[guestTableId] || [];
+    const otherGuestsSize = tableGuests
+      .filter(id => id !== guestId)
+      .reduce((sum, gId) => {
+        const g = genderGuests.find(guest => guest._id.toString() === gId);
+        const genderCount = genderToProcess === 'male' ? (g?.maleCount || 0) : (g?.femaleCount || 0);
+        return sum + genderCount;
+      }, 0);
+
+    const newTotalSize = otherGuestsSize + newCount;
+
+    if (newTotalSize <= currentTable.capacity && newCount > 0) {
+      actions.push({
+        action: 'guest_updated',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          tableName: currentTable.name,
+          gender: genderToProcess,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.stayedAtTable')
+        }
+      });
+      continue;
+    }
+
+    const guestIndex = currentArrangement[guestTableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      currentArrangement[guestTableId].splice(guestIndex, 1);
+      if (currentArrangement[guestTableId].length === 0) {
+        delete currentArrangement[guestTableId];
       }
     }
+
+    if (newCount === 0) {
+      actions.push({
+        action: 'guest_removed',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          tableName: currentTable.name,
+          gender: genderToProcess,
+          reason: req.t('seating.sync.countBecameZero')
+        }
+      });
+      continue;
+    }
+
+    let newTable = findAvailableTableSimulation(
+      { tables: currentTables, arrangement: currentArrangement }, 
+      newCount, 
+      genderGuests
+    );
+   
+    if (!newTable) {
+      const optimalCapacity = determineOptimalTableSize(currentTables, newCount, strategy);
+      const genderTables = genderToProcess === 'male' ? (optionSeating.maleTables || []) : (optionSeating.femaleTables || []);
+      
+      const highestTableNumber = genderTables.reduce((max, table) => {
+        const match = table.name.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0]);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const tableNumber = highestTableNumber + 1;
+     
+      newTable = createTableSimulation(optionSeating, optimalCapacity, tableNumber, req, genderToProcess);
+      
+      if (genderToProcess === 'male') {
+        optionSeating.maleTables.push(newTable);
+      } else {
+        optionSeating.femaleTables.push(newTable);
+      }
+     
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          gender: genderToProcess,
+          reason: req.t('seating.sync.createdForResize')
+        }
+      });
+    }
+
+    if (!currentArrangement[newTable.id]) {
+      currentArrangement[newTable.id] = [];
+    }
+   
+    if (!currentArrangement[newTable.id].includes(guestId)) {
+      currentArrangement[newTable.id].push(guestId);
+     
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          gender: genderToProcess,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.movedForResize')
+        }
+      });
+    }
+  }
+  
+  if (gendersToProcess.includes('male')) {
+    optionSeating.maleArrangement = optionSeating.maleArrangement;
+  }
+  if (gendersToProcess.includes('female')) {
+    optionSeating.femaleArrangement = optionSeating.femaleArrangement;
+  }
+
+  return { actions };
+};
+
+const processGenderChange = async (optionSeating, changeData, allGuests, req, strategy, genderToProcess) => {
+  const actions = [];
+  const { guestId, guest, oldMaleCount, newMaleCount, oldFemaleCount, newFemaleCount } = changeData;
+  
+  const oldCount = genderToProcess === 'male' ? oldMaleCount : oldFemaleCount;
+  const newCount = genderToProcess === 'male' ? newMaleCount : newFemaleCount;
+  
+  if (oldCount === newCount) {
+    return { actions: [] };
+  }
+  
+  const currentTables = genderToProcess === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
+  const currentArrangement = genderToProcess === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
+  const genderGuests = allGuests.filter(g => {
+    if (genderToProcess === 'male') {
+      return g.maleCount && g.maleCount > 0;
+    } else {
+      return g.femaleCount && g.femaleCount > 0;
+    }
+  });
+  
+  let guestTableId = null;
+  Object.keys(currentArrangement).forEach(tableId => {
+    if (currentArrangement[tableId].includes(guestId)) {
+      guestTableId = tableId;
+    }
+  });
+
+  if (!guestTableId) {
+    const guestForSeating = {
+      ...guest,
+      _id: guestId,
+      gender: genderToProcess,
+      attendingCount: newCount
+    };
+    const result = await simulateSeatNewGuest(optionSeating, guestForSeating, allGuests, req, strategy);
+    return result;
+  }
+
+  const currentTable = currentTables.find(t => t.id === guestTableId);
+  if (!currentTable) {
+    return { actions: [] };
+  }
+
+  const tableGuests = currentArrangement[guestTableId] || [];
+  const otherGuestsSize = tableGuests
+    .filter(id => id !== guestId)
+    .reduce((sum, gId) => {
+      const g = allGuests.find(guest => guest._id.toString() === gId);
+      const guestCount = genderToProcess === 'male' 
+        ? (g?.maleCount || 0)
+        : (g?.femaleCount || 0);
+      return sum + guestCount;
+    }, 0);
+ 
+  const newTotalSize = otherGuestsSize + newCount;
+ 
+  if (newTotalSize <= currentTable.capacity) {
+    actions.push({
+      action: 'guest_updated',
+      details: {
+        guestName: `${guest.firstName} ${guest.lastName}`,
+        tableName: currentTable.name,
+        gender: genderToProcess,
+        oldCount,
+        newCount,
+        reason: req.t('seating.sync.stayedAtTable')
+      }
+    });
+  } else {
+    const guestIndex = currentArrangement[guestTableId].indexOf(guestId);
+    if (guestIndex !== -1) {
+      currentArrangement[guestTableId].splice(guestIndex, 1);
+      if (currentArrangement[guestTableId].length === 0) {
+        delete currentArrangement[guestTableId];
+      }
+    }
+
+    let newTable = findAvailableTableSimulation(
+      { tables: currentTables, arrangement: currentArrangement }, 
+      newCount, 
+      genderGuests
+    );
+   
+    if (!newTable) {
+      const optimalCapacity = determineOptimalTableSize(currentTables, newCount, strategy);
+      
+      const allTables = [
+        ...(optionSeating.maleTables || []),
+        ...(optionSeating.femaleTables || [])
+      ];
+      
+      const highestTableNumber = allTables.reduce((max, table) => {
+        const match = table.name.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0]);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const tableNumber = highestTableNumber + 1;
+     
+      newTable = createTableSimulation(optionSeating, optimalCapacity, tableNumber, req);
+      
+      if (genderToProcess === 'male') {
+        optionSeating.maleTables.push(newTable);
+      } else {
+        optionSeating.femaleTables.push(newTable);
+      }
+     
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          gender: genderToProcess,
+          reason: req.t('seating.sync.createdForResize')
+        }
+      });
+    }
+
+    if (!currentArrangement[newTable.id]) {
+      currentArrangement[newTable.id] = [];
+    }
+   
+    if (!currentArrangement[newTable.id].includes(guestId)) {
+      currentArrangement[newTable.id].push(guestId);
+     
+      actions.push({
+        action: 'guest_moved',
+        details: {
+          guestName: `${guest.firstName} ${guest.lastName}`,
+          fromTable: currentTable.name,
+          toTable: newTable.name,
+          gender: genderToProcess,
+          oldCount,
+          newCount,
+          reason: req.t('seating.sync.movedForResize')
+        }
+      });
+    }
+  }
+  
+  if (genderToProcess === 'male') {
+    optionSeating.maleArrangement = currentArrangement;
+  } else {
+    optionSeating.femaleArrangement = currentArrangement;
   }
 
   return { actions };
@@ -2867,13 +3046,22 @@ const findAvailableTableSimulation = (optionSeating, guestSize, allGuests) => {
       return sum + (guest?.attendingCount || 1);
     }, 0);
    
-    return (table.capacity - currentOccupancy) >= guestSize;
+    const remainingCapacity = table.capacity - currentOccupancy;
+    return remainingCapacity >= guestSize && currentOccupancy + guestSize <= table.capacity;
   });
 };
 
 const determineOptimalTableSize = (existingTables, guestSize, strategy) => {
+  const MAX_TABLE_CAPACITY = 24;
+  
   if (existingTables.length === 0) {
-    return Math.max(8, guestSize * 2);
+    if (guestSize <= 8) return 8;
+    if (guestSize <= 10) return 10;
+    if (guestSize <= 12) return 12;
+    if (guestSize <= MAX_TABLE_CAPACITY) {
+      return Math.min(Math.ceil(guestSize / 12) * 12, MAX_TABLE_CAPACITY);
+    }
+    return MAX_TABLE_CAPACITY;
   }
 
   const tableSizes = existingTables.map(t => t.capacity);
@@ -2882,18 +3070,39 @@ const determineOptimalTableSize = (existingTables, guestSize, strategy) => {
     sizeCount[size] = (sizeCount[size] || 0) + 1;
   });
 
-  const mostCommonSize = Object.keys(sizeCount)
-    .reduce((a, b) => sizeCount[a] > sizeCount[b] ? a : b);
+  const mostCommonSize = parseInt(Object.keys(sizeCount)
+    .reduce((a, b) => sizeCount[a] > sizeCount[b] ? a : b));
 
   if (strategy === 'conservative') {
-    return parseInt(mostCommonSize);
+    if (guestSize <= mostCommonSize) {
+      return mostCommonSize;
+    }
+    
+    const sortedSizes = [...new Set(tableSizes)].sort((a, b) => a - b);
+    const fitSize = sortedSizes.find(size => size >= guestSize);
+    
+    if (fitSize) return fitSize;
+    
+    const calculatedSize = Math.max(mostCommonSize, Math.ceil(guestSize / 2) * 2);
+    return Math.min(calculatedSize, MAX_TABLE_CAPACITY);
   } else {
-    const targetSize = parseInt(mostCommonSize);
-    return Math.max(targetSize, Math.ceil(guestSize * 1.5));
+    const targetSize = mostCommonSize;
+    
+    if (guestSize <= targetSize) {
+      return targetSize;
+    }
+    
+    const sortedSizes = [...new Set(tableSizes)].sort((a, b) => a - b);
+    const fitSize = sortedSizes.find(size => size >= guestSize);
+    
+    if (fitSize) return fitSize;
+    
+    const calculatedSize = Math.ceil(guestSize / 2) * 2;
+    return Math.min(calculatedSize, MAX_TABLE_CAPACITY);
   }
 };
 
-const createTableSimulation = (optionSeating, capacity, tableNumber, req) => {
+const createTableSimulation = (optionSeating, capacity, tableNumber, req, targetGender = null) => {
   if (!req || typeof req.t !== 'function') {
     throw new Error('Translation function (req.t) is required');
   }
@@ -2908,31 +3117,183 @@ const createTableSimulation = (optionSeating, capacity, tableNumber, req) => {
       if (baseTableName && baseTableName !== 'seating.tableName') {
         tableName = `${baseTableName} ${tableNumber}`;
       } else {
-        tableName = `×©×•×œ×—×Ÿ ${tableNumber}`;
+        tableName = `${req.t('seating.table')} ${tableNumber}`;
       }
     }
   } catch (error) {
-    tableName = `×©×•×œ×—×Ÿ ${tableNumber}`;
+    tableName = `${req.t('seating.table')} ${tableNumber}`;
+  }
+ 
+  let allExistingTables = [];
+  const isSeparatedSeating = optionSeating.maleTables !== undefined && optionSeating.femaleTables !== undefined;
+  
+  if (isSeparatedSeating) {
+    allExistingTables = [
+      ...(optionSeating.tables || []),
+      ...(optionSeating.maleTables || []),
+      ...(optionSeating.femaleTables || [])
+    ];
+  } else if (optionSeating.tables) {
+    allExistingTables = optionSeating.tables || [];
+  } else {
+    allExistingTables = [];
+  }
+  
+  let tableType = 'round';
+  let width = 120;
+  let height = 120;
+  
+  if (allExistingTables.length > 0) {
+    const typeCount = {};
+    allExistingTables.forEach(table => {
+      typeCount[table.type] = (typeCount[table.type] || 0) + 1;
+    });
+    
+    const mostCommonType = Object.keys(typeCount)
+      .reduce((a, b) => typeCount[a] > typeCount[b] ? a : b);
+    
+    if (mostCommonType === 'round' && capacity <= 12) {
+      tableType = 'round';
+      width = 120;
+      height = 120;
+    } else if (mostCommonType === 'rectangular') {
+      tableType = 'rectangular';
+      width = capacity > 12 ? 180 : 160;
+      height = 100;
+    } else {
+      if (capacity <= 10) {
+        tableType = 'round';
+        width = 120;
+        height = 120;
+      } else {
+        tableType = 'rectangular';
+        width = capacity > 12 ? 180 : 160;
+        height = 100;
+      }
+    }
+  } else {
+    if (capacity <= 10) {
+      tableType = 'round';
+      width = 120;
+      height = 120;
+    } else {
+      tableType = 'rectangular';
+      width = capacity > 12 ? 180 : 160;
+      height = 100;
+    }
+  }
+
+  const MALE_START_X = 300;
+  const FEMALE_START_X = 1200;
+  const START_Y = 250;
+  const SPACING = 200;
+  const COLS = 3;
+  
+  let posX = MALE_START_X;
+  let posY = START_Y;
+  
+  if (isSeparatedSeating && targetGender) {
+    const startX = targetGender === 'male' ? MALE_START_X : FEMALE_START_X;
+    const relevantTables = targetGender === 'male' 
+      ? (optionSeating.maleTables || [])
+      : (optionSeating.femaleTables || []);
+    
+    if (relevantTables.length === 0) {
+      posX = startX;
+      posY = START_Y;
+    } else {
+      const occupiedPositions = new Set();
+      relevantTables.forEach(table => {
+        if (table && table.position && !table.dummy) {
+          const posKey = `${Math.round(table.position.x)},${Math.round(table.position.y)}`;
+          occupiedPositions.add(posKey);
+        }
+      });
+      
+      let position = 0;
+      let found = false;
+      
+      while (position < 100 && !found) {
+        const row = Math.floor(position / COLS);
+        const col = position % COLS;
+        const x = startX + col * SPACING;
+        const y = START_Y + row * SPACING;
+        const posKey = `${x},${y}`;
+        
+        if (!occupiedPositions.has(posKey)) {
+          posX = x;
+          posY = y;
+          found = true;
+        }
+        position++;
+      }
+      
+      if (!found) {
+        const existingCount = relevantTables.filter(t => !t.dummy).length;
+        const lastRow = Math.floor(existingCount / COLS);
+        const lastCol = existingCount % COLS;
+        posX = startX + lastCol * SPACING;
+        posY = START_Y + lastRow * SPACING;
+      }
+    }
+  } else {
+    if (allExistingTables.length > 0) {
+      const occupiedPositions = new Set();
+      
+      allExistingTables.forEach(table => {
+        if (!table || !table.position) return;
+        const posKey = `${Math.round(table.position.x)},${Math.round(table.position.y)}`;
+        occupiedPositions.add(posKey);
+      });
+      
+      let position = 0;
+      let found = false;
+      
+      while (position < 100 && !found) {
+        const row = Math.floor(position / COLS);
+        const col = position % COLS;
+        const x = MALE_START_X + col * SPACING;
+        const y = START_Y + row * SPACING;
+        const posKey = `${x},${y}`;
+        
+        if (!occupiedPositions.has(posKey)) {
+          posX = x;
+          posY = y;
+          found = true;
+        }
+        position++;
+      }
+      
+      if (!found) {
+        const tableCounter = allExistingTables.length;
+        posX = MALE_START_X + (tableCounter % COLS) * SPACING;
+        posY = START_Y + Math.floor(tableCounter / COLS) * SPACING;
+      }
+    }
   }
  
   const newTable = {
     id: `sync_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     name: tableName,
-    type: capacity <= 10 ? 'round' : 'rectangular',
+    type: tableType,
     capacity: capacity,
     position: {
-      x: 300 + ((tableNumber - 1) % 3) * 200,
-      y: 300 + Math.floor((tableNumber - 1) / 3) * 200
+      x: posX,
+      y: posY
     },
     rotation: 0,
-    size: capacity <= 10 ?
-      { width: 120, height: 120 } :
-      { width: 160, height: 100 },
+    size: {
+      width: width,
+      height: height
+    },
     autoCreated: true,
     createdForSync: true
   };
 
-  optionSeating.tables.push(newTable);
+  if (!isSeparatedSeating && optionSeating.tables) {
+    optionSeating.tables.push(newTable);
+  }
+  
   return newTable;
 };
 
@@ -3144,29 +3505,86 @@ const calculateArrangementStats = (optionSeating, guests) => {
   return stats;
 };
 
-const extractAffectedGuests = (triggers, guests) => {
+const extractAffectedGuests = (triggers, guests, seating) => {
   const affectedGuestIds = new Set();
+  const isSeparated = seating?.isSeparatedSeating || false;
+  
+  const guestGenderChanges = new Map();
  
   triggers.forEach(trigger => {
     const { changeData } = trigger;
+    let guestId = null;
    
     if (changeData.guestId) {
-      affectedGuestIds.add(changeData.guestId);
+      guestId = changeData.guestId;
+      affectedGuestIds.add(guestId);
     }
     if (changeData.guest && changeData.guest._id) {
-      affectedGuestIds.add(changeData.guest._id.toString());
+      guestId = changeData.guest._id.toString();
+      affectedGuestIds.add(guestId);
+    }
+    
+    if (isSeparated && guestId && changeData.changedGenders) {
+      if (!guestGenderChanges.has(guestId)) {
+        guestGenderChanges.set(guestId, new Set());
+      }
+      changeData.changedGenders.forEach(gender => {
+        guestGenderChanges.get(guestId).add(gender);
+      });
+    }
+    else if (isSeparated && guestId && changeData.guest?.gender) {
+      if (!guestGenderChanges.has(guestId)) {
+        guestGenderChanges.set(guestId, new Set());
+      }
+      guestGenderChanges.get(guestId).add(changeData.guest.gender);
     }
   });
 
-  return Array.from(affectedGuestIds).map(guestId => {
+  return Array.from(affectedGuestIds).flatMap(guestId => {
     const guest = guests.find(g => g._id.toString() === guestId);
-    return guest ? {
+    if (!guest) return [];
+    
+    if (isSeparated && guestGenderChanges.has(guestId)) {
+      const changedGenders = guestGenderChanges.get(guestId);
+      const results = [];
+      
+      changedGenders.forEach(gender => {
+        if (gender === 'male' && guest.maleCount > 0) {
+          results.push({
+            id: guest._id,
+            name: `${guest.firstName} ${guest.lastName}`,
+            attendingCount: guest.maleCount,
+            group: guest.customGroup || guest.group,
+            gender: 'male',
+            maleCount: guest.maleCount,
+            femaleCount: 0
+          });
+        } else if (gender === 'female' && guest.femaleCount > 0) {
+          results.push({
+            id: guest._id,
+            name: `${guest.firstName} ${guest.lastName}`,
+            attendingCount: guest.femaleCount,
+            group: guest.customGroup || guest.group,
+            gender: 'female',
+            maleCount: 0,
+            femaleCount: guest.femaleCount
+          });
+        }
+      });
+      
+      return results;
+    }
+    
+    return [{
       id: guest._id,
       name: `${guest.firstName} ${guest.lastName}`,
       attendingCount: guest.attendingCount || 1,
-      group: guest.customGroup || guest.group
-    } : null;
-  }).filter(Boolean);
+      group: guest.customGroup || guest.group,
+      gender: guest.gender,
+      maleCount: guest.maleCount || 0,
+      femaleCount: guest.femaleCount || 0
+    }];
+  });
 };
 
 const applySyncOption = async (req, res) => {
@@ -3214,8 +3632,16 @@ const applySyncOption = async (req, res) => {
     }
 
     if (isSeparated) {
-      const validMaleTableIds = new Set(appliedData.maleTables.map(t => t.id));
-      const validFemaleTableIds = new Set(appliedData.femaleTables.map(t => t.id));
+      if (!appliedData.maleTables || !appliedData.femaleTables || 
+          !appliedData.maleArrangement || !appliedData.femaleArrangement) {
+        return res.status(400).json({ 
+          message: req.t('seating.sync.invalidOptionData'),
+          details: 'Missing required separated seating data'
+        });
+      }
+      
+      const validMaleTableIds = new Set((appliedData.maleTables || []).map(t => t.id));
+      const validFemaleTableIds = new Set((appliedData.femaleTables || []).map(t => t.id));
      
       const cleanedMaleArrangement = {};
       const cleanedFemaleArrangement = {};
@@ -3232,11 +3658,8 @@ const applySyncOption = async (req, res) => {
         }
       });
 
-      const maleGuests = guests.filter(g => g.maleCount && g.maleCount > 0);
-      const femaleGuests = guests.filter(g => g.femaleCount && g.femaleCount > 0);
-     
-      const maleValidationErrors = validateArrangementCapacity(appliedData.maleTables, cleanedMaleArrangement, maleGuests, req);
-      const femaleValidationErrors = validateArrangementCapacity(appliedData.femaleTables, cleanedFemaleArrangement, femaleGuests, req);
+      const maleValidationErrors = validateArrangementCapacity(appliedData.maleTables, cleanedMaleArrangement, guests, req, 'male');
+      const femaleValidationErrors = validateArrangementCapacity(appliedData.femaleTables, cleanedFemaleArrangement, guests, req, 'female');
      
       if (maleValidationErrors.length > 0 || femaleValidationErrors.length > 0) {
         return res.status(400).json({
@@ -3251,7 +3674,14 @@ const applySyncOption = async (req, res) => {
       seating.femaleArrangement = cleanedFemaleArrangement;
       seating.isSeparatedSeating = true;
     } else {
-      const validTableIds = new Set(appliedData.tables.map(t => t.id));
+      if (!appliedData.tables || !appliedData.arrangement) {
+        return res.status(400).json({ 
+          message: req.t('seating.sync.invalidOptionData'),
+          details: 'Missing required seating data'
+        });
+      }
+      
+      const validTableIds = new Set((appliedData.tables || []).map(t => t.id));
       const cleanedArrangement = {};
      
       Object.keys(appliedData.arrangement).forEach(tableId => {
@@ -3409,9 +3839,9 @@ const applySyncOption = async (req, res) => {
   }
 };
 
-const validateArrangementCapacity = (tables, arrangement, guests, req) => {
+const validateArrangementCapacity = (tables, arrangement, guests, req, tableGender = null) => {
   const errors = [];
- 
+  
   const validTableIds = new Set(tables.map(t => t.id));
   const invalidTableIds = Object.keys(arrangement).filter(tableId => !validTableIds.has(tableId));
  
@@ -3419,22 +3849,55 @@ const validateArrangementCapacity = (tables, arrangement, guests, req) => {
     invalidTableIds.forEach(tableId => {
       errors.push({
         type: 'table_not_found',
-        message: req.t('seating.sync.validation.tableNotFound', { tableId })
+        message: req.t('seating.sync.validation.tableNotFound', { tableId: tableId })
       });
     });
     return errors;
   }
  
   Object.entries(arrangement).forEach(([tableId, guestIds]) => {
-    if (!Array.isArray(guestIds)) return;
+    if (!Array.isArray(guestIds)) {
+      return;
+    }
    
     const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-   
-    const totalPeople = guestIds.reduce((sum, guestId) => {
+    if (!table) {
+      return;
+    }
+    
+    let totalPeople = 0;
+    
+    guestIds.forEach(guestId => {
       const guest = guests.find(g => g._id.toString() === guestId);
-      return sum + (guest?.attendingCount || 1);
-    }, 0);
+      if (!guest) {
+        return;
+      }
+      
+      let countUsed = 0;
+      
+      if (tableGender === 'male') {
+        countUsed = guest.maleCount || 0;
+      } else if (tableGender === 'female') {
+        countUsed = guest.femaleCount || 0;
+      } else {
+        if (guest.maleCount !== undefined || guest.femaleCount !== undefined) {
+          const isMaleTable = table.name.includes('גברים') || table.id.startsWith('male_');
+          const isFemaleTable = table.name.includes('נשים') || table.id.startsWith('female_');
+          
+          if (isMaleTable) {
+            countUsed = guest.maleCount || 0;
+          } else if (isFemaleTable) {
+            countUsed = guest.femaleCount || 0;
+          } else {
+            countUsed = guest.attendingCount || 1;
+          }
+        } else {
+          countUsed = guest.attendingCount || 1;
+        }
+      }
+      
+      totalPeople += countUsed;
+    });
 
     if (totalPeople > table.capacity) {
       errors.push({
@@ -3480,14 +3943,18 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
     const movedGuests = [];
     const actions = [];
 
-    affectedGuestIds.forEach(guestId => {
+    affectedGuestIds.forEach(guestData => {
+      const guestId = typeof guestData === 'string' ? guestData : guestData.id;
+      const specifiedGender = typeof guestData === 'object' ? guestData.gender : null;
+      
       const guest = guests.find(g => g._id.toString() === guestId);
       if (!guest) return;
 
       let wasMovedFromTable = null;
-     
+    
       if (isSeparated) {
-        const guestGender = guest.gender;
+        const guestGender = specifiedGender || guest.gender;
+        
         const currentArrangement = guestGender === 'male' ? seating.maleArrangement : seating.femaleArrangement;
         const currentTables = guestGender === 'male' ? seating.maleTables : seating.femaleTables;
        
@@ -3955,7 +4422,6 @@ const generateAISeating = async (req, res) => {
     });
   }
 };
-
 
 const getSeatingArrangementForGender = (seating, gender) => {
   if (!seating.isSeparatedSeating) {

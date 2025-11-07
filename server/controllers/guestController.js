@@ -489,6 +489,14 @@ const updateGuestRSVP = async (req, res) => {
     } else if (rsvpStatus === 'confirmed') {
       if (event.isSeparatedSeating) {
         if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
+          const changedGenders = [];
+          if (oldMaleCount !== newMaleCount) {
+            changedGenders.push('male');
+          }
+          if (oldFemaleCount !== newFemaleCount) {
+            changedGenders.push('female');
+          }
+          
           syncTriggerData = {
             type: 'attending_count_changed',
             guestId,
@@ -499,7 +507,8 @@ const updateGuestRSVP = async (req, res) => {
             newMaleCount,
             oldFemaleCount,
             newFemaleCount,
-            isSeparated: true
+            isSeparated: true,
+            changedGenders
           };
         }
       } else if (oldAttendingCount !== newAttendingCount) {
@@ -711,11 +720,19 @@ const updateGuestRSVPPublic = async (req, res) => {
         };
       }
     } else if (rsvpStatus === 'confirmed') {
-      if (currentEvent.isSeparatedSeating) {
+      if (event.isSeparatedSeating) {
         if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
+          const changedGenders = [];
+          if (oldMaleCount !== newMaleCount) {
+            changedGenders.push('male');
+          }
+          if (oldFemaleCount !== newFemaleCount) {
+            changedGenders.push('female');
+          }
+          
           syncTriggerData = {
             type: 'attending_count_changed',
-            guestId: updatedGuest._id,
+            guestId,
             guest: updatedGuest,
             oldCount: oldAttendingCount,
             newCount: newAttendingCount,
@@ -723,7 +740,8 @@ const updateGuestRSVPPublic = async (req, res) => {
             newMaleCount,
             oldFemaleCount,
             newFemaleCount,
-            isSeparated: true
+            isSeparated: true,
+            changedGenders
           };
         }
       } else if (oldAttendingCount !== newAttendingCount) {

@@ -336,51 +336,44 @@ const EventSeatingPage = () => {
 
   const checkAndHandlePendingSync = useCallback(async (skipFingerprintUpdate = false) => {
     try {
-      const syncResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/status`);
-      if (syncResponse && syncResponse.ok) {
-        const syncStatus = await syncResponse.json();
-       
-        if (syncStatus.syncRequired && syncStatus.pendingTriggers > 0) {
-          const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
-            method: 'POST'
-          });
-         
-          if (processResponse && processResponse.ok) {
-            const processResult = await processResponse.json();
-           
-            if (processResult.requiresUserDecision) {
-              setSyncOptions(processResult.options || []);
-              setAffectedGuests(processResult.affectedGuests || []);
-              setPendingSyncTriggers(processResult.pendingTriggers || []);
-              setIsSyncOptionsModalOpen(true);
-             
-              showSyncNotification('info', t('seating.sync.pendingChangesDetected'));
-            } else if (processResult.hasChanges && processResult.seating) {
-              if (isSeparatedSeating) {
-                setMaleTables(processResult.seating.maleTables || []);
-                setFemaleTables(processResult.seating.femaleTables || []);
-                setMaleArrangement(processResult.seating.maleArrangement || {});
-                setFemaleArrangement(processResult.seating.femaleArrangement || {});
-              } else {
-                setTables(processResult.seating.tables || []);
-                setSeatingArrangement(processResult.seating.arrangement || {});
-              }
-             
-              if (!skipFingerprintUpdate) {
-                const currentGuestData = await fetchConfirmedGuests();
-                if (currentGuestData) {
-                  const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
-                  setLastSyncData(newFingerprint);
-                }
-              }
-             
-              showSyncNotification('success', processResult.message);
+      const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
+        method: 'POST'
+      });
+    
+      if (processResponse && processResponse.ok) {
+        const processResult = await processResponse.json();
+      
+        if (processResult.requiresUserDecision) {
+          setSyncOptions(processResult.options || []);
+          setAffectedGuests(processResult.affectedGuests || []);
+          setPendingSyncTriggers(processResult.pendingTriggers || []);
+          setIsSyncOptionsModalOpen(true);
+        
+          showSyncNotification('info', t('seating.sync.pendingChangesDetected'));
+        } else if (processResult.hasChanges && processResult.seating) {
+          if (isSeparatedSeating) {
+            setMaleTables(processResult.seating.maleTables || []);
+            setFemaleTables(processResult.seating.femaleTables || []);
+            setMaleArrangement(processResult.seating.maleArrangement || {});
+            setFemaleArrangement(processResult.seating.femaleArrangement || {});
+          } else {
+            setTables(processResult.seating.tables || []);
+            setSeatingArrangement(processResult.seating.arrangement || {});
+          }
+        
+          if (!skipFingerprintUpdate) {
+            const currentGuestData = await fetchConfirmedGuests();
+            if (currentGuestData) {
+              const newFingerprint = createGuestFingerprint(currentGuestData.confirmed);
+              setLastSyncData(newFingerprint);
             }
           }
+        
+          showSyncNotification('success', processResult.message);
         }
       }
     } catch (error) {
-      // Silent error handling
+      console.error('checkAndHandlePendingSync error:', error);
     }
   }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
@@ -2494,6 +2487,7 @@ const EventSeatingPage = () => {
         showSyncNotification('error', errorData.message || t('seating.sync.manualSyncFailed'));
       }
     } catch (error) {
+      console.error('manualSync error:', error);
       showSyncNotification('error', t('seating.sync.manualSyncFailed'));
     } finally {
       setSyncInProgress(false);
@@ -2597,10 +2591,20 @@ const EventSeatingPage = () => {
       await fetchEventPermissions();
       const guestData = await fetchConfirmedGuests();
       const seatingData = await fetchSeatingArrangement();
+      
+      if (seatingData) {
+        const hasExistingArrangement = seatingData.isSeparatedSeating 
+          ? (seatingData.maleTables?.length > 0 || seatingData.femaleTables?.length > 0)
+          : (seatingData.tables?.length > 0);
+        
+        if (hasExistingArrangement) {
+          checkAndHandlePendingSync(true);
+        }
+      }
     };
 
     initializeData();
-  }, [eventId]);
+  }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement, checkAndHandlePendingSync]);
 
   const getCurrentTables = useCallback(() => {
     if (isSeparatedSeating) {
@@ -3096,6 +3100,7 @@ const EventSeatingPage = () => {
           onApplyOption={handleApplySyncOption}
           onMoveToUnassigned={handleMoveAffectedGuestsToUnassigned}
           isSeparatedSeating={isSeparatedSeating}
+          canEdit={canEdit}
         />
       </div>
     </FeaturePageTemplate>
