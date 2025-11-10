@@ -427,9 +427,126 @@
 }
 
 /* Responsive Design */
+
+@media (max-width: 480px) {
+  .info-section {
+    margin-top: -100px;
+    margin-bottom: 20px;
+  }
+  
+  .share-form-section {
+    padding-bottom: 24px;
+    margin-bottom: 30px;
+  }
+  
+  .share-form-section .input-group {
+    flex: 0 1 100%;
+    max-width: 200px;
+    min-width: unset;
+  }
+  
+  .share-form-section .permission-select {
+    width: 100%;
+    font-size: 13px;
+    padding: 12px 14px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+  
+  .shared-user-card {
+    padding: 18px;
+  }
+
+  .info-content li {
+    font-size: 14px;
+  }
+  
+  .permission-select {
+    width: 100%;
+    max-width: 150px;
+    font-size: 13px;
+  }
+  
+  .permission-select option {
+    font-size: 12px;
+    padding: 6px;
+  }
+  
+  .status-indicator {
+    margin-right: 25px;
+  }
+  
+  .shared-users-section {
+    margin-bottom: 30px;
+  }
+
+  .user-avatar {
+    margin-right: auto;
+    margin-left: auto;
+  }
+  
+}
+
 @media (max-width: 768px) {
   .share-content {
     padding: 0 16px;
+  }
+  
+  .info-section {
+    margin-top: -80px;
+    margin-bottom: 25px;
+  }
+
+  .permission-select {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .permission-select option {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .share-form-section {
+    padding-bottom: 24px;
+    margin-bottom: 30px;
+  }
+  
+  .share-form-section .input-group {
+    flex: 0 1 100%;
+    max-width: 400px;
+    min-width: unset;
+    width: 100%;
+  }
+  
+  .share-form-section .permission-select {
+    width: 100%;
+    font-size: 13px;
+    padding: 12px 14px;
+  }
+
+  .shared-user-card {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .user-meta {
+    justify-content: center;
+  }
+  
+  .user-actions {
+    justify-content: center;
   }
   
   .form-row {
@@ -469,22 +586,23 @@
   .section-title {
     font-size: 20px;
   }
+
+  .user-avatar {
+    margin-right: auto;
+    margin-left: auto;
+  }
 }
 
-@media (max-width: 480px) {
-  .share-form-section {
-    padding-bottom: 24px;
+@media (min-width: 769px) and (max-width: 1025px) {
+  .share-content {
+    padding: 0 20px;
   }
   
-  .section-title {
-    font-size: 18px;
+  .info-section {
+    margin-bottom: 30px;
   }
   
   .shared-user-card {
-    padding: 18px;
-  }
-
-  .info-content li {
-    font-size: 14px;
+    padding: 22px;
   }
 }

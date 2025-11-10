@@ -6,7 +6,7 @@ import { useModal } from '../../../hooks/useModal';
 import '../../../styles/PublicRidesPage.css';
 
 const PublicRidesPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n} = useTranslation();
   const { eventId } = useParams();
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
@@ -150,8 +150,8 @@ const PublicRidesPage = () => {
             await fetchOtherGuests();
         }
     }  else {
-        const errorData = await response.json();
-        setError(errorData.message || t('events.features.rides.phoneNotFound'));
+      const errorData = await response.json();
+      setError(t('events.features.rides.phoneNotFound'));
       }
     } catch (err) {
       setError(t('events.features.rides.errors.networkError'));
@@ -382,9 +382,10 @@ const handleRideInfoSubmit = async (e) => {
 
   // Formats event date to Hebrew locale
   const formatEventDate = (dateString) => {
-    if (!dateString) return '';
+  if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('he-IL', {
+    const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -426,7 +427,7 @@ const handleRideInfoSubmit = async (e) => {
   }
 
   return (
-    <div className="public-rides-page">
+    <div className="public-rides-page" dir={i18n.language === 'he' ? 'rtl' : 'ltr'}>
       <div className="rides-container">
         <div className="rides-header">
           <h1 className="event-title">{eventInfo.eventName}</h1>
@@ -666,11 +667,11 @@ const handleRideInfoSubmit = async (e) => {
                                     <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {otherGuest.rideInfo.departureTime}</p>
                                   )}
                                   {otherGuest.distance && (
-                                    <p className="distance-info"><strong>{t('events.features.rides.distance')}:</strong> {otherGuest.distance}</p>
+                                    <p className="distance-info"><strong>{t('events.features.rides.distance')}:</strong> {otherGuest.distance} {t('events.features.rides.km')}</p>
                                   )}
                                 </div>
                                 <div className="contact-info">
-                                  <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
+                                  <strong>{t('events.features.rides.contactInfo')}</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
                                 </div>
                                 {statusText && (
                                   <div className="status-display">
@@ -747,7 +748,7 @@ const handleRideInfoSubmit = async (e) => {
                                   )}
                                 </div>
                                 <div className="contact-info">
-                                  <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
+                                  <strong>{t('events.features.rides.contactInfo')}</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
                                 </div>
                                 {statusText && (
                                   <div className="status-display">
@@ -819,7 +820,7 @@ const handleRideInfoSubmit = async (e) => {
                                 )}
                               </div>
                               <div className="contact-info">
-                                <strong>{t('events.features.rides.contactInfo')}:</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
+                                <strong>{t('events.features.rides.contactInfo')}</strong> {otherGuest.phone || t('events.features.rides.notAvailable')}
                               </div>
                             </div>
                           </div>

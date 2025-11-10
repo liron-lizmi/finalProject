@@ -290,7 +290,7 @@ const getSuggestedRides = async (req, res) => {
         const distance = await calculateDistance(userAddress, guest.rideInfo.address);
       return {
         ...guest,
-        distance: `${distance.toFixed(1)} ק"מ`,
+        distance: distance.toFixed(1),
         numericDistance: distance
       };
     })

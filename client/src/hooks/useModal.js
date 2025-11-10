@@ -42,7 +42,7 @@ export const useModal = () => {
     closeModal();
   };
 
-  // ה-JSX של המודל
+
   const ModalComponent = showModal ? (
     <div className="modal-overlay" onClick={(e) => {
       if (e.target.className === 'modal-overlay') {

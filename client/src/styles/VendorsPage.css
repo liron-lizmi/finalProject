@@ -1384,7 +1384,328 @@
 }
 
 /* Responsive Design*/
+@media (max-width: 480px) {
+  .vendors-page {
+    padding: 15px;
+  }
+
+  .vendors-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .vendor-details-content {
+    padding: 15px;
+  }
+
+  .main-photo {
+    height: 180px;
+  }
+
+  .all-photos img.thumbnail-photo {
+    width: 80px;
+    height: 60px;
+  }
+
+  .vendor-details-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .vendor-card-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .vendor-icon-name {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .vendor-icon {
+    font-size: 32px !important;
+  }
+
+  .vendor-card-header h4 {
+    font-size: 1.3rem !important;
+  }
+
+  .vendor-category {
+    margin: 0 auto;
+    font-size: 0.8rem !important;
+    padding: 6px 14px !important;
+  }
+
+  .vendor-details-card {
+    padding: 25px 15px !important;
+  }
+
+  .vendor-details-card p {
+    font-size: 1rem !important;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .save-vendor-button,
+  .manual-form-cancel-button {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    max-width: 180px !important;
+    width: 100%;
+  }
+
+  .form-actions .save-vendor-button {
+    order: 1;
+  }
+
+  .form-actions .manual-form-cancel-button {
+    order: 2;
+  }
+
+  .manual-vendor-form .form-group {
+    margin: 0 auto 12px;
+    padding: 0 10px;
+  }
+
+  .manual-vendor-form .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .manual-vendor-form .form-group input,
+  .manual-vendor-form .form-group select,
+  .manual-vendor-form .form-group textarea {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
+  .manual-vendor-form {
+    margin-top: -100px;
+  }
+
+  .vendor-actions {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .change-vendor-button,
+  .delete-vendor-button {
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+    max-width: 180px !important;
+  }
+
+  .vendor-selection-modal-content {
+    padding: 25px 15px;
+    max-width: 95%;
+  }
+
+  .vendor-selection-modal-content h3 {
+    font-size: 1.3rem;
+  }
+
+  .vendor-modal-btn {
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    max-width: 200px !important;
+  }
+
+  .vendor-modal-cancel-button {
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+    max-width: 180px !important;
+  }
+
+  .select-vendor-button,
+  .add-manual-vendor-button {
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    max-width: 280px !important;
+  }
+
+  .add-vendor-button {
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+    max-width: 200px;
+    width: auto;
+  }
+
+  .add-more-vendors {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .vendors-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .vendors-list-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .results-info {
+    font-size: 0.75rem;
+  }
+
+  .pagination {
+    gap: 4px;
+  }
+
+  .pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  .pagination-prev,
+  .pagination-next {
+    font-size: 14px;
+  }
+
+  .vendors-map {
+    height: 300px;
+  }
+
+  .vendor-card {
+    margin-bottom: 15px;
+  }
+
+  .vendor-info {
+    padding: 12px;
+  }
+
+  .vendor-info h4 {
+    font-size: 1rem;
+  }
+
+  html[dir="rtl"] .delete-vendor-button,
+  html[dir="ltr"] .delete-vendor-button,
+  html[dir="rtl"] .change-vendor-button,
+  html[dir="ltr"] .change-vendor-button {
+    order: initial;
+  }
+
+  .no-vendor-selected {
+    margin-top: 40px;
+  }
+
+  .selected-vendors {
+    margin-top: -100px;
+    padding-top: 0;
+  }
+
+  .success-message {
+    margin-bottom: 100px;
+    position: relative;
+    z-index: 10;
+  }
+
+}
+
 @media (max-width: 768px) {
+  .vendors-page {
+    padding: 20px;
+  }
+
+  .vendors-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .vendor-details-content {
+    padding: 20px;
+  }
+
+  .main-photo {
+    height: 220px;
+  }
+
+  .all-photos img.thumbnail-photo {
+    width: 90px;
+    height: 65px;
+  }
+
+  .vendor-details-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .vendor-card-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vendor-icon-name {
+    justify-content: center;
+  }
+
+  .vendor-category {
+    margin: 0 auto;
+  }
+
+  .vendor-details-card {
+    text-align: center;
+  }
+
+  .vendor-details-card p {
+    text-align: center;
+  }
+
+  .vendor-selection-options,
+  .add-more-vendors {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .save-vendor-button,
+  .manual-form-cancel-button {
+    width: 40%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .manual-vendor-form .form-actions {
+    max-width: 600px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+  }
+
+  .manual-vendor-form {
+    margin-top: -80px;
+  }
+
+  .vendor-actions {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+  }
+
+  .change-vendor-button,
+  .delete-vendor-button {
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .vendors-filters {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
   .vendors-list-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1410,46 +1731,9 @@
   .pagination-next {
     font-size: 16px;
   }
-}
-  
-@media (max-width: 768px) {
-  .vendor-details-content {
-    padding: 15px;
-  }
 
-  .main-photo {
-    height: 200px;
-  }
-
-  .vendor-details-header h2 {
-    font-size: 1.3rem;
-  }
-
-  .vendor-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-  }
-
-  .vendor-category {
-    margin-left: 30px;
-  }
-
-  html[dir="rtl"] .vendor-category {
-    margin-left: 0;
-    margin-right: 30px;
-  }
-
-  .vendor-selection-options,
-  .add-more-vendors,
-  .form-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .vendor-actions {
-    flex-direction: column;
-    gap: 10px;
+  .vendors-map {
+    height: 350px;
   }
 
   html[dir="rtl"] .delete-vendor-button,
@@ -1459,151 +1743,74 @@
     order: initial;
   }
 
-  .vendors-filters {
-    max-height: 70vh;
-    overflow-y: auto;
+  .no-vendor-selected {
+    padding-top: -100px;
   }
 
-  .checkbox-group {
-    grid-template-columns: 1fr 1fr;
+  .selected-vendors {
+    margin-top: -100px;
+    padding-top: 0;
   }
 
-  .form-actions {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
-    align-items: stretch;
-  }
-
-  .save-vendor-button,
-    .manual-form-cancel-button {
-      padding: 10px 15px;
-      font-size: 0.9rem;
-      width: 100%;
-      max-width: 200px;
-      margin: 0 auto;
-    }
-
-  .manual-vendor-form .form-actions {
-    max-width: 600px;
-    margin: 20px auto 0;
-    padding: 0 20px;
-  }
-
-  .vendor-actions {
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 15px;
-  }
-
-  .change-vendor-button,
-  .delete-vendor-button {
-    padding: 8px 16px;
-    font-size: 0.9rem;
+  .add-vendor-button {
     max-width: 200px;
-    margin: 0 auto;
   }
 
-  .vendor-details-card {
-    text-align: center;
-  }
-
-  .vendor-card-header {
+  .add-more-vendors {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 8px;
-    margin-bottom: 15px;
-  }
-
-  .vendor-icon-name {
-    display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 10px;
+    align-items: center;
   }
 
-  .vendor-card-header h4 {
-    text-align: center;
-    margin: 0;
+  .success-message {
+    margin-bottom: 100px;
+    position: relative;
+    z-index: 10;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1025px) {
+  .vendors-page {
+    padding: 25px;
   }
 
-  .vendor-category {
-    text-align: center;
-    margin: 0 auto;
-    display: block;
+  .vendors-content {
+    flex-direction: row;
+    gap: 20px;
   }
 
-  .vendor-details-card p {
-    text-align: center;
+  .vendors-filters {
+    flex: 0 0 220px;
+    align-self: flex-start;
+  }
+
+  .vendors-results-container {
+    flex: 1;
+  }
+
+  .vendors-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
   }
 
   .vendors-map {
-      height: 400px;
+    height: 350px;
   }
+
+  .selected-vendors {
+  display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .vendor-details-card {
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .manual-vendor-form {
+    margin-top: 50px;
+  }
+
 }
-
-@media (max-width: 480px) {
-  .form-actions {
-    gap: 8px;
-    margin-top: 15px;
-  }
-
-  .save-vendor-button,
-  .cancel-button {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    max-width: 150px;
-    border-radius: 3px;
-  }
-
-  .manual-vendor-form .form-actions {
-    padding: 0 15px;
-  }
-
-  .manual-vendor-form .form-group {
-    margin: 0 auto 12px;
-    padding: 0 15px;
-  }
-
-  .change-vendor-button,
-  .delete-vendor-button {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    max-width: 150px;
-  }
-
-  .vendor-actions {
-    gap: 8px;
-    margin-top: 12px;
-  }
-}
-
- @media (min-width: 992px) {
-    .vendors-content {
-      flex-direction: row;
-    }
-   
-    .vendors-filters {
-      flex: 0 0 250px;
-      align-self: flex-start;
-      position: sticky;
-      top: 20px;
-    }
-   
-    .vendors-results-container {
-      flex: 1;
-    }
-
-    .vendors-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-    @media (min-width: 576px) {
-    .vendors-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
- 

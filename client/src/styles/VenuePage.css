@@ -1347,15 +1347,202 @@ button:disabled:hover,
 }
 
 /* Responsive Design*/
-@media (min-width: 576px) {
-  .venues-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 480px) {
+  .event-venue-container {
+    padding: 30px 4%;
+  }
+
+  .venue-icon {
+    font-size: 45px;
+    margin-bottom: 10px;
+  }
+
+  .venue-page-title {
+    font-size: 1.6rem;
+    letter-spacing: 1px;
+    padding-bottom: 12px;
+  }
+
+  .venue-page-title::after {
+    width: 80px;
+    height: 3px;
+  }
+
+  .no-venue-state {
+    padding: 40px 15px;
+  }
+
+  .no-venue-description {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+
+  .no-venue-sub-description {
+    font-size: 0.95rem;
+    margin-bottom: 40px;
+  }
+
+  .venue-btn,
+  .venue-modal-btn,
+  .venue-card-btn,
+  .change-venue-button,
+  .delete-venue-button,
+  .save-venue-button,
+  .manual-form-cancel-button {
+    padding: 14px 25px;
+    font-size: 15px;
+    max-width: 100%;
+  }
+
+  .save-venue-button,
+  .manual-form-cancel-button {
+    width: 80% !important;
+    min-width: auto !important;
+  }
+
+  .form-actions .save-venue-button {
+    order: 1;  
+  }
+  .form-actions .manual-form-cancel-button {
+    order: 2;  
+  }
+
+  .venue-action-buttons {
+    gap: 15px;
+    margin-top: 40px;
+  }
+
+  .venue-success-message {
+    padding: 15px 20px;
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+
+  .venue-selected-card {
+    padding: 30px 20px;
+    box-shadow: 0 5px 20px rgba(107, 84, 68, 0.1);
+  }
+
+  .venue-card-title {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+  }
+
+  .venue-details-container {
+    margin: 15px auto;
+    padding: 15px 0;
+  }
+
+  .venue-detail-label {
+    font-size: 0.9rem;
+  }
+
+  .venue-detail-value,
+  .venue-detail-link {
+    font-size: 1.05rem;
+  }
+
+  .venue-card-actions {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 15px;
+  }
+
+  .manual-venue-form {
+    padding: 0;
+    margin: 30px auto;
+  }
+
+  .manual-venue-form .form-group {
+    margin-bottom: 20px;
+  }
+
+  .manual-venue-form label {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  .manual-venue-form input {
+    padding: 14px 16px;
+    font-size: 1rem;
+  }
+
+  .form-actions {
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .venue-selection-modal-content {
+    padding: 35px 20px;
+    max-width: 90%;
+  }
+
+  .venue-selection-modal-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+  }
+
+  .venue-selection-options {
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+
+  .venue-details-content {
+    padding: 25px 15px;
+    max-width: 95%;
+  }
+
+  .venue-details-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .main-photo {
+    height: 200px;
+  }
+
+  .all-photos img.thumbnail-photo {
+    width: 90px;
+    height: 65px;
+  }
+
+  .venue-map {
+    height: 250px;
+  }
+
+  .pagination-btn {
+    min-width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .pagination-prev,
+  .pagination-next {
+    font-size: 16px;
+  }
+
+  .results-info {
+    font-size: 12px;
+  }
+
+  .venue-list-header {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .venue-header h1 {
+    font-size: 2rem;
+  }
+
+  .venue-header p {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 768px) {
   .event-venue-container {
-    padding: 60px 4%; 
+    padding: 60px 4%;
   }
 
   .venue-page-title {
@@ -1365,13 +1552,13 @@ button:disabled:hover,
   .venue-selected-card,
   .manual-venue-form,
   .venue-selection-modal-content {
-    padding: 30px 20px; 
-    box-shadow: none; 
-    border: none; 
+    padding: 30px 20px;
+    box-shadow: none;
+    border: none;
   }
 
   .venue-action-buttons,
-  .venue-card-actions, 
+  .venue-card-actions,
   .form-actions,
   .venue-selection-options {
     flex-direction: column;
@@ -1380,12 +1567,18 @@ button:disabled:hover,
 
   .venue-btn,
   .venue-card-btn,
-  .save-venue-button,
   .change-venue-button,
   .delete-venue-button,
   .cancel-button {
     width: 100%;
-    max-width: 100%; 
+    max-width: 100%;
+  }
+
+  .save-venue-button,
+  .manual-form-cancel-button {
+    width: 45%;
+    max-width: 100%;
+    margin: 0 auto;
   }
 
   .venue-card-title {
@@ -1401,13 +1594,13 @@ button:disabled:hover,
   }
 
   .venue-details-content {
-    padding: 25px; 
+    padding: 25px;
   }
- 
+
   .main-photo {
-    height: 250px; 
+    height: 250px;
   }
- 
+
   .venue-details-header h2 {
     font-size: 1.5rem;
   }
@@ -1417,13 +1610,13 @@ button:disabled:hover,
     height: 35px;
     font-size: 13px;
   }
- 
+
   .venue-list-header {
     flex-direction: column;
     gap: 10px;
     text-align: center;
   }
- 
+
   .results-info {
     font-size: 13px;
   }
@@ -1436,79 +1629,40 @@ button:disabled:hover,
     margin: 15px auto;
   }
 
-   .venue-card-actions {
+  .venue-card-actions {
     margin-top: 20px;
     padding-top: 15px;
- }
+  }
 }
 
-@media (min-width: 992px) {
+@media (min-width: 769px) and (max-width: 1025px) {
+  .event-venue-container {
+    padding: 60px 6%;
+  }
+
+  .venues-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+  }
+
   .venue-content {
     flex-direction: row;
+    gap: 25px;
   }
- 
+
   .venue-filters {
-    flex: 0 0 280px; 
-    align-self: flex-start;
+    flex: 0 0 250px;
   }
- 
+
   .venue-results-container {
     flex: 1;
   }
 
-  .venues-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1200px) {
-  .event-venue-container {
-    padding: 80px 0; 
-  }
-}
-
-@media (max-width: 480px) {
-  .event-venue-container {
-    padding: 40px 4%;
+  .venue-map {
+    height: 380px;
   }
 
-  .venue-icon {
-    font-size: 50px;
-  }
-
-  .venue-page-title {
-    font-size: 1.8rem;
-  }
-
-  .venue-selected-card,
-  .manual-venue-form,
-  .venue-selection-modal-content {
-    padding: 25px 20px;
-  }
-
-  .venue-card-icon {
-    font-size: 40px;
-  }
-
-  .no-venue-description {
-    font-size: 1rem;
-  }
-
-  .no-venue-sub-description {
-    font-size: 0.95rem;
-  }
-
-  .venue-btn,
-  .venue-card-btn {
-    padding: 14px 28px;
-    font-size: 15px;
-  }
-
-  .venue-header h1 {
-    font-size: 2rem;
-  }
-
-  .venue-header p {
-    font-size: 1rem;
+  .venue-selected-card {
+    max-width: 700px;
   }
 }

@@ -223,7 +223,13 @@
   text-align: center;
   display: flex;
   gap: 16px;
-  justify-content: flex-end;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cancel-button {
+  order: 2;
 }
 
 .save-budget-button,
@@ -235,23 +241,30 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
-  min-width: 120px;
+  order: 1;
 }
 
-.save-budget-button,
-.edit-budget-button {
-  background-color: #28a745;
+.save-budget-button {
+  background-color: #d4b99e;
   color: white;
 }
 
-.save-budget-button:hover:not(:disabled),
-.edit-budget-button:hover {
-  background-color: #218838;
+.save-budget-button:hover:not(:disabled){
+  background-color: #a68b76;
 }
 
 .save-budget-button:disabled {
   background-color: #6c757d;
   cursor: not-allowed;
+}
+
+.edit-budget-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.edit-budget-button:hover {
+  background-color: #28a745;
 }
 
 /* Budget Display */
@@ -1394,7 +1407,8 @@ button:disabled {
 }
 
 .budget-alerts-banner {
-  margin-bottom: 20px;
+  margin-top: -8px;
+  margin-bottom: 16px;
 }
 
 .alert-banner {
@@ -1518,7 +1532,472 @@ button:disabled {
 }
 
 /* Mobile Responsiveness */
+@media (max-width: 480px) {
+  
+  .budget-container {
+    padding: 8px;
+  }
+  
+  .budget-tabs {
+    padding: 0 8px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  
+  .budget-tab {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: fit-content;
+  }
+  
+  .budget-setup-form,
+  .budget-edit-form {
+    padding: 16px;
+  }
+  
+  .budget-setup-header h3 {
+    font-size: 20px;
+  }
+  
+  .budget-setup-header p {
+    font-size: 14px;
+  }
+  
+  .budget-label {
+    font-size: 14px;
+  }
+  
+  .budget-input {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  
+  .category-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    margin: 0;
+  }
+  
+  .categories-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .category-item {
+    padding: 12px;
+  }
+  
+  .category-name {
+    font-size: 13px;
+  }
+  
+  .category-percentage {
+    font-size: 11px;
+  }
+  
+  .reset-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .budget-summary-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .summary-card {
+    padding: 16px;
+    flex-direction: row;
+    gap: 12px;
+  }
+  
+  .card-icon {
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+  
+  .card-content h3 {
+    font-size: 12px;
+  }
+  
+  .amount {
+    font-size: 18px;
+  }
+  
+  .percentage,
+  .sub-info {
+    font-size: 11px;
+  }
+  
+  .budget-summary-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .budget-amount-compact {
+    font-size: 20px;
+  }
+  
+  .edit-budget-button {
+    width: 100%;
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+  
+  .expense-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .expense-stats {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .expense-stats .stat-item {
+    width: 100%;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+  
+  .add-expense-button {
+    width: 100%;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .expense-filters {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .category-filter,
+  .sort-select,
+  .sort-order-button {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .expense-form-modal {
+    margin: 8px;
+    padding: 16px;
+    max-height: 95vh;
+  }
+  
+  .expense-form h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  
+  .cancel-button,
+  .save-button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    padding: 10px 24px !important;
+    font-size: 14px;
+  }
+  
+  .budget-actions .save-budget-button {
+    order: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .budget-actions .cancel-button {
+    order: 2;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+  }
+
+  .expense-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  
+  .expense-category {
+    min-width: auto;
+  }
+  
+  .expense-category span {
+    font-size: 13px;
+  }
+  
+  .expense-details {
+    order: 2;
+  }
+  
+  .expense-description {
+    font-size: 14px;
+  }
+  
+  .expense-date,
+  .expense-notes {
+    font-size: 11px;
+  }
+  
+  .expense-amount {
+    font-size: 16px;
+    min-width: auto;
+    text-align: start;
+    order: 1;
+  }
+  
+  .expense-actions {
+    justify-content: flex-end;
+    order: 3;
+  }
+  
+  .payment-toggle,
+  .edit-button,
+  .delete-button {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .budget-edit-modal {
+    margin: 8px;
+    max-height: 95vh;
+  }
+  
+  .budget-edit-header {
+    padding: 16px 16px 0;
+    margin-bottom: 16px;
+  }
+  
+  .budget-edit-header h3 {
+    font-size: 18px;
+  }
+  
+  .budget-edit-form {
+    padding: 0 16px 16px;
+  }
+  
+  .budget-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .save-budget-button {
+    width: 100%;
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+  
+  .improved-bar-chart {
+    gap: 8px;
+  }
+  
+  .chart-bars-container {
+    gap: 6px;
+    padding-bottom: 100px;
+    height: 250px;
+  }
+  
+  .chart-bars-container::before {
+    background-size: 100% 250px;
+  }
+  
+  .y-axis {
+    height: 250px;
+    padding-right: 8px;
+  }
+  
+  .y-axis-label {
+    font-size: 9px;
+  }
+  
+  .improved-bar-group {
+    min-width: 50px;
+  }
+  
+  .bar-container {
+    width: 45px;
+    height: 250px;
+  }
+  
+  .improved-bar {
+    width: 18px;
+  }
+  
+  .bar-value {
+    font-size: 8px;
+    padding: 2px 4px;
+    top: -20px;
+  }
+  
+  .improved-bar-label {
+    min-height: 65px;
+    gap: 4px;
+    max-width: 50px;
+  }
+  
+  .improved-bar-label .category-name {
+    font-size: 8px;
+    max-width: 50px;
+  }
+  
+  .percentage-indicator {
+    font-size: 8px;
+    padding: 2px 4px;
+  }
+  
+  .chart-legend-horizontal {
+    flex-direction: row !important;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .chart-legend-horizontal .legend-item {
+    font-size: 12px;
+  }
+  
+  .summary-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .stat {
+    min-width: 100%;
+    padding: 10px;
+  }
+  
+  .chart-summary .stat-label {
+    font-size: 11px;
+  }
+  
+  .chart-summary .stat-value {
+    font-size: 16px;
+  }
+  
+  .pie-chart {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .chart-legend {
+    max-width: 100%;
+  }
+  
+  .legend-item {
+    font-size: 12px;
+  }
+  
+  .budget-progress h4,
+  .categories-breakdown h4 {
+    font-size: 16px;
+  }
+  
+  .category-breakdown-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .category-info {
+    width: 100%;
+  }
+  
+  .category-progress {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row-reverse;
+    gap: 12px;
+  }
+
+  .category-remaining {
+    width: 100%;
+    text-align: start;
+  }
+  
+  .alert-threshold-section {
+    padding: 16px;
+  }
+  
+  .alert-threshold-section h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .threshold-value {
+    font-size: 14px;
+  }
+  
+  .setting-description {
+    font-size: 12px;
+  }
+  
+  .categories-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .categories-header h4 {
+    font-size: 16px;
+  }
+  
+  .reset-button {
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
+
+  .budget-alerts-banner {
+    margin-top: -60px;
+    margin-bottom: 18px;
+  }
+
   .budget-container {
     padding: 10px;
   }
@@ -1595,9 +2074,24 @@ button:disabled {
   }
 
   .budget-summary-compact {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     gap: 16px;
+    padding: 16px;
+  }
+
+  .budget-total-display {
+    flex: 0 0 auto;
+  }
+
+  .edit-budget-button {
+    width: auto;
+    min-width: 120px;
+    max-width: 180px;
+    padding: 10px 20px;
+    font-size: 14px;
+    flex-shrink: 0;
   }
 
   .budget-edit-modal {
@@ -1643,8 +2137,7 @@ button:disabled {
   }
 
   .chart-legend-horizontal {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
   }
 
   .y-axis-label {
@@ -1654,47 +2147,72 @@ button:disabled {
   .budget-actions {
     flex-direction: column;
     gap: 12px;
+    align-items: center;
   }
 
   .save-budget-button,
-  .edit-budget-button,
-  .cancel-button {
-    width: 100%;
+  .edit-budget-button {
+    width: 25%;
+    max-width: 350px;
   }
+
+  .cancel-button {
+    width: 60%;
+    max-width: 300px;
+  }
+
 }
 
-@media (max-width: 480px) {
-  .budget-setup-form,
-  .budget-edit-form {
-    padding: 20px;
-  }
-  
-  .expense-form-modal {
-    margin: 10px;
+@media (min-width: 769px) and (max-width: 1025px) {
+  .budget-container {
     padding: 16px;
   }
   
-  .form-actions {
-    flex-direction: column;
+  .budget-summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
   
-  .improved-bar-chart {
-    gap: 12px;
+  .categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
   
   .chart-bars-container {
-    gap: 8px;
+    gap: 16px;
   }
   
   .improved-bar-group {
-    min-width: 60px;
+    min-width: 85px;
   }
   
   .bar-container {
-    width: 50px;
+    width: 75px;
   }
   
   .improved-bar {
-    width: 22px;
+    width: 30px;
   }
+  
+  .improved-bar-label {
+    max-width: 85px;
+  }
+  
+  .improved-bar-label .category-name {
+    font-size: 10px;
+    max-width: 85px;
+  }
+  
+  .expense-main {
+    flex-wrap: wrap;
+  }
+  
+  .summary-stats {
+    gap: 16px;
+  }
+
+  .budget-actions {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
 }

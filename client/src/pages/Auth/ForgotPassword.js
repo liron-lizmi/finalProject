@@ -6,7 +6,8 @@ import emailjs from 'emailjs-com';
 import '../../styles/AuthPages.css';
 
 const ForgotPassword = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -81,7 +82,10 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className={`auth-container ${isRTL ? 'rtl' : 'ltr'}`}>
+      <div className="auth-logo-container">
+        <img src="/images/logo.png" alt={t('general.appLogo')} className="logo" onClick={() => navigate('/')} />
+      </div>
       <div className="auth-box">
         <h2>{t('auth.resetPasswordTitle')}</h2>
         {error && <div className="error-message">{error}</div>}

@@ -32,6 +32,15 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
     const dueDate = new Date(task.dueDate);
     const dueDateString = dueDate.toDateString();
 
+    // Add time to dueDate for accurate comparison
+    if (task.dueTime) {
+      const [hours, minutes] = task.dueTime.split(':');
+      dueDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    } else {
+      // If no time specified, set to end of day
+      dueDate.setHours(23, 59, 59, 999);
+    }
+
     if (dueDate < now && !shownTodayFromStorage.includes(`${taskId}_overdue_${dueDateString}`)) {
       reminderTasks.push({
         ...task,

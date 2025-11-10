@@ -593,24 +593,27 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
 
       {showDeleteModal && canEdit && (
         <div className="modal-overlay" onClick={cancelDeleteTask}>
-          <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-delete" onClick={cancelDeleteTask}>
-              ✕
-            </button>
-            
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">{t('events.features.tasks.messages.deleteConfirm')}</h2>
+              <h3>{t('dashboard.confirmDelete')}</h3>
+              <button className="modal-close" onClick={cancelDeleteTask}>
+                ✕
+              </button>
             </div>
             
-            <div className="modal-actions">
+            <div className="modal-body">
+              <p>{t('events.features.tasks.messages.deleteConfirm')}</p>
+            </div>
+            
+            <div className="modal-footer">
               <button
-                className="btn-secondary"
+                className="modal-btn cancel"
                 onClick={cancelDeleteTask}
               >
                 {t('general.cancel')}
               </button>
               <button
-                className="btn-primary delete-confirm-btn"
+                className="modal-btn delete"
                 onClick={confirmDeleteTask}
               >
                 {t('events.features.tasks.actions.delete')}
