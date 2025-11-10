@@ -87,7 +87,7 @@
     "deleteEvent": "Delete Event",
     "confirmDelete": "confirmDelete",
     "backToDashboard": "Back to Dashboard",
-    "deleteConfirm": "Are you sure you want to delete this event?",
+    "deleteConfirm": "?Are you sure you want to delete this event",
     "newNotifications": "New Notifications",
     "sharedEvent": "event shared",
     "sharedBy": "Shared by",
@@ -269,7 +269,7 @@
           "phone": "Phone",
           "notes": "Notes"
         },
-        "deleteVendor": "Remove Vendor",
+        "deleteVendor": "Remove",
         "addAnotherVendor": "Add Another Vendor",
         "changeVendor": "Change Vendor"
       },
@@ -284,7 +284,7 @@
       },
       "tasks": {
         "title": "Task and Timeline Management",
-        "description": "Manage all event-related tasks in an organized and efficient way",
+        "description": "Organize and manage events efficiently",
         "addTask": "Add New Task",
         "createTask": "Create First Task",
         "editTask": "Edit Task",
@@ -414,7 +414,7 @@
         "messages": {
           "createSuccess": "Task created successfully",
           "updateSuccess": "Task updated successfully",
-          "deleteConfirm": "Are you sure you want to delete this task?",
+          "deleteConfirm": "?Are you sure you want to delete this task",
           "deleteSuccess": "Task deleted successfully",
           "statusUpdateSuccess": "Task status updated successfully",
           "loadError": "Error loading tasks",
@@ -454,7 +454,7 @@
         "seekingRides": "Seeking Rides",
         "noOffering": "No rides available at the moment",
         "noSeeking": "No one is seeking a ride at the moment",
-        "contactInfo": "Contact Information",
+        "contactInfo": "Contact Information:",
         "offeringRides": "Offering Rides",
         "loading": "Loading...",
         "backToEventDetails": "Back to Event Details",
@@ -464,6 +464,7 @@
         "suggestedRides": "Recommended ride offers",
         "allAvailableRides": "All available rides",
         "distance": "Distance",
+        "km": "km",
         "rideCancelled": "Ride successfully canceled",
         "notAvailable": "Not available",
         "rsvpNote": "If participants appear on this page who are not on the external guest page, they probably have not RSVP'd",
@@ -474,8 +475,8 @@
           "seeking": "Ride Seekers"
         },
         "status": {
-          "offering": "I am offering a ride",
-          "seeking": "I am seeking a ride",
+          "offering": "I offering ride",
+          "seeking": "I seeking ride",
           "arranged_separately": "Not interested in Trumps",
           "not_set": "Not set",
           "in_process": "In Process",
@@ -527,7 +528,7 @@
       },
       "budget": {
         "title": "Budget Management",
-        "description": "Track expenses and income",
+        "description": "Description of the expense",
         "setupBudget": "Set Up Budget",
         "editBudget": "Edit Budget",
         "setupDescription": "Define the total event budget and divide it into categories",
@@ -540,7 +541,7 @@
         "overAllocatedWarning": "The allocation exceeds the total budget",
         "createBudget": "Create Budget",
         "updateBudget": "Update Budget",
-        "chartsTitle": "Charts & Visuals",
+        "chartsTitle": "Visual graphsrts",
         "pieChart": "Pie Chart",
         "barChart": "Bar Chart",
         "timelineChart": "Timeline",
@@ -559,7 +560,7 @@
         "alertOverBudget": "Alert: {category} has exceeded the budget by {percentage}%",
         "alertNearLimit": "Alert: {category} has reached {percentage}% of the budget (Alert threshold: {threshold}%)",
         "efficiency": "Budget Efficiency",
-        "confirmDelete":"confirmDelete",
+         "confirmDelete":"Confirm Delete",
         "categories": {
           "venue": "Venue/Hall",
           "catering": "Catering",
@@ -659,7 +660,7 @@
         "sharedOn": "Shared On",
         "accepted": "Accepted",
         "pending": "Pending",
-        "confirmRemove": "Are you sure you want to remove access for this user?",
+        "confirmRemove": "?Are you sure you want to remove access for this user",
         "importantInfo": "Important Information",
         "syncInfo": "Changes you make to the event will automatically update for all shared users",
         "editLimitationsInfo": "Users with 'View Only' permission can see all details but cannot edit",
@@ -717,7 +718,8 @@
     "deleteGuest": "Error deleting guest",
     "importFailed": "The import failed",
     "userNotFound": "User not found",
-    "notificationNotFound": "Notification not found"
+    "notificationNotFound": "Notification not found",
+    "newPasswordRequired": "New password is required"
   },
   "home": {
     "hero": {

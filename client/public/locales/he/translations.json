@@ -323,7 +323,7 @@
             "disconnectButton": "🔌 נתק חיבור",
             "syncButton": "🔄 סנכרן משימות",
             "syncing": "מסנכרן...",
-            "autoSyncInfo": "המשימות שלך יסונכרנו אוטומטית ללוח השנה של גוגל",
+            "autoSyncInfo": "המשימות שלך יסונכרנו אוטומטית ללוח השנה של גוגל, כנס אליו וצפה בהן",
             "connectionError": "שגיאה בחיבור ליומן גוגל",
             "disconnectError": "שגיאה בניתוק יומן גוגל",
             "disconnectSuccess": "יומן גוגל נותק בהצלחה",
@@ -454,7 +454,7 @@
         "seekingRides": "מחפשים טרמפ",
         "noOffering": "אין טרמפים זמינים כרגע",
         "noSeeking": "עדיין אף מוזמן לא חיפש טרמפ לאירוע",
-        "contactInfo": "פרטי קשר",
+        "contactInfo": "פרטי קשר:",
         "offeringRides": "מציעי טרמפ",
         "loading": "טוען...",
         "backToEventDetails": "חזרה לפרטי האירוע",
@@ -464,6 +464,7 @@
         "suggestedRides": "הצעות טרמפ מומלצות",
         "allAvailableRides": "כל הטרמפים הזמינים",
         "distance": "מרחק",
+        "km": "ק\"מ",
         "rideCancelled": "הטרמפ בוטל בהצלחה",
         "notAvailable": "לא זמין",
         "rsvpNote": "אם מופיעים בדף זה משתתפים שאינם נמצאים בדף החיצוני של המוזמנים, כנראה שהם לא אישרו הגעה",
@@ -527,7 +528,7 @@
       },
       "budget": {
         "title": "ניהול תקציב",
-        "description": "מעקב אחר הוצאות והכנסות",
+        "description": "תיאור ההוצאה",
         "setupBudget": "הגדרת תקציב",
         "editBudget": "עריכת תקציב",
         "setupDescription": "הגדר את התקציב הכולל של האירוע וחלק אותו לקטגוריות",
@@ -540,7 +541,7 @@
         "overAllocatedWarning": "החלוקה עולה על התקציב הכולל",
         "createBudget": "צור תקציב",
         "updateBudget": "עדכן תקציב",
-        "chartsTitle": "גרפים וחזותיים",
+        "chartsTitle": "גרפים חזותיים",
         "pieChart": "גרף עוגה",
         "barChart": "גרף עמודות",
         "timelineChart": "ציר זמן",
@@ -717,7 +718,8 @@
     "deleteGuest": "שגיאה במחיקת המוזמן",
     "importFailed": "הייבוא נכשל",
     "userNotFound": "המשתמש לא נמצא",
-    "notificationNotFound": "ההודעה לא נמצאה"
+    "notificationNotFound": "ההודעה לא נמצאה",
+    "newPasswordRequired": "נא להזין סיסמה חדשה"
   },
   "home": {
     "hero": {
