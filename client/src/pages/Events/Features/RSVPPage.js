@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../../styles/RSVPPage.css';
 
 const RSVPPage = () => {
-  const { t } = useTranslation();
+  const { t , i18n} = useTranslation();
   const { eventId } = useParams();
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
@@ -17,6 +17,7 @@ const RSVPPage = () => {
   const [guestNotes, setGuestNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isRTL = i18n.language === 'he';
 
   useEffect(() => {
     fetchEventInfo();
@@ -91,7 +92,8 @@ const RSVPPage = () => {
       if (response.ok) {
         const data = await response.json();
         setGuest(data.guest);
-        setRsvpStatus(data.guest.rsvpStatus);
+        // setRsvpStatus(data.guest.rsvpStatus);
+        setRsvpStatus(data.guest.rsvpStatus === 'pending' ? '' : data.guest.rsvpStatus);
         
         if (eventInfo && eventInfo.isSeparatedSeating) {
           setMaleCount(data.guest.maleCount || 0);
@@ -169,9 +171,10 @@ const RSVPPage = () => {
   };
 
   const formatEventDate = (dateString) => {
-    if (!dateString) return '';
+     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('he-IL', {
+    const locale = i18n.language === 'he' ? 'he-IL' : 'en-US';
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -194,7 +197,7 @@ const RSVPPage = () => {
   const isSeparatedSeating = eventInfo && eventInfo.isSeparatedSeating;
 
   return (
-    <div className="rsvp-page">
+    <div className="rsvp-page" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="rsvp-container">
         <div className="rsvp-header">
           <h1 className="rsvp-title">{eventInfo.eventName}</h1>
@@ -230,9 +233,6 @@ const RSVPPage = () => {
             
             <form onSubmit={handlePhoneSubmit} className="rsvp-form">
               <div className="rsvp-form-group">
-                <label htmlFor="phone">
-                  {t('guests.form.phone')}
-                </label>
                 <input
                   type="tel"
                   id="phone"
@@ -453,7 +453,7 @@ const RSVPPage = () => {
                 <button
                   type="submit"
                   className="rsvp-submit-button"
-                  disabled={loading}
+                  disabled={loading || !rsvpStatus}
                 >
                   {loading ? t('common.loading') : t('guests.rsvp.submitResponse')}
                 </button>

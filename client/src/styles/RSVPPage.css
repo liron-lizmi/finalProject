@@ -1,8 +1,8 @@
-/* styles/RSVPPage.css */
+/* RSVPPage.css */
 
 .rsvp-page {
   min-height: 100vh;
-  background: #ffffff;
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -73,19 +73,26 @@
 
 .rsvp-step {
   padding: 30px;
+  background: white;
 }
 
 .rsvp-step h2 {
   color: #333;
-  margin: 0 0 15px 0;
+  margin: 0 0 20px 0;
   font-size: 24px;
   font-weight: 600;
+  text-align: center;
 }
 
 .rsvp-description {
   color: #666;
-  margin-bottom: 25px;
+  margin-bottom: 150px;
   line-height: 1.5;
+  text-align: center; 
+  font-size: 16px;
+  padding: 15px; 
+  background: #f8f9fa; 
+  border-radius: 8px;
 }
 
 .rsvp-guest-info {
@@ -107,13 +114,19 @@
 .rsvp-form-group {
   display: flex;
   flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.rsvp-step .rsvp-form {
+  margin-top: 150px;
 }
 
 .rsvp-form-group label {
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #333;
   font-size: 14px;
+  text-align: right;
 }
 
 .rsvp-form-input,
@@ -273,9 +286,10 @@
 }
 
 .rsvp-submit-button:disabled {
-  opacity: 0.6;
+  opacity: 1;
   cursor: not-allowed;
   transform: none;
+  background: #000000 !important;
 }
 
 .rsvp-form-actions {
@@ -337,72 +351,308 @@
   line-height: 1.5;
 }
 
+.rsvp-submit-button:active,
+.rsvp-submit-button:focus {
+  background: #000000 !important;
+}
+
+.rsvp-submit-button:disabled:hover,
+.rsvp-submit-button:disabled:active,
+.rsvp-submit-button:disabled:focus {
+  background: #000000 !important;
+}
+
+.rsvp-submit-button:hover:not(:disabled) {
+  background: #333333;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.rsvp-submit-button:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+  background: #000000 !important;
+}
+
+.rsvp-submit-button:active {
+  background: #000000 !important;
+}
+
+.rsvp-submit-button:focus {
+  background: #000000 !important;
+  outline: none;
+}
+
+[dir="ltr"] .rsvp-form-group label,
+[dir="ltr"] .rsvp-description,
+[dir="ltr"] .rsvp-guest-info,
+[dir="ltr"] .rsvp-step h2 {
+  text-align: left;
+}
+
+[dir="ltr"] .rsvp-form-input,
+[dir="ltr"] .rsvp-form-textarea {
+  text-align: left;
+  direction: ltr;
+}
+
+[dir="ltr"] .rsvp-radio-option {
+  flex-direction: row;
+}
+
+[dir="ltr"] .rsvp-radio-option input[type="radio"] {
+  margin-right: 0;
+  margin-left: 12px;
+}
+
+[dir="ltr"] .character-count {
+  text-align: left;
+}
+
+[dir="ltr"] .rsvp-status-options,
+[dir="ltr"] .rsvp-form-group {
+  direction: ltr;
+}
+
+[dir="ltr"] .rsvp-radio-label {
+  text-align: left;
+}
+
+[dir="ltr"] .rsvp-step h2 {
+  text-align: center;
+}
+
 /* Responsive Design */
-@media (max-width: 768px) {
+
+@media (max-width: 480px) {
   .rsvp-page {
     padding: 10px;
   }
   
   .rsvp-container {
-    margin: 10px;
+    margin: 5px;
+    border-radius: 10px;
   }
   
   .rsvp-header {
-    padding: 20px;
+    padding: 20px 15px;
   }
   
   .rsvp-title {
-    font-size: 24px;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .rsvp-date,
+  .rsvp-location {
+    font-size: 14px;
+    margin: 5px 0;
   }
   
   .rsvp-step {
-    padding: 20px;
+    padding: 20px 15px;
   }
   
   .rsvp-step h2 {
-    font-size: 20px;
+    font-size: 19px;
+    margin-bottom: 15px;
+  }
+  
+  .rsvp-description {
+    font-size: 14px;
+    margin-bottom: 150px !important;
+    padding: 10px;
+    line-height: 1.4;
+  }
+  
+  .rsvp-guest-info {
+    font-size: 14px;
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .rsvp-form-group {
+    margin-bottom: 16px;
+  }
+  
+  .rsvp-form-group label {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .rsvp-form-input,
+  .rsvp-form-textarea {
+    font-size: 15px;
+    padding: 11px 13px;
+  }
+  
+  .count-button {
+    min-width: 40px;
+    height: 40px;
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+  
+  .count-input {
+    min-width: 60px;
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+  
+  .rsvp-status-options {
+    gap: 10px;
+  }
+  
+  .rsvp-radio-option {
+    padding: 12px 10px;
+  }
+  
+  .rsvp-radio-label {
+    font-size: 14px;
+  }
+  
+  .rsvp-submit-button {
+    padding: 13px 25px;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+  }
+  
+  .rsvp-back-button {
+    padding: 11px 20px;
+    font-size: 13px;
   }
   
   .rsvp-form-actions {
     gap: 10px;
   }
   
-  .rsvp-status-options {
-    gap: 8px;
+  .rsvp-success-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
   }
   
-  .rsvp-radio-option {
-    padding: 12px;
+  .rsvp-success h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+  
+  .rsvp-success-message {
+    font-size: 15px;
+    margin-bottom: 25px;
+    line-height: 1.4;
+  }
+  
+  .character-count {
+    font-size: 11px;
   }
 }
 
-@media (max-width: 480px) {
-  .rsvp-header {
+@media (max-width: 768px) {
+  .rsvp-page {
     padding: 15px;
   }
   
+  .rsvp-container {
+    margin: 10px;
+    border-radius: 12px;
+    max-width: 650px;
+  }
+  
+  .rsvp-header {
+    padding: 25px 20px;
+  }
+  
   .rsvp-title {
-    font-size: 20px;
+    font-size: 24px;
+    margin-bottom: 12px;
   }
   
   .rsvp-date,
   .rsvp-location {
-    font-size: 14px;
+    font-size: 15px;
+    margin: 6px 0;
   }
   
   .rsvp-step {
-    padding: 15px;
+    padding: 25px 20px;
   }
   
   .rsvp-step h2 {
-    font-size: 18px;
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+  
+  .rsvp-description {
+    font-size: 15px;
+    margin-bottom: 150px;
+    padding: 12px;
+  }
+  
+  .rsvp-form-group label {
+    font-size: 15px;
+  }
+  
+  .rsvp-form-input,
+  .rsvp-form-textarea {
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+  
+  .count-button {
+    min-width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  .count-input {
+    min-width: 70px;
+    font-size: 15px;
+  }
+  
+  .rsvp-radio-option {
+    padding: 14px;
+  }
+  
+  .rsvp-radio-label {
+    font-size: 15px;
+  }
+  
+  .rsvp-submit-button {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+  
+  .rsvp-form-actions {
+    gap: 12px;
   }
   
   .rsvp-success-icon {
-    font-size: 48px;
+    font-size: 56px;
   }
   
   .rsvp-success-message {
-    font-size: 16px;
+    font-size: 17px;
+  }
+}
+
+
+@media (min-width: 769px) and (max-width: 1025px) {
+  .rsvp-container {
+    max-width: 800px;
+    margin: 20px;
+  }
+  
+  .rsvp-header {
+    padding: 35px;
+  }
+  
+  .rsvp-title {
+    font-size: 30px;
+  }
+  
+  .rsvp-date,
+  .rsvp-location {
+    font-size: 17px;
   }
 }

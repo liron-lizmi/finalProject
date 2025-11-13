@@ -487,7 +487,7 @@ const updateGuestRSVP = async (req, res) => {
         };
       }
     } else if (rsvpStatus === 'confirmed') {
-      if (event.isSeparatedSeating) {
+      if (currentEvent.isSeparatedSeating) {
         if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
           const changedGenders = [];
           if (oldMaleCount !== newMaleCount) {
@@ -720,7 +720,7 @@ const updateGuestRSVPPublic = async (req, res) => {
         };
       }
     } else if (rsvpStatus === 'confirmed') {
-      if (event.isSeparatedSeating) {
+      if (currentEvent.isSeparatedSeating) {
         if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
           const changedGenders = [];
           if (oldMaleCount !== newMaleCount) {
