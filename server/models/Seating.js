@@ -85,7 +85,45 @@ const PreferenceSchema = new mongoose.Schema({
       enum: ['low', 'medium', 'high'],
       default: 'medium'
     }
-  }]
+  }],
+
+  seatingRules: {
+    mustSitTogether: [{
+      id: String,
+      guest1Id: String,
+      guest2Id: String,
+      reason: String
+    }]
+  },
+  
+  groupMixingRules: [{
+    id: String,
+    group1: String,
+    group2: String,
+    allowMixing: {
+      type: Boolean,
+      default: true
+    }
+  }],
+  
+  allowGroupMixing: {
+    type: Boolean,
+    default: false
+  },
+  
+  preferredTableSize: {
+    type: Number,
+    default: 12,
+    min: 6,
+    max: 24
+  },
+  
+  groupPolicies: {
+    type: Map,
+    of: String, 
+    default: {}
+  }
+
 }, { _id: false });
 
 const SyncTriggerSchema = new mongoose.Schema({
@@ -166,8 +204,16 @@ const SeatingSchema = new mongoose.Schema({
     default: {
       groupTogether: [],
       keepSeparate: [],
-      specialRequests: []
-    }
+      specialRequests: [],
+      seatingRules: {
+        mustSitTogether: [],
+        cannotSitTogether: []
+      },
+      groupMixingRules: [],
+      allowGroupMixing: false,
+      preferredTableSize: 12,
+      groupPolicies: {}
+      }
   },
   layoutSettings: {
     canvasScale: {

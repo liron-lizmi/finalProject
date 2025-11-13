@@ -62,6 +62,14 @@ const SyncOptionsModal = ({
                   : (guest.femaleCount || 0);
               }
               
+              const getGroupDisplayName = (group) => {
+                if (!group) return '';
+                if (['family', 'friends', 'work', 'other'].includes(group)) {
+                  return t(`guests.groups.${group}`);
+                }
+                return group;
+              };
+              
               return (
                 <div key={guest.id} className="affected-guest-item">
                   <span className="guest-name">{guest.name}</span>
@@ -73,7 +81,7 @@ const SyncOptionsModal = ({
                       {t(`seating.genderFilter.${guest.gender}`)}
                     </span>
                   )}
-                  <span className="guest-group">{guest.group}</span>
+                  <span className="guest-group">{getGroupDisplayName(guest.group)}</span>
                 </div>
               );
             })}
@@ -225,6 +233,16 @@ const getActionDescription = (action, t) => {
       });
     case 'table_removed':
       return t('seating.sync.actionDescriptions.tableRemoved');
+    case 'optimal_summary':
+      return t('seating.sync.actionDescriptions.optimalSummary', {
+        count: details?.guestsCount || 0
+      });
+    case 'optimal_summary_with_rules':
+      const rulesText = details?.rules?.join(', ') || '';
+      return t('seating.sync.actionDescriptions.optimalSummaryWithRules', {
+        count: details?.guestsCount || 0,
+        rules: rulesText
+      });
     default:
       return details?.reason || t('seating.sync.actionDescriptions.unknown');
   }

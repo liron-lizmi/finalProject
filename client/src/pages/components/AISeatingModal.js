@@ -55,19 +55,13 @@ const AISeatingModal = ({
 
   const [showSeatingRules, setShowSeatingRules] = useState(false);
   const [seatingRules, setSeatingRules] = useState({
-    mustSitTogether: [],
-    cannotSitTogether: []
+    mustSitTogether: []
   });
   const [newMustSitRule, setNewMustSitRule] = useState({
     guest1Id: '',
-    guest2Id: '',
-    reason: ''
+    guest2Id: ''
   });
-  const [newCannotSitRule, setNewCannotSitRule] = useState({
-    guest1Id: '',
-    guest2Id: '',
-    reason: ''
-  });
+
   const [showGroupPolicies, setShowGroupPolicies] = useState(false);
 
   const [genderView, setGenderView] = useState('male'); // 'male' or 'female'
@@ -85,6 +79,32 @@ const AISeatingModal = ({
 
   const [customMaleTableSettings, setCustomMaleTableSettings] = useState([]);
   const [customFemaleTableSettings, setCustomFemaleTableSettings] = useState([]);
+
+  const canAddMustSitRule = React.useMemo(() => {
+  if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
+    return { canAdd: false, reason: '' };
+  }
+  
+  if (newMustSitRule.guest1Id === newMustSitRule.guest2Id) {
+    return { canAdd: false, reason: 'נא לבחור שני מוזמנים שונים' };
+  }
+  
+  const guest1 = guests.find(g => g._id === newMustSitRule.guest1Id);
+  const guest2 = guests.find(g => g._id === newMustSitRule.guest2Id);
+  
+  if (!guest1 || !guest2) {
+    return { canAdd: false, reason: '' };
+  }
+  
+  const group1 = guest1.customGroup || guest1.group;
+  const group2 = guest2.customGroup || guest2.group;
+  
+  if (group1 !== group2) {
+    return { canAdd: false, reason: 'המוזמנים חייבים להיות מאותה קבוצה' };
+  }
+  
+  return { canAdd: true, reason: '' };
+}, [newMustSitRule.guest1Id, newMustSitRule.guest2Id, guests]);
 
   const hasExistingArrangement = isSeparatedSeating
     ? (maleArrangement && Object.keys(maleArrangement).length > 0 && Object.values(maleArrangement).some(arr => arr.length > 0)) ||
@@ -1106,19 +1126,40 @@ const AISeatingModal = ({
     }));
   };
 
+
   const addMustSitRule = () => {
-    if (newMustSitRule.guest1Id && newMustSitRule.guest2Id && newMustSitRule.guest1Id !== newMustSitRule.guest2Id) {
-      setSeatingRules(prev => ({
-        ...prev,
-        mustSitTogether: [...prev.mustSitTogether, {
-          id: Date.now().toString(),
-          guest1Id: newMustSitRule.guest1Id,
-          guest2Id: newMustSitRule.guest2Id,
-          reason: newMustSitRule.reason
-        }]
-      }));
-      setNewMustSitRule({ guest1Id: '', guest2Id: '', reason: '' });
+    if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
+      return;
     }
+    
+    if (newMustSitRule.guest1Id === newMustSitRule.guest2Id) {
+      return;
+    }
+    
+    const guest1 = guests.find(g => g._id === newMustSitRule.guest1Id);
+    const guest2 = guests.find(g => g._id === newMustSitRule.guest2Id);
+    
+    if (!guest1 || !guest2) {
+      return;
+    }
+    
+    const group1 = guest1.customGroup || guest1.group;
+    const group2 = guest2.customGroup || guest2.group;
+    
+    if (group1 !== group2) {
+      return;
+    }
+    
+    setSeatingRules(prev => ({
+      ...prev,
+      mustSitTogether: [...prev.mustSitTogether, {
+        id: Date.now().toString(),
+        guest1Id: newMustSitRule.guest1Id,
+        guest2Id: newMustSitRule.guest2Id
+      }]
+    }));
+    
+    setNewMustSitRule({ guest1Id: '', guest2Id: '' });
   };
 
   const removeMustSitRule = (ruleId) => {
@@ -1128,27 +1169,6 @@ const AISeatingModal = ({
     }));
   };
 
-  const addCannotSitRule = () => {
-    if (newCannotSitRule.guest1Id && newCannotSitRule.guest2Id && newCannotSitRule.guest1Id !== newCannotSitRule.guest2Id) {
-      setSeatingRules(prev => ({
-        ...prev,
-        cannotSitTogether: [...prev.cannotSitTogether, {
-          id: Date.now().toString(),
-          guest1Id: newCannotSitRule.guest1Id,
-          guest2Id: newCannotSitRule.guest2Id,
-          reason: newCannotSitRule.reason
-        }]
-      }));
-      setNewCannotSitRule({ guest1Id: '', guest2Id: '', reason: '' });
-    }
-  };
-
-  const removeCannotSitRule = (ruleId) => {
-    setSeatingRules(prev => ({
-      ...prev,
-      cannotSitTogether: prev.cannotSitTogether.filter(rule => rule.id !== ruleId)
-    }));
-  };
 
   const getGuestName = (guestId) => {
     const guest = guests.find(g => g._id === guestId);
@@ -2224,7 +2244,7 @@ const AISeatingModal = ({
 
               <div className="seating-rules-section">
                 <div className="section-header">
-                  <h4>{t('seating.ai.seatingRules')}</h4>
+                  <h4>{t('seating.ai.seatingRulesTitle')}</h4>
                   <button
                     type="button"
                     onClick={() => setShowSeatingRules(!showSeatingRules)}
@@ -2251,7 +2271,7 @@ const AISeatingModal = ({
                             </option>
                           ))}
                         </select>
-                       
+                      
                         <select
                           value={newMustSitRule.guest2Id}
                           onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest2Id: e.target.value }))}
@@ -2264,112 +2284,40 @@ const AISeatingModal = ({
                             </option>
                           ))}
                         </select>
-                       
-                        <input
-                          type="text"
-                          value={newMustSitRule.reason}
-                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, reason: e.target.value }))}
-                          placeholder={t('seating.ai.reasonOptional')}
-                          className="reason-input"
-                        />
-                       
+                      
                         <button
                           type="button"
                           onClick={addMustSitRule}
-                          disabled={!newMustSitRule.guest1Id || !newMustSitRule.guest2Id}
+                          disabled={!canAddMustSitRule.canAdd}
                           className="add-rule-btn"
+                          title={canAddMustSitRule.reason}
                         >
                           {t('seating.ai.addRule')}
                         </button>
+                        
+                        {!canAddMustSitRule.canAdd && canAddMustSitRule.reason && (
+                          <div className="validation-message error">
+                            {canAddMustSitRule.reason}
+                          </div>
+                        )}
                       </div>
-                     
-                      {seatingRules.mustSitTogether.length > 0 && (
-                        <div className="rules-list">
-                          {seatingRules.mustSitTogether.map(rule => (
-                            <div key={rule.id} className="rule-item must-sit">
-                              <div className="rule-content">
-                                <span className="rule-guests">
-                                  {getGuestName(rule.guest1Id)} â†” {getGuestName(rule.guest2Id)}
-                                </span>
-                                {rule.reason && <span className="rule-reason">{rule.reason}</span>}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => removeMustSitRule(rule.id)}
-                                className="remove-rule-btn"
-                              >
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="rule-group">
-                      <h5>{t('seating.ai.cannotSitTogether')}</h5>
-                      <div className="add-rule-form">
-                        <select
-                          value={newCannotSitRule.guest1Id}
-                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, guest1Id: e.target.value }))}
-                          className="guest-select"
-                        >
-                          <option value="">{t('seating.ai.selectFirstGuest')}</option>
-                          {guests.map(guest => (
-                            <option key={guest._id} value={guest._id}>
-                              {guest.firstName} {guest.lastName}
-                            </option>
-                          ))}
-                        </select>
-                       
-                        <select
-                          value={newCannotSitRule.guest2Id}
-                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, guest2Id: e.target.value }))}
-                          className="guest-select"
-                        >
-                          <option value="">{t('seating.ai.selectSecondGuest')}</option>
-                          {guests.filter(guest => guest._id !== newCannotSitRule.guest1Id).map(guest => (
-                            <option key={guest._id} value={guest._id}>
-                              {guest.firstName} {guest.lastName}
-                            </option>
-                          ))}
-                        </select>
-                       
-                        <input
-                          type="text"
-                          value={newCannotSitRule.reason}
-                          onChange={(e) => setNewCannotSitRule(prev => ({ ...prev, reason: e.target.value }))}
-                          placeholder={t('seating.ai.reasonOptional')}
-                          className="reason-input"
-                        />
-                       
-                        <button
-                          type="button"
-                          onClick={addCannotSitRule}
-                          disabled={!newCannotSitRule.guest1Id || !newCannotSitRule.guest2Id}
-                          className="add-rule-btn"
-                        >
-                          {t('seating.ai.addRule')}
-                        </button>
-                      </div>
-                     
-                      {seatingRules.cannotSitTogether.length > 0 && (
-                        <div className="rules-list">
-                          {seatingRules.cannotSitTogether.map(rule => (
-                            <div key={rule.id} className="rule-item cannot-sit">
-                              <div className="rule-content">
-                                <span className="rule-guests">
-                                  {getGuestName(rule.guest1Id)} âš ï¸ {getGuestName(rule.guest2Id)}
-                                </span>
-                                {rule.reason && <span className="rule-reason">{rule.reason}</span>}
+                      {seatingRules.mustSitTogether.length > 0 && (
+                        <div className="added-rules-summary">
+                          {seatingRules.mustSitTogether.map(rule => {
+                            const guest1 = guests.find(g => g._id === rule.guest1Id);
+                            const guest2 = guests.find(g => g._id === rule.guest2Id);
+                            if (!guest1 || !guest2) return null;
+                            
+                            const guest1Name = `${guest1.firstName} ${guest1.lastName}`;
+                            const guest2Name = `${guest2.firstName} ${guest2.lastName}`;
+                            
+                            return (
+                              <div key={rule.id} className="validation-message success">
+                                {guest1Name} + {guest2Name} חייבים לשבת יחד
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => removeCannotSitRule(rule.id)}
-                                className="remove-rule-btn"
-                              >
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

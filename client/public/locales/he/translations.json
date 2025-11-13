@@ -1624,7 +1624,6 @@
       "startArrangingWithExistingTables": "🤖 התחל סידור עם השולחנות הקיימים",
       "continueArrangement": "🤖 המשך סידור מקומות",
       "createArrangement": "🤖 צור סידור מקומות",
-      "seatingRules": "חוקי ישיבה",
       "showRules": "הצג חוקים",
       "hideRules": "הסתר חוקים",
       "mustSitTogether": "חובה לשבת יחד",
@@ -1633,7 +1632,6 @@
       "selectSecondGuest": "בחר מוזמן שני",
       "reasonOptional": "סיבה (אופציונלי)",
       "addRule": "הוסף כלל",
-      "unknownGuest": "מוזמן לא ידוע",
       "allowGroupMixingDescription": "מאפשר לערב קבוצות שונות באותו שולחן כשאין מקום",
       "groupMixingRules": "כללי עירוב קבוצות",
       "showMixing": "הצג עירוב",
@@ -1690,7 +1688,38 @@
       "populatedFemaleTables": "שולחנות נשים מאוכלסות",
       "createTablesAndArrangeSeparated": "צור שולחנות וסדר הושבה מופרדת",
       "startArrangingWithExistingTablesSeparated": "סדר עם שולחנות קיימים (הפרדה)",
-      "existingArrangementDescriptionSeparated": "יש לך {{maleTablesCount}} שולחנות גברים ו-{{femaleTablesCount}} שולחנות נשים עם {{seatedMaleGuests}}/{{totalMaleGuests}} גברים ו-{{seatedFemaleGuests}}/{{totalFemaleGuests}} נשים כבר מושבים."
+      "existingArrangementDescriptionSeparated": "יש לך {{maleTablesCount}} שולחנות גברים ו-{{femaleTablesCount}} שולחנות נשים עם {{seatedMaleGuests}}/{{totalMaleGuests}} גברים ו-{{seatedFemaleGuests}}/{{totalFemaleGuests}} נשים כבר מושבים.",
+      "seatingRulesTitle": "חוקי ישיבה",
+      "seatingRules": {
+        "mustSitTogether": {
+          "title": "חובה לשבת ביחד",
+          "addButton": "הוסף כלל",
+          "removeButton": "הסר",
+          "guest1Label": "מוזמן ראשון",
+          "guest2Label": "מוזמן שני",
+          "reasonLabel": "סיבה (אופציונלי)",
+          "reasonPlaceholder": "למה הם חייבים לשבת ביחד?",
+          "selectGuest": "בחר מוזמן",
+          "success": "חוק נוסף בהצלחה",
+          "error": "שגיאה בהוספת החוק",
+          "errorSameGuest": "יש לבחור שני מוזמנים שונים",
+          "errorMissingGuests": "יש לבחור שני מוזמנים"
+        },
+        "cannotSitTogether": {
+          "title": "אסור לשבת ביחד",
+          "addButton": "הוסף כלל",
+          "removeButton": "הסר",
+          "guest1Label": "מוזמן ראשון",
+          "guest2Label": "מוזמן שני",
+          "reasonLabel": "סיבה (אופציונלי)",
+          "reasonPlaceholder": "למה הם אסורים לשבת ביחד?",
+          "selectGuest": "בחר מוזמן",
+          "success": "חוק נוסף בהצלחה",
+          "error": "שגיאה בהוספת החוק",
+          "errorSameGuest": "יש לבחור שני מוזמנים שונים",
+          "errorMissingGuests": "יש לבחור שני מוזמנים"
+        }
+      }
     },
     "genderFilter": {
       "all": "כל השולחנות",
@@ -1735,6 +1764,7 @@
       "guestsSeated": "{{count}} מוזמנים הושבו",
       "guestsMoved": "{{count}} מוזמנים הוזזו",
       "tablesCreated": "{{count}} שולחנות נוצרו",
+      "groupMixingEnabled": "ערבוב קבוצות מופעל",
       "status": {
         "enabled": "סנכרון מופעל",
         "disabled": "סנכרון מושבת"
@@ -1802,14 +1832,23 @@
         "guest_deleted": "מוזמן נמחק"
       },
       "actionDescriptions": {
-        "guestSeated": "{{guestName}} יושב בשולחן {{tableName}}",
-        "guestMoved": "{{guestName}} יועבר משולחן {{fromTable}} לשולחן {{toTable}}",
-        "guestRemoved": "{{guestName}} יוסר מהשולחן {{tableName}}",
-        "guestUpdated": "{{guestName}} עודכן בשולחן {{tableName}}",
-        "tableCreated": "{{tableName}} ייווצר עם קיבולת של {{capacity}}",
-        "tableRemoved": "שולחן ריק יוסר",
-        "unknown": "פעולה לא ידועה"
+        "guestSeated": "{{guestName}} הושבץ/ה בשולחן {{tableName}}",
+        "guestMoved": "{{guestName}} הועבר/ה משולחן {{fromTable}} לשולחן {{toTable}}",
+        "guestRemoved": "{{guestName}} הוסר/ה משולחן {{tableName}}",
+        "guestUpdated": "{{guestName}} עודכן/ה בשולחן {{tableName}}",
+        "tableCreated": "נוצר שולחן {{tableName}} ({{capacity}} מקומות)",
+        "tableRemoved": "שולחן ריק הוסר",
+        "optimalRearrangement": "סידור מחדש אופטימלי של {{count}} אורחים",
+        "optimalRearrangementWithRules": "סידור מחדש אופטימלי של {{count}} אורחים עם הכללים: {{rules}}",
+        "unknown": "פעולה לא ידועה",
+        "optimalSummary": "סידור מחדש אופטימלי של {{count}} אורחים",
+        "optimalSummaryWithRules": "סידור מחדש אופטימלי של {{count}} אורחים עם הכללים: {{rules}}"
       },
+      "mustSitTogetherApplied": "{{count}} כללי 'חייבים לשבת ביחד'",
+      "cannotSitTogetherApplied": "{{count}} כללי 'לא יכולים לשבת ביחד'",
+      "noGroupMixingApplied": "הפרדה בין קבוצות",
+      "groupMixingRulesApplied": "{{count}} כללי ערבוב קבוצות",
+      "separateGroupsApplied": "{{count}} קבוצות נפרדות",
       "patterns": {
         "added": "נוסף לשולחן",
         "removed": "הוסר מהשולחן",

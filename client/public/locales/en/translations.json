@@ -1624,7 +1624,6 @@
       "startArrangingWithExistingTables": "🤖 Start Arranging with Existing Tables",
       "continueArrangement": "🤖 Continue Arranging",
       "createArrangement": "🤖 Create Seating Arrangement",
-      "seatingRules": "Seating Rules",
       "showRules": "Show Rules",
       "hideRules": "Hide Rules",
       "mustSitTogether": "Must Sit Together",
@@ -1690,7 +1689,38 @@
       "populatedFemaleTables": "Occupied Women's Tables",
       "createTablesAndArrangeSeparated": "Create tables and arrange separate seating",
       "startArrangingWithExistingTablesSeparated": "Arrange with existing tables (separated)",
-      "existingArrangementDescriptionSeparated": "You have {{maleTablesCount}} men's tables and {{femaleTablesCount}} women's tables with {{seatedMaleGuests}}/{{totalMaleGuests}} men and {{seatedFemaleGuests}}/{{totalFemaleGuests}} women already seated."
+      "existingArrangementDescriptionSeparated": "You have {{maleTablesCount}} men's tables and {{femaleTablesCount}} women's tables with {{seatedMaleGuests}}/{{totalMaleGuests}} men and {{seatedFemaleGuests}}/{{totalFemaleGuests}} women already seated.",
+      "seatingRulesTitle": "Seating Rules",
+      "seatingRules": {
+        "mustSitTogether": {
+          "title": "Must Sit Together",
+          "addButton": "Add Rule",
+          "removeButton": "Remove",
+          "guest1Label": "First Guest",
+          "guest2Label": "Second Guest",
+          "reasonLabel": "Reason (optional)",
+          "reasonPlaceholder": "Why do they have to sit together?",
+          "selectGuest": "Select Guest",
+          "success": "Rule added successfully",
+          "error": "Error adding rule",
+          "errorSameGuest": "Please select two different guests",
+          "errorMissingGuests": "Please select two guests"
+        },
+        "cannotSitTogether": {
+          "title": "Cannot Sit Together",
+          "addButton": "Add Rule",
+          "removeButton": "Remove",
+          "guest1Label": "First Guest",
+          "guest2Label": "Second Guest",
+          "reasonLabel": "Reason (optional)",
+          "reasonPlaceholder": "Why are they not allowed to sit together?",
+          "selectGuest": "Select Guest",
+          "success": "Rule added successfully",
+          "error": "Error adding rule",
+          "errorSameGuest": "Please select two different guests",
+          "errorMissingGuests": "Please select two guests"
+        }
+      }
     },
     "genderFilter": {
       "all": "All Tables",
@@ -1796,20 +1826,30 @@
       "moveAllToUnassigned": "Move all to unassigned list",
       "applySelected": "Apply selected option",
       "userApprovalRequired": "User approval required for arrangement changes",
+      "groupMixingEnabled": "Group mixing enabled",
       "triggerTypes": {
         "guest_added": "Guest added",
         "rsvp_updated": "RSVP updated",
         "guest_deleted": "Guest deleted"
       },
       "actionDescriptions": {
-        "guestSeated": "{guestName} will be seated at {tableName}",
-        "guestMoved": "{guestName} will be moved from {fromTable} to {toTable}",
-        "guestRemoved": "{guestName} will be removed from {tableName}",
-        "guestUpdated": "{guestName} updated at {tableName}",
-        "tableCreated": "{tableName} will be created with capacity {capacity}",
-        "tableRemoved": "Empty table will be removed",
-        "unknown": "Unknown action"
+        "guestSeated": "{{guestName}} was seated at table {{tableName}}",
+        "guestMoved": "{{guestName}} was moved from table {{fromTable}} to table {{toTable}}",
+        "guestRemoved": "{{guestName}} was removed from table {{tableName}}",
+        "guestUpdated": "{{guestName}} was updated at table {{tableName}}",
+        "tableCreated": "Table {{tableName}} created ({{capacity}} seats)",
+        "tableRemoved": "Empty table removed",
+        "optimalRearrangement": "Optimal rearrangement of {{count}} guests",
+        "optimalRearrangementWithRules": "Optimal rearrangement of {{count}} guests with rules: {{rules}}",
+        "unknown": "Unknown action",
+        "optimalSummary": "Optimal rearrangement of {{count}} guests",
+        "optimalSummaryWithRules": "Optimal rearrangement of {{count}} guests with the rules: {{rules}}"
       },
+      "mustSitTogetherApplied": "{{count}} 'must sit together' rules",
+      "cannotSitTogetherApplied": "{{count}} 'cannot sit together' rules",
+      "noGroupMixingApplied": "Group separation",
+      "groupMixingRulesApplied": "{{count}} group mixing rules",
+      "separateGroupsApplied": "{{count}} separate groups",
       "patterns": {
         "added": "added to table",
         "removed": "removed from table",
