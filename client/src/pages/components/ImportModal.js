@@ -11,7 +11,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewData, setPreviewData] = useState([]);
-  const [allImportData, setAllImportData] = useState([]); // נתונים מלאים לייבוא
+  const [allImportData, setAllImportData] = useState([]); 
   
   // Google Contacts states
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -252,14 +252,14 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   };
 
   // Update a group for a specific Google contact
-  const handleContactGroupChange = (contactId, newGroup, customGroupName = '') => {
+   const handleContactGroupChange = (contactId, newGroup, customGroupName = '') => {
     setGoogleContacts(prev => 
       prev.map(contact => 
         contact.id === contactId 
           ? { 
               ...contact, 
-              group: (newGroup === 'custom' || newGroup === 'other') ? (customGroupName || newGroup) : newGroup,
-              customGroup: (newGroup === 'custom' || newGroup === 'other') ? customGroupName : undefined
+              group: newGroup === 'other' ? (customGroupName || 'other') : newGroup,
+              customGroup: newGroup === 'other' ? customGroupName : undefined
             }
           : contact
       )
@@ -270,8 +270,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const handleBulkGroupChange = () => {
     if (!bulkGroupValue) return;
 
-  const finalGroup = (bulkGroupValue === 'custom' || bulkGroupValue === 'other') ? bulkCustomGroupName : bulkGroupValue;
-  const finalCustomGroup = (bulkGroupValue === 'custom' || bulkGroupValue === 'other') ? bulkCustomGroupName : undefined;
+  const finalGroup = bulkGroupValue === 'other' ? bulkCustomGroupName : bulkGroupValue;
+  const finalCustomGroup = bulkGroupValue === 'other' ? bulkCustomGroupName : undefined;
 
     setGoogleContacts(prev => 
       prev.map(contact => 
@@ -291,8 +291,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   const handleConfirmGroupEditor = () => {
     const selectedContacts = googleContacts.filter(contact => contact.selected);
-    setAllImportData(selectedContacts); // שמירת כל הנתונים
-    setPreviewData(selectedContacts.slice(0, 10)); // תצוגה מקדימה של 10 הראשונים
+    setAllImportData(selectedContacts); 
+    setPreviewData(selectedContacts.slice(0, 10)); 
     setShowGroupEditor(false);
   };
 
@@ -303,8 +303,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         contact.id === contactId 
           ? { 
               ...contact, 
-              group: (newGroup === 'custom' || newGroup === 'other') ? (customGroupName || newGroup) : newGroup,
-              customGroup: (newGroup === 'custom' || newGroup === 'other') ? customGroupName : undefined
+              group: newGroup === 'other' ? (customGroupName || 'other') : newGroup,
+              customGroup: newGroup === 'other' ? customGroupName : undefined
             }
           : contact
       )
@@ -315,8 +315,17 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const handleVcfBulkGroupChange = () => {
     if (!vcfBulkGroupValue) return;
 
-    const finalGroup = (vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') ? vcfBulkCustomGroupName : vcfBulkGroupValue;
-    const finalCustomGroup = (vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') ? vcfBulkCustomGroupName : undefined;
+    let finalGroup = vcfBulkGroupValue;
+    let finalCustomGroup = undefined;
+
+    if (vcfBulkGroupValue === 'other') {
+      if (vcfBulkCustomGroupName && vcfBulkCustomGroupName.trim()) {
+        finalGroup = vcfBulkCustomGroupName.trim();
+        finalCustomGroup = vcfBulkCustomGroupName.trim();
+      } else {
+        finalGroup = 'other';
+      }
+    }
 
     setVcfContacts(prev => 
       prev.map(contact => 
@@ -336,8 +345,8 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   const handleConfirmVcfGroupEditor = () => {
     const selectedContacts = vcfContacts.filter(contact => contact.selected);
-    setAllImportData(selectedContacts); // שמירת כל הנתונים
-    setPreviewData(selectedContacts.slice(0, 10)); // תצוגה מקדימה של 10 הראשונים
+    setAllImportData(selectedContacts); 
+    setPreviewData(selectedContacts.slice(0, 10)); 
     setShowVcfGroupEditor(false);
   };
 
@@ -642,7 +651,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   };
 
   const handleImport = async () => {
-    // שימוש ב-allImportData במקום previewData
     const dataToImport = allImportData.length > 0 ? allImportData : previewData;
     
     if (dataToImport.length === 0) {
@@ -667,7 +675,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
     setCsvData('');
     setFile(null);
     setPreviewData([]);
-    setAllImportData([]); // איפוס גם של הנתונים המלאים
+    setAllImportData([]); 
     setError('');
     setLoading(false);
     setGoogleConnected(false);
@@ -693,7 +701,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
   if (!isOpen) return null;
 
-  // חישוב המספר הכולל לייבוא
   const totalImportCount = allImportData.length > 0 ? allImportData.length : previewData.length;
 
   return (
@@ -909,17 +916,17 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
                   <div className="contact-selection-footer">
                     <button 
-                      onClick={() => setShowContactSelection(false)}
-                      className="cancel-selection-button"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                    <button 
                       onClick={handleConfirmGoogleSelection}
                       className="confirm-selection-button"
                       disabled={!googleContacts.some(c => c.selected)}
                     >
                       {t('import.googleInstructions.continueToGroups')} ({googleContacts.filter(c => c.selected).length})
+                    </button>
+                    <button 
+                      onClick={() => setShowContactSelection(false)}
+                      className="cancel-selection-button"
+                    >
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -945,10 +952,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                         <option value="friends">{t('guests.groups.friends')}</option>
                         <option value="work">{t('guests.groups.work')}</option>
                         <option value="other">{t('guests.groups.other')}</option>
-                        <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                       </select>
                       
-                      {(bulkGroupValue === 'custom' || bulkGroupValue === 'other') && (
+                      {bulkGroupValue === 'other' && (
                         <input
                           type="text"
                           value={bulkCustomGroupName}
@@ -961,7 +967,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                       <button
                         onClick={handleBulkGroupChange}
                         className="apply-bulk-button"
-                        disabled={!bulkGroupValue || ((bulkGroupValue === 'custom' || bulkGroupValue === 'other') && !bulkCustomGroupName.trim())}
+                        disabled={!bulkGroupValue || (bulkGroupValue === 'other' && (!bulkCustomGroupName || !bulkCustomGroupName.trim()))}
                       >
                         {t('import.googleInstructions.applyToAll')}
                       </button>
@@ -983,9 +989,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                           </div>
                           <div className="contact-editor-group">
                             <select
-                              value={contact.group === contact.customGroup ? 'custom' : contact.group}
+                              value={contact.group === contact.customGroup ? 'other' : contact.group}
                               onChange={(e) => {
-                                if (e.target.value === 'custom' || e.target.value === 'other') {
+                                if (e.target.value === 'other') {
                                   handleContactGroupChange(contact.id, e.target.value, contact.customGroup || '');
                                 } else {
                                   handleContactGroupChange(contact.id, e.target.value);
@@ -997,14 +1003,13 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                               <option value="friends">{t('guests.groups.friends')}</option>
                               <option value="work">{t('guests.groups.work')}</option>
                               <option value="other">{t('guests.groups.other')}</option>
-                              <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                             </select>
                             
-                            {(contact.group === contact.customGroup || contact.group === 'custom' || contact.group === 'other') && (
+                            {(contact.group === 'other' || contact.customGroup) && (
                               <input
                                 type="text"
                                 value={contact.customGroup || ''}
-                                onChange={(e) => handleContactGroupChange(contact.id, 'custom', e.target.value)}
+                                onChange={(e) => handleContactGroupChange(contact.id, 'other', e.target.value)}
                                 placeholder={t('guests.form.customGroupPlaceholder')}
                                 className="contact-custom-group-input"
                               />
@@ -1103,17 +1108,17 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
 
                   <div className="contact-selection-footer">
                     <button 
-                      onClick={() => setShowVcfContactSelection(false)}
-                      className="cancel-selection-button"
-                    >
-                      {t('common.cancel')}
-                    </button>
-                    <button 
                       onClick={handleConfirmVcfSelection}
                       className="confirm-selection-button"
                       disabled={!vcfContacts.some(c => c.selected)}
                     >
                       {t('import.googleInstructions.continueToGroups')} ({vcfContacts.filter(c => c.selected).length})
+                    </button>
+                    <button 
+                      onClick={() => setShowVcfContactSelection(false)}
+                      className="cancel-selection-button"
+                    >
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </div>
@@ -1140,10 +1145,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                         <option value="friends">{t('guests.groups.friends')}</option>
                         <option value="work">{t('guests.groups.work')}</option>
                         <option value="other">{t('guests.groups.other')}</option>
-                        <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                       </select>
                       
-                      {(vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') && (
+                      {vcfBulkGroupValue === 'other' && (
                         <input
                           type="text"
                           value={vcfBulkCustomGroupName}
@@ -1156,7 +1160,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                       <button
                         onClick={handleVcfBulkGroupChange}
                         className="apply-bulk-button"
-                        disabled={!vcfBulkGroupValue || ((vcfBulkGroupValue === 'custom' || vcfBulkGroupValue === 'other') && !vcfBulkCustomGroupName.trim())}
+                        disabled={!vcfBulkGroupValue || (vcfBulkGroupValue === 'other' && (!vcfBulkCustomGroupName || !vcfBulkCustomGroupName.trim()))}
                       >
                         {t('import.googleInstructions.applyToAll')}
                       </button>
@@ -1178,9 +1182,9 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                           </div>
                           <div className="contact-editor-group">
                             <select
-                              value={contact.group === contact.customGroup ? 'custom' : contact.group}
+                              value={contact.group === contact.customGroup ? 'other' : contact.group}
                               onChange={(e) => {
-                                if (e.target.value === 'custom' || e.target.value === 'other') {
+                                if (e.target.value === 'other') {
                                   handleVcfContactGroupChange(contact.id, e.target.value, contact.customGroup || '');
                                 } else {
                                   handleVcfContactGroupChange(contact.id, e.target.value);
@@ -1192,14 +1196,13 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
                               <option value="friends">{t('guests.groups.friends')}</option>
                               <option value="work">{t('guests.groups.work')}</option>
                               <option value="other">{t('guests.groups.other')}</option>
-                              <option value="custom">{t('import.googleInstructions.customGroup')}</option>
                             </select>
                             
-                            {(contact.group === contact.customGroup || contact.group === 'custom' || contact.group === 'other') && (
+                            {(contact.group === 'other' || contact.customGroup) && (
                               <input
                                 type="text"
                                 value={contact.customGroup || ''}
-                                onChange={(e) => handleVcfContactGroupChange(contact.id, 'custom', e.target.value)}
+                                onChange={(e) => handleVcfContactGroupChange(contact.id, 'other', e.target.value)}
                                 placeholder={t('guests.form.customGroupPlaceholder')}
                                 className="contact-custom-group-input"
                               />

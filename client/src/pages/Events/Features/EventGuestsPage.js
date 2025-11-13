@@ -117,7 +117,6 @@ const EventGuestsPage = () => {
   const copyRSVPLink = async () => {
     try {
       await navigator.clipboard.writeText(rsvpLink);
-      showSuccessModal(t('guests.rsvp.linkCopied'));
     } catch (err) {
       setError(t('errors.clipboardError'));}
   };
@@ -830,12 +829,6 @@ const EventGuestsPage = () => {
           <h3>📨 {t('guests.rsvp.shareLink')}</h3>
           <p>{t('guests.rsvp.shareLinkDescription')}</p>
           <div className="rsvp-link-container">
-            <input
-              type="text"
-              className="rsvp-link-input"
-              value={rsvpLink}
-              readOnly
-            />
             <button
               className="rsvp-copy-button"
               onClick={copyRSVPLink}

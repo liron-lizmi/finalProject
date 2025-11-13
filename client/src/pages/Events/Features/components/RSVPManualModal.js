@@ -277,17 +277,17 @@ const RSVPManualModal = ({ isOpen, onClose, guest, onUpdateRSVP, getGroupDisplay
 
             <div className="rsvp-form-actions">
               <button
+                type="submit"
+                className="rsvp-submit-button"
+              >
+                {t('guests.rsvp.updateRSVP')}
+              </button>
+              <button
                 type="button"
                 className="rsvp-cancel-button"
                 onClick={onClose}
               >
                 {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                className="rsvp-submit-button"
-              >
-                {t('guests.rsvp.updateRSVP')}
               </button>
             </div>
           </form>
