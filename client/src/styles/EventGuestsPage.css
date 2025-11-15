@@ -104,8 +104,18 @@
   transition: background-color 0.2s;
 }
 
-.guests-add-button:hover {
+.guests-add-button:hover:not(:disabled) {
   background-color: #0056b3;
+}
+
+.guests-add-button:disabled {
+  background-color: #007bff !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.guests-add-button:disabled:hover {
+  background-color: #007bff !important;
 }
 
 .guests-bulk-select-button {
@@ -130,6 +140,16 @@
 
 .guests-bulk-select-button.active:hover {
   background-color: #545b62;
+}
+
+.guests-bulk-select-button:disabled {
+  background-color: #6c757d !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.guests-bulk-select-button:disabled:hover {
+  background-color: #6c757d !important;
 }
 
 .guests-bulk-delete-button {

@@ -308,8 +308,7 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
             <div className="reminder-toast-actions">
               <button 
                 className="reminder-btn view-task"
-                onClick={() => canEdit && handleTaskClick(task)}
-                disabled={!canEdit}
+                onClick={() => handleTaskClick(task)}
               >
                 {t('events.features.tasks.reminders.viewTask')}
               </button>

@@ -312,10 +312,6 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
   };
 
   const handleEditTask = (task) => {
-    if (!canEdit) {
-      showError(t('events.accessDenied'));
-      return;
-    }
     setEditingTask(task);
     setShowModal(true);
   };
@@ -579,10 +575,11 @@ const fetchTasks = useCallback(async (showErrorMsg = true) => {
         </div>
       )}
 
-      {canEdit && showModal && (
+      {showModal && (
         <TaskModal
           task={editingTask}
           eventDate={eventData?.date}
+          canEdit={canEdit}
           onSave={handleSaveTask}
           onClose={() => {
             setShowModal(false);

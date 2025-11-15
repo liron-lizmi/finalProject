@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const TaskModal = ({ task, onSave, onClose, eventDate }) => {
+const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
   const [formData, setFormData] = useState({
@@ -610,6 +610,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
               className={`form-input ${errors.title ? 'error' : ''} ${formData.title ? 'filled' : ''}`}
               placeholder={t('events.features.tasks.form.titlePlaceholder')}
               maxLength={200}
+              disabled={!canEdit}
             />
             {errors.title && <div className="field-error">{errors.title}</div>}
           </div>
@@ -626,6 +627,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
               placeholder={t('events.features.tasks.form.descriptionPlaceholder')}
               maxLength={1000}
               rows={3}
+              disabled={!canEdit}
             />
           </div>
 
@@ -641,9 +643,13 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                     value={displayDueDate}
                     readOnly
                     className={`task-date-display-input ${errors.dueDate ? 'input-error' : ''} ${formData.dueDate ? 'filled' : ''}`}
-                    onClick={() => toggleCalendar('dueDate')}
+                    onClick={() => canEdit && toggleCalendar('dueDate')}
+                    disabled={!canEdit}
                   />
-                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('dueDate')}>
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                   onClick={() => canEdit && toggleCalendar('dueDate')}
+                   style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
+                   > 
                     <span role="img" aria-label="calendar">📅</span>
                   </div>
                 </div>
@@ -666,8 +672,12 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                   ref={dueTimePickerRef}
                   placeholder="HH:MM"
                   className={`time-input ${formData.dueTime ? 'filled' : ''}`}
+                  disabled={!canEdit}
                 />
-                <div className={`time-icon due-time-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => setShowDueTimePicker(!showDueTimePicker)}>
+                <div className={`time-icon due-time-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                onClick={() => canEdit && setShowDueTimePicker(!showDueTimePicker)}
+                style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
+                >
                   <span role="img" aria-label="clock">🕒</span>
                 </div>
                 
@@ -686,6 +696,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                 onFocus={() => handleFocus('priority')}
                 onBlur={handleBlur}
                 className={`form-select priority-select ${formData.priority && formData.priority !== 'medium' ? 'filled' : ''}`}
+                disabled={!canEdit}
               >
                 <option value="low">{t('events.features.tasks.priority.low')}</option>
                 <option value="medium">{t('events.features.tasks.priority.medium')}</option>
@@ -703,6 +714,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                 onFocus={() => handleFocus('category')}
                 onBlur={handleBlur}
                 className={`form-select ${formData.category && formData.category !== 'other' ? 'filled' : ''}`}
+                disabled={!canEdit}
               >
                 <option value="venue">{t('events.features.tasks.category.venue')}</option>
                 <option value="catering">{t('events.features.tasks.category.catering')}</option>
@@ -729,9 +741,13 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                     value={displayReminderDate}
                     readOnly
                     className={`task-date-display-input ${errors.reminderDate ? 'input-error' : ''} ${formData.reminderDate ? 'filled' : ''}`}
-                    onClick={() => toggleCalendar('reminderDate')}
+                    onClick={() => canEdit && toggleCalendar('reminderDate')}
+                    disabled={!canEdit}
                   />
-                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`} onClick={() => toggleCalendar('reminderDate')}>
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                   onClick={() => canEdit && toggleCalendar('reminderDate')}
+                   style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
+                   >
                     <span role="img" aria-label="calendar">📅</span>
                   </div>
                 </div>
@@ -753,12 +769,13 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                   onChange={handleChange}
                   ref={reminderTimePickerRef}
                   placeholder="HH:MM"
-                  disabled={!formData.reminderDate}
+                  disabled={!formData.reminderDate || !canEdit}
                   className={`time-input ${formData.reminderTime ? 'filled' : ''} ${!formData.reminderDate ? 'disabled' : ''}`}
                 />
                 <div 
                   className={`time-icon reminder-time-icon ${isRTL ? 'rtl' : 'ltr'} ${!formData.reminderDate ? 'disabled' : ''}`} 
-                  onClick={() => formData.reminderDate && setShowReminderTimePicker(!showReminderTimePicker)}
+                  onClick={() => canEdit && formData.reminderDate && setShowReminderTimePicker(!showReminderTimePicker)}
+                  style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
                 >
                   <span role="img" aria-label="clock">🕒</span>
                 </div>
@@ -786,6 +803,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
                   checked={recurringReminderEnabled}
                   onChange={handleRecurringCheckboxChange}
                   className="recurring-checkbox"
+                  disabled={!canEdit}
                 />
               </div>
             </div>
@@ -803,6 +821,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
               placeholder={t('events.features.tasks.form.notesPlaceholder')}
               maxLength={500}
               rows={2}
+              disabled={!canEdit}
             />
           </div>
 
@@ -811,10 +830,10 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
               type="button"
               className="btn-secondary"
               onClick={onClose}
-              disabled={loading}
             >
               {t('general.cancel')}
             </button>
+            {canEdit && (
             <button
               type="submit"
               className="btn-primary"
@@ -822,6 +841,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate }) => {
             >
               {loading ? t('general.loading') : t('general.save')}
             </button>
+          )}
           </div>
         </form>
       </div>

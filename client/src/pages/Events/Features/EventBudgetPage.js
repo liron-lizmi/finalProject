@@ -209,7 +209,11 @@ const EventBudgetPage = () => {
         icon="💰"
         description={t('events.features.budget.description')}
       >
-        <BudgetSetup eventId={id} onBudgetCreated={handleBudgetCreated} />
+        <BudgetSetup 
+          eventId={id} 
+          onBudgetCreated={handleBudgetCreated} 
+          canEdit={canEdit}
+        />
       </FeaturePageTemplate>
     );
   }

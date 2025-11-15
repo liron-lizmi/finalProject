@@ -160,6 +160,7 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated, canEdit = true}
                 className="budget-input"
                 min="0"
                 step="1"
+                disabled={!canEdit}
               />
             </label>
           </div>
@@ -292,6 +293,7 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated, canEdit = true}
                     className="budget-input"
                     min="0"
                     step="1"
+                    disabled={!canEdit}
                   />
                 </label>
               </div>
