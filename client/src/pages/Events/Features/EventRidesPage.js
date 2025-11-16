@@ -87,6 +87,11 @@ const EventRidesPage = ({ permissionLoading = false }) => {
       className = 'in-process';
     } else {
       const status = guest.rideInfo?.status || 'not_set';
+
+      if (status === 'not_set') {
+        return null;
+      }
+
       text = t(`events.features.rides.status.${status}`);
       icon = status === 'offering' ? '🚗' : status === 'seeking' ? '🔍' : '➖';
       className = status;
