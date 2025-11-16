@@ -576,8 +576,29 @@
         "tabs": {
           "overview": "Overview",
           "expenses": "Expenses",
-          "charts": "Charts",
-          "settings": "Settings"
+          "incomes": "Incomes", 
+          "charts": "Charts"
+        },
+        "incomes": {
+          "title": "Income Management",
+          "totalIncomes": "Total Incomes",
+          "giftIncomes": "Gift Incomes",
+          "manualIncomes": "Manual Incomes",
+          "addIncome": "Add Income",
+          "editIncome": "Edit Income",
+          "saveIncome": "Save Income",
+          "updateIncome": "Update Income",
+          "deleteIncome": "Delete Income",
+          "confirmDeleteIncome": "Are you sure you want to delete this income?",
+          "noIncomes": "No incomes yet",
+          "source": "Income Source",
+          "incomeDescriptionPlaceholder": "Describe where the income is from",
+          "sortBySource": "Sort by source",
+          "sources": {
+            "manual": "Manual Income",
+            "gift": "Gift",
+            "other": "Other"
+          }
         },
         "settings": {
           "title": "Budget Settings",

@@ -209,7 +209,10 @@
     "notFound": "תקציב לא נמצא",
     "alreadyExists": "תקציב כבר קיים לאירוע זה",
     "expenseNotFound": "הוצאה לא נמצאה",
-    "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה"
+    "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה",
+    "incomeNotFound": "הכנסה לא נמצאה",
+    "incomeDeleteSuccess": "ההכנסה נמחקה בהצלחה",
+    "giftSyncSuccess": "המתנה סונכרנה לתקציב בהצלחה"
   },
   "seating": {
     "tableName": "שולחן",

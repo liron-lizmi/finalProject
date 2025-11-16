@@ -442,6 +442,205 @@ const updateAlertThreshold = async (req, res) => {
   }
 };
 
+const addIncome = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { source, description, amount, date, notes, guestId } = req.body;
+
+    let actualEventId = eventId;
+
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (event && event.originalEvent) {
+      actualEventId = event.originalEvent;
+    } else if (!event) {
+      const originalEvent = await Event.findOne({
+        _id: eventId,
+        'sharedWith.userId': req.userId
+      });
+      if (!originalEvent) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      actualEventId = eventId;
+    }
+
+    const budget = await Budget.findOne({ event: actualEventId });
+    if (!budget) {
+      return res.status(404).json({ message: req.t('events.features.budget.notFound') });
+    }
+
+    const newIncome = {
+      source: source || 'manual',
+      description,
+      amount,
+      date: date || new Date(),
+      notes,
+      guestId: guestId || null
+    };
+
+    budget.incomes.push(newIncome);
+    const updatedBudget = await budget.save();
+    
+    const addedIncome = updatedBudget.incomes[updatedBudget.incomes.length - 1];
+    res.status(201).json(addedIncome);
+  } catch (err) {
+    console.error('Error adding income:', err);
+    
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ errors });
+    }
+    
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const updateIncome = async (req, res) => {
+  try {
+    const { eventId, incomeId } = req.params;
+    const { source, description, amount, date, notes } = req.body;
+
+    let actualEventId = eventId;
+
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (event && event.originalEvent) {
+      actualEventId = event.originalEvent;
+    } else if (!event) {
+      const originalEvent = await Event.findOne({
+        _id: eventId,
+        'sharedWith.userId': req.userId
+      });
+      if (!originalEvent) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      actualEventId = eventId;
+    }
+
+    const budget = await Budget.findOne({ event: actualEventId });
+    if (!budget) {
+      return res.status(404).json({ message: req.t('events.features.budget.notFound') });
+    }
+
+    const income = budget.incomes.id(incomeId);
+    if (!income) {
+      return res.status(404).json({ message: req.t('events.features.budget.incomeNotFound') });
+    }
+
+    if (source !== undefined) income.source = source;
+    if (description !== undefined) income.description = description;
+    if (amount !== undefined) income.amount = amount;
+    if (date !== undefined) income.date = date;
+    if (notes !== undefined) income.notes = notes;
+
+    const updatedBudget = await budget.save();
+    res.json(income);
+  } catch (err) {
+    console.error('Error updating income:', err);
+    
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ errors });
+    }
+    
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const deleteIncome = async (req, res) => {
+  try {
+    const { eventId, incomeId } = req.params;
+
+    let actualEventId = eventId;
+
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (event && event.originalEvent) {
+      actualEventId = event.originalEvent;
+    } else if (!event) {
+      const originalEvent = await Event.findOne({
+        _id: eventId,
+        'sharedWith.userId': req.userId
+      });
+      if (!originalEvent) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      actualEventId = eventId;
+    }
+
+    const budget = await Budget.findOne({ event: actualEventId });
+    if (!budget) {
+      return res.status(404).json({ message: req.t('events.features.budget.notFound') });
+    }
+
+    const income = budget.incomes.id(incomeId);
+    if (!income) {
+      return res.status(404).json({ message: req.t('events.features.budget.incomeNotFound') });
+    }
+
+    budget.incomes.pull(incomeId);
+    await budget.save();
+
+    res.json({ message: req.t('events.features.budget.incomeDeleteSuccess') });
+  } catch (err) {
+    console.error('Error deleting income:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
+const syncGiftToIncome = async (req, res) => {
+  try {
+    const { eventId, guestId } = req.params;
+    const { hasGift, giftValue, giftDescription } = req.body;
+
+    let actualEventId = eventId;
+
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (event && event.originalEvent) {
+      actualEventId = event.originalEvent;
+    } else if (!event) {
+      const originalEvent = await Event.findOne({
+        _id: eventId,
+        'sharedWith.userId': req.userId
+      });
+      if (!originalEvent) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      actualEventId = eventId;
+    }
+
+    const budget = await Budget.findOne({ event: actualEventId });
+    if (!budget) {
+      return res.status(404).json({ message: req.t('events.features.budget.notFound') });
+    }
+
+    const Guest = require('../models/Guest');
+    const guest = await Guest.findById(guestId);
+    if (!guest) {
+      return res.status(404).json({ message: req.t('guests.notFound') });
+    }
+
+    budget.incomes = budget.incomes.filter(income => 
+      !income.guestId || income.guestId.toString() !== guestId
+    );
+
+    if (hasGift && giftValue > 0) {
+      const newIncome = {
+        source: 'gift',
+        guestId: guestId,
+        description: giftDescription || `מתנה מ${guest.firstName} ${guest.lastName}`,
+        amount: giftValue,
+        date: new Date(),
+        notes: giftDescription || ''
+      };
+      budget.incomes.push(newIncome);
+    }
+
+    await budget.save();
+    res.json({ message: req.t('events.features.budget.giftSyncSuccess') });
+  } catch (err) {
+    console.error('Error syncing gift to income:', err);
+    res.status(500).json({ message: req.t('errors.serverError') });
+  }
+};
+
 module.exports = {
   getBudget,
   createBudget,
@@ -451,5 +650,9 @@ module.exports = {
   deleteExpense,
   getBudgetSummary,
   getExpensesByCategory,
-  updateAlertThreshold
+  updateAlertThreshold,
+  addIncome,
+  updateIncome,
+  deleteIncome,
+  syncGiftToIncome
 };

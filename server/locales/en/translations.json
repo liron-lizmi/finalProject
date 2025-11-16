@@ -209,7 +209,10 @@
     "notFound": "Budget not found",
     "alreadyExists": "A budget already exists for this event",
     "expenseNotFound": "Expense not found",
-    "expenseDeleteSuccess": "Expense deleted successfully"
+    "expenseDeleteSuccess": "Expense deleted successfully",
+    "incomeNotFound": "Income not found",
+    "incomeDeleteSuccess": "Income deleted successfully",
+    "giftSyncSuccess": "Gift synced to budget successfully"
   },
   "seating": {
     "tableName": "Table",

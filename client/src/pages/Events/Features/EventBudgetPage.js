@@ -5,6 +5,7 @@ import FeaturePageTemplate from './FeaturePageTemplate';
 import BudgetOverview from './components/budget/BudgetOverview';
 import BudgetSetup from './components/budget/BudgetSetup';
 import ExpenseManager from './components/budget/ExpenseManager';
+import IncomeManager from './components/budget/IncomeManager'; // הוסף את זה
 import BudgetCharts from './components/budget/BudgetCharts';
 import '../../../styles/EventBudgetPage.css';
 
@@ -20,24 +21,24 @@ const EventBudgetPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [canEdit, setCanEdit] = useState(true);
 
-    const fetchEventPermissions = useCallback(async () => {
-        try {
-          const token = localStorage.getItem('token');
-          const response = await fetch(`/api/events/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (response.ok) {
-            const eventData = await response.json();
-            setCanEdit(eventData.canEdit || false);
-          }
-        } catch (err) {
-          console.error('Error fetching event permissions:', err);
+  const fetchEventPermissions = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-    }, [id]);
+      });
+
+      if (response.ok) {
+        const eventData = await response.json();
+        setCanEdit(eventData.canEdit || false);
+      }
+    } catch (err) {
+      console.error('Error fetching event permissions:', err);
+    }
+  }, [id]);
 
   useEffect(() => {
     fetchEventPermissions();
@@ -153,22 +154,20 @@ const EventBudgetPage = () => {
   };
 
   const handleBudgetCreated = (newBudget) => {
-
     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
+      setError(t('events.accessDenied'));
+      return;
+    }
 
     setBudget(newBudget);
     setActiveTab('overview');
   };
 
   const handleBudgetUpdated = (updatedBudget) => {
-
     if (!canEdit) {
-    setError(t('events.accessDenied'));
-    return;
-  }
+      setError(t('events.accessDenied'));
+      return;
+    }
 
     setBudget(updatedBudget);
     fetchBudget();
@@ -211,7 +210,7 @@ const EventBudgetPage = () => {
       >
         <BudgetSetup 
           eventId={id} 
-          onBudgetCreated={handleBudgetCreated} 
+          onBudgetCreated={handleBudgetCreated}
           canEdit={canEdit}
         />
       </FeaturePageTemplate>
@@ -260,6 +259,12 @@ const EventBudgetPage = () => {
               {t('events.features.budget.tabs.expenses')}
             </button>
             <button 
+              className={`budget-tab ${activeTab === 'incomes' ? 'active' : ''}`}
+              onClick={() => setActiveTab('incomes')}
+            >
+              {t('events.features.budget.tabs.incomes')}
+            </button>
+            <button 
               className={`budget-tab ${activeTab === 'charts' ? 'active' : ''}`}
               onClick={() => setActiveTab('charts')}
             >
@@ -281,6 +286,15 @@ const EventBudgetPage = () => {
             
             {activeTab === 'expenses' && (
               <ExpenseManager 
+                budget={budget}
+                eventId={id}
+                onBudgetUpdated={handleBudgetUpdated}
+                canEdit={canEdit}
+              />
+            )}
+
+            {activeTab === 'incomes' && (
+              <IncomeManager 
                 budget={budget}
                 eventId={id}
                 onBudgetUpdated={handleBudgetUpdated}

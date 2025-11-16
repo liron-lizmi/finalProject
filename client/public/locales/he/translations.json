@@ -576,8 +576,29 @@
         "tabs": {
           "overview": "סקירה",
           "expenses": "הוצאות",
-          "charts": "גרפים",
-          "settings": "הגדרות"
+          "incomes": "הכנסות",
+          "charts": "גרפים"
+        },
+        "incomes": {
+          "title": "ניהול הכנסות",
+          "totalIncomes": "סך הכנסות",
+          "giftIncomes": "הכנסות ממתנות",
+          "manualIncomes": "הכנסות ידניות",
+          "addIncome": "הוסף הכנסה",
+          "editIncome": "ערוך הכנסה",
+          "saveIncome": "שמור הכנסה",
+          "updateIncome": "עדכן הכנסה",
+          "deleteIncome": "מחק הכנסה",
+          "confirmDeleteIncome": "האם אתה בטוח שברצונך למחוק הכנסה זו?",
+          "noIncomes": "אין הכנסות עדיין",
+          "source": "מקור הכנסה",
+          "incomeDescriptionPlaceholder": "תאר מהיכן ההכנסה",
+          "sortBySource": "מיון לפי מקור",
+          "sources": {
+            "manual": "הכנסה ידנית",
+            "gift": "מתנה",
+            "other": "אחר"
+          }
         },
         "settings": {
           "title": "הגדרות תקציב",

@@ -927,6 +927,8 @@ const updateGuestGift = async (req, res) => {
         message: req.t('guests.gifts.eventNotPassed') 
       });
     }
+
+    const targetEventId = event.originalEvent || eventId;
     
     const guest = await Guest.findOne({ 
       _id: guestId, 
@@ -944,6 +946,35 @@ const updateGuestGift = async (req, res) => {
     };
 
     const updatedGuest = await guest.save();
+
+    try {
+      const Budget = require('../models/Budget');
+      const budget = await Budget.findOne({ event: targetEventId });
+      
+      if (budget) {
+        budget.incomes = budget.incomes.filter(income => 
+          !income.guestId || income.guestId.toString() !== guestId
+        );
+
+        if (hasGift && giftValue > 0) {
+          const newIncome = {
+            source: 'gift',
+            guestId: guestId,
+            description: giftDescription || `מתנה מ${guest.firstName} ${guest.lastName}`,
+            amount: giftValue,
+            date: new Date(),
+            notes: giftDescription || ''
+          };
+          budget.incomes.push(newIncome);
+          await budget.save();
+        } else {
+          await budget.save();
+        }
+      }
+    } catch (budgetError) {
+      console.error('Error syncing gift to budget:', budgetError);
+    }
+
     res.json(updatedGuest);
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
