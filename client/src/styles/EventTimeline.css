@@ -844,7 +844,6 @@
 
 .internal-calendar .week-day.event-date {
   background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  align-self: stretch;
 }
 
 .internal-calendar .week-day.event-date .week-day-header {

@@ -28,7 +28,7 @@ const getEventTasks = async (req, res) => {
     }
 
     const tasks = await Task.find({ event: actualEventId })
-      .select('title description dueDate dueTime priority status category reminderDate reminderTime notes createdAt')
+      .select('title description dueDate dueTime priority status category reminderDate reminderTime reminderRecurrence notes createdAt')
       .sort({ dueDate: 1, priority: -1, createdAt: -1 })
       .lean();
 

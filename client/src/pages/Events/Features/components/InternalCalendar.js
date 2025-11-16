@@ -183,7 +183,7 @@ const InternalCalendar = ({ tasks, eventDate, onTaskClick, canEdit = true, onClo
               <div
                 key={task._id}
                 className={`week-task-item status-${task.status}`}
-                ononClick={() => canEdit && onTaskClick(task)}
+                onClick={() => canEdit && onTaskClick(task)}
                 style={{ 
                   borderLeftColor: getPriorityColor(task.priority),
                 }}

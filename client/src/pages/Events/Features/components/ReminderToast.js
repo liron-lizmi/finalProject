@@ -18,6 +18,10 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
   const now = new Date();
   const today = now.toDateString();
 
+  const dismissedReminders = JSON.parse(
+    localStorage.getItem('dismissed_reminders') || '[]'
+  );
+
   const shownTodayFromStorage = JSON.parse(
     localStorage.getItem(`reminders_shown_${today}`) || '[]'
   );
@@ -32,24 +36,23 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
     const dueDate = new Date(task.dueDate);
     const dueDateString = dueDate.toDateString();
 
-    // Add time to dueDate for accurate comparison
     if (task.dueTime) {
       const [hours, minutes] = task.dueTime.split(':');
       dueDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     } else {
-      // If no time specified, set to end of day
       dueDate.setHours(23, 59, 59, 999);
     }
 
-    if (dueDate < now && !shownTodayFromStorage.includes(`${taskId}_overdue_${dueDateString}`)) {
+    const overdueKey = `${taskId}_overdue_${dueDateString}`;
+    if (dueDate < now && !dismissedReminders.includes(overdueKey)) {
       reminderTasks.push({
         ...task,
         reminderType: 'overdue',
-        reminderKey: `${taskId}_overdue_${dueDateString}`
+        reminderKey: overdueKey
       });
     }
 
-    if (task.reminderDate && !shownTodayFromStorage.includes(`${taskId}_original`)) {
+    if (task.reminderDate) {
       const reminderDateTime = new Date(task.reminderDate);
 
       if (task.reminderTime) {
@@ -57,87 +60,139 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
         reminderDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       }
 
-      const timeDiff = now - reminderDateTime;
-
-      if (timeDiff >= 0 && timeDiff <= 24 * 60 * 60 * 1000) {
-        reminderTasks.push({
-          ...task,
-          reminderType: 'original',
-          reminderKey: `${taskId}_original`
-        });
+      if (task.reminderRecurrence && task.reminderRecurrence !== 'none') {
+        const recurringReminders = getRecurringReminders(
+          task, 
+          now, 
+          shownTodayFromStorage, 
+          dismissedReminders
+        );
+        reminderTasks.push(...recurringReminders);
+      } 
+      else {
+        const originalKey = `${taskId}_original`;
+        
+        if (now >= reminderDateTime && !dismissedReminders.includes(originalKey)) {
+          reminderTasks.push({
+            ...task,
+            reminderType: 'original',
+            reminderKey: originalKey
+          });
+        }
       }
-    }
-
-    if (task.reminderRecurrence && task.reminderRecurrence !== 'none' && task.reminderDate) {
-      const recurringReminders = getRecurringReminders(task, now, shownTodayFromStorage);
-      reminderTasks.push(...recurringReminders);
     }
   });
 
   if (reminderTasks.length > 0) {
     setActiveReminders(reminderTasks);
 
-    const newShownToday = [...shownTodayFromStorage, ...reminderTasks.map(t => t.reminderKey)];
+    const newShownToday = [
+      ...shownTodayFromStorage, 
+      ...reminderTasks
+        .filter(t => t.reminderType === 'recurring')
+        .map(t => t.reminderKey)
+    ];
     localStorage.setItem(`reminders_shown_${today}`, JSON.stringify(newShownToday));
     setShownToday(new Set(newShownToday));
   }
 };
 
-  const getRecurringReminders = (task, now, shownToday) => {
-    const reminders = [];
-    const taskId = task._id;
-    const dueDate = new Date(task.dueDate);
-    const reminderDate = new Date(task.reminderDate);
+  const getRecurringReminders = (task, now, shownToday, dismissedReminders) => {
+  const reminders = [];
+  const taskId = task._id;
+  const dueDate = new Date(task.dueDate);
+  const reminderDate = new Date(task.reminderDate);
 
-    if (task.reminderTime) {
-      const [hours, minutes] = task.reminderTime.split(':');
-      reminderDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    }
+  if (task.reminderTime) {
+    const [hours, minutes] = task.reminderTime.split(':');
+    reminderDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  }
 
-    let intervalDays;
-    switch (task.reminderRecurrence) {
-      case 'daily':
-        intervalDays = 1;
-        break;
-      case 'weekly':
-        intervalDays = 7;
-        break;
-      case 'biweekly':
-        intervalDays = 14;
-        break;
-      default:
-        return reminders;
-    }
+  const todayAtReminderTime = new Date(now);
+  if (task.reminderTime) {
+    const [hours, minutes] = task.reminderTime.split(':');
+    todayAtReminderTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  }
 
-    let currentReminderDate = new Date(reminderDate);
-    let recurringCount = 1;
-
-    while (currentReminderDate <= dueDate) {
-      currentReminderDate = new Date(reminderDate.getTime() + (intervalDays * 24 * 60 * 60 * 1000 * recurringCount));
-
-      if (currentReminderDate > dueDate) break;
-
-      const reminderKey = `${taskId}_recurring_${recurringCount}`;
-      const timeDiff = now - currentReminderDate;
-
-      if (timeDiff >= 0 && timeDiff <= 24 * 60 * 60 * 1000 && !shownToday.includes(reminderKey)) {
+  switch (task.reminderRecurrence) {
+    case 'daily':
+      const dailyKey = `${taskId}_daily_${now.toDateString()}`;
+      
+      if (now >= todayAtReminderTime && 
+          now <= dueDate && 
+          !shownToday.includes(dailyKey) &&
+          !dismissedReminders.includes(dailyKey)) {
         reminders.push({
           ...task,
           reminderType: 'recurring',
-          reminderKey: reminderKey,
-          recurringNumber: recurringCount
+          reminderKey: dailyKey,
+          recurringNumber: 'daily'
         });
       }
+      break;
 
-      recurringCount++;
+    case 'weekly':
+      const reminderDayOfWeek = reminderDate.getDay();
+      const todayDayOfWeek = now.getDay();
+      const weeklyKey = `${taskId}_weekly_${now.toDateString()}`;
+      
+      if (reminderDayOfWeek === todayDayOfWeek &&
+          now >= todayAtReminderTime &&
+          now <= dueDate &&
+          !shownToday.includes(weeklyKey) &&
+          !dismissedReminders.includes(weeklyKey)) {
+        reminders.push({
+          ...task,
+          reminderType: 'recurring',
+          reminderKey: weeklyKey,
+          recurringNumber: 'weekly'
+        });
+      }
+      break;
+
+    case 'biweekly':
+      const reminderDayOfWeek2 = reminderDate.getDay();
+      const todayDayOfWeek2 = now.getDay();
+      
+      const secondDay = (reminderDayOfWeek2 + 3) % 7;
+      
+      const biweeklyKey = `${taskId}_biweekly_${now.toDateString()}`;
+      
+      if ((reminderDayOfWeek2 === todayDayOfWeek2 || secondDay === todayDayOfWeek2) &&
+          now >= todayAtReminderTime &&
+          now <= dueDate &&
+          !shownToday.includes(biweeklyKey) &&
+          !dismissedReminders.includes(biweeklyKey)) {
+        reminders.push({
+          ...task,
+          reminderType: 'recurring',
+          reminderKey: biweeklyKey,
+          recurringNumber: 'biweekly'
+        });
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return reminders;
+};
+
+  const closeReminder = (reminderKey, isPermanentDismiss = false) => {
+  setActiveReminders(prev => prev.filter(task => task.reminderKey !== reminderKey));
+  
+  if (isPermanentDismiss) {
+    const dismissedReminders = JSON.parse(
+      localStorage.getItem('dismissed_reminders') || '[]'
+    );
+    
+    if (!dismissedReminders.includes(reminderKey)) {
+      dismissedReminders.push(reminderKey);
+      localStorage.setItem('dismissed_reminders', JSON.stringify(dismissedReminders));
     }
-
-    return reminders;
-  };
-
-  const closeReminder = (reminderKey) => {
-    setActiveReminders(prev => prev.filter(task => task.reminderKey !== reminderKey));
-  };
+  }
+};
 
   const handleTaskClick = (task) => {
     if (onTaskClick) {
@@ -236,7 +291,10 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
               </div>
               <button 
                 className="reminder-close"
-                onClick={() => closeReminder(task.reminderKey)}
+                onClick={() => closeReminder(
+                  task.reminderKey, 
+                  task.reminderType !== 'recurring'
+                )}
                 aria-label={t('general.close')}
               >
                 ✕
@@ -314,7 +372,10 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
               </button>
               <button 
                 className="reminder-btn dismiss"
-                onClick={() => closeReminder(task.reminderKey)}
+                onClick={() => closeReminder(
+                  task.reminderKey, 
+                  task.reminderType !== 'recurring'
+                )}
               >
                 {t('events.features.tasks.reminders.dismiss')}
               </button>
