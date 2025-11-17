@@ -76,22 +76,36 @@
 
 .feature-page-header h1 {
   font-size: 2.2rem;
-  margin: 10px 0;
-  color: #000;
+  margin: 0 0 20px 0;
+  color: #333; 
   text-align: center !important;
   width: 100%;
+  font-weight: 300;
+  letter-spacing: 1.5px; 
+  position: relative; 
+  display: inline-block; 
+  padding-bottom: 15px;
+}
+
+.feature-page-header h1::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(to right, #8b9d83, #d4b99e, #6b5444);
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .feature-icon {
-  font-size: 2.5rem;
+  font-size: 60px;
   margin-bottom: 10px;
   height: 70px;
   width: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background-color: #f8f9fa;
   margin-left: auto;
   margin-right: auto;
 }
@@ -487,6 +501,46 @@
 }
 
 /* Responsive Design*/
+
+@media (max-width: 480px) {
+  .feature-page-container {
+    padding: 20px 15px;
+  }
+
+  .header-content {
+    padding: 0 10px;
+  }
+
+  .header-logo {
+    height: 40px;
+  }
+
+  .feature-icon {
+    font-size: 50px;
+    margin-bottom: 15px;
+  }
+
+  .feature-page-header h1 {
+    font-size: 1.6rem;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+  .feature-page-header h1::after {
+    width: 100px;
+    height: 3px;
+  }
+
+  .back-button {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .feature-page-content {
+    margin-top: 20px;
+  }
+}
+
 @media (max-width: 768px) {
  
   .feature-page-header {
@@ -525,6 +579,16 @@
   .logo-image {
     max-width: 160px;
   }
- 
+}
 
+@media (min-width: 769px) and (max-width: 1025px) {
+  .feature-page-container {
+    padding: 20px 30px;
+    max-width: 90%;
+  }
+
+  .header-content {
+    padding: 0 30px;
+    max-width: 90%;
+  }
 }

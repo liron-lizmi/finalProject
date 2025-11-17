@@ -10,7 +10,7 @@ window.googleMapsLoaded = window.googleMapsLoaded || false;
 const VendorsPage = ({ onSelectVendor }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
- 
+  
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [map, setMap] = useState(null);
@@ -28,7 +28,7 @@ const VendorsPage = ({ onSelectVendor }) => {
   
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
- 
+  
   const [filters, setFilters] = useState({
     area: 'all',
     vendorType: 'all',
@@ -37,37 +37,36 @@ const VendorsPage = ({ onSelectVendor }) => {
   });
 
   const getMapStyles = () => {
-  const root = document.documentElement;
-  const styles = getComputedStyle(root);
-  
-  return [
-    { 
-      elementType: "geometry", 
-      stylers: [{ color: styles.getPropertyValue('--map-geometry-color').trim() || "#f5f5f5" }] 
-    },
-    { 
-      elementType: "labels.text.fill", 
-      stylers: [{ color: styles.getPropertyValue('--map-text-color').trim() || "#333333" }] 
-    },
-    { 
-      featureType: "road", 
-      elementType: "geometry", 
-      stylers: [{ color: styles.getPropertyValue('--map-road-color').trim() || "#ffffff" }] 
-    },
-    { 
-      featureType: "road", 
-      elementType: "geometry.stroke", 
-      stylers: [{ color: styles.getPropertyValue('--map-road-stroke-color').trim() || "#dddddd" }] 
-    },
-    { 
-      featureType: "water", 
-      elementType: "geometry", 
-      stylers: [{ color: styles.getPropertyValue('--map-water-color').trim() || "#e0e0e0" }] 
-    }
-  ];
-};
+    const root = document.documentElement;
+    const styles = getComputedStyle(root);
+    
+    return [
+      { 
+        elementType: "geometry", 
+        stylers: [{ color: styles.getPropertyValue('--map-geometry-color').trim() || "#f5f5f5" }] 
+      },
+      { 
+        elementType: "labels.text.fill", 
+        stylers: [{ color: styles.getPropertyValue('--map-text-color').trim() || "#333333" }] 
+      },
+      { 
+        featureType: "road", 
+        elementType: "geometry", 
+        stylers: [{ color: styles.getPropertyValue('--map-road-color').trim() || "#ffffff" }] 
+      },
+      { 
+        featureType: "road", 
+        elementType: "geometry.stroke", 
+        stylers: [{ color: styles.getPropertyValue('--map-road-stroke-color').trim() || "#dddddd" }] 
+      },
+      { 
+        featureType: "water", 
+        elementType: "geometry", 
+        stylers: [{ color: styles.getPropertyValue('--map-water-color').trim() || "#e0e0e0" }] 
+      }
+    ];
+  };
 
-// Returns emoji and Hebrew category mappings for specific vendor types
   const getSpecificFilters = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -158,7 +157,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  // Returns kosher certification level options
   const getKashrutOptions = () => {
     return [
       { value: 'all', labelKey: 'vendors.specificFilters.catering.kashrut.all' },
@@ -170,7 +168,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     ];
   };
 
-  // Maps vendor type string to event category 
   const determineCategoryFromVendorType = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -194,10 +191,9 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
-  // Determines vendor category from Google Place types array using keyword matching
   const determineCategoryFromPlaceTypes = (types) => {
     if (!types || !Array.isArray(types)) return 'other';
-   
+    
     const typeMapping = {
       'restaurant': 'catering',
       'food': 'catering',
@@ -205,43 +201,42 @@ const VendorsPage = ({ onSelectVendor }) => {
       'meal_delivery': 'catering',
       'bakery': 'catering',
       'cafe': 'catering',
-     
+      
       'photographer': 'photography',
       'photography': 'photography',
-     
+      
       'florist': 'flowers',
       'flower_shop': 'flowers',
-     
+      
       'musician': 'music',
       'music': 'music',
       'entertainment': 'music',
-     
+      
       'beauty_salon': 'makeup',
       'hair_care': 'makeup',
       'spa': 'makeup',
-     
+      
       'car_rental': 'transportation',
       'taxi_stand': 'transportation',
       'bus_station': 'transportation',
       'travel_agency': 'transportation',
-     
+      
       'event_planning': 'decoration',
       'establishment': 'decoration'
     };
-   
+    
     for (const type of types) {
       if (typeMapping[type]) {
         return typeMapping[type];
       }
     }
-   
+    
     return 'other';
   };
 
-  // Determines vendor category from business name and description using keyword matching
   const determineCategoryFromName = (name, description = '') => {
     const text = (name + ' ' + description).toLowerCase();
-   
+    
     const keywords = {
       catering: ['קייטרינג', 'אוכל', 'מזון', 'catering', 'food', 'restaurant', 'chef', 'cooking', 'מסעדה', 'בישול'],
       photography: ['צילום', 'צלם', 'photography', 'photographer', 'photo', 'camera', 'צילומים', 'מצלמה'],
@@ -253,16 +248,16 @@ const VendorsPage = ({ onSelectVendor }) => {
       makeup: ['איפור', 'יופי', 'makeup', 'beauty', 'cosmetics', 'hair', 'מאפרת', 'שיער'],
       transportation: ['הסעות', 'רכב', 'transportation', 'car', 'bus', 'taxi', 'limousine', 'הסעה']
     };
-   
+    
     for (const [category, words] of Object.entries(keywords)) {
       if (words.some(word => text.includes(word))) {
         return category;
       }
     }
-   
+    
     return 'other';
   };
- 
+  
   const mapRef = useRef(null);
   const placesService = useRef(null);
   const geocoder = useRef(null);
@@ -275,7 +270,7 @@ const VendorsPage = ({ onSelectVendor }) => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
   }, [isRTL, i18n.language]);
- 
+  
   useEffect(() => {
     if (isEffectRun.current) return;
     isEffectRun.current = true;
@@ -350,20 +345,19 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 }, []);
- 
-// Initializes Google Maps instance with Israel center, creates PlacesService and Geocoder
+  
   const initMap = () => {
     if (!mapRef.current || !window.google) {
       console.error("Map ref or Google API not ready");
       return;
     }
-   
+    
     if (isMapInitialized.current || mapInstance.current) {
       return;
     }
-   
+    
     isMapInitialized.current = true;
-   
+    
     try {
       const mapOptions = {
         center: { lat: 31.7683, lng: 35.2137 },
@@ -378,26 +372,26 @@ const VendorsPage = ({ onSelectVendor }) => {
         fullscreenControl: false,
         styles: getMapStyles()
       };
-     
+      
       const newMap = new window.google.maps.Map(mapRef.current, mapOptions);
-     
+      
       mapInstance.current = newMap;
-     
+      
       setMap(newMap);
-     
+      
       if (window.google.maps.Geocoder) {
         geocoder.current = new window.google.maps.Geocoder();
       }
-     
+      
       const placesDiv = document.createElement('div');
       document.body.appendChild(placesDiv);
-     
+      
       if (window.google.maps.places && window.google.maps.places.PlacesService) {
         placesService.current = new window.google.maps.places.PlacesService(placesDiv);
       } else {
         console.error("Google Maps Places Service is not available");
       }
-     
+      
       const israelCenter = { lat: 31.5, lng: 34.75 };
       newMap.setCenter(israelCenter);
       newMap.setZoom(7);
@@ -418,7 +412,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     }
   };
 
- // Searches vendors via backend API with filters and manages loading states, pagination, and map markers 
 const searchVendors = async (shouldAppend = false) => {
   if (!shouldAppend) {
     setLoading(true);
@@ -472,30 +465,29 @@ const searchVendors = async (shouldAppend = false) => {
   }
 };
 
-// Creates map markers for vendors and adds click listeners to show details
   const addMarkers = (vendors, mapParamDirect = null) => {
     clearMarkers();
-   
+    
     const currentMap = mapParamDirect || mapInstance.current || map;
-   
+    
     if (!currentMap || !window.google) {
       console.error("Map not available for adding markers");
       return;
     }
-      
+        
     const newMarkers = vendors.map(vendor => {
       if (!vendor.geometry || !vendor.geometry.location) return null;
-     
+      
       try {
         let marker;
-       
+        
         if (window.google.maps.marker && window.google.maps.marker.AdvancedMarkerElement) {
           marker = new window.google.maps.marker.AdvancedMarkerElement({
             position: vendor.geometry.location,
             map: currentMap,
             title: vendor.name
           });
-         
+          
           marker.addListener('gm_click', () => {
             getVendorDetails(vendor.place_id);
           });
@@ -505,23 +497,22 @@ const searchVendors = async (shouldAppend = false) => {
             map: currentMap,
             title: vendor.name
           });
-         
+          
           marker.addListener('click', () => {
             getVendorDetails(vendor.place_id);
           });
         }
-       
+        
         return marker;
       } catch (error) {
         console.error("Error creating marker:", error);
         return null;
       }
     }).filter(Boolean);
-   
+    
     setMarkers(newMarkers);
   };
- 
-  // Removes all markers from the map
+  
   const clearMarkers = () => {
     markers.forEach(marker => {
       if (marker) {
@@ -538,8 +529,7 @@ const searchVendors = async (shouldAppend = false) => {
     });
     setMarkers([]);
   };
- 
-  // Fetches detailed vendor information using Google Places API placeId
+  
   const getVendorDetails = async (placeId) => {
     if (!placeId) {
       console.error("Missing placeId");
@@ -607,16 +597,15 @@ const searchVendors = async (shouldAppend = false) => {
       console.error("Failed to get vendor details:", error);
     }
   };
- 
-  // Handles search input changes with debouncing
+  
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearch(value);
-   
+    
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-   
+    
     const timeout = setTimeout(() => {
       if (value.length >= 3) {
         const currentMap = mapInstance.current || map;
@@ -625,18 +614,17 @@ const searchVendors = async (shouldAppend = false) => {
         }
       }
     }, 300);
-   
+    
     setSearchTimeout(timeout);
   };
- 
-  // Handles search form submission with geocoding for address searches
+  
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-   
+    
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-   
+    
     if (!geocoder.current) {
       console.error("Geocoder not initialized");
       if (window.google && window.google.maps && window.google.maps.Geocoder) {
@@ -646,13 +634,13 @@ const searchVendors = async (shouldAppend = false) => {
         return;
       }
     }
-   
+    
     const geocodeRequest = {
       address: search,
       language: 'en',
       region: 'IL'
     };
-   
+    
     geocoder.current.geocode(geocodeRequest, (results, status) => {
       if (status === 'OK' && results && results[0]) {
         const location = results[0].geometry.location;
@@ -671,11 +659,10 @@ const searchVendors = async (shouldAppend = false) => {
       }
     });
   };
- 
-  // Handles filter dropdown changes
+  
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-   
+    
     if (name === 'vendorType') {
       setFilters(prev => ({
         ...prev,
@@ -696,7 +683,6 @@ const searchVendors = async (shouldAppend = false) => {
     }
   };
 
-  // Toggles specific filter checkboxes
   const handleSpecificFilterChange = (filterValue) => {
     setFilters(prev => ({
       ...prev,
@@ -705,8 +691,7 @@ const searchVendors = async (shouldAppend = false) => {
         : [...prev.specificFilters, filterValue]
     }));
   };
- 
-  // Applies current filters and triggers new vendor search with cache clear
+  
   const applyFilters = () => {
     
     vendorService.clearFiltersCache(filters, search);
@@ -718,12 +703,11 @@ const searchVendors = async (shouldAppend = false) => {
     
     searchVendors(false);
   };
- 
-  // Selects a vendor, determines category, and calls onSelectVendor callback or navigates
+  
   const selectVendor = (vendor) => {
     try {
       let category = 'other';
-     
+      
       if (filters.vendorType && filters.vendorType !== 'all') {
         category = determineCategoryFromVendorType(filters.vendorType);
       }
@@ -733,12 +717,12 @@ const searchVendors = async (shouldAppend = false) => {
           category = typeCategory;
         }
       }
-     
+      
       if (category === 'other') {
         const nameBasedCategory = determineCategoryFromName(vendor.name, vendor.vicinity);
         category = nameBasedCategory;
       }
-     
+      
       const vendorData = {
         place_id: vendor.place_id,
         id: vendor.place_id,
@@ -750,11 +734,11 @@ const searchVendors = async (shouldAppend = false) => {
         price_level: vendor.price_level || 0,
         category: category
       };
-   
+    
       if (onSelectVendor && typeof onSelectVendor === 'function') {
         onSelectVendor(vendorData);
         setSuccessMessage(t('vendors.vendorAddedSuccess'));
-       
+        
         setTimeout(() => {
           setSelectedVendor(null);
         }, 2000);
@@ -767,7 +751,6 @@ const searchVendors = async (shouldAppend = false) => {
     }
   };
 
-// Returns first valid photo with URL from vendor photos array along with its index
   const getMainVendorImage = (vendor) => {
     if (!vendor.photos || vendor.photos.length === 0) {
       console.warn('⚠️ No photos for:', vendor.name);
@@ -790,7 +773,6 @@ const searchVendors = async (shouldAppend = false) => {
     return null;
   };
 
-  // Returns array of all valid photos with URLs from vendor photos
   const getValidPhotos = (vendor) => {
   if (!vendor.photos || vendor.photos.length === 0) {
     return [];
@@ -812,43 +794,42 @@ const searchVendors = async (shouldAppend = false) => {
   const currentSpecificFilters = getSpecificFilters(filters.vendorType);
   const kashrutOptions = getKashrutOptions();
 
-  // Loads next page of vendors and appends to existing results
   const handleLoadMore = () => {
     searchVendors(true); 
   };
 
   return (
-    <div className="vendors-page">
-      <div className="vendors-header">
+    <div className="vp-vendors-page">
+      <div className="vp-vendors-header">
         <h1>{t('vendors.searchTitle')}</h1>
         <p>{t('vendors.searchSubtitle')}</p>
       </div>
-     
-      <div className="vendors-search-container">
-        <form onSubmit={handleSearchSubmit} className="vendors-search-form">
+      
+      <div className="vp-vendors-search-container">
+        <form onSubmit={handleSearchSubmit} className="vp-vendors-search-form">
           <input
             type="text"
             placeholder={t('vendors.searchPlaceholder')}
             value={search}
             onChange={handleSearchChange}
-            className="vendors-search-input"
+            className="vp-vendors-search-input"
           />
-          <button type="submit" className="vendors-search-button">{t('vendors.searchButton')}</button>
+          <button type="submit" className="vp-vendors-search-button">{t('vendors.searchButton')}</button>
         </form>
       </div>
-     
-      <div className="vendors-content">
-        <div className="vendors-filters">
+      
+      <div className="vp-vendors-content">
+        <div className="vp-vendors-filters">
           <h3>{t('vendors.filtersTitle')}</h3>
-         
-          <div className="filter-group">
+          
+          <div className="vp-filter-group">
             <label htmlFor="area">{t('vendors.filters.areaLabel')}</label>
             <select
               id="area"
               name="area"
               value={filters.area}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vp-rtl-select' : 'vp-ltr-select'}
             >
               <option value="all">{t('vendors.filters.allAreas')}</option>
               <option value="ירושלים">{t('vendors.filters.jerusalem')}</option>
@@ -857,15 +838,15 @@ const searchVendors = async (shouldAppend = false) => {
               <option value="צפון">{t('vendors.filters.north')}</option>
             </select>
           </div>
-         
-          <div className="filter-group">
+          
+          <div className="vp-filter-group">
             <label htmlFor="vendorType">{t('vendors.filters.typeLabel')}</label>
             <select
               id="vendorType"
               name="vendorType"
               value={filters.vendorType}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vp-rtl-select' : 'vp-ltr-select'}
             >
               <option value="all">{t('vendors.filters.allTypes')}</option>
               <option value="catering">{t('vendors.filters.catering')}</option>
@@ -880,14 +861,14 @@ const searchVendors = async (shouldAppend = false) => {
           </div>
 
           {filters.vendorType === 'catering' && (
-            <div className="filter-group">
+            <div className="vp-filter-group">
               <label htmlFor="kashrutLevel">{t('vendors.filters.kashrutLabel')}</label>
               <select
                 id="kashrutLevel"
                 name="kashrutLevel"
                 value={filters.kashrutLevel}
                 onChange={handleFilterChange}
-                className={isRTL ? 'rtl-select' : 'ltr-select'}
+                className={isRTL ? 'vp-rtl-select' : 'vp-ltr-select'}
               >
                 {kashrutOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -899,21 +880,21 @@ const searchVendors = async (shouldAppend = false) => {
           )}
 
           {filters.vendorType !== 'all' && currentSpecificFilters && (
-            <div className="filter-group">
+            <div className="vp-filter-group">
               <label>{t(currentSpecificFilters.labelKey)}</label>
-              <div className="checkbox-filters">
+              <div className="vp-checkbox-filters">
                 {currentSpecificFilters.options.map(option => (
-                  <div key={option.value} className="checkbox-item">
+                  <div key={option.value} className="vp-checkbox-item">
                     <input
                       type="checkbox"
                       id={`filter-${option.value}`}
                       checked={filters.specificFilters.includes(option.value)}
                       onChange={() => handleSpecificFilterChange(option.value)}
-                      className="filter-checkbox"
+                      className="vp-filter-checkbox"
                     />
                     <label
                       htmlFor={`filter-${option.value}`}
-                      className="checkbox-label"
+                      className="vp-checkbox-label"
                     >
                       {t(option.labelKey)}
                     </label>
@@ -922,34 +903,34 @@ const searchVendors = async (shouldAppend = false) => {
               </div>
             </div>
           )}
-         
-          <button className="filter-apply-button" onClick={applyFilters}>{t('vendors.filters.applyButton')}</button>
+          
+          <button className="vp-filter-apply-button" onClick={applyFilters}>{t('vendors.filters.applyButton')}</button>
         </div>
-       
-        <div className="vendors-results-container">
-          <div className="vendors-map" ref={mapRef}></div>
-         
-          <div className="vendors-list">
-            <div className="vendors-list-header">
+        
+        <div className="vp-vendors-results-container">
+          <div className="vp-vendors-map" ref={mapRef}></div>
+          
+          <div className="vp-vendors-list">
+            <div className="vp-vendors-list-header">
               <h3>{t('vendors.searchResults')}</h3>
             </div>
-           
+            
             {loading ? (
-              <div className="loading-indicator">
+              <div className="vp-loading-indicator">
                 <p>{t('vendors.loading')}</p>
               </div>
             ) : displayedVendors.length === 0 ? (
-              <div className="no-results">{t('vendors.noResults')}</div>
+              <div className="vp-no-results">{t('vendors.noResults')}</div>
             ) : (
               <>
-                <div className="vendors-grid">
+                <div className="vp-vendors-grid">
                   {displayedVendors.map(vendor => {
                     const mainImageData = getMainVendorImage(vendor);
                     
                     return (
                       <div
                         key={vendor.place_id}
-                        className={`vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'selected' : ''}`}
+                        className={`vp-vendor-card ${selectedVendor && selectedVendor.place_id === vendor.place_id ? 'vp-selected' : ''}`}
                         onClick={() => {
                           const mainImageData = getMainVendorImage(vendor);
                           if (mainImageData) {
@@ -963,7 +944,7 @@ const searchVendors = async (shouldAppend = false) => {
                           getVendorDetails(vendor.place_id);
                         }}
                       >
-                        <div className="vendor-image">
+                        <div className="vp-vendor-image">
                           {mainImageData && mainImageData.url ? (
                             <img
                               src={mainImageData.url}
@@ -983,27 +964,27 @@ const searchVendors = async (shouldAppend = false) => {
                           )}
                         </div>
                         
-                        <div className="vendor-info">
+                        <div className="vp-vendor-info">
                           <h4>{vendor.name}</h4>
-                          <p className="vendor-address">
+                          <p className="vp-vendor-address">
                             {vendor.formatted_address || vendor.vicinity || t('vendors.noAddress')}
                           </p>
                           
                           {vendor.rating && (
-                            <div className="vendor-rating">
-                              <span className="stars">
+                            <div className="vp-vendor-rating">
+                              <span className="vp-stars">
                                 {Array(Math.floor(vendor.rating)).fill().map((_, i) => (
-                                  <span key={i} className="star">★</span>
+                                  <span key={i} className="vp-star">★</span>
                                 ))}
-                                {vendor.rating % 1 > 0 && <span className="star half">★</span>}
+                                {vendor.rating % 1 > 0 && <span className="vp-star vp-half">★</span>}
                               </span>
-                              <span className="rating-value">{vendor.rating}</span>
-                              <span className="review-count">({vendor.user_ratings_total || 0})</span>
+                              <span className="vp-rating-value">{vendor.rating}</span>
+                              <span className="vp-review-count">({vendor.user_ratings_total || 0})</span>
                             </div>
                           )}
                           
                           {vendor.price_level && (
-                            <div className="vendor-price">
+                            <div className="vp-vendor-price">
                               {'₪'.repeat(vendor.price_level)}
                             </div>
                           )}
@@ -1014,9 +995,9 @@ const searchVendors = async (shouldAppend = false) => {
                 </div>
 
                 {hasMore && !loading && displayedVendors.length > 0 && (
-                  <div className="load-more-container">
+                  <div className="vp-load-more-container">
                     <button 
-                      className="load-more-button" 
+                      className="vp-load-more-button" 
                       onClick={handleLoadMore}
                       disabled={loadingMore}
                     >
@@ -1028,26 +1009,26 @@ const searchVendors = async (shouldAppend = false) => {
             )}
           </div>
         </div>
-       
+        
         {selectedVendor && (
-          <div className="vendor-details">
-            <div className="vendor-details-content">
-              <div className="vendor-details-header">
+          <div className="vp-vendor-details">
+            <div className="vp-vendor-details-content">
+              <div className="vp-vendor-details-header">
                 <h2>{selectedVendor.name}</h2>
-                <button className="close-details" onClick={() => {
+                <button className="vp-close-details" onClick={() => {
                   setSelectedVendor(null);
                   setSelectedVendorMainPhoto(null);
                 }}>×</button>
               </div>
-             
+              
               {successMessage && (
-                <div className="success-message">
+                <div className="vp-success-message">
                   {successMessage}
                 </div>
               )}
-             
-              <div className="vendor-photos">
-                <div className="main-photo">
+              
+              <div className="vp-vendor-photos">
+                <div className="vp-main-photo">
                   {selectedVendor.photos && selectedVendor.photos.length > 0 ? (
                     (() => {
                       const validPhotos = getValidPhotos(selectedVendor);
@@ -1103,13 +1084,13 @@ const searchVendors = async (shouldAppend = false) => {
                 </div>
                 
                 {selectedVendor.photos && selectedVendor.photos.length > 0 && getValidPhotos(selectedVendor).length > 0 && (
-                  <div className="all-photos">
+                  <div className="vp-all-photos">
                     {getValidPhotos(selectedVendor).map(({ url, index }) => (
                       <img
                         key={index}
                         src={url}
                         alt={`${selectedVendor.name} - ${index + 1}`}
-                        className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
+                        className={`vp-thumbnail-photo ${selectedPhoto === index ? 'vp-selected' : ''}`}
                         onClick={() => setSelectedPhoto(index)}
                         loading="lazy"
                         onError={(e) => {
@@ -1120,42 +1101,42 @@ const searchVendors = async (shouldAppend = false) => {
                   </div>
                 )}
               </div>
-                         
-              <div className="vendor-info-detailed">
-                <p className="address">
+                          
+              <div className="vp-vendor-info-detailed">
+                <p className="vp-address">
                   <strong>{t('vendors.details.address')}:</strong> {
                     isRTL && selectedVendor.originalFormattedAddress ?
                     selectedVendor.originalFormattedAddress :
                     selectedVendor.formatted_address || selectedVendor.vicinity
                   }
                 </p>
-               
+                
                 {selectedVendor.formatted_phone_number && (
-                  <p className="phone">
+                  <p className="vp-phone">
                     <strong>{t('vendors.details.phone')}:</strong> {selectedVendor.formatted_phone_number}
                   </p>
                 )}
-               
+                
                 {selectedVendor.website && (
-                  <p className="website">
+                  <p className="vp-website">
                     <strong>{t('vendors.details.website')}:</strong> <a href={selectedVendor.website} target="_blank" rel="noopener noreferrer">{selectedVendor.website}</a>
                   </p>
                 )}
-               
+                
                 {selectedVendor.rating && (
-                  <p className="rating-details">
+                  <p className="vp-rating-details">
                     <strong>{t('vendors.details.rating')}:</strong> {selectedVendor.rating} {t('vendors.details.outOf5')} ({selectedVendor.user_ratings_total} {t('vendors.details.reviews')})
                   </p>
                 )}
-               
+                
                 {selectedVendor.price_level && (
-                  <p className="price-details">
+                  <p className="vp-price-details">
                     <strong>{t('vendors.details.priceLevel')}:</strong> {'₪'.repeat(selectedVendor.price_level)}
                   </p>
                 )}
-               
+                
                 {selectedVendor.opening_hours && selectedVendor.opening_hours.weekday_text && (
-                  <div className="opening-hours">
+                  <div className="vp-opening-hours">
                     <strong>{t('vendors.details.openingHours')}:</strong>
                     <ul>
                       {selectedVendor.opening_hours.weekday_text.map((day, index) => (
@@ -1165,31 +1146,31 @@ const searchVendors = async (shouldAppend = false) => {
                   </div>
                 )}
               </div>
-             
+              
               {selectedVendor.reviews && selectedVendor.reviews.length > 0 && (
-                <div className="vendor-reviews">
+                <div className="vp-vendor-reviews">
                   <h3>{t('vendors.details.reviewsTitle')}</h3>
-                  <div className="reviews-list">
+                  <div className="vp-reviews-list">
                     {selectedVendor.reviews.slice(0, 3).map((review, index) => (
-                      <div key={index} className="review">
-                        <div className="review-header">
-                          <span className="reviewer">{review.author_name}</span>
-                          <span className="review-rating">
+                      <div key={index} className="vp-review">
+                        <div className="vp-review-header">
+                          <span className="vp-reviewer">{review.author_name}</span>
+                          <span className="vp-review-rating">
                             {'★'.repeat(review.rating)}
                             {'☆'.repeat(5 - review.rating)}
                           </span>
-                          <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
+                          <span className="vp-review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
                         </div>
-                        <p className="review-text">{review.text}</p>
+                        <p className="vp-review-text">{review.text}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-             
-              <div className="vendor-actions">
+              
+              <div className="vp-vendor-actions">
                 {!successMessage && (
-                  <button className="select-vendor-button" onClick={() => selectVendor(selectedVendor)}>
+                  <button className="vp-select-vendor-button" onClick={() => selectVendor(selectedVendor)}>
                     {t('vendors.selectButton')}
                   </button>
                 )}
@@ -1201,5 +1182,4 @@ const searchVendors = async (shouldAppend = false) => {
     </div>
   );
 };
-
 export default VendorsPage;

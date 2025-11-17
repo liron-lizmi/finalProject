@@ -1,4 +1,3 @@
-// client/src/pages/Events/VenuePage.js
 import React,  { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +12,6 @@ const VenuePage = ({ onSelectVenue }) => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // ========== State ==========
   const [venues, setVenues] = useState([]);
   const [allVenues, setAllVenues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,19 +47,15 @@ const VenuePage = ({ onSelectVenue }) => {
     distance: '50',
   });
 
-  // ========== Refs ==========
   const mapRef = useRef(null);
   const isMapInitialized = useRef(false);
   const isEffectRun = useRef(false);
   const mapInstance = useRef(null);
   const searchCache = useRef(new Map());
  
-  // ========== Constants ==========
   const eventId = location.state?.eventId;
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
   const isEnglish = i18n.language === 'en' || i18n.language === 'en-US';
-
-  // VenuePage.jsx - searchVenues
 
 const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters = false) => {
   setLoading(true);
@@ -216,7 +210,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
     currentMap.fitBounds(bounds);
   };
 
-  // ========== Event Handlers ==========
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
   };
@@ -295,7 +288,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
     }
   };
 
-  // ========== Photo Helper Functions ==========
   const getPhotoUrl = (photo, maxWidth = 300, maxHeight = 200) => {
     if (photo && photo.url) {
       return photo.url;
@@ -335,7 +327,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
     }).filter(Boolean);
   };
 
-  // ========== useEffects ==========
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.body.dir = isRTL ? 'rtl' : 'ltr';
@@ -394,41 +385,40 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
     }
   }, [allVenues, currentPage, venuesPerPage]);
 
-  // ========== Render ==========
   return (
-    <div className="venue-page">
-      <div className="venue-header">
+    <div className="vup-venue-page">
+      <div className="vup-venue-header">
         <h1>{t('events.features.venues.searchTitle')}</h1>
         <p>{t('events.features.venues.searchSubtitle')}</p>
       </div>
      
-      <div className="venue-search-container">
-        <form onSubmit={handleSearchSubmit} className="venue-search-form">
+      <div className="vup-venue-search-container">
+        <form onSubmit={handleSearchSubmit} className="vup-venue-search-form">
           <input
             type="text"
             placeholder={t('events.features.venues.searchPlaceholder')}
             value={search}
             onChange={handleSearchChange}
-            className="venue-search-input"
+            className="vup-venue-search-input"
           />
-          <button type="submit" className="venue-search-button">
+          <button type="submit" className="vup-venue-search-button">
             {t('events.features.venues.searchButton')}
           </button>
         </form>
       </div>
      
-      <div className="venue-content">
-        <div className="venue-filters">
+      <div className="vup-venue-content">
+        <div className="vup-venue-filters">
           <h3>{t('events.features.venues.filtersTitle')}</h3>
          
-          <div className="filter-group">
+          <div className="vup-filter-group">
             <label htmlFor="area">{t('events.features.venues.filters.areaLabel')}</label>
             <select
               id="area"
               name="area"
               value={filters.area}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vup-rtl-select' : 'vup-ltr-select'}
             >
               <option value="all">{t('events.features.venues.filters.allAreas')}</option>
               <option value="jerusalem">{t('events.features.venues.filters.jerusalem')}</option>
@@ -438,14 +428,14 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </select>
           </div>
          
-          <div className="filter-group">
+          <div className="vup-filter-group">
             <label htmlFor="venueType">{t('events.features.venues.filters.typeLabel')}</label>
             <select
               id="venueType"
               name="venueType"
               value={filters.venueType}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vup-rtl-select' : 'vup-ltr-select'}
             >
               <option value="all">{t('events.features.venues.filters.allTypes')}</option>
               <option value="restaurant">{t('events.features.venues.filters.restaurant')}</option>
@@ -457,14 +447,14 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </select>
           </div>
          
-          <div className="filter-group">
+          <div className="vup-filter-group">
             <label htmlFor="venueStyle">{t('events.features.venues.filters.styleLabel')}</label>
             <select
               id="venueStyle"
               name="venueStyle"
               value={filters.venueStyle}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vup-rtl-select' : 'vup-ltr-select'}
             >
               <option value="all">{t('events.features.venues.filters.allStyles')}</option>
               <option value="modern">{t('events.features.venues.filters.modern')}</option>
@@ -474,14 +464,14 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </select>
           </div>
          
-          <div className="filter-group">
+          <div className="vup-filter-group">
             <label htmlFor="capacity">{t('events.features.venues.filters.capacityLabel')}</label>
             <select
               id="capacity"
               name="capacity"
               value={filters.capacity}
               onChange={handleFilterChange}
-              className={isRTL ? 'rtl-select' : 'ltr-select'}
+              className={isRTL ? 'vup-rtl-select' : 'vup-ltr-select'}
             >
               <option value="">{t('events.features.venues.filters.selectCapacity')}</option>
               <option value="50">{t('events.features.venues.filters.upTo50')}</option>
@@ -493,9 +483,9 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </select>
           </div>
          
-          <div className="filter-group amenities-group">
+          <div className="vup-filter-group vup-amenities-group">
             <label>{t('events.features.venues.filters.amenitiesLabel')}</label>
-            <div className="checkbox-group">
+            <div className="vup-checkbox-group">
               <label>
                 <input
                   type="checkbox"
@@ -548,23 +538,23 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </div>
           </div>
          
-          <button className="filter-apply-button" onClick={applyFilters}>
+          <button className="vup-filter-apply-button" onClick={applyFilters}>
             {t('events.features.venues.filters.applyButton')}
           </button>
         </div>
        
-        <div className="venue-results-container">
-          <div className="venue-map" ref={mapRef}></div>
+        <div className="vup-venue-results-container">
+          <div className="vup-venue-map" ref={mapRef}></div>
          
-          <div className="venue-list">
-            <div className="venue-list-header">
+          <div className="vup-venue-list">
+            <div className="vup-venue-list-header">
               <h3>{t('events.features.venues.searchResults')}</h3>
             </div>
             {error && (
-              <div className="error-message">
+              <div className="vup-error-message">
                 {error}
                 <button 
-                  className="error-close-btn"
+                  className="vup-error-close-btn"
                   onClick={() => setError(null)}
                 >
                   ×
@@ -573,14 +563,14 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             )}
            
             {loading ? (
-              <div className="loading-indicator">
+              <div className="vup-loading-indicator">
                 <p>{t('events.features.venues.loading')}</p>
               </div>
             ) : venues.length === 0 ? (
-              <div className="no-results">{t('events.features.venues.noResults')}</div>
+              <div className="vup-no-results">{t('events.features.venues.noResults')}</div>
             ) : (
               <>
-                <div className="venues-grid">
+                <div className="vup-venues-grid">
                   {venues.map(venue => (
                     <VenueCardWithImage
                       key={venue.place_id}
@@ -596,9 +586,9 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                   ))}
                 </div>
                 {hasMoreResults && (
-                  <div className="load-more-container">
+                  <div className="vup-load-more-container">
                     <button 
-                      className="load-more-button"
+                      className="vup-load-more-button"
                       onClick={loadNextPage}
                       disabled={loadingPage}
                     >
@@ -616,24 +606,24 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
         </div>
        
         {selectedVenue && (
-          <div className="venue-details">
-            <div className="venue-details-content">
-              <div className="venue-details-header">
+          <div className="vup-venue-details">
+            <div className="vup-venue-details-content">
+              <div className="vup-venue-details-header">
                 <h2>{selectedVenue.name}</h2>
-                <button className="close-details" onClick={() => {
+                <button className="vup-close-details" onClick={() => {
                   setSelectedVenue(null);
                   setSelectedVenuePhotoIndex(null);
                 }}>×</button>
               </div>
              
               {successMessage && (
-                <div className="success-message">
+                <div className="vup-success-message">
                   {successMessage}
                 </div>
               )}
              
-              <div className="venue-photos">
-                <div className="main-photo">
+              <div className="vup-venue-photos">
+                <div className="vup-main-photo">
                   {selectedVenue.photos && selectedVenue.photos.length > 0 ? (
                     (() => {
                       const validPhotos = getValidPhotos(selectedVenue);
@@ -669,13 +659,13 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                 </div>
                 
                 {selectedVenue.photos && selectedVenue.photos.length > 0 && getValidPhotos(selectedVenue).length > 0 && (
-                  <div className="all-photos">
+                  <div className="vup-all-photos">
                     {getValidPhotos(selectedVenue).map(({ photo, url, index }) => (
                       <img
                         key={index}
                         src={url}
                         alt={`${selectedVenue.name} - ${index + 1}`}
-                        className={`thumbnail-photo ${selectedPhoto === index ? 'selected' : ''}`}
+                        className={`vup-thumbnail-photo ${selectedPhoto === index ? 'vup-selected' : ''}`}
                         onClick={() => setSelectedPhoto(index)}
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -686,8 +676,8 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                 )}
               </div>
                           
-              <div className="venue-info-detailed">
-                <p className="address">
+              <div className="vup-venue-info-detailed">
+                <p className="vup-address">
                   <strong>{t('events.features.venues.details.address')}:</strong> {
                     isRTL && selectedVenue.originalFormattedAddress ? 
                     selectedVenue.originalFormattedAddress : 
@@ -696,25 +686,25 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                 </p>
                
                 {selectedVenue.formatted_phone_number && (
-                  <p className="phone">
+                  <p className="vup-phone">
                     <strong>{t('events.features.venues.details.phone')}:</strong> {selectedVenue.formatted_phone_number}
                   </p>
                 )}
                
                 {selectedVenue.website && (
-                  <p className="website">
+                  <p className="vup-website">
                     <strong>{t('events.features.venues.details.website')}:</strong> <a href={selectedVenue.website} target="_blank" rel="noopener noreferrer">{selectedVenue.website}</a>
                   </p>
                 )}
                
                 {selectedVenue.rating && (
-                  <p className="rating-details">
+                  <p className="vup-rating-details">
                     <strong>{t('events.features.venues.details.rating')}:</strong> {selectedVenue.rating} {t('events.features.venues.details.outOf5')} ({selectedVenue.user_ratings_total} {t('events.features.venues.details.reviews')})
                   </p>
                 )}
                
                 {selectedVenue.opening_hours && selectedVenue.opening_hours.weekday_text && (
-                  <div className="opening-hours">
+                  <div className="vup-opening-hours">
                     <strong>{t('events.features.venues.details.openingHours')}:</strong>
                     <ul>
                       {selectedVenue.opening_hours.weekday_text.map((day, index) => (
@@ -726,29 +716,29 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
               </div>
              
               {selectedVenue.reviews && selectedVenue.reviews.length > 0 && (
-                <div className="venue-reviews">
+                <div className="vup-venue-reviews">
                   <h3>{t('events.features.venues.details.reviewsTitle')}</h3>
-                  <div className="reviews-list">
+                  <div className="vup-reviews-list">
                     {selectedVenue.reviews.slice(0, 3).map((review, index) => (
-                      <div key={index} className="review">
-                        <div className="review-header">
-                          <span className="reviewer">{review.author_name}</span>
-                          <span className="review-rating">
+                      <div key={index} className="vup-review">
+                        <div className="vup-review-header">
+                          <span className="vup-reviewer">{review.author_name}</span>
+                          <span className="vup-review-rating">
                             {'★'.repeat(review.rating)}
                             {'☆'.repeat(5 - review.rating)}
                           </span>
-                          <span className="review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
+                          <span className="vup-review-date">{new Date(review.time * 1000).toLocaleDateString()}</span>
                         </div>
-                        <p className="review-text">{review.text}</p>
+                        <p className="vup-review-text">{review.text}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
              
-              <div className="venue-actions">
+              <div className="vup-venue-actions">
                 {!successMessage && (
-                  <button className="select-venue-button" onClick={() => selectVenue(selectedVenue)}>
+                  <button className="vup-select-venue-button" onClick={() => selectVenue(selectedVenue)}>
                     {t('events.features.venues.selectButton')}
                   </button>
                 )}
@@ -824,20 +814,20 @@ const VenueCardWithImage = ({ venue, isSelected, onClick, t }) => {
   return (
     <div 
       ref={imageRef}
-      className={`venue-card ${isSelected ? 'selected' : ''}`}
+      className={`vup-venue-card ${isSelected ? 'vup-selected' : ''}`}
       onClick={onClick}
     >
-      <div className="venue-image">
+      <div className="vup-venue-image">
         {isVisible ? (
           <>
             {!imageLoaded && !imageError && (
-              <div className="image-loading">
+              <div className="vup-image-loading">
               </div>
             )}
             <img
               src={imageUrl}
               alt={venue.name}
-              className={imageLoaded ? 'loaded' : 'loading'}
+              className={imageLoaded ? 'vup-loaded' : 'vup-loading'}
               onLoad={() => {
                 setImageLoaded(true);
               }}
@@ -853,25 +843,25 @@ const VenueCardWithImage = ({ venue, isSelected, onClick, t }) => {
             
           </>
         ) : (
-          <div className="image-placeholder"></div>
+          <div className="vup-image-placeholder"></div>
         )}
       </div>
       
-      <div className="venue-info">
+      <div className="vup-venue-info">
         <h4>{venue.name}</h4>
-        <p className="venue-address">
+        <p className="vup-venue-address">
           {venue.formatted_address || venue.vicinity || t('events.features.venues.noAddress')}
         </p>
         
         {venue.rating && (
-          <div className="venue-rating">
-            <span className="stars">
+          <div className="vup-venue-rating">
+            <span className="vup-stars">
               {Array(Math.floor(venue.rating)).fill().map((_, i) => (
-                <span key={i} className="star">★</span>
+                <span key={i} className="vup-star">★</span>
               ))}
             </span>
-            <span className="rating-value">{venue.rating}</span>
-            <span className="review-count">({venue.user_ratings_total || 0})</span>
+            <span className="vup-rating-value">{venue.rating}</span>
+            <span className="vup-review-count">({venue.user_ratings_total || 0})</span>
           </div>
         )}
       </div>
