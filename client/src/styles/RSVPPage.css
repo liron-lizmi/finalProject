@@ -86,12 +86,12 @@
 
 .rsvp-description {
   color: #666;
-  margin-bottom: 150px;
+  margin-bottom: 25px;
   line-height: 1.5;
-  text-align: center; 
+  text-align: center;
   font-size: 16px;
-  padding: 15px; 
-  background: #f8f9fa; 
+  padding: 15px;
+  background: #f8f9fa;
   border-radius: 8px;
 }
 
@@ -118,7 +118,7 @@
 }
 
 .rsvp-step .rsvp-form {
-  margin-top: 150px;
+  margin-top: 0;
 }
 
 .rsvp-form-group label {
@@ -461,7 +461,7 @@
   
   .rsvp-description {
     font-size: 14px;
-    margin-bottom: 150px !important;
+    margin-bottom: 20px !important;
     padding: 10px;
     line-height: 1.4;
   }
@@ -585,7 +585,7 @@
   
   .rsvp-description {
     font-size: 15px;
-    margin-bottom: 150px;
+    margin-bottom: 22px;
     padding: 12px;
   }
   
