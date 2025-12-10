@@ -471,7 +471,9 @@ const RSVPPage = () => {
 
         {step === 3 && (
           <div className="rsvp-step rsvp-success">
-            <div className="rsvp-success-icon">🎉</div>
+            <div className="rsvp-success-icon">
+              {rsvpStatus === 'confirmed' ? '🎉' : ''}
+            </div>
             <h2>{t('guests.rsvp.thankYou')}</h2>
             <p className="rsvp-success-message">
               {rsvpStatus === 'confirmed' 
@@ -489,6 +491,16 @@ const RSVPPage = () => {
                 : t('guests.rsvp.declineSuccess', { name: guest?.firstName })
               }
             </p>
+            {rsvpStatus === 'confirmed' && (
+              <div className="rides-link-container">
+                <a 
+                  href={`/rides/${eventId}`}
+                  className="rides-link-button"
+                >
+                  {t('guests.rsvp.ridesLinkText')}
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>

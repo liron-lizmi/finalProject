@@ -1153,6 +1153,7 @@
       "notes": "הערות",
       "optional": "אופציונלי",
       "notesPlaceholder": "הערות נוספות מהמוזמן...",
+      "ridesLinkText": "לחץ כאן לתיאום טרמפים לאירוע 🚗",
       "filters": {
         "all": "כל הסטטוסים"
       },

@@ -422,6 +422,36 @@
   text-align: center;
 }
 
+.rides-link-container {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.rides-link-button {
+  display: inline-block;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.rides-link-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  text-decoration: none;
+  color: white;
+}
+
+.rides-link-button:active {
+  transform: translateY(0);
+}
+
 /* Responsive Design */
 
 @media (max-width: 480px) {

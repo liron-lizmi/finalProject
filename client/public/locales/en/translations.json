@@ -1153,6 +1153,7 @@
       "notes": "Notes",
       "optional": "Optional",
       "notesPlaceholder": "Additional notes from guest...",
+      "ridesLinkText": "Click here to coordinate rides for the event 🚗",
       "filters": {
         "all": "All Statuses"
       },
