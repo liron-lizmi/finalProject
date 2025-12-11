@@ -69,13 +69,14 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 5%;
-  background-color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%) !important;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e0e0e0;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
 }
 

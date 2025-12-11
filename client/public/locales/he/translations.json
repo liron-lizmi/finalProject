@@ -283,7 +283,7 @@
         "description": "ארגון שולחנות ומקומות ישיבה"
       },
       "tasks": {
-        "title": "ניהול משימות ולוח זמנים",
+        "title":" ניהול משימות ולוח זמנים",
         "description": "נהל את המשימות לאירוע שלך בצורה מסודרת ויעילה",
         "addTask": "הוסף משימה חדשה",
         "createTask": "צור משימה ראשונה",
@@ -294,6 +294,7 @@
         "noTasksMessage": "התחל ליצור משימות לאירוע שלך",
         "noFilteredTasks": "אין משימות התואמות לסינון הנוכחי",
         "calendar": {
+          "title": "יומן המשימות" ,
           "modeSelection": {
             "title": "בחר אופן ניהול יומן המשימות",
             "googleMode": "יומן גוגל",
@@ -366,11 +367,14 @@
         },
         "form": {
           "title": "כותרת המשימה",
+          "taskName": "שם המשימה",
           "titlePlaceholder": "הזן כותרת למשימה",
           "description": "תיאור",
           "descriptionPlaceholder": "תאר את המשימה בפירוט...",
           "dueDate": "תאריך יעד",
           "priority": "עדיפות",
+          "statusTable": "סטטוס (לחץ על הסטטוס לעדכון)",
+          "titleTable": "רשימת משימות",
           "category": "קטגוריה",
           "assignee": "אחראי",
           "assigneePlaceholder": "שם האחראי למשימה",

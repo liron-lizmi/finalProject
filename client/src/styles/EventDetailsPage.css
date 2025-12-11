@@ -88,9 +88,10 @@ html[dir="ltr"] .back-icon svg {
 }
 
 .page-header {
-  background-color: white;
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%) !important;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e0e0e0;
   width: 100%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   padding: 10px 0;
   position: sticky;
   top: 0;

@@ -283,7 +283,7 @@
         "description": "Organizing tables and seating"
       },
       "tasks": {
-        "title": "Task and Timeline Management",
+        "title": "Task Management & Calendar",
         "description": "Organize and manage events efficiently",
         "addTask": "Add New Task",
         "createTask": "Create First Task",
@@ -294,6 +294,7 @@
         "noTasksMessage": "Start creating tasks for your event",
         "noFilteredTasks": "No tasks match the current filter",
         "calendar": {
+          "title": "Task Calendar",
           "modeSelection": {
             "title": "Choose Task Calendar Management Mode",
             "googleMode": "Google Calendar",
@@ -366,11 +367,14 @@
         },
         "form": {
           "title": "Task Title",
+          "taskName": "Task Name",
           "titlePlaceholder": "Enter task title",
           "description": "Description",
           "descriptionPlaceholder": "Describe the task in detail...",
           "dueDate": "Due Date",
           "priority": "Priority",
+          "statusTable": "Status (click to update)",
+          "titleTable": "Task List",
           "category": "Category",
           "assignee": "Assignee",
           "assigneePlaceholder": "Name of task assignee",

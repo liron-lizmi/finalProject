@@ -1,4 +1,5 @@
 /* EventGuestsPage.css */
+
 .guests-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -16,72 +17,55 @@
   font-size: 16px;
 }
 
-.guests-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
-  margin-bottom: 30px;
+.guests-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
+  border: 1px solid #eaeaea;
 }
 
-.guests-stat-card {
-  padding: 15px;
-  border-radius: 8px;
+.guests-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
   text-align: center;
-  border: 1px solid #e9ecef;
 }
 
-.guests-stat-card.total {
-  background-color: #f8f9fa;
+.summary-value {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 1.1rem;
 }
 
-.guests-stat-card.confirmed {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
+.summary-value.large {
+  font-size: 1.8rem;
+  line-height: 1;
 }
 
-.guests-stat-card.declined {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
+.summary-value.success-text,
+.summary-value.overdue-text,
+.summary-value.pending-text {
+  color: #000000 !important;
 }
 
-.guests-stat-card.pending {
-  background-color: #fff3cd;
-  border-color: #ffeaa7;
+
+.summary-label {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 5px;
 }
 
-.guests-stat-number {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-}
-
-.guests-stat-card.confirmed .guests-stat-number {
-  color: #155724;
-}
-
-.guests-stat-card.declined .guests-stat-number {
-  color: #721c24;
-}
-
-.guests-stat-card.pending .guests-stat-number {
-  color: #856404;
-}
-
-.guests-stat-label {
-  font-size: 14px;
-  color: #666;
-}
-
-.guests-stat-card.confirmed .guests-stat-label {
-  color: #155724;
-}
-
-.guests-stat-card.declined .guests-stat-label {
-  color: #721c24;
-}
-
-.guests-stat-card.pending .guests-stat-label {
-  color: #856404;
+.vertical-divider {
+  width: 1px;
+  height: 40px;
+  background-color: #e5e7eb;
+  margin: 0 10px;
 }
 
 .guests-controls {
@@ -93,7 +77,7 @@
 }
 
 .guests-add-button {
-  background-color: #007bff;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 5px;
@@ -104,17 +88,17 @@
 }
 
 .guests-add-button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: #6a8060;
 }
 
 .guests-add-button:disabled {
-  background-color: #007bff !important;
+  background-color: #829c75 !important;
   cursor: not-allowed !important;
   opacity: 0.6;
 }
 
 .guests-add-button:disabled:hover {
-  background-color: #007bff !important;
+  background-color: #829c75 !important;
 }
 
 .guests-bulk-select-button {
@@ -195,7 +179,7 @@
 
 .guests-select-all-button,
 .guests-deselect-all-button {
-  background-color: #28a745;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 4px;
@@ -206,11 +190,11 @@
 }
 
 .guests-select-all-button:hover {
-  background-color: #1e7e34;
+  background-color: #6a8060;
 }
 
 .guests-deselect-all-button {
-  background-color: #6c757d;
+  background-color: #6c757d; /* נשאר אפור כברירת מחדל */
 }
 
 .guests-deselect-all-button:hover {
@@ -224,7 +208,7 @@
 }
 
 .guests-form {
-  background-color: #f8f9fa;
+  background-color: white;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
@@ -262,7 +246,7 @@
 }
 
 .guests-form-submit {
-  background-color: #28a745;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 5px;
@@ -273,7 +257,7 @@
 }
 
 .guests-form-submit:hover {
-  background-color: #1e7e34;
+  background-color: #6a8060;
 }
 
 .guests-form-cancel {
@@ -461,9 +445,9 @@
 }
 
 .guest-edit-button {
-  background-color: #17a2b8;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc; 
   border-radius: 4px;
   padding: 6px 8px;
   cursor: pointer;
@@ -477,14 +461,15 @@
 }
 
 .guest-edit-button:hover {
-  background-color: #138496;
-  transform: translateY(-1px);
+  background-color: transparent;
+  color: #333;
+  transform: translateY(0);
 }
 
 .guest-delete-button {
-  background-color: #dc3545;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc; 
   border-radius: 4px;
   padding: 6px 8px;
   cursor: pointer;
@@ -498,8 +483,9 @@
 }
 
 .guest-delete-button:hover {
-  background-color: #c82333;
-  transform: translateY(-1px);
+  background-color: transparent;
+  color: #721c24;
+  transform: translateY(0);
 }
 
 /* Duplicates Warning Styles */
@@ -641,9 +627,9 @@
 
 /* Gift Button Styles */
 .guest-gifts-button {
-  background-color: #ff6b35;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
   border-radius: 4px;
   padding: 6px 8px;
   cursor: pointer;
@@ -654,26 +640,28 @@
   justify-content: center;
   min-width: 32px;
   height: 32px;
+  position: relative;
 }
 
 .guest-gifts-button:hover:not(.disabled) {
-  background-color: #e55a2b;
-  transform: translateY(-1px);
+  background-color: transparent;
+  transform: translateY(0);
 }
 
 .guest-gifts-button.disabled {
-  background-color: #6c757d;
+  background-color: transparent;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .guest-gifts-button.disabled:hover {
-  background-color: #6c757d;
+  background-color: transparent;
   transform: none;
 }
 
+
 .guests-rsvp-link-section {
-  background: #f8f9fa;
+  background: white;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 20px;
@@ -688,11 +676,21 @@
   font-weight: 600;
 }
 
+.guests-rsvp-content {
+  display: flex;
+  align-items: center; 
+  gap: 20px;
+  flex-wrap: wrap; 
+}
+
 .guests-rsvp-link-section p {
-  margin: 0 0 15px 0;
+  margin: 0; 
+  padding: 0; 
   color: #666;
   font-size: 14px;
   line-height: 1.5;
+  flex-grow: 1; 
+  min-width: 150px; 
 }
 
 [dir="rtl"] .guests-rsvp-link-section {
@@ -702,7 +700,6 @@
 [dir="rtl"] .rsvp-copy-button {
   margin-right: 0;
   margin-left: 0;
-  float: left;
 }
 
 [dir="ltr"] .guests-rsvp-link-section {
@@ -712,11 +709,10 @@
 [dir="ltr"] .rsvp-copy-button {
   margin-left: 0;
   margin-right: 0;
-  float: right;
 }
 
 .rsvp-copy-button {
-  background-color: #28a745;
+  background-color: #d4b99e;
   color: white;
   border: none;
   border-radius: 5px;
@@ -730,7 +726,7 @@
 }
 
 .rsvp-copy-button:hover {
-  background-color: #218838;
+  background-color: #8c7664;
 }
 
 [dir="rtl"] .rsvp-copy-button {
@@ -743,9 +739,9 @@
 
 /* RSVP Edit Button */
 .guest-rsvp-edit-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc; 
   border-radius: 4px;
   padding: 6px 8px;
   cursor: pointer;
@@ -759,8 +755,9 @@
 }
 
 .guest-rsvp-edit-button:hover {
-  background-color: #0056b3;
-  transform: translateY(-1px);
+  background-color: transparent;
+  color: #333;
+  transform: translateY(0);
 }
 
 /* Guest Info Display in Modal */
@@ -950,7 +947,7 @@
 }
 
 .modal-submit-button {
-  background-color: #28a745;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 5px;
@@ -962,7 +959,7 @@
 }
 
 .modal-submit-button:hover {
-  background-color: #1e7e34;
+  background-color: #6a8060;
 }
 
 .modal-cancel-button {
@@ -1051,9 +1048,40 @@
 
 /* Responsive Design*/
 @media (max-width: 480px) {
-
+  
   .guests-container {
     padding: 10px;
+  }
+
+  .guests-stats-bar {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .guests-stat-item {
+    width: 100%;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .guests-stat-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .vertical-divider {
+    display: none;
+  }
+
+  .guests-rsvp-content {
+    flex-direction: column;
+    align-items: center; 
+    gap: 10px;
+  }
+
+  .guests-rsvp-link-section p {
+    text-align: center;
   }
 
   .guests-rsvp-link-section {
@@ -1202,15 +1230,6 @@
     gap: 5px;
   }
 
-  .guest-edit-button,
-  .guest-delete-button,
-  .guest-rsvp-edit-button,
-  .guest-gifts-button {
-    min-width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
   .guest-selection {
     width: 100%;
     justify-self: center;
@@ -1317,6 +1336,39 @@
 
   .guests-container {
     padding: 10px;
+  }
+  
+  .guests-stats-bar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 15px;
+  }
+  
+  .guests-stat-item {
+    width: 45%;
+    padding: 10px 0;
+  }
+  
+  .vertical-divider {
+    display: none; 
+  }
+  
+  .guests-stat-item:nth-child(even) {
+    border-left: 1px solid #e5e7eb;
+  }
+  
+  .guests-stat-item:nth-child(odd) {
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .guests-rsvp-content {
+    flex-direction: column;
+    align-items: center; 
+    gap: 10px;
+  }
+
+  .guests-rsvp-link-section p {
+    text-align: center;
   }
 
   .guests-rsvp-link-section {
@@ -1490,6 +1542,16 @@
   .guests-container {
     padding: 15px;
   }
+  
+  .guests-stats-bar {
+    justify-content: space-between;
+    padding: 20px;
+  }
+  
+  .guests-stat-item {
+    flex: none;
+    width: 20%;
+  }
 
   .guests-stats {
     grid-template-columns: repeat(4, 1fr);
@@ -1543,7 +1605,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
   }
 
   .guest-phone {

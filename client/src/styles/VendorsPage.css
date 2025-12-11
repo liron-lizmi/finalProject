@@ -758,7 +758,6 @@ html[dir="ltr"] .change-vendor-button {
   bottom: 0;
   border-radius: 20px;
   padding: 2px;
-  background: linear-gradient(135deg, #8b9d83, #d4b99e, #6b5444);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   z-index: -1;
@@ -840,19 +839,16 @@ html[dir="ltr"] .change-vendor-button {
   cursor: pointer !important;
   font-size: 16px !important;
   font-weight: 500 !important;
-  transition: all 0.3s ease !important;
   background-color: #d4b99e !important;
   border: 1px solid #d4b99e !important;
   color: #fff !important;
-  letter-spacing: 0.5px !important;
-  /* REMOVED width and max-width */
+  width: 100% !important; 
+  max-width: 350px !important; 
 }
 
 .change-vendor-button:hover,
 .delete-vendor-button:hover {
-  transform: translateY(-3px) !important;
   box-shadow: 0 5px 15px rgba(164, 139, 118, 0.15) !important;
-  background-color: transparent !important;
   color: #a68b76 !important;
 }
 

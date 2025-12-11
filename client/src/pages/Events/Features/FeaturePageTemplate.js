@@ -26,7 +26,6 @@ const FeaturePageTemplate = ({
     document.body.dir = isRTL ? 'rtl' : 'ltr';
     document.documentElement.lang = isRTL ? 'he' : 'en';
 
-    // טוען פרטי אירוע ברקע ללא הצגת מצב טעינה
     const fetchEventDetails = async () => {
       try {
         const token = localStorage.getItem('token');

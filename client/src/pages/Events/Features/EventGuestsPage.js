@@ -800,7 +800,7 @@ const EventGuestsPage = () => {
     return (
       <FeaturePageTemplate
         title={t('guests.title')}
-        icon="👥"
+        icon="📋"
         description={t('guests.description')}
       >
         <div className="guests-empty-message">
@@ -813,7 +813,7 @@ const EventGuestsPage = () => {
   return (
     <FeaturePageTemplate
       title={t('guests.title')}
-      icon="👥"
+      icon="📋"
       description={t('guests.description')}
     >
       <div className="guests-container">
@@ -826,9 +826,9 @@ const EventGuestsPage = () => {
         {/* RSVP Link Section */}
         {canEdit && (
         <div className="guests-rsvp-link-section">
-          <h3>📨 {t('guests.rsvp.shareLink')}</h3>
-          <p>{t('guests.rsvp.shareLinkDescription')}</p>
-          <div className="rsvp-link-container">
+          <h3>🔗 {t('guests.rsvp.shareLink')}</h3>
+          <div className="guests-rsvp-content">
+            <p>{t('guests.rsvp.shareLinkDescription')}</p>
             <button
               className="rsvp-copy-button"
               onClick={copyRSVPLink}
@@ -888,22 +888,31 @@ const EventGuestsPage = () => {
           </div>
         )}
 
-        <div className="guests-stats">
-          <div className="guests-stat-card total">
-            <div className="guests-stat-number">{stats.total}</div>
-            <div className="guests-stat-label">{t('guests.stats.total')}</div>
+        <div className="guests-stats-bar">
+          <div className="guests-stat-item">
+            <div className="summary-value large">{stats.total}</div>
+            <div className="summary-label">{t('guests.stats.total')}</div>
           </div>
-          <div className="guests-stat-card confirmed">
-            <div className="guests-stat-number">{stats.confirmed}</div>
-            <div className="guests-stat-label">{t('guests.stats.confirmed')}</div>
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large success-text">{stats.confirmed}</div>
+            <div className="summary-label">{t('guests.stats.confirmed')}</div>
           </div>
-          <div className="guests-stat-card declined">
-            <div className="guests-stat-number">{stats.declined}</div>
-            <div className="guests-stat-label">{t('guests.stats.declined')}</div>
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large overdue-text">{stats.declined}</div>
+            <div className="summary-label">{t('guests.stats.declined')}</div>
           </div>
-          <div className="guests-stat-card pending">
-            <div className="guests-stat-number">{stats.pending}</div>
-            <div className="guests-stat-label">{t('guests.stats.pending')}</div>
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large pending-text">{stats.pending}</div>
+            <div className="summary-label">{t('guests.stats.pending')}</div>
           </div>
         </div>
 
@@ -1062,6 +1071,9 @@ const EventGuestsPage = () => {
                   <option value="friends">{t('guests.groups.friends')}</option>
                   <option value="work">{t('guests.groups.work')}</option>
                   <option value="other">{t('guests.groups.other')}</option>
+                  {getUniqueGroups().filter(group => !['family', 'friends', 'work', 'other'].includes(group)).map(group => (
+                    <option key={group} value={group}>{group}</option>
+                  ))}
                 </select>
                 
                 {guestForm.group === 'other' && (

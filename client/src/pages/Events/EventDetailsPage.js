@@ -224,7 +224,7 @@ const EventDetailsPage = () => {
             </div>
 
             <div className="feature-card" onClick={() => handleFeatureClick('guests')}>
-              <div className="feature-emoji">👥</div>
+              <div className="feature-emoji">📋</div>
               <div className="feature-content">
                 <h3>{t('events.features.guests.title')}</h3>
                 <p>

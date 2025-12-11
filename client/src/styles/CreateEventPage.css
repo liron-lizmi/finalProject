@@ -634,13 +634,13 @@ html, body {
 }
 
 .rtl.create-event-actions {
-  justify-content: flex-end;
-  flex-direction: row-reverse;
+  justify-content: flex-end; 
+  flex-direction: row; 
 }
 
 .ltr.create-event-actions {
-  justify-content: flex-start ;
-  flex-direction: row-reverse;
+  justify-content: flex-start;
+  flex-direction: row; 
 }
 
 .create-event-actions .submit-button {

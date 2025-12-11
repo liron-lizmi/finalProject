@@ -579,19 +579,19 @@ const CreateEventPage = () => {
           
           <div className={`create-event-actions ${isRTL ? 'rtl' : 'ltr'}`}>
             <button 
+              type="submit" 
+              className="submit-button"
+              disabled={loading}
+            >
+              {loading ? t('events.creating') : t('events.createEventButton')}
+            </button>
+            <button 
               type="button" 
               className="cancel-button" 
               onClick={handleCancel}
               disabled={loading}
             >
               {t('general.cancel')}
-            </button>
-            <button 
-              type="submit" 
-              className="submit-button"
-              disabled={loading}
-            >
-              {loading ? t('events.creating') : t('events.createEventButton')}
             </button>
           </div>
         </form>

@@ -233,7 +233,7 @@
 }
 
 .save-budget-button,
-.edit-budget-button{
+.edit-budget-button {
   padding: 12px 32px;
   border: none;
   border-radius: 8px;
@@ -259,12 +259,12 @@
 }
 
 .edit-budget-button {
-  background-color: #28a745;
+  background: #829c75;
   color: white;
 }
 
 .edit-budget-button:hover {
-  background-color: #28a745;
+  background: #829c75;
 }
 
 /* Budget Display */
@@ -497,7 +497,7 @@
 }
 
 .progress-fill.safe {
-  background: #28a745;
+  background: #829c75;
 }
 
 .progress-fill.warning {
@@ -590,7 +590,7 @@
 
 .category-remaining {
   font-weight: 600;
-  color: #28a745;
+  color: #829c75;
   min-width: 100px;
   text-align: end;
 }
@@ -684,7 +684,7 @@
 
 .add-expense-button {
   padding: 12px 24px;
-  background-color: #28a745;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 8px;
@@ -694,7 +694,7 @@
 }
 
 .add-expense-button:hover {
-  background-color: #218838;
+  background-color: #829c75;
 }
 
 .expense-controls {
@@ -810,17 +810,9 @@
 }
 
 .cancel-button {
-  order: 1;
-}
-
-.save-button {
-  order: 2;
-}
-
-.cancel-button {
   padding: 12px 32px !important;
   border: none;
-  border-radius: 8px;
+  border-radius: 8px !important;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -829,6 +821,7 @@
   min-width: 150px !important;
   max-width: 150px !important;
   width: 150px !important;
+  order: 2;
 }
 
 .cancel-button:hover {
@@ -847,6 +840,7 @@
   transition: all 0.3s ease;
   min-width: 150px;
   border: none;
+  order: 2;
 }
 
 .save-button:hover {
@@ -888,7 +882,7 @@
 }
 
 .expense-item.paid {
-  border-right: 4px solid #28a745;
+  border-right: 4px solid #829c75;
 }
 
 .expense-item.unpaid {
@@ -1515,7 +1509,7 @@ button:disabled {
 
 .export-button {
   padding: 8px 16px;
-  background: #28a745;
+  background: #829c75;
   color: white;
   border: none;
   border-radius: 6px;
@@ -1525,7 +1519,7 @@ button:disabled {
 }
 
 .export-button:hover {
-  background: #218838;
+  background: #829c75;
 }
 
 .payment-toggle:disabled,
@@ -1541,13 +1535,13 @@ button:disabled {
 .add-expense-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  background-color: #28a745 !important;
+  background-color: #829c75 !important;
   color: white !important;
 }
 
 .edit-budget-button:disabled:hover,
 .add-expense-button:disabled:hover {
-  background-color: #28a745 !important;
+  background-color: #829c75 !important;
   color: white !important;
   transform: none;
 }
@@ -1574,7 +1568,7 @@ button:disabled {
 
 .add-income-button {
   padding: 12px 24px;
-  background-color: #28a745;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 8px;
@@ -1584,13 +1578,13 @@ button:disabled {
 }
 
 .add-income-button:hover {
-  background-color: #218838;
+  background-color: #829c75;
 }
 
 .add-income-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  background-color: #28a745 !important;
+  background-color: #829c75 !important;
 }
 
 .income-controls {
@@ -1673,7 +1667,7 @@ button:disabled {
 }
 
 .income-item.manual {
-  border-right: 4px solid #28a745;
+  border-right: 4px solid #829c75;
 }
 
 .income-item.other {
@@ -1710,7 +1704,7 @@ button:disabled {
 
 .income-item.manual .source-badge {
   background: #d4edda;
-  color: #155724;
+  color: #829c75;
 }
 
 .income-details {
@@ -1738,7 +1732,7 @@ button:disabled {
 .income-amount {
   font-size: 18px;
   font-weight: 600;
-  color: #28a745;
+  color: #829c75;
   min-width: 120px;
   text-align: center;
 }
@@ -1749,7 +1743,7 @@ button:disabled {
 }
 
 .add-income-button:disabled:hover {
-  background-color: #28a745 !important;
+  background-color: #829c75 !important;
   transform: none;
 }
 
