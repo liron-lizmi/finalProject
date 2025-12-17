@@ -63,12 +63,6 @@ const GuestSchema = new mongoose.Schema({
     min: 0,
     max: 20
   },
-  attendingCount: {
-    type: Number,
-    default: 1,
-    min: 0,
-    max: 20
-  },
   
   maleCount: {
     type: Number,
@@ -211,7 +205,7 @@ GuestSchema.pre('save', function(next) {
     }
   }
 
-  if (this.rideInfo) {
+  if (this.rideInfo && this.isModified('rideInfo')) {
     if (this.rideInfo.status !== 'offering') {
       this.rideInfo.availableSeats = undefined;
     }
@@ -220,9 +214,7 @@ GuestSchema.pre('save', function(next) {
       this.rideInfo.requiredSeats = undefined;
     }
 
-    if (this.rideInfo.lastUpdated) {
-      this.rideInfo.lastUpdated = Date.now();
-    }
+    this.rideInfo.lastUpdated = Date.now();
   }
   
   next();

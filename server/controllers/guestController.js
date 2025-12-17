@@ -487,7 +487,7 @@ const updateGuestRSVP = async (req, res) => {
         };
       }
     } else if (rsvpStatus === 'confirmed') {
-      if (currentEvent.isSeparatedSeating) {
+       if (event.isSeparatedSeating) {
         if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
           const changedGenders = [];
           if (oldMaleCount !== newMaleCount) {
