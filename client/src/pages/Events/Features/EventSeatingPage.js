@@ -525,7 +525,7 @@ const EventSeatingPage = () => {
   const generateAISeating = useCallback(async (aiPreferences) => {
     try {
       setLoading(true);
-     
+    
       const requestBody = isSeparatedSeating ? {
         maleTables,
         femaleTables,
@@ -548,7 +548,7 @@ const EventSeatingPage = () => {
         allTables: aiPreferences.allTables || tables,
         isSeparatedSeating: false
       };
-     
+    
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {
         method: 'POST',
         body: JSON.stringify(requestBody)
@@ -558,24 +558,24 @@ const EventSeatingPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-       
+      
         if (isSeparatedSeating) {
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
-         
-          let finalMaleTables = data.maleTables || maleTables;
-          let finalFemaleTables = data.femaleTables || femaleTables;
-         
+        
+          let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleTables;
+          let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleTables;
+        
           if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
             finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
           }
           if (data.femaleArrangement && Object.keys(data.femaleArrangement).length > 0) {
             finalFemaleTables = updateTableNamesWithGroups(finalFemaleTables, data.femaleArrangement);
           }
-         
+        
           setMaleTables(finalMaleTables);
           setFemaleTables(finalFemaleTables);
-         
+        
           const layoutData = {
             maleTables: finalMaleTables,
             femaleTables: finalFemaleTables,
@@ -588,19 +588,19 @@ const EventSeatingPage = () => {
               canvasOffset
             }
           };
-         
+        
           autoSave(layoutData);
         } else {
           setSeatingArrangement(data.arrangement);
-         
-          let finalTables = data.tables || tables;
-         
+        
+          let finalTables = data.tables && data.tables.length > 0 ? data.tables : tables;
+        
           if (data.arrangement && Object.keys(data.arrangement).length > 0) {
             finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
           }
-         
+        
           setTables(finalTables);
-         
+        
           const layoutData = {
             tables: finalTables,
             arrangement: data.arrangement,
@@ -611,16 +611,16 @@ const EventSeatingPage = () => {
               canvasOffset
             }
           };
-         
+        
           autoSave(layoutData);
         }
-       
+      
         setError('');
         setIsAIModalOpen(false);
-       
+      
         const newFingerprint = createGuestFingerprint(confirmedGuests);
         setLastSyncData(newFingerprint);
-       
+      
         return isSeparatedSeating ? {
           maleArrangement: data.maleArrangement,
           femaleArrangement: data.femaleArrangement,
@@ -642,6 +642,39 @@ const EventSeatingPage = () => {
       setLoading(false);
     }
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, preferences, confirmedGuests, seatingArrangement, maleArrangement, femaleArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint, isSeparatedSeating]);
+
+  const fetchTableSuggestion = useCallback(async (options) => {
+    try {
+      const requestBody = {
+        allowGroupMixing: options.allowGroupMixing,
+        groupMixingRules: options.groupMixingRules,
+        groupPolicies: options.groupPolicies,
+        preferredTableSize: options.preferredTableSize || 12,
+        isSeparatedSeating,
+        existingTables: tables,
+        existingMaleTables: maleTables,
+        existingFemaleTables: femaleTables,
+        existingArrangement: seatingArrangement,
+        existingMaleArrangement: maleArrangement,
+        existingFemaleArrangement: femaleArrangement,
+        preserveExisting: options.preserveExisting
+      };
+
+      const response = await makeApiRequest(`/api/events/${eventId}/seating/suggest-tables`, {
+        method: 'POST',
+        body: JSON.stringify(requestBody)
+      });
+
+      if (response && response.ok) {
+        const data = await response.json();
+        return data;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error fetching table suggestion:', err);
+      return null;
+    }
+  }, [eventId, makeApiRequest, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating]);
 
   const calculateTableSize = useCallback((type, capacity) => {
     const baseSize = 120;
@@ -3087,6 +3120,8 @@ const EventSeatingPage = () => {
           isSeparatedSeating={isSeparatedSeating}
           onClose={() => setIsAIModalOpen(false)}
           onGenerate={generateAISeating}
+          onFetchTableSuggestion={fetchTableSuggestion}
+          eventId={eventId}
           onAddTables={handleAddTablesFromAI}
           getNextTableNumber={getNextTableNumber}
         />

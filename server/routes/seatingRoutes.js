@@ -15,36 +15,30 @@ const {
   getSyncStatus,
   proposeSyncOptions,
   applySyncOption,
-  moveAffectedGuestsToUnassigned
+  moveAffectedGuestsToUnassigned,
+  suggestTables
 } = require('../controllers/seatingController');
 const auth = require('../middleware/auth');
 const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 
-// All routes require authentication
 router.use(auth);
 
-// Main seating routes
 router.get('/', checkViewPermission, getSeatingArrangement); 
 router.post('/', checkEditPermission, saveSeatingArrangement); 
 router.delete('/', checkEditPermission, deleteSeatingArrangement); 
 
-// AI seating generation
 router.post('/ai-generate', checkEditPermission, generateAISeating); 
+router.post('/suggest-tables', checkViewPermission, suggestTables);
 
-// Export functionality
 router.post('/export', checkViewPermission, exportSeatingChart); 
 
-// Statistics and validation
 router.get('/statistics', checkViewPermission, getSeatingStatistics); 
 router.post('/validate', checkViewPermission, validateSeatingArrangement); 
 
-// Guest suggestions
 router.get('/suggestions', checkViewPermission, getSeatingSubjestions); 
 
-// Clone seating arrangement
 router.post('/clone', checkEditPermission, cloneSeatingArrangement); 
 
-// Sync functionality - new routes
 router.post('/sync/process', checkEditPermission, processSeatingSync);
 router.post('/sync/propose-options', checkViewPermission, proposeSyncOptions);
 router.post('/sync/apply-option', checkEditPermission, applySyncOption);
