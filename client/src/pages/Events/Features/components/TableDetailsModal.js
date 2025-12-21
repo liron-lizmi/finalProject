@@ -379,7 +379,7 @@ const TableDetailsModal = ({
                   {t('seating.table.capacity')}
                   {currentOccupancy > 0 && (
                     <span className="capacity-hint">
-                      ({t('seating.table.minCapacity')}: {minAllowedCapacity})
+                      &nbsp;({t('seating.table.minCapacity')}: {minAllowedCapacity})
                     </span>
                   )}
                 </label>
@@ -456,7 +456,7 @@ const TableDetailsModal = ({
                   className="add-guests-button"
                   onClick={() => setShowAddGuests(!showAddGuests)}
                 >
-                  {showAddGuests ? `✖️ ${t('seating.table.cancelAddGuests')}` : `➕ ${t('seating.table.addGuests')}`}
+                  {showAddGuests ? `X ${t('seating.table.cancelAddGuests')}` : `+ ${t('seating.table.addGuests')}`}
                 </button>
               )}
             </div>
@@ -556,22 +556,17 @@ const TableDetailsModal = ({
                       <div className="guest-info">
                         <div className="guest-name">
                           {guest.firstName} {guest.lastName}
+                          {actualCount > 1 && (
+                            <span className="attending-count">
+                              +{actualCount - 1}
+                            </span>
+                          )}
                         </div>
                         <div className="guest-details">
                           <span className="guest-group">
                             {getGroupDisplayName(guest)}
                           </span>
-                          {actualCount > 1 && (
-                            <span className="attending-count">
-                              +{actualCount - 1} ({actualCount} {t('seating.guestsList.people')})
-                            </span>
-                          )}
                         </div>
-                        {guest.guestNotes && (
-                          <div className="guest-notes">
-                            💬 {guest.guestNotes}
-                          </div>
-                        )}
                       </div>
                       <button
                         className="remove-guest-button"
@@ -583,6 +578,7 @@ const TableDetailsModal = ({
                       </button>
                     </div>
                   );
+                    
                 })}
               </div>
             ) : (
@@ -591,60 +587,22 @@ const TableDetailsModal = ({
               </div>
             )}
           </div>
-
-          <div className="table-statistics-section">
-            <h4>{t('seating.table.statistics')}</h4>
-            <div className="table-stats-grid">
-              <div className="stat-item">
-                <span className="stat-label">{t('seating.table.utilization')}</span>
-                <span className="stat-value">
-                  {((currentOccupancy / table.capacity) * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">{t('seating.table.availableSeats')}</span>
-                <span className="stat-value">
-                  {Math.max(0, table.capacity - currentOccupancy)}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">{t('seating.table.efficiency')}</span>
-                <span className="stat-value">
-                  {currentOccupancy === 0 ? '0%' : 
-                   isOvercapacity ? t('seating.table.overbooked') :
-                   currentOccupancy === table.capacity ? t('seating.table.full') :
-                   t('seating.table.partiallyFilled')}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="modal-footer">
-          <div className="footer-left">
-            <button
-              className="delete-button"
-              onClick={handleDelete}
-              disabled={!canEdit}
-            >
-              🗑️ {t('seating.table.deleteTable')}
-            </button>
-          </div>
-          <div className="footer-right">
-            <button
-              className="cancel-button"
-              onClick={onClose}
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              className="save-button"
-              onClick={handleSave}
-              disabled={!canEdit}
-            >
-              {t('common.save')}
-            </button>
-          </div>
+          <button
+            className="save-button"
+            onClick={handleSave}
+            disabled={!canEdit}
+          >
+            {t('common.save')}
+          </button>
+          <button
+            className="cancel-button"
+            onClick={onClose}
+          >
+            {t('common.cancel')}
+          </button>
         </div>
       </div>
     </div>

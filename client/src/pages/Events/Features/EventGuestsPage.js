@@ -1,3 +1,4 @@
+
 // client/src/pages/Events/Features/EventGuestsPage.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -194,15 +195,12 @@ const EventGuestsPage = () => {
   const getUniqueGroups = () => {
     const groups = new Set();
     guests.forEach(guest => {
-      if (guest.customGroup) {
-        groups.add(guest.customGroup);
-      } else if (['family', 'friends', 'work'].includes(guest.group)) {
-        groups.add(guest.group);
-      } else {
-        groups.add(guest.group);
+      const groupName = guest.customGroup || guest.group;
+      if (groupName) {
+        groups.add(groupName);
       }
     });
-    return Array.from(groups);
+    return Array.from(groups).sort((a, b) => a.localeCompare(b));
   };
 
   const handleGuestSelection = (guestId, isSelected) => {
@@ -970,12 +968,12 @@ const EventGuestsPage = () => {
             onChange={(e) => setSelectedGroup(e.target.value)}
           >
             <option value="all">{t('guests.groups.all')}</option>
-            <option value="family">{t('guests.groups.family')}</option>
-            <option value="friends">{t('guests.groups.friends')}</option>
-            <option value="work">{t('guests.groups.work')}</option>
-            <option value="other">{t('guests.groups.other')}</option>
-            {getUniqueGroups().filter(group => !['family', 'friends', 'work', 'other'].includes(group)).map(group => (
-              <option key={group} value={group}>{group}</option>
+            {getUniqueGroups().map(group => (
+              <option key={group} value={group}>
+                {['family', 'friends', 'work', 'other'].includes(group) 
+                  ? t(`guests.groups.${group}`) 
+                  : group}
+              </option>
             ))}
           </select>
 

@@ -80,15 +80,12 @@ const GuestsList = ({
   const groups = useMemo(() => {
     const groupSet = new Set();
     guests.forEach(guest => {
-      if (guest.customGroup) {
-        groupSet.add(guest.customGroup);
-      } else if (['family', 'friends', 'work'].includes(guest.group)) {
-        groupSet.add(guest.group);
-      } else {
-        groupSet.add(guest.group);
+      const g = guest.customGroup || guest.group;
+      if (g && g !== 'all') {
+        groupSet.add(g);
       }
     });
-    return Array.from(groupSet);
+    return Array.from(groupSet).sort(); 
   }, [guests]);
 
   const seatedGuestIds = useMemo(() => {
@@ -482,40 +479,14 @@ const GuestsList = ({
             className="group-select"
           >
             <option value="all">{t('guests.groups.all')}</option>
-            <option value="family">{t('guests.groups.family')}</option>
-            <option value="friends">{t('guests.groups.friends')}</option>
-            <option value="work">{t('guests.groups.work')}</option>
-            <option value="other">{t('guests.groups.other')}</option>
-            {groups.filter(group => !['family', 'friends', 'work', 'other'].includes(group)).map(group => (
-              <option key={group} value={group}>{group}</option>
+            {groups.map(group => (
+              <option key={group} value={group}>
+                {['family', 'friends', 'work', 'other'].includes(group) 
+                  ? t(`guests.groups.${group}`) 
+                  : group}
+              </option>
             ))}
           </select>
-        </div>
-
-        <div className="status-filters">
-          <label className="filter-checkbox">
-            <input
-              type="checkbox"
-              checked={showSeatedOnly}
-              onChange={(e) => {
-                setShowSeatedOnly(e.target.checked);
-                if (e.target.checked) setShowUnseatedOnly(false);
-              }}
-            />
-            <span className="filter-text">{t('seating.guestsList.filters.seatedOnly')}</span>
-          </label>
-          
-          <label className="filter-checkbox">
-            <input
-              type="checkbox"
-              checked={showUnseatedOnly}
-              onChange={(e) => {
-                setShowUnseatedOnly(e.target.checked);
-                if (e.target.checked) setShowSeatedOnly(false);
-              }}
-            />
-            <span className="filter-text">{t('seating.guestsList.filters.unseatedOnly')}</span>
-          </label>
         </div>
       </div>
 
@@ -523,7 +494,7 @@ const GuestsList = ({
         {(!showSeatedOnly && groupedGuests.unseated.length > 0) && (
           <div className="guests-section unseated-section">
             <h4 className="section-title">
-              🔄 {t('seating.guestsList.unassigned')} ({groupedGuests.unseated.length})
+              ❌ {t('seating.guestsList.unassigned')} ({groupedGuests.unseated.length})
             </h4>
             <div className="guests-list">
               {groupedGuests.unseated.map(guest => {
@@ -541,29 +512,24 @@ const GuestsList = ({
                     onDragEnd={handleDragEnd}
                   >
                     <div className="guest-info">
-                      <div className="guest-name">
-                        {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
-                        {guestCount > 1 && (
-                          <span className="attending-count">
-                            +{guestCount - 1}
-                          </span>
-                        )}
-                        {syncIndicator && (
-                          <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
-                            {syncIndicator.icon}
-                          </span>
-                        )}
-                      </div>
-                      <div className="guest-details">
+                      <div className="guest-name-row">
+                        <div className="guest-name">
+                          {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
+                          {guestCount > 1 && (
+                            <span className="attending-count">
+                              +{guestCount - 1}
+                            </span>
+                          )}
+                          {syncIndicator && (
+                            <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
+                              {syncIndicator.icon}
+                            </span>
+                          )}
+                        </div>
                         <span className="guest-group">
                           {getGroupDisplayName(guest)}
                         </span>
                       </div>
-                      {guest.guestNotes && (
-                        <div className="guest-notes">
-                          💬 {guest.guestNotes}
-                        </div>
-                      )}
                     </div>
                     <div className="drag-handle">
                       ⋮⋮
@@ -597,32 +563,28 @@ const GuestsList = ({
                     onDragEnd={handleDragEnd}
                   >
                     <div className="guest-info">
-                      <div className="guest-name">
-                        {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
-                        {guestCount > 1 && (
-                          <span className="attending-count">
-                            +{guestCount - 1}
-                          </span>
-                        )}
-                        {syncIndicator && (
-                          <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
-                            {syncIndicator.icon}
-                          </span>
-                        )}
-                      </div>
-                      <div className="guest-details">
+                      <div className="guest-name-row">
+                        <div className="guest-name">
+                          {getGenderIcon(guest)}{guest.firstName} {guest.lastName}
+                          {guestCount > 1 && (
+                            <span className="attending-count">
+                              +{guestCount - 1}
+                            </span>
+                          )}
+                          {syncIndicator && (
+                            <span className="sync-indicator" title={t(`seating.sync.actions.${syncAction}`)}>
+                              {syncIndicator.icon}
+                            </span>
+                          )}
+                        </div>
                         <span className="guest-group">
                           {getGroupDisplayName(guest)}
                         </span>
-                        <span className="table-assignment">
-                          📍 {getTableName(tableId)}
-                        </span>
                       </div>
-                      {guest.guestNotes && (
-                        <div className="guest-notes">
-                          💬 {guest.guestNotes}
-                        </div>
-                      )}
+                      
+                      <div className="table-assignment">
+                        📍 {getTableName(tableId)}
+                      </div>
                     </div>
                     <div className="guest-actions">
                       <button

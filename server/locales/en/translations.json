@@ -246,9 +246,7 @@
       "separateGroupsApplied": "{{count}} groups kept separate",
       "optionGenerationError": "Error generating synchronization option",
       "groupMixingEnabled": "Group mixing enabled",
-      "noGroupMixingApplied": "Group separation maintained",
-      "optimalSummary": "Optimal rearrangement of {{count}} guests",
-      "optimalSummaryWithRules": "Optimal rearrangement of {{count}} guests with the rules: {{rules}}"
+      "noGroupMixingApplied": "Group separation maintained"
     },
     "errors": {
       "fetchFailed": "Failed to load seating arrangement",

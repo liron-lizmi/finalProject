@@ -246,9 +246,7 @@
       "separateGroupsApplied": "{{count}} קבוצות נשמרו בנפרד",
       "optionGenerationError": "שגיאה ביצירת אופציית סנכרון",
       "groupMixingEnabled": "ערבוב קבוצות מופעל",
-      "noGroupMixingApplied": "שמירה על הפרדה בין קבוצות",
-      "optimalSummary": "סידור מחדש אופטימלי של {{count}} אורחים",
-      "optimalSummaryWithRules": "סידור מחדש אופטימלי של {{count}} אורחים עם הכללים: {{rules}}"
+      "noGroupMixingApplied": "שמירה על הפרדה בין קבוצות"
       },
     "errors": {
       "fetchFailed": "שגיאה בטעינת סידור המקומות",
