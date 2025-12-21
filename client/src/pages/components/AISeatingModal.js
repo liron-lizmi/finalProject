@@ -1226,41 +1226,6 @@ const AISeatingModal = ({
                       <div className="choice-title">{t('seating.ai.continueFromExisting')}</div>
                       <div className="choice-description">
                         {t('seating.ai.continueDescription')}
-                        {isSeparatedSeating ? (
-                          <>
-                            {(() => {
-                              const availableMaleCapacity = totalMaleCapacity - seatedMaleGuestsCount;
-                              const availableFemaleCapacity = totalFemaleCapacity - seatedFemaleGuestsCount;
-                              const hasMaleCapacity = availableMaleCapacity >= unseatedMaleGuestsCount;
-                              const hasFemaleCapacity = availableFemaleCapacity >= unseatedFemaleGuestsCount;
-                             
-                              return (hasMaleCapacity && hasFemaleCapacity) ? (
-                                <div className="choice-note success">
-                                  {t('seating.ai.enoughCapacityExisting')}
-                                </div>
-                              ) : (
-                                <div className="choice-note warning">
-                                  {t('seating.ai.needMoreTables')}
-                                </div>
-                              );
-                            })()}
-                          </>
-                        ) : (
-                          <>
-                            {(() => {
-                              const availableCapacity = totalCapacity - seatedGuestsCount;
-                              return availableCapacity >= unseatedGuestsCount ? (
-                                <div className="choice-note success">
-                                  {t('seating.ai.enoughCapacity', { capacity: availableCapacity })}
-                                </div>
-                              ) : (
-                                <div className="choice-note warning">
-                                  {t('seating.ai.needMoreTables')}
-                                </div>
-                              );
-                            })()}
-                          </>
-                        )}
                       </div>
                     </div>
                   </button>
@@ -1274,38 +1239,6 @@ const AISeatingModal = ({
                       <div className="choice-title">{t('seating.ai.startOver')}</div>
                       <div className="choice-description">
                         {t('seating.ai.clearDescription')}
-                        {isSeparatedSeating ? (
-                          <>
-                            {(() => {
-                              const hasMaleCapacity = totalMaleCapacity >= totalMaleGuests;
-                              const hasFemaleCapacity = totalFemaleCapacity >= totalFemaleGuests;
-                             
-                              return (hasMaleCapacity && hasFemaleCapacity) ? (
-                                <div className="choice-note success">
-                                  {t('seating.ai.enoughCapacityExisting')}
-                                </div>
-                              ) : (
-                                <div className="choice-note warning">
-                                  {t('seating.ai.needMoreTables')}
-                                </div>
-                              );
-                            })()}
-                          </>
-                        ) : (
-                          <>
-                            {(() => {
-                              return totalCapacity >= totalGuests ? (
-                                <div className="choice-note success">
-                                  {t('seating.ai.enoughCapacityExisting')}
-                                </div>
-                              ) : (
-                                <div className="choice-note warning">
-                                  {t('seating.ai.needMoreTables')}
-                                </div>
-                              );
-                            })()}
-                          </>
-                        )}
                       </div>
                     </div>
                   </button>
@@ -1583,12 +1516,10 @@ const AISeatingModal = ({
                          
                           <button
                             type="button"
-                            onClick={() => removeCustomTableSetting(
-                              setting.id,
-                              isSeparatedSeating ? genderView : null
-                            )}
+                            onClick={() => removeCustomTableSetting(setting.id, isSeparatedSeating ? genderView : null)}
                             className="remove-custom-table-btn"
                           >
+                            ✕
                           </button>
                         </div>
                       ))}
@@ -1614,18 +1545,12 @@ const AISeatingModal = ({
                         <span>{t('seating.ai.existingMaleTables')}: <strong>{maleTables.length}</strong> ({totalMaleCapacity} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.plannedNewMaleTables')}: <strong>{maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedMaleCapacity} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.totalMaleCapacity')}: <strong>{totalMaleCapacity + plannedMaleCapacity}</strong> {t('seating.ai.seats')}</span>
-                        <span className={totalMaleCapacity + plannedMaleCapacity >= totalMaleGuests ? 'sufficient' : 'insufficient'}>
-                          {totalMaleCapacity + plannedMaleCapacity >= totalMaleGuests ? t('seating.ai.enoughSeatsForAllMale') : t('seating.ai.notEnoughSeatsForAllMale')}
-                        </span>
                       </>
                     ) : (
                       <>
                         <span>{t('seating.ai.existingFemaleTables')}: <strong>{femaleTables.length}</strong> ({totalFemaleCapacity} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.plannedNewFemaleTables')}: <strong>{femaleTableSettings.reduce((sum, s) => sum + s.count, 0) + customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedFemaleCapacity} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.totalFemaleCapacity')}: <strong>{totalFemaleCapacity + plannedFemaleCapacity}</strong> {t('seating.ai.seats')}</span>
-                        <span className={totalFemaleCapacity + plannedFemaleCapacity >= totalFemaleGuests ? 'sufficient' : 'insufficient'}>
-                          {totalFemaleCapacity + plannedFemaleCapacity >= totalFemaleGuests ? t('seating.ai.enoughSeatsForAllFemale') : t('seating.ai.notEnoughSeatsForAllFemale')}
-                        </span>
                       </>
                     )
                   ) : (
@@ -1633,15 +1558,6 @@ const AISeatingModal = ({
                       <span>{t('seating.ai.existingTables')}: <strong>{tables.length}</strong> ({totalCapacity} {t('seating.ai.seats')})</span>
                       <span>{t('seating.ai.plannedNewTables')}: <strong>{tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedCapacity} {t('seating.ai.seats')})</span>
                       <span>{t('seating.ai.totalCapacity')}: <strong>{totalCapacity + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
-                      {existingArrangementAction === 'continue' ? (
-                        <span className={totalCapacity + plannedCapacity >= totalGuests ? 'sufficient' : 'insufficient'}>
-                          {totalCapacity + plannedCapacity >= totalGuests ? t('seating.ai.enoughSeatsForAll') : t('seating.ai.notEnoughSeatsForAll')}
-                        </span>
-                      ) : (
-                        <span className={totalCapacity + plannedCapacity >= totalGuests ? 'sufficient' : 'insufficient'}>
-                          {totalCapacity + plannedCapacity >= totalGuests ? t('seating.ai.enoughSeats') : t('seating.ai.notEnoughSeats')}
-                        </span>
-                      )}
                     </>
                   )}
                 </div>
@@ -1889,42 +1805,42 @@ const AISeatingModal = ({
 
                     {showGroupMixingConfig && (
                       <div className="group-mixing-config">
-                        <div className="add-mix-rule-form">
-                          <select
-                            value={newGroupMixRule.group1}
-                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group1: e.target.value }))}
-                            className="group-select"
-                          >
-                            <option value="">{t('seating.ai.selectFirstGroup')}</option>
-                            {availableGroups.map(group => (
-                              <option key={group} value={group}>
-                                {getGroupDisplayName(group)}
-                              </option>
-                            ))}
-                          </select>
-                         
-                          <select
-                            value={newGroupMixRule.group2}
-                            onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group2: e.target.value }))}
-                            className="group-select"
-                          >
-                            <option value="">{t('seating.ai.selectSecondGroup')}</option>
-                            {availableGroups.filter(group => group !== newGroupMixRule.group1).map(group => (
-                              <option key={group} value={group}>
-                                {getGroupDisplayName(group)}
-                              </option>
-                            ))}
-                          </select>
-                         
-                          <button
-                            type="button"
-                            onClick={addGroupMixRule}
-                            disabled={!newGroupMixRule.group1 || !newGroupMixRule.group2}
-                            className="add-rule-btn"
-                          >
-                            {t('seating.ai.addMixRule')}
-                          </button>
-                        </div>
+                        <div className="add-rule-form">
+                        <select
+                          value={newGroupMixRule.group1}
+                          onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group1: e.target.value }))}
+                          className="group-select guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectFirstGroup')}</option>
+                          {availableGroups.map(group => (
+                            <option key={group} value={group}>
+                              {getGroupDisplayName(group)}
+                            </option>
+                          ))}
+                        </select>
+                      
+                        <select
+                          value={newGroupMixRule.group2}
+                          onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group2: e.target.value }))}
+                          className="group-select guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectSecondGroup')}</option>
+                          {availableGroups.filter(group => group !== newGroupMixRule.group1).map(group => (
+                            <option key={group} value={group}>
+                              {getGroupDisplayName(group)}
+                            </option>
+                          ))}
+                        </select>
+                      
+                        <button
+                          type="button"
+                          onClick={addGroupMixRule}
+                          disabled={!newGroupMixRule.group1 || !newGroupMixRule.group2}
+                          className="add-rule-btn"
+                        >
+                          {t('seating.ai.addMixRule')}
+                        </button>
+                      </div>
                        
                         {aiPreferences.groupMixingRules.length > 0 && (
                           <div className="mix-rules-list">

@@ -2856,13 +2856,13 @@ const EventSeatingPage = () => {
               className={`view-button ${viewMode === 'visual' ? 'active' : ''}`}
               onClick={() => setViewMode('visual')}
             >
-              🎨 {t('seating.view.visual')}
+               {t('seating.view.visual')}
             </button>
             <button
               className={`view-button ${viewMode === 'table' ? 'active' : ''}`}
               onClick={() => setViewMode('table')}
             >
-              📋 {t('seating.view.table')}
+               {t('seating.view.table')}
             </button>
           </div>
 
@@ -2873,7 +2873,7 @@ const EventSeatingPage = () => {
                 onClick={() => setIsAIModalOpen(true)}
                 disabled={confirmedGuests.length === 0 || !canEdit}
               >
-                🤖 {t('seating.generateAI')}
+                {t('seating.generateAI')}
               </button>
             )}
 
@@ -2919,37 +2919,36 @@ const EventSeatingPage = () => {
           </div>
         </div>
 
-        <div className="seating-stats">
-          <div className="stat-card">
-            <div className="stat-number">{stats.totalGuests}</div>
-            <div className="stat-label">{t('seating.stats.totalGuests')}</div>
+        <div className="guests-stats-bar">
+          <div className="guests-stat-item">
+            <div className="summary-value large">{stats.totalGuests}</div>
+            <div className="summary-label">{t('seating.stats.totalGuests')}</div>
             {isSeparatedSeating && (
               <div className="stat-sublabel">
-                {t('seating.stats.maleGuests')}: {stats.totalMaleGuests} | {t('seating.stats.femaleGuests')}: {stats.totalFemaleGuests}
+                {stats.totalMaleGuests} ♂ | {stats.totalFemaleGuests} ♀
               </div>
             )}
           </div>
-          <div className="stat-card">
-            <div className="stat-number">{stats.seatedGuests}</div>
-            <div className="stat-label">{t('seating.stats.seatedGuests')}</div>
-            {isSeparatedSeating && (
-              <div className="stat-sublabel">
-                {t('seating.stats.maleGuests')}: {stats.maleSeatedGuests} | {t('seating.stats.femaleGuests')}: {stats.femaleSeatedGuests}
-              </div>
-            )}
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large success-text">{stats.seatedGuests}</div>
+            <div className="summary-label">{t('seating.stats.seatedGuests')}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">{stats.totalTables}</div>
-            <div className="stat-label">{t('seating.stats.totalTables')}</div>
-            {isSeparatedSeating && (
-              <div className="stat-sublabel">
-                {t('seating.stats.maleGuests')}: {stats.maleTables} | {t('seating.stats.femaleGuests')}: {stats.femaleTables}
-              </div>
-            )}
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large">{stats.totalTables}</div>
+            <div className="summary-label">{t('seating.stats.totalTables')}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">{stats.occupiedTables}</div>
-            <div className="stat-label">{t('seating.stats.occupiedTables')}</div>
+          
+          <div className="vertical-divider"></div>
+
+          <div className="guests-stat-item">
+            <div className="summary-value large pending-text">{stats.occupiedTables}</div>
+            <div className="summary-label">{t('seating.stats.occupiedTables')}</div>
           </div>
         </div>
 

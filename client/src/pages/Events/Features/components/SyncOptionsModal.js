@@ -40,7 +40,11 @@ const SyncOptionsModal = ({
     }
   };
 
-  const toggleDetails = (optionId) => {
+  const toggleDetails = (optionId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setShowingDetails(prev => ({
       ...prev,
       [optionId]: !prev[optionId]
@@ -110,7 +114,12 @@ const SyncOptionsModal = ({
                 
                 <button 
                   className="details-toggle"
-                  onClick={() => toggleDetails(option.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleDetails(option.id, e);
+                  }}
+                  type="button"
                 >
                   {showingDetails[option.id] 
                     ? t('seating.sync.hideDetails')
@@ -198,7 +207,7 @@ const getActionIcon = (actionType) => {
     table_removed: '🗑️',
     arrangement_optimized: '⚡'
   };
-  return icons[actionType] || '📋';
+  return icons[actionType];
 };
 
 const getActionDescription = (action, t) => {
@@ -233,18 +242,8 @@ const getActionDescription = (action, t) => {
       });
     case 'table_removed':
       return t('seating.sync.actionDescriptions.tableRemoved');
-    case 'optimal_summary':
-      return t('seating.sync.actionDescriptions.optimalSummary', {
-        count: details?.guestsCount || 0
-      });
-    case 'optimal_summary_with_rules':
-      const rulesText = details?.rules?.join(', ') || '';
-      return t('seating.sync.actionDescriptions.optimalSummaryWithRules', {
-        count: details?.guestsCount || 0,
-        rules: rulesText
-      });
     default:
-      return details?.reason || t('seating.sync.actionDescriptions.unknown');
+      return '';
   }
 };
 

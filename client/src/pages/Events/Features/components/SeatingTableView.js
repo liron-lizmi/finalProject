@@ -273,7 +273,7 @@ const SeatingTableView = ({
   };
 
   const getSortIcon = (field) => {
-    if (sortBy !== field) return '↕️';
+    if (sortBy !== field) return '↑↓';
     return sortOrder === 'asc' ? '↑' : '↓';
   };
 
@@ -460,7 +460,7 @@ const SeatingTableView = ({
               onClick={handleAddTable}
               disabled={!canEdit}
             >
-              ➕ {t('seating.tableView.addTable')}
+              + {t('seating.tableView.addTable')}
             </button>
           </div>
         </div>

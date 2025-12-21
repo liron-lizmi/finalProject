@@ -1958,14 +1958,13 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
         });
       }
      
-      if (isSeparated) {
-        optionSeating.maleArrangement = {};
-        optionSeating.femaleArrangement = {};
-      } else {
-        optionSeating.arrangement = {};
-      }
-     
       const allGuestsToSeat = guests.filter(g => g.rsvpStatus === 'confirmed');
+
+      allGuestsToSeat.forEach(guest => {
+        if (guest.attendingCount === undefined || guest.attendingCount === null) {
+          guest.attendingCount = 1;
+        }
+      });
      
       const preferences = seating.preferences || {};
       const userPreferences = {
@@ -1981,85 +1980,312 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
       };
      
       if (isSeparated) {
-        const maleGuests = allGuestsToSeat.filter(g => g.maleCount && g.maleCount > 0);
-        const femaleGuests = allGuestsToSeat.filter(g => g.femaleCount && g.femaleCount > 0);
-       
-        const maleResult = generateOptimalSeating(
-          maleGuests.map(g => ({...g, attendingCount: g.maleCount, gender: 'male'})),
-          optionSeating.maleTables,
-          userPreferences
-        );
-       
-        const femaleResult = generateOptimalSeating(
-          femaleGuests.map(g => ({...g, attendingCount: g.femaleCount, gender: 'female'})),
-          optionSeating.femaleTables,
-          userPreferences
-        );
-       
-        optionSeating.maleArrangement = maleResult.arrangement;
-        optionSeating.femaleArrangement = femaleResult.arrangement;
-        optionSeating.maleTables = maleResult.tables;
-        optionSeating.femaleTables = femaleResult.tables;
-       
-        Object.keys(maleResult.arrangement).forEach(tableId => {
-          const table = optionSeating.maleTables.find(t => t.id === tableId);
-          const guestIds = maleResult.arrangement[tableId] || [];
-         
-          guestIds.forEach(guestId => {
-            const guest = maleGuests.find(g => g._id.toString() === guestId);
-            if (guest && table) {
-              actions.push({
-                action: 'guest_seated',
-                details: {
-                  guestName: `${guest.firstName} ${guest.lastName}`,
-                  tableName: table.name,
-                  gender: 'male'
-                }
-              });
-            }
-          });
+  const affectedGuestIds = new Set();
+  const affectedByGender = { male: new Set(), female: new Set() };
+ 
+  triggers.forEach(trigger => {
+    const { changeType, changeData } = trigger;
+    let guestId = null;
+   
+    if (changeData.guestId) {
+      guestId = changeData.guestId;
+    } else if (changeData.guest && changeData.guest._id) {
+      guestId = changeData.guest._id.toString();
+    }
+   
+    if (guestId) {
+      affectedGuestIds.add(guestId);
+     
+      if (changeData.changedGenders && changeData.changedGenders.length > 0) {
+        changeData.changedGenders.forEach(g => {
+          if (g === 'male') affectedByGender.male.add(guestId);
+          if (g === 'female') affectedByGender.female.add(guestId);
         });
-       
-        Object.keys(femaleResult.arrangement).forEach(tableId => {
-          const table = optionSeating.femaleTables.find(t => t.id === tableId);
-          const guestIds = femaleResult.arrangement[tableId] || [];
-         
-          guestIds.forEach(guestId => {
-            const guest = femaleGuests.find(g => g._id.toString() === guestId);
-            if (guest && table) {
-              actions.push({
-                action: 'guest_seated',
-                details: {
-                  guestName: `${guest.firstName} ${guest.lastName}`,
-                  tableName: table.name,
-                  gender: 'female'
-                }
-              });
-            }
-          });
-        });
-       
-        const maleOptimized = optimizeArrangementSimulation(
-          { tables: optionSeating.maleTables, arrangement: maleResult },
-          maleGuests
-        );
-       
-        const femaleOptimized = optimizeArrangementSimulation(
-          { tables: optionSeating.femaleTables, arrangement: femaleResult },
-          femaleGuests
-        );
-       
-        if (maleOptimized.wasOptimized) {
-          optionSeating.maleTables = maleOptimized.tables || optionSeating.maleTables;
-          optionSeating.maleArrangement = maleOptimized.arrangement || optionSeating.maleArrangement;
-          actions.push(...maleOptimized.actions);
+      } else if (changeType === 'guest_added' || changeType === 'rsvp_updated') {
+        const guest = guests.find(g => g._id.toString() === guestId);
+        if (guest) {
+          if (guest.maleCount > 0) affectedByGender.male.add(guestId);
+          if (guest.femaleCount > 0) affectedByGender.female.add(guestId);
         }
-       
-        if (femaleOptimized.wasOptimized) {
-          optionSeating.femaleTables = femaleOptimized.tables || optionSeating.femaleTables;
-          optionSeating.femaleArrangement = femaleOptimized.arrangement || optionSeating.femaleArrangement;
-          actions.push(...femaleOptimized.actions);
+      }
+    }
+  });
+
+  affectedGuestIds.forEach(guestId => {
+    Object.keys(optionSeating.maleArrangement || {}).forEach(tableId => {
+      const guestIds = optionSeating.maleArrangement[tableId] || [];
+      const filteredIds = guestIds.filter(id =>
+        id.toString() !== guestId && id.toString() !== guestId.toString()
+      );
+      if (filteredIds.length !== guestIds.length) {
+        optionSeating.maleArrangement[tableId] = filteredIds;
+        if (filteredIds.length === 0) {
+          delete optionSeating.maleArrangement[tableId];
         }
+      }
+    });
+   
+    Object.keys(optionSeating.femaleArrangement || {}).forEach(tableId => {
+      const guestIds = optionSeating.femaleArrangement[tableId] || [];
+      const filteredIds = guestIds.filter(id =>
+        id.toString() !== guestId && id.toString() !== guestId.toString()
+      );
+      if (filteredIds.length !== guestIds.length) {
+        optionSeating.femaleArrangement[tableId] = filteredIds;
+        if (filteredIds.length === 0) {
+          delete optionSeating.femaleArrangement[tableId];
+        }
+      }
+    });
+  });
+
+  const allowGroupMixing = userPreferences.allowGroupMixing || false;
+  const groupMixingRules = userPreferences.groupMixingRules || [];
+  const groupPolicies = userPreferences.groupPolicies || {};
+ 
+  const canGroupsMix = (group1, group2) => {
+    if (!group1 || !group2) return true;
+    if (group1 === group2) return true;
+   
+    if (!allowGroupMixing) return false;
+   
+    if (groupPolicies[group1] === 'S' || groupPolicies[group2] === 'S') {
+      return false;
+    }
+   
+    if (groupPolicies[group1] === 'M' && groupPolicies[group2] === 'M') {
+      return true;
+    }
+   
+    const hasRule = groupMixingRules.some(rule =>
+      (rule.group1 === group1 && rule.group2 === group2) ||
+      (rule.group1 === group2 && rule.group2 === group1)
+    );
+   
+    if (hasRule) return true;
+   
+    if (allowGroupMixing && groupMixingRules.length === 0 && Object.keys(groupPolicies).length === 0) {
+      return true;
+    }
+   
+    if ((groupPolicies[group1] === 'M' && !groupPolicies[group2]) ||
+        (groupPolicies[group2] === 'M' && !groupPolicies[group1])) {
+      return allowGroupMixing;
+    }
+   
+    return false;
+  };
+
+  const findSuitableTable = (guest, tables, arrangement, guestGender) => {
+    const guestSize = guestGender === 'male' ? guest.maleCount : guest.femaleCount;
+    const guestGroup = guest.customGroup || guest.group;
+    const policy = groupPolicies[guestGroup];
+   
+    const sortedTables = [...tables].sort((a, b) => {
+      const aGuestIds = arrangement[a.id] || [];
+      const bGuestIds = arrangement[b.id] || [];
+     
+      const aHasSameGroup = aGuestIds.some(gId => {
+        const g = guests.find(guest => guest._id.toString() === gId.toString());
+        return g && (g.customGroup || g.group) === guestGroup;
+      });
+     
+      const bHasSameGroup = bGuestIds.some(gId => {
+        const g = guests.find(guest => guest._id.toString() === gId.toString());
+        return g && (g.customGroup || g.group) === guestGroup;
+      });
+     
+      if (aHasSameGroup && !bHasSameGroup) return -1;
+      if (!aHasSameGroup && bHasSameGroup) return 1;
+     
+      const aOccupancy = aGuestIds.reduce((sum, gId) => {
+        const g = guests.find(guest => guest._id.toString() === gId.toString());
+        return sum + (guestGender === 'male' ? (g?.maleCount || 0) : (g?.femaleCount || 0));
+      }, 0);
+     
+      const bOccupancy = bGuestIds.reduce((sum, gId) => {
+        const g = guests.find(guest => guest._id.toString() === gId.toString());
+        return sum + (guestGender === 'male' ? (g?.maleCount || 0) : (g?.femaleCount || 0));
+      }, 0);
+     
+      return bOccupancy - aOccupancy;
+    });
+   
+    for (const table of sortedTables) {
+      const currentGuestIds = arrangement[table.id] || [];
+      const currentOccupancy = currentGuestIds.reduce((sum, gId) => {
+        const g = guests.find(guest => guest._id.toString() === gId.toString());
+        return sum + (guestGender === 'male' ? (g?.maleCount || 0) : (g?.femaleCount || 0));
+      }, 0);
+     
+      const availableSpace = table.capacity - currentOccupancy;
+     
+      if (availableSpace < guestSize) continue;
+     
+      if (currentGuestIds.length === 0) {
+        return table;
+      }
+     
+      const tableGuests = currentGuestIds.map(gId =>
+        guests.find(g => g._id.toString() === gId.toString())
+      ).filter(Boolean);
+     
+      const tableGroups = new Set(tableGuests.map(g => g.customGroup || g.group));
+     
+      if (tableGroups.size === 1 && tableGroups.has(guestGroup)) {
+        return table;
+      }
+     
+      let canSitHere = true;
+      for (const tableGroup of tableGroups) {
+        if (!canGroupsMix(guestGroup, tableGroup)) {
+          canSitHere = false;
+          break;
+        }
+      }
+     
+      if (canSitHere) {
+        return table;
+      }
+    }
+   
+    return null;
+  };
+
+  const maleAffectedGuests = allGuestsToSeat.filter(g =>
+    g.maleCount && g.maleCount > 0 && affectedByGender.male.has(g._id.toString())
+  );
+ 
+  const femaleAffectedGuests = allGuestsToSeat.filter(g =>
+    g.femaleCount && g.femaleCount > 0 && affectedByGender.female.has(g._id.toString())
+  );
+
+  for (const guest of maleAffectedGuests) {
+    const suitableTable = findSuitableTable(guest, optionSeating.maleTables, optionSeating.maleArrangement, 'male');
+   
+  if (suitableTable) {
+      if (!optionSeating.maleArrangement[suitableTable.id]) {
+        optionSeating.maleArrangement[suitableTable.id] = [];
+      }
+      optionSeating.maleArrangement[suitableTable.id].push(guest._id.toString());
+     
+    } else {
+      const highestMaleTableNumber = optionSeating.maleTables.reduce((max, table) => {
+        const match = table.name.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0]);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const tableNumber = highestMaleTableNumber + 1;
+      const newCapacity = Math.max(12, Math.ceil(guest.maleCount * 1.2));
+      
+      const newPosition = calculateNextTablePositionForGender(optionSeating.maleTables);
+     
+      const newTable = {
+        id: `male_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: newCapacity,
+        type: newCapacity > 12 ? 'rectangular' : 'round',
+        position: newPosition,
+        rotation: 0,
+        gender: 'male',
+        autoCreated: true,
+        createdForSync: true
+      };
+     
+      optionSeating.maleTables.push(newTable);
+      optionSeating.maleArrangement[newTable.id] = [guest._id.toString()];
+     
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          gender: 'male'
+        }
+      });
+     
+    }
+  }
+
+  for (const guest of femaleAffectedGuests) {
+    const suitableTable = findSuitableTable(guest, optionSeating.femaleTables, optionSeating.femaleArrangement, 'female');
+   
+    if (suitableTable) {
+      if (!optionSeating.femaleArrangement[suitableTable.id]) {
+        optionSeating.femaleArrangement[suitableTable.id] = [];
+      }
+      optionSeating.femaleArrangement[suitableTable.id].push(guest._id.toString());
+     
+    } else {
+      const highestFemaleTableNumber = optionSeating.femaleTables.reduce((max, table) => {
+        const match = table.name.match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0]);
+          return num > max ? num : max;
+        }
+        return max;
+      }, 0);
+      
+      const tableNumber = highestFemaleTableNumber + 1;
+      const newCapacity = Math.max(12, Math.ceil(guest.femaleCount * 1.2));
+      
+      const newPosition = calculateNextTablePositionForGender(optionSeating.femaleTables);
+     
+      const newTable = {
+        id: `female_table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: newCapacity,
+        type: newCapacity > 12 ? 'rectangular' : 'round',
+        position: newPosition,
+        rotation: 0,
+        gender: 'female',
+        autoCreated: true,
+        createdForSync: true
+      };
+     
+      optionSeating.femaleTables.push(newTable);
+      optionSeating.femaleArrangement[newTable.id] = [guest._id.toString()];
+     
+      actions.push({
+        action: 'table_created',
+        details: {
+          tableName: newTable.name,
+          capacity: newTable.capacity,
+          gender: 'female'
+        }
+      });
+     
+    }
+  }
+
+  const maleGuests = allGuestsToSeat.filter(g => g.maleCount && g.maleCount > 0);
+  const femaleGuests = allGuestsToSeat.filter(g => g.femaleCount && g.femaleCount > 0);
+  
+  maleGuests.forEach(g => {
+    g.attendingCount = g.maleCount;
+  });
+  
+  femaleGuests.forEach(g => {
+    g.attendingCount = g.femaleCount;
+  });
+  
+  optionSeating.maleTables = updateTableNamesWithGroupsInSync(
+    optionSeating.maleTables,
+    optionSeating.maleArrangement,
+    maleGuests,
+    req
+  );
+  
+  optionSeating.femaleTables = updateTableNamesWithGroupsInSync(
+    optionSeating.femaleTables,
+    optionSeating.femaleArrangement,
+    femaleGuests,
+    req
+  );
        
       } else {
         const result = generateOptimalSeating(
@@ -2070,29 +2296,32 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
        
         optionSeating.arrangement = result.arrangement;
         optionSeating.tables = result.tables;
-       
-        Object.keys(result.arrangement).forEach(tableId => {
-          const table = optionSeating.tables.find(t => t.id === tableId);
-          const guestIds = newArrangement[tableId] || [];
-         
-          guestIds.forEach(guestId => {
-            const guest = allGuestsToSeat.find(g => g._id.toString() === guestId);
-            if (guest && table) {
-              actions.push({
-                action: 'guest_seated',
-                details: {
-                  guestName: `${guest.firstName} ${guest.lastName}`,
-                  tableName: table.name
-                }
-              });
-            }
-          });
-        });
+
+        optionSeating.arrangement = result.arrangement;
+        optionSeating.tables = result.tables;
+
+        if (result.tables && result.tables.length > optionSeating.tables.length) {
+          optionSeating.tables = result.tables;
+        }
        
         const optimized = optimizeArrangementSimulation(optionSeating, guests);
         if (optimized.wasOptimized) {
           actions.push(...optimized.actions);
         }
+       
+        const originalTableIds = new Set((seating.tables || []).map(t => t.id));
+       
+        optionSeating.tables.forEach(table => {
+          if (!originalTableIds.has(table.id) && (table.autoCreated || table.createdForSync)) {
+            actions.push({
+              action: 'table_created',
+              details: {
+                tableName: table.name,
+                capacity: table.capacity
+              }
+            });
+          }
+        });
       }
      
       const rulesApplied = [];
@@ -2112,45 +2341,37 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
         }));
       }
      
-      if (userPreferences.allowGroupMixing === false) {
+      if (userPreferences.allowGroupMixing === true) {
         hasExplicitRules = true;
-        rulesApplied.push(req.t('seating.sync.noGroupMixingApplied'));
-      } else if (userPreferences.allowGroupMixing === true) {
-        hasExplicitRules = true;
-        if (userPreferences.groupMixingRules?.length > 0) {
+        if (userPreferences.groupMixingRules?.length > 0 ||
+            (userPreferences.groupPolicies && Object.keys(userPreferences.groupPolicies).length > 0)) {
           rulesApplied.push(req.t('seating.sync.groupMixingRulesApplied', {
-            count: userPreferences.groupMixingRules.length
+            count: userPreferences.groupMixingRules?.length || 0
           }));
+         
+          const separateGroupsCount = Object.values(userPreferences.groupPolicies || {})
+            .filter(policy => policy === 'S').length;
+          if (separateGroupsCount > 0) {
+            rulesApplied.push(req.t('seating.sync.separateGroupsApplied', {
+              count: separateGroupsCount
+            }));
+          }
         } else {
           rulesApplied.push(req.t('seating.sync.groupMixingEnabled'));
         }
-      }
-
-      const separateGroupsCount = Object.values(userPreferences.groupPolicies || {})
-        .filter(policy => policy === 'S').length;
-
-      if (separateGroupsCount > 0) {
+      } else if (userPreferences.allowGroupMixing === false) {
         hasExplicitRules = true;
-        rulesApplied.push(req.t('seating.sync.separateGroupsApplied', {
-          count: separateGroupsCount
-        }));
-      }
-     
-      if (hasExplicitRules && rulesApplied.length > 0) {
-        actions.unshift({
-          action: 'optimal_summary_with_rules',
-          details: {
-            guestsCount: allGuestsToSeat.length,
-            rules: rulesApplied
-          }
-        });
+        rulesApplied.push(req.t('seating.sync.noGroupMixingApplied'));
       } else {
-        actions.unshift({
-          action: 'optimal_summary',
-          details: {
-            guestsCount: allGuestsToSeat.length
-          }
-        });
+        const separateGroupsCount = Object.values(userPreferences.groupPolicies || {})
+          .filter(policy => policy === 'S').length;
+
+        if (separateGroupsCount > 0) {
+          hasExplicitRules = true;
+          rulesApplied.push(req.t('seating.sync.separateGroupsApplied', {
+            count: separateGroupsCount
+          }));
+        }
       }
     }
 
@@ -2375,108 +2596,157 @@ const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strate
   const isSeparated = optionSeating.isSeparatedSeating || false;
  
   if (isSeparated) {
-    const guestGender = guest.gender;
+    const hasMales = guest.maleCount && guest.maleCount > 0;
+    const hasFemales = guest.femaleCount && guest.femaleCount > 0;
    
-    if (!guestGender || (guestGender !== 'male' && guestGender !== 'female')) {
-      return {
-        actions: [{
-          action: 'error',
-          details: {
-            guestName: `${guest.firstName} ${guest.lastName}`,
-            error: 'Guest gender not defined for separated seating'
-          }
-        }]
-      };
-    }
-   
-    const guestSize = guestGender === 'male'
-      ? (guest.maleCount || 0)
-      : (guest.femaleCount || 0);
-   
-    if (guestSize === 0) {
+    if (!hasMales && !hasFemales) {
       return { actions: [] };
     }
    
-    const currentTables = guestGender === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
-    const currentArrangement = guestGender === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
-    const genderGuests = allGuests.filter(g => {
-      if (guestGender === 'male') {
-        return g.maleCount && g.maleCount > 0;
-      } else {
-        return g.femaleCount && g.femaleCount > 0;
+    if (hasMales) {
+      const maleGuestSize = guest.maleCount;
+      const maleTables = optionSeating.maleTables;
+      const maleArrangement = optionSeating.maleArrangement;
+      const maleGuests = allGuests.filter(g => g.maleCount && g.maleCount > 0);
+     
+      let availableMaleTable = findAvailableTableSimulation(
+        {
+          tables: maleTables,
+          arrangement: maleArrangement,
+          preferences: optionSeating.preferences || {},
+          isSeparatedSeating: true,
+          maleTables: maleTables,
+          femaleTables: [],
+          maleArrangement: maleArrangement,
+          femaleArrangement: {}
+        },
+        maleGuestSize,
+        maleGuests,
+        {...guest, gender: 'male'}
+      );
+     
+      if (!availableMaleTable) {
+        const tableSize = determineOptimalTableSize(maleTables, maleGuestSize, strategy);
+        const highestTableNumber = maleTables.reduce((max, table) => {
+          const match = table.name.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0]);
+            return num > max ? num : max;
+          }
+          return max;
+        }, 0);
+       
+        const tableNumber = highestTableNumber + 1;
+        availableMaleTable = createTableSimulation(optionSeating, tableSize, tableNumber, req, 'male');
+       
+        optionSeating.maleTables.push(availableMaleTable);
+       
+        actions.push({
+          action: 'table_created',
+          details: {
+            tableName: availableMaleTable.name,
+            capacity: availableMaleTable.capacity,
+            gender: 'male',
+            reason: req.t('seating.sync.createdForGuest', {
+              guestName: `${guest.firstName} ${guest.lastName}`
+            })
+          }
+        });
       }
-    });
-   
-    let availableTable = findAvailableTableSimulation(
-    {
-      tables: currentTables,
-      arrangement: currentArrangement,
-      preferences: optionSeating.preferences || {}  
-    },
-    guestSize,
-    genderGuests,
-    guest  
-  );
-   
-    if (!availableTable) {
-      const tableSize = determineOptimalTableSize(currentTables, guestSize, strategy);
-      const genderTables = guestGender === 'male' ? (optionSeating.maleTables || []) : (optionSeating.femaleTables || []);
      
-      const highestTableNumber = genderTables.reduce((max, table) => {
-        const match = table.name.match(/\d+/);
-        if (match) {
-          const num = parseInt(match[0]);
-          return num > max ? num : max;
-        }
-        return max;
-      }, 0);
-     
-      const tableNumber = highestTableNumber + 1;
-     
-      availableTable = createTableSimulation(optionSeating, tableSize, tableNumber, req, guestGender);
-     
-      if (guestGender === 'male') {
-        optionSeating.maleTables.push(availableTable);
-      } else {
-        optionSeating.femaleTables.push(availableTable);
+      if (!maleArrangement[availableMaleTable.id]) {
+        maleArrangement[availableMaleTable.id] = [];
       }
      
-      actions.push({
-        action: 'table_created',
-        details: {
-          tableName: availableTable.name,
-          capacity: availableTable.capacity,
-          gender: guestGender,
-          reason: req.t('seating.sync.createdForGuest', {
-            guestName: `${guest.firstName} ${guest.lastName}`
-          })
-        }
-      });
-    }
-   
-    if (!currentArrangement[availableTable.id]) {
-      currentArrangement[availableTable.id] = [];
-    }
-   
-    if (!currentArrangement[availableTable.id].includes(guest._id.toString())) {
-      currentArrangement[availableTable.id].push(guest._id.toString());
+      if (!maleArrangement[availableMaleTable.id].includes(guest._id.toString())) {
+        maleArrangement[availableMaleTable.id].push(guest._id.toString());
+       
+        actions.push({
+          action: 'guest_seated',
+          details: {
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            tableName: availableMaleTable.name,
+            gender: 'male',
+            attendingCount: maleGuestSize
+          }
+        });
+      }
      
-      actions.push({
-        action: 'guest_seated',
-        details: {
-          guestName: `${guest.firstName} ${guest.lastName}`,
-          tableName: availableTable.name,
-          gender: guestGender,
-          attendingCount: guestSize
-        }
-      });
+      optionSeating.maleArrangement = maleArrangement;
     }
    
-    if (guestGender === 'male') {
-      optionSeating.maleArrangement = currentArrangement;
-    } else {
-      optionSeating.femaleArrangement = currentArrangement;
+    if (hasFemales) {
+      const femaleGuestSize = guest.femaleCount;
+      const femaleTables = optionSeating.femaleTables;
+      const femaleArrangement = optionSeating.femaleArrangement;
+      const femaleGuests = allGuests.filter(g => g.femaleCount && g.femaleCount > 0);
+     
+      let availableFemaleTable = findAvailableTableSimulation(
+        {
+          tables: femaleTables,
+          arrangement: femaleArrangement,
+          preferences: optionSeating.preferences || {},
+          isSeparatedSeating: true,
+          maleTables: [],
+          femaleTables: femaleTables,
+          maleArrangement: {},
+          femaleArrangement: femaleArrangement
+        },
+        femaleGuestSize,
+        femaleGuests,
+        {...guest, gender: 'female'}
+      );
+     
+      if (!availableFemaleTable) {
+        const tableSize = determineOptimalTableSize(femaleTables, femaleGuestSize, strategy);
+        const highestTableNumber = femaleTables.reduce((max, table) => {
+          const match = table.name.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0]);
+            return num > max ? num : max;
+          }
+          return max;
+        }, 0);
+       
+        const tableNumber = highestTableNumber + 1;
+        availableFemaleTable = createTableSimulation(optionSeating, tableSize, tableNumber, req, 'female');
+       
+        optionSeating.femaleTables.push(availableFemaleTable);
+       
+        actions.push({
+          action: 'table_created',
+          details: {
+            tableName: availableFemaleTable.name,
+            capacity: availableFemaleTable.capacity,
+            gender: 'female',
+            reason: req.t('seating.sync.createdForGuest', {
+              guestName: `${guest.firstName} ${guest.lastName}`
+            })
+          }
+        });
+      }
+     
+      if (!femaleArrangement[availableFemaleTable.id]) {
+        femaleArrangement[availableFemaleTable.id] = [];
+      }
+     
+      if (!femaleArrangement[availableFemaleTable.id].includes(guest._id.toString())) {
+        femaleArrangement[availableFemaleTable.id].push(guest._id.toString());
+       
+        actions.push({
+          action: 'guest_seated',
+          details: {
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            tableName: availableFemaleTable.name,
+            gender: 'female',
+            attendingCount: femaleGuestSize
+          }
+        });
+      }
+     
+      optionSeating.femaleArrangement = femaleArrangement;
     }
+   
   } else {
     const guestSize = guest.attendingCount || 1;
     let availableTable = findAvailableTableSimulation(optionSeating, guestSize, allGuests, guest);
@@ -2864,11 +3134,88 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
 };
 
 const findAvailableTableSimulation = (optionSeating, guestSize, allGuests, guestToAdd) => {
-  const tables = optionSeating.tables || [];
-  const arrangement = optionSeating.arrangement || {};
+  const isSeparated = optionSeating.isSeparatedSeating || false;
+  const tables = isSeparated ? (optionSeating.tables || []) : (optionSeating.tables || []);
+  const arrangement = isSeparated ? (optionSeating.arrangement || {}) : (optionSeating.arrangement || {});
   const preferences = optionSeating.preferences || {};
  
   const guestGroup = guestToAdd ? (guestToAdd.customGroup || guestToAdd.group) : null;
+  const guestGender = guestToAdd?.gender;
+ 
+  if (isSeparated && guestGender) {
+    const genderTables = guestGender === 'male' ? (optionSeating.maleTables || []) : (optionSeating.femaleTables || []);
+    const genderArrangement = guestGender === 'male' ? (optionSeating.maleArrangement || {}) : (optionSeating.femaleArrangement || {});
+   
+    const genderCount = guestGender === 'male' ? (guestToAdd.maleCount || 0) : (guestToAdd.femaleCount || 0);
+   
+    return genderTables.find(table => {
+      const tableGuests = genderArrangement[table.id] || [];
+     
+      const currentOccupancy = tableGuests.reduce((sum, guestId) => {
+        const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+        if (!g) return sum;
+        const count = guestGender === 'male' ? (g.maleCount || 0) : (g.femaleCount || 0);
+        return sum + count;
+      }, 0);
+     
+      const remainingCapacity = table.capacity - currentOccupancy;
+      if (remainingCapacity < genderCount) {
+        return false;
+      }
+     
+      if (tableGuests.length === 0) {
+        return true;
+      }
+     
+      if (preferences.allowGroupMixing === false && guestGroup) {
+        const hasOtherGroup = tableGuests.some(guestId => {
+          const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+          if (!g) return false;
+          const tableGuestGroup = g.customGroup || g.group;
+          return tableGuestGroup !== guestGroup;
+        });
+       
+        if (hasOtherGroup) {
+          return false;
+        }
+      }
+     
+      if (preferences.groupPolicies && guestGroup) {
+        const guestPolicy = preferences.groupPolicies[guestGroup];
+        if (guestPolicy === 'S') {
+          const hasOtherGroup = tableGuests.some(guestId => {
+            const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+            if (!g) return false;
+            const tableGuestGroup = g.customGroup || g.group;
+            return tableGuestGroup !== guestGroup;
+          });
+          if (hasOtherGroup) {
+            return false;
+          }
+        } else if (guestPolicy === 'M') {
+          if (preferences.groupMixingRules && preferences.groupMixingRules.length > 0) {
+            const canMixWithAny = tableGuests.some(guestId => {
+              const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+              if (!g) return false;
+              const tableGuestGroup = g.customGroup || g.group;
+              if (tableGuestGroup === guestGroup) return true;
+             
+              return preferences.groupMixingRules.some(rule =>
+                (rule.group1 === guestGroup && rule.group2 === tableGuestGroup) ||
+                (rule.group2 === guestGroup && rule.group1 === tableGuestGroup)
+              );
+            });
+           
+            if (tableGuests.length > 0 && !canMixWithAny) {
+              return false;
+            }
+          }
+        }
+      }
+     
+      return true;
+    });
+  }
  
   return tables.find(table => {
     const tableGuests = arrangement[table.id] || [];
@@ -2897,6 +3244,39 @@ const findAvailableTableSimulation = (optionSeating, guestSize, allGuests, guest
      
       if (hasOtherGroup) {
         return false;
+      }
+    }
+   
+    if (preferences.groupPolicies && guestGroup) {
+      const guestPolicy = preferences.groupPolicies[guestGroup];
+      if (guestPolicy === 'S') {
+        const hasOtherGroup = tableGuests.some(guestId => {
+          const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+          if (!g) return false;
+          const tableGuestGroup = g.customGroup || g.group;
+          return tableGuestGroup !== guestGroup;
+        });
+        if (hasOtherGroup) {
+          return false;
+        }
+      } else if (guestPolicy === 'M') {
+        if (preferences.groupMixingRules && preferences.groupMixingRules.length > 0) {
+          const canMixWithAny = tableGuests.some(guestId => {
+            const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+            if (!g) return false;
+            const tableGuestGroup = g.customGroup || g.group;
+            if (tableGuestGroup === guestGroup) return true;
+           
+            return preferences.groupMixingRules.some(rule =>
+              (rule.group1 === guestGroup && rule.group2 === tableGuestGroup) ||
+              (rule.group2 === guestGroup && rule.group1 === tableGuestGroup)
+            );
+          });
+         
+          if (tableGuests.length > 0 && !canMixWithAny) {
+            return false;
+          }
+        }
       }
     }
    
@@ -3214,6 +3594,30 @@ const optimizeArrangementSimulation = (optionSeating, guests) => {
 
       if (tableOccupancy === 0) {
         tablesToRemove.push({ id: table.id, gender: 'male' });
+      } else {
+        let optimalCapacity = table.capacity;
+        let oldCapacity = table.capacity;
+       
+        if (table.capacity === 24) {
+          if (tableOccupancy >= 21) {
+            optimalCapacity = 24;
+          } else if (tableOccupancy >= 11 && tableOccupancy <= 12) {
+            optimalCapacity = 12;
+          } else if (tableOccupancy <= 10) {
+            optimalCapacity = 10;
+          }
+        } else if (table.capacity === 12) {
+          if (tableOccupancy >= 11) {
+            optimalCapacity = 12;
+          } else {
+            optimalCapacity = 10;
+          }
+        }
+       
+        if (optimalCapacity !== table.capacity) {
+          table.capacity = optimalCapacity;
+          optimized = true;
+        }
       }
     });
    
@@ -3226,6 +3630,30 @@ const optimizeArrangementSimulation = (optionSeating, guests) => {
 
       if (tableOccupancy === 0) {
         tablesToRemove.push({ id: table.id, gender: 'female' });
+      } else {
+        let optimalCapacity = table.capacity;
+        let oldCapacity = table.capacity;
+       
+        if (table.capacity === 24) {
+          if (tableOccupancy >= 21) {
+            optimalCapacity = 24;
+          } else if (tableOccupancy >= 11 && tableOccupancy <= 12) {
+            optimalCapacity = 12;
+          } else if (tableOccupancy <= 10) {
+            optimalCapacity = 10;
+          }
+        } else if (table.capacity === 12) {
+          if (tableOccupancy >= 11) {
+            optimalCapacity = 12;
+          } else {
+            optimalCapacity = 10;
+          }
+        }
+       
+        if (optimalCapacity !== table.capacity) {
+          table.capacity = optimalCapacity;
+          optimized = true;
+        }
       }
     });
 
@@ -3266,6 +3694,30 @@ const optimizeArrangementSimulation = (optionSeating, guests) => {
 
       if (tableOccupancy === 0) {
         tablesToRemove.push(table.id);
+      } else {
+        let optimalCapacity = table.capacity;
+        let oldCapacity = table.capacity;
+       
+        if (table.capacity === 24) {
+          if (tableOccupancy >= 21) {
+            optimalCapacity = 24;
+          } else if (tableOccupancy >= 11 && tableOccupancy <= 12) {
+            optimalCapacity = 12;
+          } else if (tableOccupancy <= 10) {
+            optimalCapacity = 10;
+          }
+        } else if (table.capacity === 12) {
+          if (tableOccupancy >= 11) {
+            optimalCapacity = 12;
+          } else {
+            optimalCapacity = 10;
+          }
+        }
+       
+        if (optimalCapacity !== table.capacity) {
+          table.capacity = optimalCapacity;
+          optimized = true;
+        }
       }
     });
 
@@ -3282,7 +3734,12 @@ const optimizeArrangementSimulation = (optionSeating, guests) => {
       });
     });
 
-    return { wasOptimized: optimized, actions };
+    return {
+      wasOptimized: optimized,
+      actions,
+      tables: optionSeating.tables,
+      arrangement: optionSeating.arrangement
+    };
   }
 };
 
@@ -3991,6 +4448,7 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
 };
 
 const generateAISeating = async (req, res) => {
+
   try {
     const { eventId } = req.params;
     const {
@@ -4132,7 +4590,7 @@ const generateAISeating = async (req, res) => {
         if (dryRunResult.tableSettings && Object.keys(dryRunResult.tableSettings).length > 0) {
           const suggestedTotalTables = dryRunResult.totalTables || 0;
           const currentTotalTables = maleTablesList.length;
-                  
+                 
           if (suggestedTotalTables > currentTotalTables) {
             const tablesToCreate = [];
             let tableCounter = currentTotalTables;
@@ -4154,7 +4612,7 @@ const generateAISeating = async (req, res) => {
             maleTablesList = tablesToCreate;
           }
         }
-       
+
         const maleResult = generateOptimalSeating(maleGuests, maleTablesList, enhancedPreferences);
         aiMaleArrangement = maleResult.arrangement;
         maleTablesList = maleResult.tables;
@@ -4185,11 +4643,11 @@ const generateAISeating = async (req, res) => {
         femaleTablesList = femaleResult.tables;
       } else {
         const dryRunResult = runDryGenerateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences);
-       
+
         if (dryRunResult.tableSettings && Object.keys(dryRunResult.tableSettings).length > 0) {
           const suggestedTotalTables = dryRunResult.totalTables || 0;
           const currentTotalTables = femaleTablesList.length;
-                  
+                 
           if (suggestedTotalTables > currentTotalTables) {
             const tablesToCreate = [];
             let tableCounter = currentTotalTables;
@@ -4211,9 +4669,8 @@ const generateAISeating = async (req, res) => {
             femaleTablesList = tablesToCreate;
           }
         }
-       
-        const femaleResult = generateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences);
-        aiFemaleArrangement = femaleResult.arrangement;
+      const femaleResult = generateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences);
+      aiFemaleArrangement = femaleResult.arrangement;
         femaleTablesList = femaleResult.tables;
       }
 
@@ -4303,11 +4760,11 @@ const generateAISeating = async (req, res) => {
         tablesToUse = result.tables;
       } else {
         const dryRunResult = runDryGenerateOptimalSeating(guests, tablesToUse, enhancedPreferences);
-       
+
         if (dryRunResult.tableSettings && Object.keys(dryRunResult.tableSettings).length > 0) {
           const suggestedTotalTables = dryRunResult.totalTables || 0;
           const currentTotalTables = tablesToUse.length;
-                  
+                 
           if (suggestedTotalTables > currentTotalTables) {
             const tablesToCreate = [];
             let tableCounter = currentTotalTables;
@@ -4329,7 +4786,7 @@ const generateAISeating = async (req, res) => {
             tablesToUse = tablesToCreate;
           }
         }
-       
+   
         const result = generateOptimalSeating(guests, tablesToUse, enhancedPreferences);
         aiArrangement = result.arrangement;
         tablesToUse = result.tables;
@@ -4381,6 +4838,20 @@ const generateAISeating = async (req, res) => {
   }
 };
 
+
+function getMaxTableNumber(tables) {
+  let maxNumber = 0;
+  tables.forEach(t => {
+    const match = t.name.match(/שולחן (\d+)/);
+    if (match) {
+      const num = parseInt(match[1]);
+      if (num > maxNumber) {
+        maxNumber = num;
+      }
+    }
+  });
+  return maxNumber;
+}
 
 function buildMixingClusters(groupMixingRules) {
   if (!groupMixingRules || groupMixingRules.length === 0) {
@@ -4678,6 +5149,7 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
   const clusterMap = mixingMode === 'rules' ? buildMixingClusters(preferences.groupMixingRules) : new Map();
 
   const groupPolicies = preferences.groupPolicies || {};
+  Object.keys(groupPolicies).forEach(key => console.log(`[GROUP POLICY DEBUG] קבוצה "${key}" => מדיניות: ${groupPolicies[key]}`));
   const separateGroupsList = [];
   const separateGroupSizes = {};
  
@@ -4805,7 +5277,9 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
    
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
-      if (groupPolicy === 'S') return;
+      if (groupPolicy === 'S') {
+        return;
+      }
      
       const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
       allUnassignedGuests.push(...unassigned);
@@ -4814,7 +5288,7 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
     const sortedAllGuests = allUnassignedGuests.sort((a, b) =>
       (b.attendingCount || 1) - (a.attendingCount || 1)
     );
-      
+     
     sortedAllGuests.forEach(guest => {
       if (alreadyAssigned.has(guest._id.toString())) return;
      
@@ -4868,7 +5342,9 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
   } else {
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
-      if (groupPolicy === 'S') return;
+      if (groupPolicy === 'S') {
+        return;
+      }
      
       const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
       if (unassigned.length === 0) return;
@@ -4879,7 +5355,9 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
         name: `${g.firstName} ${g.lastName}`,
         size: g.attendingCount || 1,
         _id: g._id,
-        originalGuest: g
+        originalGuest: g,
+        group: g.customGroup || g.group,
+        groupPolicy: groupPolicies[g.customGroup || g.group]
       }));
      
       let capacities = [...new Set(unreservedTables.map(t => t.capacity))];
@@ -4921,8 +5399,7 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
           }
          
           const requiredCapacity = tableArrangement.capacity;
-          const currentTableCount = tables.length;
-          const tableNumber = currentTableCount + 1;
+          const tableNumber = getMaxTableNumber(tables) + 1;
           const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
          
           let tableType = 'round';
@@ -4935,14 +5412,14 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
             name: `שולחן ${tableNumber}`,
             capacity: requiredCapacity,
             type: tableType,
-            position: { x: 100 + (currentTableCount * 150), y: 100 },
+            position: calculateNextTablePosition(tables),
             rotation: 0,
             assignedGuests: [],
             remainingCapacity: requiredCapacity,
             autoCreated: true,
             createdForSync: true
           };
-                  
+                 
           tables.push(newTable);
           availableTables.push(newTable);
           unreservedTables.push(newTable);
@@ -4950,11 +5427,11 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
         }
        
       }
-          
+         
       for (const tableArrangement of result.tables) {
         const requiredCapacity = tableArrangement.capacity;
         const guestsForThisTable = tableArrangement.guests;
-              
+             
         let foundTable = emptyTables.find(t =>
           t.capacity === requiredCapacity &&
           !assignedTablesForGroup.some(at => at.id === t.id)
@@ -4977,8 +5454,7 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
        
         if (!foundTable) {
          
-          const currentTableCount = tables.length;
-          const tableNumber = currentTableCount + 1;
+          const tableNumber = getMaxTableNumber(tables) + 1;
           const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
          
           let tableType = 'round';
@@ -4993,20 +5469,20 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
             name: `שולחן ${tableNumber}`,
             capacity: newCapacity,
             type: tableType,
-            position: { x: 100 + (currentTableCount * 150), y: 100 },
+            position: calculateNextTablePosition(tables),
             rotation: 0,
             assignedGuests: [],
             remainingCapacity: newCapacity,
             autoCreated: true,
             createdForSync: true
           };
-                  
+                 
           tables.push(foundTable);
           availableTables.push(foundTable);
           unreservedTables.push(foundTable);
           emptyTables.push(foundTable);
         }
-              
+             
         assignedTablesForGroup.push(foundTable);
         globalUsedTableIds.add(foundTable.id);
        
@@ -5170,7 +5646,9 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
    
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
-      if (groupPolicy === 'S') return;
+      if (groupPolicy === 'S') {
+        return;
+      }
      
       const unassigned = groupGuests.filter(g =>
         g && g._id && !alreadyAssigned.has(g._id.toString())
@@ -5312,8 +5790,7 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
      
       if (!assigned) {
        
-        const currentTableCount = tables.length;
-        const tableNumber = currentTableCount + 1;
+        const tableNumber = getMaxTableNumber(tables) + 1;
         const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
        
         let tableType = 'round';
@@ -5328,14 +5805,14 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
           name: `שולחן ${tableNumber}`,
           capacity: newCapacity,
           type: tableType,
-          position: { x: 100 + (currentTableCount * 150), y: 100 },
+          position: calculateNextTablePosition(tables),
           rotation: 0,
           assignedGuests: [guest._id.toString()],
           remainingCapacity: newCapacity - guestSize,
           autoCreated: true,
           createdForSync: true
         };
-              
+             
         tables.push(newTable);
         availableTables.push(newTable);
        
@@ -5802,7 +6279,7 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
            
             if (wouldBe100Percent && !currentGuestInCombo && hasSmallGuestsRemaining && availableCaps.includes(12)) {
               const combo12 = findOptimalCombo(12, 0.7);
-              if (combo12 && combo12.totalSize >= 10) {
+              if (combo12 && combo12.totalSize >= 11) {
                 bestOption = { capacity: 12, combo: combo12 };
                 bestScore = 999;
               } else {
@@ -5822,6 +6299,13 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
           const combo = findOptimalCombo(cap, minUtilization);
          
           if (combo) {
+            if (cap === 12 && combo.totalSize < 11) {
+              continue; 
+            }
+            if (cap === 24 && combo.totalSize < 23) {
+              continue;
+            }
+           
             if (combo.totalSize <= 10 && cap === 10 && combo.utilization >= 0.5) {
               bestScore = 999;
               bestOption = { capacity: cap, combo };
@@ -5888,20 +6372,26 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
             continue;
           }
         }
-              
+             
         const fitOptions = availableCaps.filter(c => c >= guest.size);
         if (fitOptions.length > 0) {
-          if (guest.size >= 8 && guest.size <= 10 && fitOptions.includes(10)) {
+          if (guest.size <= 10) {
             tableCapacity = 10;
           }
           else if (guest.size >= 11 && guest.size <= 12 && fitOptions.includes(12)) {
             tableCapacity = 12;
+          }
+          else if (guest.size >= 23 && fitOptions.includes(24)) {
+            tableCapacity = 24;
           }
           else {
             let bestCapacity = null;
             let bestUtilization = 0;
            
             for (const cap of fitOptions) {
+              if (cap === 12 && guest.size < 11) continue;
+              if (cap === 24 && guest.size < 23) continue;
+             
               const utilization = guest.size / cap;
               if (utilization >= 0.6 && utilization > bestUtilization) {
                 bestUtilization = utilization;
@@ -5939,6 +6429,37 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
  
   const tablesToRemove = new Set();
  
+  const canMergeTables = (table1, table2) => {
+    if (table1.guests.length === 0 || table2.guests.length === 0) {
+      return true;
+    }
+   
+    const groups1 = new Set(table1.guests.map(g => g.group).filter(Boolean));
+    const groups2 = new Set(table2.guests.map(g => g.group).filter(Boolean));
+   
+    for (const guest of table1.guests) {
+      if (guest.groupPolicy === 'S') {
+        for (const guest2 of table2.guests) {
+          if (guest2.group !== guest.group) {
+            return false;
+          }
+        }
+      }
+    }
+   
+    for (const guest of table2.guests) {
+      if (guest.groupPolicy === 'S') {
+        for (const guest1 of table1.guests) {
+          if (guest1.group !== guest.group) {
+            return false;
+          }
+        }
+      }
+    }
+   
+    return true;
+  };
+
   for (const lowUtilTable of tablesByUtilization) {
     if (tablesToRemove.has(lowUtilTable.index)) continue;
    
@@ -5947,6 +6468,8 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
     let merged = false;
     for (const targetTable of tablesByUtilization) {
       if (targetTable.index === lowUtilTable.index || tablesToRemove.has(targetTable.index)) continue;
+     
+      if (!canMergeTables(lowUtilTable.table, targetTable.table)) continue;
      
       if (lowUtilTable.used <= targetTable.remaining) {
        
@@ -5964,6 +6487,8 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
     if (!merged && lowUtilTable.utilization < 0.3) {
       for (const targetTable of tablesByUtilization) {
         if (targetTable.index === lowUtilTable.index || tablesToRemove.has(targetTable.index)) continue;
+       
+        if (!canMergeTables(lowUtilTable.table, targetTable.table)) continue;
        
         if (targetTable.utilization > 0.8) {
           const combinedSize = targetTable.used + lowUtilTable.used;
@@ -5998,13 +6523,18 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
     tables = tables.filter((_, idx) => !tablesToRemove.has(idx));
   }
  
+  tables.forEach((table, idx) => {
+    const guestGroups = [...new Set(table.guests.map(g => g.group))];
+    const hasSPolicy = table.guests.some(g => g.groupPolicy === 'S');
+  });
+ 
   tables.forEach(table => {
     if (!tableSettings[table.capacity]) {
       tableSettings[table.capacity] = 0;
     }
     tableSettings[table.capacity]++;
   });
-  
+ 
   return { tables, tableSettings, rectangular24Used: rect24Count };
 };
 
@@ -6085,7 +6615,7 @@ function fillFullTablesForGroup(
  
   for (const table of emptyTables) {
     if (guestsPool.length === 0) break;
-      
+     
     const bestCombination = findBestGuestCombination(guestsPool, table.capacity);
    
     if (bestCombination.guests.length === 0) {
@@ -6100,7 +6630,7 @@ function fillFullTablesForGroup(
     const reservedTablesCount = (typeof temporarilyReservedTables !== 'undefined') ? temporarilyReservedTables.length : 0;
     const totalEmptyTablesIncludingReserved = emptyTables.length + reservedTablesCount;
     const isLastTable = (currentEmptyTableIndex === emptyTables.length - 1) && (reservedTablesCount === 0);
-      
+     
     const isPerfectFit = utilizationRate === 100;
     const isGoodUtilization = utilizationRate >= 70;
     const isReasonableUtilization = utilizationRate >= 60;
@@ -6163,7 +6693,7 @@ function fillFullTablesForGroup(
      
     }
   }
-  
+ 
   return {
     filledTables,
     remainingGuests: guestsPool
@@ -6213,7 +6743,7 @@ function findBestGuestCombination(guests, tableCapacity) {
   }
  
   selectedGuests.reverse();
-  
+ 
   return {
     guests: selectedGuests,
     totalSize: bestSize
@@ -6290,17 +6820,117 @@ function findBestGuestCombinationHeuristic(guests, tableCapacity) {
       bestWaste = waste;
     }
   }
-  
+ 
   return bestCombination;
 }
 
+function calculateNextTablePositionForGender(existingTables) {
+  const SPACING = 200;
+  const COLS = 3;
+  
+  if (!existingTables || existingTables.length === 0) {
+    return { x: 300, y: 250 };
+  }
+  
+  let minX = Infinity;
+  let minY = Infinity;
+  
+  existingTables.forEach(table => {
+    if (table && table.position) {
+      if (table.position.x < minX) minX = table.position.x;
+      if (table.position.y < minY) minY = table.position.y;
+    }
+  });
+  
+  if (minX === Infinity || minY === Infinity) {
+    return { x: 300, y: 250 };
+  }
+  
+  const occupiedPositions = new Set();
+  existingTables.forEach(table => {
+    if (table && table.position) {
+      const posKey = `${Math.round(table.position.x)},${Math.round(table.position.y)}`;
+      occupiedPositions.add(posKey);
+    }
+  });
+  
+  let position = 0;
+  while (position < 100) {
+    const row = Math.floor(position / COLS);
+    const col = position % COLS;
+    const x = minX + col * SPACING;
+    const y = minY + row * SPACING;
+    const posKey = `${x},${y}`;
+    
+    if (!occupiedPositions.has(posKey)) {
+      return { x, y };
+    }
+    position++;
+  }
+  
+  const tableCounter = existingTables.length;
+  return {
+    x: minX + (tableCounter % COLS) * SPACING,
+    y: minY + Math.floor(tableCounter / COLS) * SPACING
+  };
+}
+
+function calculateNextTablePosition(existingTables) {
+  const MALE_START_X = 300;
+  const START_Y = 250;
+  const SPACING = 200;
+  const COLS = 3;
+ 
+  if (!existingTables || existingTables.length === 0) {
+    return { x: MALE_START_X, y: START_Y };
+  }
+ 
+  const occupiedPositions = new Set();
+  existingTables.forEach(table => {
+    if (table && table.position) {
+      const posKey = `${Math.round(table.position.x)},${Math.round(table.position.y)}`;
+      occupiedPositions.add(posKey);
+    }
+  });
+ 
+  let position = 0;
+  while (position < 100) {
+    const row = Math.floor(position / COLS);
+    const col = position % COLS;
+    const x = MALE_START_X + col * SPACING;
+    const y = START_Y + row * SPACING;
+    const posKey = `${x},${y}`;
+   
+    if (!occupiedPositions.has(posKey)) {
+      return { x, y };
+    }
+    position++;
+  }
+ 
+  const tableCounter = existingTables.length;
+  return {
+    x: MALE_START_X + (tableCounter % COLS) * SPACING,
+    y: START_Y + Math.floor(tableCounter / COLS) * SPACING
+  };
+}
+
 function generateOptimalSeating(guests, tables, preferences) {
+
+  const originalTableNumbers = new Map();
+  tables.forEach((table) => {
+    const match = table.name.match(/\d+/);
+    if (match) {
+      originalTableNumbers.set(table.id, parseInt(match[0]));
+    }
+  });
 
   tables.sort((a, b) => {
     if (b.capacity !== a.capacity) {
       return b.capacity - a.capacity;
     }
-    return (a.name || '').localeCompare(b.name || '');
+    const aNum = originalTableNumbers.get(a.id) || 0;
+    const bNum = originalTableNumbers.get(b.id) || 0;
+    return aNum - bNum;
   });
 
   const mixingMode = determineMixingMode(preferences);
@@ -6332,24 +6962,25 @@ function generateOptimalSeating(guests, tables, preferences) {
       separateGroupSizes[group] += (guest.attendingCount || 1);
     }
   });
- 
+
   const reservedTablesForSGroups = new Map();
   const reservedTableIds = new Set();
  
   separateGroupsList.forEach(groupName => {
-    const groupSize = separateGroupSizes[groupName];
-   
-    const suitableTable = availableTables.find(table =>
-      !reservedTableIds.has(table.id) &&
-      table.assignedGuests.length === 0 &&
-      table.capacity >= groupSize
-    );
-   
-    if (suitableTable) {
-      reservedTablesForSGroups.set(groupName, suitableTable.id);
-      reservedTableIds.add(suitableTable.id);
-    }
-  });
+  const groupSize = separateGroupSizes[groupName];
+ 
+  const suitableTable = availableTables.find(table =>
+    !reservedTableIds.has(table.id) &&
+    table.assignedGuests.length === 0 &&
+    table.capacity >= groupSize
+  );
+ 
+  if (suitableTable) {
+    reservedTablesForSGroups.set(groupName, suitableTable.id);
+    reservedTableIds.add(suitableTable.id);
+  } else {
+  }
+});
 
   if (preferences.seatingRules && preferences.seatingRules.mustSitTogether) {
     preferences.seatingRules.mustSitTogether.forEach(rule => {
@@ -6389,6 +7020,11 @@ function generateOptimalSeating(guests, tables, preferences) {
     groupedGuests[group].push(guest);
   });
 
+  Object.entries(groupedGuests).forEach(([groupName, guestList]) => {
+    const totalPeople = guestList.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+    const policy = (preferences.groupPolicies || {})[groupName] || 'none';
+  });
+
   const sortedGroups = Object.entries(groupedGuests).sort((a, b) => {
     const aTotal = a[1].reduce((sum, g) => sum + (g.attendingCount || 1), 0);
     const bTotal = b[1].reduce((sum, g) => sum + (g.attendingCount || 1), 0);
@@ -6410,6 +7046,9 @@ function generateOptimalSeating(guests, tables, preferences) {
   const hasMixingRules = preferences.groupMixingRules && preferences.groupMixingRules.length > 0;
  
   if (preferences.allowGroupMixing && hasMixingRules) {
+
+    preferences.groupMixingRules.forEach(rule => {
+    });
    
     const mixableGroupPairs = new Set();
     preferences.groupMixingRules.forEach(rule => {
@@ -6429,26 +7068,26 @@ function generateOptimalSeating(guests, tables, preferences) {
         groupsInMixingRules.add(rule.group2);
       }
     });
-      
+     
     const mixableGuestsByGroup = new Map();
     const nonMixableGroups = new Map();
     const separateGroups = new Map();
    
     sortedGroups.forEach(([groupName, groupGuests]) => {
-      const groupPolicy = groupPolicies[groupName];
-      const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
-     
-      if (groupPolicy === 'S') {
-        separateGroups.set(groupName, unassigned);
-      } else if (groupsInMixingRules.has(groupName)) {
-        mixableGuestsByGroup.set(groupName, unassigned);
-      } else if (groupPolicy === 'M') {
-        mixableGuestsByGroup.set(groupName, unassigned);
-      } else {
-        nonMixableGroups.set(groupName, unassigned);
-      }
-    });
-   
+    const groupPolicy = groupPolicies[groupName];
+    const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
+      
+    if (groupPolicy === 'S') {
+      separateGroups.set(groupName, unassigned);
+    } else if (groupsInMixingRules.has(groupName)) {
+      mixableGuestsByGroup.set(groupName, unassigned);
+    } else if (groupPolicy === 'M') {
+      mixableGuestsByGroup.set(groupName, unassigned);
+    } else {
+      nonMixableGroups.set(groupName, unassigned);
+    }
+  });
+
     const mPolicyGroups = [];
     sortedGroups.forEach(([groupName]) => {
       const groupPolicy = groupPolicies[groupName];
@@ -6467,57 +7106,60 @@ function generateOptimalSeating(guests, tables, preferences) {
     const allGroupsSorted = [];
    
     separateGroups.forEach((groupGuests, groupName) => {
-      const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-      allGroupsSorted.push({
-        name: groupName,
-        guests: groupGuests,
-        totalPeople,
-        type: 'separate',
-        canMixWith: []
-      });
+    const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+    allGroupsSorted.push({
+      name: groupName,
+      guests: groupGuests,
+      totalPeople,
+      type: 'separate',
+      canMixWith: []
+    });
+  });
+
+  nonMixableGroups.forEach((groupGuests, groupName) => {
+    const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+    allGroupsSorted.push({
+      name: groupName,
+      guests: groupGuests,
+      totalPeople,
+      type: 'non-mixable',
+      canMixWith: []
+    });
+  });
+
+  mixableGuestsByGroup.forEach((groupGuests, groupName) => {
+    const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+   
+    const canMixWith = [];
+    mixableGuestsByGroup.forEach((_, otherGroupName) => {
+      if (otherGroupName !== groupName &&
+          mixableGroupPairs.has(`${groupName}|${otherGroupName}`)) {
+        canMixWith.push(otherGroupName);
+      }
     });
    
-    nonMixableGroups.forEach((groupGuests, groupName) => {
-      const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-      allGroupsSorted.push({
-        name: groupName,
-        guests: groupGuests,
-        totalPeople,
-        type: 'non-mixable',
-        canMixWith: []
-      });
+    allGroupsSorted.push({
+      name: groupName,
+      guests: groupGuests,
+      totalPeople,
+      type: 'mixable',
+      canMixWith
     });
-   
-    mixableGuestsByGroup.forEach((groupGuests, groupName) => {
-      const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-     
-      const canMixWith = [];
-      mixableGuestsByGroup.forEach((_, otherGroupName) => {
-        if (otherGroupName !== groupName &&
-            mixableGroupPairs.has(`${groupName}|${otherGroupName}`)) {
-          canMixWith.push(otherGroupName);
-        }
-      });
-     
-      allGroupsSorted.push({
-        name: groupName,
-        guests: groupGuests,
-        totalPeople,
-        type: 'mixable',
-        canMixWith
-      });
-    });
+  });
    
     allGroupsSorted.sort((a, b) => {
       const sizeDiff = b.totalPeople - a.totalPeople;
       if (sizeDiff !== 0) return sizeDiff;
       return a.name.localeCompare(b.name);
     });
-      
+     
+    allGroupsSorted.forEach((group, index) => {
+    });
+
     const preferredTableSize = preferences.preferredTableSize || 12;
     const totalAvailableTables = availableTables.length;
     const totalPeopleToSeat = allGroupsSorted.reduce((sum, g) => sum + g.totalPeople, 0);
-   
+
     const groupTableRequirements = new Map();
     allGroupsSorted.forEach(group => {
       const minTablesNeeded = Math.ceil(group.totalPeople / preferredTableSize);
@@ -6634,7 +7276,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         availableTables.push(table);
       });
     }
-      
+     
     const mixableRemainingGuests = [];
     remainingGuestsByGroup.forEach((groupInfo, groupName) => {
       if (groupInfo.type === 'mixable') {
@@ -6643,7 +7285,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         });
       }
     });
-      
+     
     if (mixableRemainingGuests.length > 0) {
       mixableRemainingGuests.sort((a, b) => {
         const sizeDiff = (b.guest.attendingCount || 1) - (a.guest.attendingCount || 1);
@@ -6777,7 +7419,7 @@ function generateOptimalSeating(guests, tables, preferences) {
                 alreadyAssigned,
                 { t: (key) => key }
               );
-                          
+                         
               if (assignResult) {
                 break;
               }
@@ -6820,100 +7462,6 @@ function generateOptimalSeating(guests, tables, preferences) {
         return aUtil - bUtil;
       });
 
-      for (let i = 0; i < tablesWithGuests.length; i++) {
-        const table1 = tablesWithGuests[i];
-       
-        if (table1.capacity !== 10) continue;
-       
-        const table1GuestIds = arrangement[table1.id] || [];
-        const table1Guests = table1GuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
-        const table1People = table1Guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-        const table1Groups = [...new Set(table1Guests.map(g => g.customGroup || g.group))];
-       
-        const allMixable = table1Groups.every(g => isMixable(g));
-        if (!allMixable) continue;
-       
-        for (let j = i + 1; j < tablesWithGuests.length; j++) {
-          const table2 = tablesWithGuests[j];
-         
-          if (table2.capacity !== 10) continue;
-         
-          const table2GuestIds = arrangement[table2.id] || [];
-          const table2Guests = table2GuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
-          const table2People = table2Guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-         
-          const totalPeople = table1People + table2People;
-         
-          if (totalPeople > 12) continue;
-         
-          const table2Groups = [...new Set(table2Guests.map(g => g.customGroup || g.group))];
-          const allTable2Mixable = table2Groups.every(g => isMixable(g));
-          if (!allTable2Mixable) continue;
-         
-          let canMergeGroups = true;
-          for (const g1 of table1Groups) {
-            for (const g2 of table2Groups) {
-              if (g1 !== g2 && !canMix(g1, g2)) {
-                canMergeGroups = false;
-                break;
-              }
-            }
-            if (!canMergeGroups) break;
-          }
-         
-          if (!canMergeGroups) continue;
-         
-          const newTableId = `merged_${table1.id}_${table2.id}`;
-          const newTable = {
-            id: newTableId,
-            name: `${table1.name}+${table2.name} (12)`,
-            capacity: 12,
-            remainingCapacity: 12 - totalPeople,
-            assignedGuests: [...table1GuestIds, ...table2GuestIds]
-          };
-         
-          tables.push(newTable);
-          availableTables.push(newTable);
-         
-          arrangement[newTableId] = [...table1GuestIds, ...table2GuestIds];
-         
-          delete arrangement[table1.id];
-          delete arrangement[table2.id];
-         
-          const table1Index = availableTables.findIndex(t => t.id === table1.id);
-          if (table1Index !== -1) {
-            availableTables.splice(table1Index, 1);
-          }
-         
-          const table2Index = availableTables.findIndex(t => t.id === table2.id);
-          if (table2Index !== -1) {
-            availableTables.splice(table2Index, 1);
-          }
-         
-          const table1IndexInTables = tables.findIndex(t => t.id === table1.id);
-          if (table1IndexInTables !== -1) {
-            tables.splice(table1IndexInTables, 1);
-          }
-         
-          const table2IndexInTables = tables.findIndex(t => t.id === table2.id);
-          if (table2IndexInTables !== -1) {
-            tables.splice(table2IndexInTables, 1);
-          }
-         
-          const table1IndexInList = tablesWithGuests.findIndex(t => t.id === table1.id);
-          if (table1IndexInList !== -1) {
-            tablesWithGuests.splice(table1IndexInList, 1);
-          }
-         
-          const table2IndexInList = tablesWithGuests.findIndex(t => t.id === table2.id);
-          if (table2IndexInList !== -1) {
-            tablesWithGuests.splice(table2IndexInList, 1);
-          }
-                  
-          i--;
-          break;
-        }
-      }
 
       for (let i = 0; i < tablesWithGuests.length; i++) {
         const table1 = tablesWithGuests[i];
@@ -7009,7 +7557,7 @@ function generateOptimalSeating(guests, tables, preferences) {
      
       return utilization < 0.95;
     });
-      
+     
     for (const largeTable of largeTables) {
       const largeTableGuestIds = arrangement[largeTable.id] || [];
       const largeTableGuests = largeTableGuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
@@ -7060,7 +7608,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         return bUtil - aUtil;
       });
-          
+         
       for (const smallTable of candidateSmallTables) {
         const smallTableGuestIds = arrangement[smallTable.id] || [];
         const smallTableGuests = smallTableGuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
@@ -7084,7 +7632,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         smallTable.remainingCapacity = smallTable.capacity;
         smallTable.assignedGuests = [];
-              
+             
         largeTablePeople = combinedPeople;
         largeTableUtilization = combinedUtilization;
        
@@ -7114,7 +7662,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         const guestGroup = item.guest.customGroup || item.guest.group;
         const guestSize = item.guest.attendingCount || 1;
-              
+             
         const upgradeableTables = availableTables.filter(t => {
           if (t.capacity !== 10) return false;
          
@@ -7199,12 +7747,12 @@ function generateOptimalSeating(guests, tables, preferences) {
       const stillUnassignedAfterUpgrades = remainingToAssignAfterUpgrade.filter(item =>
         !alreadyAssigned.has(item.guest._id.toString())
       );
-          
+         
       const emptyAvailableTables = availableTables.filter(t => {
         const guestIds = arrangement[t.id] || [];
         return guestIds.length === 0 && !t.autoCreated;
       });
-          
+         
       if (emptyAvailableTables.length > 0 && stillUnassignedAfterUpgrades.length > 0) {
        
         emptyAvailableTables.sort((a, b) => b.capacity - a.capacity);
@@ -7237,7 +7785,7 @@ function generateOptimalSeating(guests, tables, preferences) {
             table.assignedGuests.push(item.guest._id.toString());
             table.remainingCapacity -= guestSize;
             alreadyAssigned.add(item.guest._id.toString());
-                      
+                     
             remainingToAssign = remainingToAssign.filter(i => i.guest._id.toString() !== item.guest._id.toString());
           }
         }
@@ -7249,10 +7797,9 @@ function generateOptimalSeating(guests, tables, preferences) {
           const preferredTableSize = preferences.preferredTableSize || 12;
           const tablesNeeded = Math.ceil(stillUnassignedAfterUsingEmpty.reduce((sum, item) =>
             sum + (item.guest.attendingCount || 1), 0) / preferredTableSize);
-                  
+                 
           for (let i = 0; i < tablesNeeded; i++) {
-            const currentTableCount = tables.length;
-            const tableNumber = currentTableCount + 1;
+            const tableNumber = getMaxTableNumber(tables) + 1;
             const tableId = `table_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
            
             let tableType = 'round';
@@ -7271,14 +7818,14 @@ function generateOptimalSeating(guests, tables, preferences) {
               name: `שולחן ${tableNumber}`,
               capacity: capacity,
               type: tableType,
-              position: { x: 100 + (currentTableCount * 150), y: 100 },
+              position: calculateNextTablePosition(tables),
               rotation: 0,
               assignedGuests: [],
               remainingCapacity: capacity,
               autoCreated: true,
               createdForSync: true
             };
-                      
+                     
             tables.push(newTable);
             availableTables.push(newTable);
            
@@ -7299,7 +7846,7 @@ function generateOptimalSeating(guests, tables, preferences) {
                 newTable.remainingCapacity -= guestSize;
                 alreadyAssigned.add(item.guest._id.toString());
                 currentOccupancy += guestSize;
-                              
+                             
                 if (currentOccupancy >= capacity) break;
               }
             }
@@ -7313,10 +7860,9 @@ function generateOptimalSeating(guests, tables, preferences) {
           const totalPeopleRemaining = stillUnassignedAfterUpgrades.reduce((sum, item) =>
             sum + (item.guest.attendingCount || 1), 0);
           const tablesNeeded = Math.ceil(totalPeopleRemaining / preferredTableSize);
-                  
+                 
           for (let i = 0; i < tablesNeeded; i++) {
-            const currentTableCount = tables.length;
-            const tableNumber = currentTableCount + 1;
+            const tableNumber = getMaxTableNumber(tables) + 1;
             const tableId = `table_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`;
            
             let tableType = 'round';
@@ -7335,14 +7881,14 @@ function generateOptimalSeating(guests, tables, preferences) {
               name: `שולחן ${tableNumber}`,
               capacity: capacity,
               type: tableType,
-              position: { x: 100 + (currentTableCount * 150), y: 100 },
+              position: calculateNextTablePosition(tables),
               rotation: 0,
               assignedGuests: [],
               remainingCapacity: capacity,
               autoCreated: true,
               createdForSync: true
             };
-                      
+                     
             tables.push(newTable);
             availableTables.push(newTable);
            
@@ -7364,7 +7910,7 @@ function generateOptimalSeating(guests, tables, preferences) {
                 newTable.remainingCapacity -= guestSize;
                 alreadyAssigned.add(item.guest._id.toString());
                 currentOccupancy += guestSize;
-                              
+                             
                 if (currentOccupancy >= capacity) break;
               }
             }
@@ -7374,16 +7920,21 @@ function generateOptimalSeating(guests, tables, preferences) {
      
     }
 
+    const originalNumbers = new Map();
+    tables.forEach((table) => {
+      const match = table.name.match(/\d+/);
+      if (match) {
+        originalNumbers.set(table.id, parseInt(match[0]));
+      }
+    });
+
     tables.sort((a, b) => {
-      if (a.capacity !== b.capacity) {
-        return b.capacity - a.capacity;
+      const aNum = originalNumbers.get(a.id) || 0;
+      const bNum = originalNumbers.get(b.id) || 0;
+      if (aNum !== bNum) {
+        return aNum - bNum;
       }
       return a.id.localeCompare(b.id);
-    });
-   
-    tables.forEach((table, index) => {
-      const newName = `שולחן ${index + 1}`;
-      table.name = newName;
     });
    
     availableTables.forEach(availTable => {
@@ -7393,7 +7944,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         availTable.capacity = mainTable.capacity;
       }
     });
-      
+     
     const nonMixableRemaining = [];
     remainingGuestsByGroup.forEach((groupInfo, groupName) => {
       if (groupInfo.type === 'non-mixable' || groupInfo.type === 'separate') {
@@ -7496,7 +8047,7 @@ function generateOptimalSeating(guests, tables, preferences) {
     separateGroups.forEach(({ groupName, guests: groupGuests }) => {
       const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
       if (unassigned.length === 0) return;
-          
+         
       const reservedTableId = reservedTablesForSGroups.get(groupName);
       let targetTable = null;
      
@@ -7517,7 +8068,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         });
       }
     });
-      
+     
     if (allUnassignedGuests.length > 0) {
       allUnassignedGuests.sort((a, b) => (b.attendingCount || 1) - (a.attendingCount || 1));
      
@@ -7537,7 +8088,9 @@ function generateOptimalSeating(guests, tables, preferences) {
    
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
-      if (groupPolicy === 'S') return;
+      if (groupPolicy === 'S') {
+        return;
+      }
      
       const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
       if (unassigned.length === 0) return;
@@ -7548,7 +8101,9 @@ function generateOptimalSeating(guests, tables, preferences) {
         name: `${g.firstName} ${g.lastName}`,
         size: g.attendingCount || 1,
         _id: g._id,
-        originalGuest: g
+        originalGuest: g,
+        group: g.customGroup || g.group,
+        groupPolicy: groupPolicies[g.customGroup || g.group]
       }));
      
       let capacities = [...new Set(unreservedTables.map(t => t.capacity))];
@@ -7591,7 +8146,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         return freeCapacity > 0;
       });
-          
+         
       const emptyTables = unreservedTables.filter(t =>
         t.assignedGuests.length === 0 &&
         !globalUsedTableIds.has(t.id)
@@ -7612,8 +8167,7 @@ function generateOptimalSeating(guests, tables, preferences) {
           }
          
           const requiredCapacity = tableArrangement.capacity;
-          const currentTableCount = tables.length;
-          const tableNumber = currentTableCount + 1;
+          const tableNumber = getMaxTableNumber(tables) + 1;
           const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
          
           let tableType = 'round';
@@ -7626,14 +8180,14 @@ function generateOptimalSeating(guests, tables, preferences) {
             name: `שולחן ${tableNumber}`,
             capacity: requiredCapacity,
             type: tableType,
-            position: { x: 100 + (currentTableCount * 150), y: 100 },
+            position: calculateNextTablePosition(tables),
             rotation: 0,
             assignedGuests: [],
             remainingCapacity: requiredCapacity,
             autoCreated: true,
             createdForSync: true
           };
-                  
+                 
           tables.push(newTable);
           availableTables.push(newTable);
           unreservedTables.push(newTable);
@@ -7641,7 +8195,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         }
        
       }
-          
+         
       for (const table of tablesWithGroupGuests) {
         if (unassigned.length === 0) break;
        
@@ -7650,7 +8204,7 @@ function generateOptimalSeating(guests, tables, preferences) {
           return sum + (guest?.attendingCount || 1);
         }, 0);
         let freeCapacity = table.capacity - currentOccupancy;
-              
+             
         const sortedUnassigned = [...unassigned].sort((a, b) =>
           (a.attendingCount || 1) - (b.attendingCount || 1)
         );
@@ -7706,11 +8260,11 @@ function generateOptimalSeating(guests, tables, preferences) {
           guests: unassignedGuests
         };
       }).filter(tableArrangement => tableArrangement.guests.length > 0);
-          
+         
       for (const tableArrangement of filteredTables) {
         const requiredCapacity = tableArrangement.capacity;
         const guestsForThisTable = tableArrangement.guests;
-              
+             
         let foundTable = emptyTables.find(t =>
           t.capacity === requiredCapacity &&
           !assignedTablesForGroup.some(at => at.id === t.id)
@@ -7726,8 +8280,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         if (!foundTable) {
          
-          const currentTableCount = tables.length;
-          const tableNumber = currentTableCount + 1;
+          const tableNumber = getMaxTableNumber(tables) + 1;
           const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
          
           let tableType = 'round';
@@ -7742,14 +8295,14 @@ function generateOptimalSeating(guests, tables, preferences) {
             name: `שולחן ${tableNumber}`,
             capacity: newCapacity,
             type: tableType,
-            position: { x: 100 + (currentTableCount * 150), y: 100 },
+            position: calculateNextTablePosition(tables),
             rotation: 0,
             assignedGuests: [],
             remainingCapacity: newCapacity,
             autoCreated: true,
             createdForSync: true
           };
-                  
+                 
           tables.push(foundTable);
           availableTables.push(foundTable);
           unreservedTables.push(foundTable);
@@ -7758,7 +8311,7 @@ function generateOptimalSeating(guests, tables, preferences) {
        
         assignedTablesForGroup.push(foundTable);
         globalUsedTableIds.add(foundTable.id);
-              
+             
         guestsForThisTable.forEach(guestInfo => {
           const originalGuest = guestInfo.originalGuest;
          
@@ -7845,13 +8398,6 @@ function generateOptimalSeating(guests, tables, preferences) {
       delete arrangement[table.id];
     }
   }
- 
-  tables.forEach((table, index) => {
-    const newName = `שולחן ${index + 1}`;
-    if (table.name !== newName) {
-      table.name = newName;
-    }
-  });
    
   const stillUnassigned = guests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
 
@@ -7868,7 +8414,7 @@ function generateOptimalSeating(guests, tables, preferences) {
         const tableGuests = tableGuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
         const currentOccupancy = tableGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
         const actualRemainingCapacity = table.capacity - currentOccupancy;
-              
+             
         if (actualRemainingCapacity >= guestSize) {
           if (canGuestBeAssignedToTable(guest, table, arrangement, guests, groupPolicies, clusterMap, mixingMode, new Map())) {
             const assignResult = assignGuestToTableAdvanced(guest, table, arrangement, availableTables, preferences, guests, alreadyAssigned, { t: (key) => key });
@@ -7895,8 +8441,17 @@ function generateOptimalSeating(guests, tables, preferences) {
         const guestSize = guest.attendingCount || 1;
 
         if (!currentEmergencyTable || currentEmergencyTable.remainingCapacity < guestSize) {
-          const currentTableCount = tables.length;
-          const tableNumber = currentTableCount + 1;
+          let maxTableNumber = 0;
+          tables.forEach(t => {
+            const match = t.name.match(/שולחן (\d+)/);
+            if (match) {
+              const num = parseInt(match[1]);
+              if (num > maxTableNumber) {
+                maxTableNumber = num;
+              }
+            }
+          });
+          const tableNumber = maxTableNumber + 1;
           const tableId = `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
           const remainingGuestsToSeat = remainingUnassigned.filter(g => !alreadyAssigned.has(g._id.toString()));
@@ -7921,7 +8476,7 @@ function generateOptimalSeating(guests, tables, preferences) {
             name: `שולחן ${tableNumber}`,
             capacity: newCapacity,
             type: tableType,
-            position: { x: 100 + (currentTableCount * 150), y: 100 },
+            position: calculateNextTablePosition(tables),
             rotation: 0,
             assignedGuests: [],
             remainingCapacity: newCapacity,
@@ -7960,6 +8515,10 @@ function generateOptimalSeating(guests, tables, preferences) {
     }
   }
  
+  Object.entries(arrangement).forEach(([tableId, guestIds]) => {
+    const table = tables.find(t => t.id === tableId);
+  });
+
   return { arrangement, tables };
 }
 
@@ -8453,11 +9012,82 @@ function createStandardTables(guests, totalPeople, preferences = null) {
   let tableNumber = 1;
  
   const hasMixingRules = preferences?.groupMixingRules && preferences.groupMixingRules.length > 0;
-  const mixingRulesCount = hasMixingRules ? preferences.groupMixingRules.length : 0;
+  const hasGroupPolicies = preferences?.groupPolicies && Object.keys(preferences.groupPolicies).length > 0;
+  const isNoMixing = !preferences?.allowGroupMixing && !hasMixingRules && !hasGroupPolicies;
  
-  const preferSmallTables = totalPeople <= 110;
- 
-  const estimatedUpgradeTables = hasMixingRules ? mixingRulesCount : 0;
+  if (isNoMixing) {
+    const mixingRulesCount = hasMixingRules ? preferences.groupMixingRules.length : 0;
+    const preferSmallTables = totalPeople <= 110;
+    const estimatedUpgradeTables = hasMixingRules ? mixingRulesCount : 0;
+   
+    const largestGuest = guests.reduce((max, g) => {
+      const gSize = g.attendingCount || 1;
+      const maxSize = max ? (max.attendingCount || 1) : 0;
+      return gSize > maxSize ? g : max;
+    }, null);
+    const largestGuestSize = largestGuest ? (largestGuest.attendingCount || 1) : 0;
+   
+    if (largestGuestSize > 10) {
+      const firstTableCapacity = largestGuestSize > 12 ? 24 : 12;
+       
+      tablesCopy.push({
+        id: `temp_${tableNumber}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: firstTableCapacity,
+        type: 'round',
+        position: { x: 100 + (tableNumber * 150), y: 100 },
+        rotation: 0,
+        assignedGuests: [],
+        remainingCapacity: firstTableCapacity
+      });
+     
+      remainingPeople -= firstTableCapacity;
+      tableNumber++;
+    }
+   
+    let tablesOf10 = 0;
+    let tablesOf12 = 0;
+    let upgradeTablesCreated = 0;
+   
+    while (remainingPeople > 0) {
+      let capacity;
+      const totalTables = tablesOf10 + tablesOf12;
+     
+      if (hasMixingRules && upgradeTablesCreated < estimatedUpgradeTables && remainingPeople >= 11) {
+        capacity = 12;
+        tablesOf12++;
+        upgradeTablesCreated++;
+      }
+      else if (remainingPeople <= 10) {
+        capacity = 10;
+        tablesOf10++;
+      }
+      else if (remainingPeople >= 11 && remainingPeople <= 12) {
+        capacity = 12;
+        tablesOf12++;
+      }
+      else {
+        capacity = 10;
+        tablesOf10++;
+      }
+     
+      tablesCopy.push({
+        id: `temp_${tableNumber}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: capacity,
+        type: 'round',
+        position: { x: 100 + (tableNumber * 150), y: 100 },
+        rotation: 0,
+        assignedGuests: [],
+        remainingCapacity: capacity
+      });
+       
+      remainingPeople -= capacity;
+      tableNumber++;
+    }
+   
+    return tablesCopy;
+  }
  
   const largestGuest = guests.reduce((max, g) => {
     const gSize = g.attendingCount || 1;
@@ -8465,47 +9095,94 @@ function createStandardTables(guests, totalPeople, preferences = null) {
     return gSize > maxSize ? g : max;
   }, null);
   const largestGuestSize = largestGuest ? (largestGuest.attendingCount || 1) : 0;
-  
-  if (largestGuestSize > 10) {
-    const firstTableCapacity = largestGuestSize > 12 ? 24 : 12;
-      
+ 
+  const largeGuests = guests.filter(g => (g.attendingCount || 1) > 10);
+  const veryLargeGuests = largeGuests.filter(g => (g.attendingCount || 1) > 16);
+ 
+  let tablesOf24 = 0;
+  let tablesOf12 = 0;
+  let tablesOf10 = 0;
+ 
+  veryLargeGuests.forEach(guest => {
+    if (tablesOf24 < 2 && remainingPeople >= 23) {
+      const capacity = 24;
+      tablesCopy.push({
+        id: `temp_${tableNumber}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: capacity,
+        type: 'round',
+        position: { x: 100 + (tableNumber * 150), y: 100 },
+        rotation: 0,
+        assignedGuests: [],
+        remainingCapacity: capacity
+      });
+      tablesOf24++;
+      remainingPeople -= capacity;
+      tableNumber++;
+    }
+  });
+ 
+  const mediumLargeGuests = largeGuests.filter(g => (g.attendingCount || 1) >= 11 && (g.attendingCount || 1) <= 16);
+  mediumLargeGuests.forEach(guest => {
+    if (tablesOf24 < 2 && remainingPeople >= 23) {
+      const capacity = 24;
+      tablesCopy.push({
+        id: `temp_${tableNumber}_${Math.random().toString(36).substr(2, 9)}`,
+        name: `שולחן ${tableNumber}`,
+        capacity: capacity,
+        type: 'round',
+        position: { x: 100 + (tableNumber * 150), y: 100 },
+        rotation: 0,
+        assignedGuests: [],
+        remainingCapacity: capacity
+      });
+      tablesOf24++;
+      remainingPeople -= capacity;
+      tableNumber++;
+    }
+  });
+ 
+  if (tablesOf24 < 2 && remainingPeople >= 23 && totalPeople >= 100) {
+    const capacity = 24;
     tablesCopy.push({
       id: `temp_${tableNumber}_${Math.random().toString(36).substr(2, 9)}`,
       name: `שולחן ${tableNumber}`,
-      capacity: firstTableCapacity,
+      capacity: capacity,
       type: 'round',
       position: { x: 100 + (tableNumber * 150), y: 100 },
       rotation: 0,
       assignedGuests: [],
-      remainingCapacity: firstTableCapacity
+      remainingCapacity: capacity
     });
-   
-    remainingPeople -= firstTableCapacity;
+    tablesOf24++;
+    remainingPeople -= capacity;
     tableNumber++;
   }
  
-  let tablesOf10 = 0;
-  let tablesOf12 = 0;
-  let upgradeTablesCreated = 0;
- 
   while (remainingPeople > 0) {
     let capacity;
-    const totalTables = tablesOf10 + tablesOf12;
    
-    if (hasMixingRules && upgradeTablesCreated < estimatedUpgradeTables && remainingPeople >= 10) {
+    if (remainingPeople >= 23) {
+      if (tablesOf24 < 2) {
+        capacity = 24;
+        tablesOf24++;
+      } else {
+        capacity = 12;
+        tablesOf12++;
+      }
+    } else if (remainingPeople >= 12) {
       capacity = 12;
       tablesOf12++;
-      upgradeTablesCreated++;
-    }
-    else if (remainingPeople <= 11) {
+    } else if (remainingPeople >= 11) {
+      capacity = 12;
+      tablesOf12++;
+    } else if (remainingPeople === 10) {
       capacity = 10;
       tablesOf10++;
-    }
-    else if (remainingPeople === 12) {
-      capacity = 12;
-      tablesOf12++;
-    }
-    else {
+    } else if (remainingPeople >= 5) {
+      capacity = 10;
+      tablesOf10++;
+    } else {
       capacity = 10;
       tablesOf10++;
     }
@@ -8520,11 +9197,11 @@ function createStandardTables(guests, totalPeople, preferences = null) {
       assignedGuests: [],
       remainingCapacity: capacity
     });
-      
+     
     remainingPeople -= capacity;
     tableNumber++;
   }
-  
+ 
   return tablesCopy;
 }
 
@@ -8741,7 +9418,7 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences) {
       } else {
         retryTables = createStandardTables(guests, retryAdjustedTotalPeople, preferences);
       }
-          
+         
       const retryResult = generateOptimalSeating(guests, retryTables, preferences);
       retryTables = retryResult.tables;
      
