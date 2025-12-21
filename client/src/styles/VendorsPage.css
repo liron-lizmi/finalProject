@@ -102,6 +102,7 @@ html[dir="ltr"] .vendors-search-button {
 
 .filter-group {
   margin-bottom: 15px;
+  position: relative;
 }
 
 .filter-group label {
@@ -122,6 +123,7 @@ html[dir="ltr"] .vendors-search-button {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  max-width: 100%;
 }
 
 .filter-group select.rtl-select {
@@ -2263,11 +2265,29 @@ html[dir="ltr"] .vp-change-vendor-button {
 }
 
 @media (max-width: 480px) {
-  .vendors-page, .vp-vendors-page {
-    padding: 15px;
+  .vendors-header, .vp-vendors-header {
+    position: relative !important;
+    margin-top: 60px !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    height: auto !important;
   }
+
   .vendors-header h1, .vp-vendors-header h1 {
     font-size: 1.8rem;
+    position: static !important;
+    margin: 0 !important;
+  }
+
+  .selected-vendors, .vp-selected-vendors, .manual-vendor-form, .vp-manual-vendor-form {
+    margin-top: 20px !important;
+    padding-top: 0;
+  }
+
+  .vendors-page, .vp-vendors-page {
+    padding: 15px;
   }
   .vendor-details-content, .vp-vendor-details-content {
     padding: 15px;
@@ -2340,9 +2360,6 @@ html[dir="ltr"] .vp-change-vendor-button {
   .manual-vendor-form .form-group textarea, .vp-manual-vendor-form .vp-form-group textarea {
     font-size: 0.9rem;
     padding: 10px;
-  }
-  .manual-vendor-form, .vp-manual-vendor-form {
-    margin-top: -100px;
   }
   .vendor-actions, .vp-vendor-actions {
     flex-direction: column;
@@ -2441,12 +2458,8 @@ html[dir="ltr"] .vp-change-vendor-button {
   .no-vendor-selected, .vp-no-vendor-selected {
     margin-top: 40px;
   }
-  .selected-vendors, .vp-selected-vendors {
-    margin-top: -100px;
-    padding-top: 0;
-  }
   .success-message, .vp-success-message {
-    margin-bottom: 100px;
+    margin-bottom: 20px;
     position: relative;
     z-index: 10;
   }

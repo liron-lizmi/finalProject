@@ -1542,6 +1542,18 @@ body {
     padding: 8px 20px;
     font-size: 0.9rem;
   }
+
+  .rtl .section-header {
+    justify-content: flex-end !important;
+    flex-direction: row !important;
+  }
+
+  .rtl .section-header h2 {
+    text-align: right !important;
+    width: 100%;
+    justify-content: flex-end !important;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1668,6 +1680,22 @@ body {
   
   .event-body {
     padding: 1.2rem;
+    text-align: right !important; /* מבטיח יישור לימין */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* שומר על האלמנטים בצד ימין ב-RTL */
+  }
+
+  .rtl .section-header {
+    justify-content: flex-end !important;
+    flex-direction: row !important;
+  }
+
+  .rtl .section-header h2 {
+    text-align: right !important;
+    width: 100%;
+    justify-content: flex-end !important;
+    gap: 8px;
   }
 
   .auth-logo-container .logo {
@@ -1731,5 +1759,17 @@ body {
   .auth-button {
     padding: 17px !important;
     font-size: 17px !important;
+  }
+
+  .rtl .section-header {
+    justify-content: flex-end !important;
+    flex-direction: row !important;
+  }
+
+  .rtl .section-header h2 {
+    text-align: right !important;
+    width: 100%;
+    justify-content: flex-end !important;
+    gap: 8px;
   }
 }
