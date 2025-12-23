@@ -1303,18 +1303,7 @@ html[dir="ltr"] .vp-vendors-search-button {
   background-color: #333;
 }
 
-.vp-vendors-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 
-.vp-vendors-filters {
-  background-color: #f8f8f8;
-  padding: 20px;
-  border-radius: 4px;
-  border: 1px solid #eee;
-}
 
 .vp-vendors-filters h3 {
   margin-bottom: 15px;
@@ -1406,10 +1395,30 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
   background-color: #333;
 }
 
+.vp-vendors-content {
+  display: flex !important;
+  flex-direction: row !important; 
+  gap: 30px !important;
+  align-items: flex-start !important;
+}
+
+.vp-vendors-filters {
+  flex: 0 0 300px !important; 
+  max-width: 300px !important;
+  background-color: #f8f8f8;
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  position: sticky !important;
+  top: 20px;
+}
+
 .vp-vendors-results-container {
+  flex: 1 !important; 
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .vp-vendors-map {

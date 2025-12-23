@@ -1431,20 +1431,6 @@ html[dir="ltr"] .vup-venue-search-button {
   background-color: #333;
 }
 
-.vup-venue-content {
-  display: flex;
-  flex-direction: column;
-  gap: 30px; 
-}
-
-.vup-venue-filters {
-  background-color: #fff; 
-  padding: 25px; 
-  border-radius: 8px; 
-  border: 1px solid #eee;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03); 
-}
-
 .vup-venue-filters h3 {
   margin-bottom: 15px;
   padding-bottom: 10px;
@@ -1545,10 +1531,32 @@ html[dir="ltr"] .vup-checkbox-group input[type="checkbox"] {
   background-color: #d4b99e;
 }
 
+.vup-venue-content {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 30px !important;
+  align-items: flex-start !important;
+}
+
+.vup-venue-filters {
+  flex: 0 0 300px !important; 
+  max-width: 300px !important;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  position: sticky !important;
+  top: 20px;
+  box-sizing: border-box !important;
+}
+
 .vup-venue-results-container {
+  flex: 1 !important; 
   display: flex;
   flex-direction: column;
-  gap: 30px; 
+  gap: 30px;
+  min-width: 0;
 }
 
 .vup-venue-map {
