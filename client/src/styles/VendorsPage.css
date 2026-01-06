@@ -587,6 +587,35 @@ html[dir="ltr"] .change-vendor-button {
   box-shadow: none !important;
 }
 
+.select-vendor-button,
+.add-manual-vendor-button,
+.vp-select-vendor-button,
+.vp-add-manual-vendor-button {
+  padding: 14px 32px !important; 
+  border-radius: 30px !important; 
+  cursor: pointer !important;
+  font-size: 17px !important; 
+  font-weight: 500 !important; 
+  transition: all 0.3s ease !important;
+  background-color: #d4b99e !important; 
+  border: 1px solid #d4b99e !important;
+  color: #fff !important;
+  letter-spacing: 0.5px !important;
+  width: 100% !important;
+  max-width: 280px !important; 
+  display: inline-block !important;
+}
+
+.select-vendor-button:hover,
+.add-manual-vendor-button:hover,
+.vp-select-vendor-button:hover,
+.vp-add-manual-vendor-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(164, 139, 118, 0.2) !important;
+  background-color: transparent !important;
+  border-color: #a68b76 !important;
+  color: #a68b76 !important;
+}
 
 .success-message {
   background-color: #f0f4f0;
