@@ -18,23 +18,8 @@ const defaultCategoryAllocations = {
 const getBudget = async (req, res) => {
   try {
     const { eventId } = req.params;
-    let actualEventId = eventId;
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    let budget = await Budget.findOne({ event: actualEventId });
+    let budget = await Budget.findOne({ event: eventId });
     
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
@@ -52,27 +37,35 @@ const createBudget = async (req, res) => {
     const { eventId } = req.params;
     const { totalBudget, categories } = req.body;
 
-    let actualEventId = eventId;
-    let originalOwnerId = req.userId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-      const originalEvent = await Event.findById(event.originalEvent);
-      originalOwnerId = originalEvent.user;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-      originalOwnerId = originalEvent.user;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const existingBudget = await Budget.findOne({ event: actualEventId });
+    const isOwner = event.user.toString() === req.userId;
+    let canEdit = isOwner;
+
+    if (!isOwner) {
+      const shareInfo = event.sharedWith.find(
+        share => share.userId && share.userId.toString() === req.userId
+      );
+      
+      if (!shareInfo) {
+        return res.status(404).json({ message: req.t('events.notFound') });
+      }
+      
+      if (shareInfo.permission !== 'edit') {
+        return res.status(403).json({ message: req.t('events.accessDenied') });
+      }
+      
+      canEdit = true;
+    }
+
+    if (!canEdit) {
+      return res.status(403).json({ message: req.t('events.accessDenied') });
+    }
+
+    const existingBudget = await Budget.findOne({ event: eventId });
     if (existingBudget) {
       return res.status(400).json({ message: req.t('events.features.budget.alreadyExists') });
     }
@@ -88,8 +81,8 @@ const createBudget = async (req, res) => {
     }
 
     const newBudget = new Budget({
-      event: actualEventId,
-      user: originalOwnerId,
+      event: eventId, 
+      user: req.userId, 
       totalBudget,
       categories: budgetCategories,
       items: []
@@ -114,27 +107,7 @@ const updateBudget = async (req, res) => {
     const { eventId } = req.params;
     const { totalBudget, categories } = req.body;
 
-    let actualEventId = eventId;
-    let originalOwnerId = req.userId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-      const originalEvent = await Event.findById(event.originalEvent);
-      originalOwnerId = originalEvent.user;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-      originalOwnerId = originalEvent.user;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -166,23 +139,7 @@ const addExpense = async (req, res) => {
     const { eventId } = req.params;
     const { category, description, amount, date, isPaid, notes } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -218,23 +175,7 @@ const updateExpense = async (req, res) => {
     const { eventId, expenseId } = req.params;
     const { category, description, amount, date, isPaid, notes } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -269,23 +210,7 @@ const deleteExpense = async (req, res) => {
   try {
     const { eventId, expenseId } = req.params;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -308,56 +233,44 @@ const deleteExpense = async (req, res) => {
 const getBudgetSummary = async (req, res) => {
   try {
     const { eventId } = req.params;
-    let actualEventId = eventId;
-    
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
 
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
 
-    const totalSpent = budget.items.reduce((total, item) => total + item.amount, 0);
-    const remaining = budget.totalBudget - totalSpent;
-    
-    const categoryBreakdown = budget.categories.map(cat => {
-      const spent = budget.items
-        .filter(item => item.category === cat.category)
-        .reduce((total, item) => total + item.amount, 0);
-      const allocated = cat.allocated;
-      const remaining = allocated - spent;
-      const percentage = allocated > 0 ? (spent / allocated * 100) : 0;
-      
-      return {
-        category: cat.category,
-        allocated,
-        spent,
-        remaining,
-        percentage: Math.round(percentage * 100) / 100
-      };
-    });
-
     const summary = {
       totalBudget: budget.totalBudget,
-      totalSpent,
-      totalRemaining: remaining,
-      spentPercentage: Math.round((totalSpent / budget.totalBudget) * 10000) / 100,
-      categoryBreakdown,
+      totalSpent: 0,
+      totalRemaining: budget.totalBudget,
+      spentPercentage: 0,
       totalExpenses: budget.items.length,
-      paidExpenses: budget.items.filter(item => item.isPaid).length
+      paidExpenses: 0,
+      categoryBreakdown: []
     };
+
+    summary.totalSpent = budget.items.reduce((sum, item) => sum + item.amount, 0);
+    summary.totalRemaining = budget.totalBudget - summary.totalSpent;
+    summary.spentPercentage = budget.totalBudget > 0 
+      ? (summary.totalSpent / budget.totalBudget) * 100 
+      : 0;
+
+    summary.paidExpenses = budget.items.filter(item => item.isPaid).length;
+
+    summary.categoryBreakdown = budget.categories.map(cat => {
+      const categoryExpenses = budget.items.filter(item => item.category === cat.category);
+      const spent = categoryExpenses.reduce((sum, item) => sum + item.amount, 0);
+      const percentage = cat.allocated > 0 ? (spent / cat.allocated) * 100 : 0;
+      const remaining = cat.allocated - spent;
+
+      return {
+        category: cat.category,
+        allocated: cat.allocated,
+        spent,
+        remaining,
+        percentage
+      };
+    });
 
     res.json(summary);
   } catch (err) {
@@ -370,34 +283,16 @@ const getExpensesByCategory = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { category } = req.query;
-    let actualEventId = eventId;
-    
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
 
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
 
     let expenses = budget.items;
-    
     if (category && category !== 'all') {
       expenses = expenses.filter(item => item.category === category);
     }
-
-    expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     res.json(expenses);
   } catch (err) {
@@ -411,23 +306,7 @@ const updateAlertThreshold = async (req, res) => {
     const { eventId } = req.params;
     const { alertThreshold } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -447,23 +326,7 @@ const addIncome = async (req, res) => {
     const { eventId } = req.params;
     const { source, description, amount, date, notes, guestId } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -499,23 +362,7 @@ const updateIncome = async (req, res) => {
     const { eventId, incomeId } = req.params;
     const { source, description, amount, date, notes } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -549,23 +396,7 @@ const deleteIncome = async (req, res) => {
   try {
     const { eventId, incomeId } = req.params;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }
@@ -590,23 +421,7 @@ const syncGiftToIncome = async (req, res) => {
     const { eventId, guestId } = req.params;
     const { hasGift, giftValue, giftDescription } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const budget = await Budget.findOne({ event: actualEventId });
+    const budget = await Budget.findOne({ event: eventId });
     if (!budget) {
       return res.status(404).json({ message: req.t('events.features.budget.notFound') });
     }

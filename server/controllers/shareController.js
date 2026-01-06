@@ -2,7 +2,7 @@
 const Event = require('../models/Event');
 const User = require('../models/User');
 
-//  Share an event with another user via email
+// Share an event with another user via email
 const shareEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -16,19 +16,16 @@ const shareEvent = async (req, res) => {
       return res.status(400).json({ message: req.t('validation.invalidPermission') });
     }
 
-    // Find the original event
-    const originalEvent = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!originalEvent) {
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    // Check if already shared with this email
-    const existingShare = originalEvent.sharedWith.find(share => share.email === email);
+    const existingShare = event.sharedWith.find(share => share.email === email);
     if (existingShare) {
       return res.status(400).json({ message: req.t('events.share.alreadyShared') });
     }
 
-    // Find users
     const targetUser = await User.findOne({ email });
     const currentUser = await User.findById(req.userId);
 
@@ -40,28 +37,23 @@ const shareEvent = async (req, res) => {
       return res.status(404).json({ message: req.t('errors.userNotInSystem') });
     }
 
-    // Add to shared list in original event
-    originalEvent.sharedWith.push({
+    event.sharedWith.push({
       email,
       userId: targetUser._id,
       permission,
       accepted: false
     });
-    originalEvent.isShared = true;
-    await originalEvent.save();
+    
+    await event.save();
 
-    // Create shared event copy and notification
-    await createSharedEventCopy(originalEvent, targetUser._id, permission, req.userId);
-
-    // Add notification to target user
     const sharerName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.email;
     targetUser.notifications.push({
       type: 'event_shared',
-      eventId: originalEvent._id,
+      eventId: event._id,
       sharedBy: req.userId,
       read: false,
       sharerName: sharerName,
-      eventTitle: originalEvent.title
+      eventTitle: event.title
     });
     await targetUser.save();
 
@@ -72,56 +64,25 @@ const shareEvent = async (req, res) => {
   }
 };
 
-//  Create a shared copy of an event for target user
-const createSharedEventCopy = async (originalEvent, targetUserId, permission, sharedByUserId) => {
-  const sharedEventData = {
-    ...originalEvent.toObject(),
-    _id: undefined,
-    user: targetUserId,
-    originalEvent: originalEvent._id,
-    isShared: true,
-    sharedWith: [],
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-
-  const sharedEvent = new Event(sharedEventData);
-  await sharedEvent.save();
-
-  return sharedEvent;
-};
-
-  // Accept a shared event invitation
+// Accept a shared event invitation
 const acceptShare = async (req, res) => {
   try {
     const { eventId } = req.params;
     const userEmail = req.userEmail;
 
-    // Find the original event where this user is in sharedWith
-    const originalEvent = await Event.findById(eventId);
-    if (!originalEvent) {
+    const event = await Event.findById(eventId);
+    if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const shareInfo = originalEvent.sharedWith.find(share => share.email === userEmail);
+    const shareInfo = event.sharedWith.find(share => share.email === userEmail);
     if (!shareInfo) {
       return res.status(403).json({ message: req.t('events.share.notSharedWithUser') });
     }
 
-    // Update accepted status
     shareInfo.accepted = true;
     shareInfo.userId = req.userId;
-    await originalEvent.save();
-
-    // Check if shared event already exists for this user
-    const existingSharedEvent = await Event.findOne({
-      user: req.userId,
-      originalEvent: eventId
-    });
-
-    if (!existingSharedEvent) {
-      await createSharedEventCopy(originalEvent, req.userId, shareInfo.permission);
-    }
+    await event.save();
 
     res.json({ message: req.t('events.share.acceptSuccess') });
   } catch (err) {
@@ -130,19 +91,23 @@ const acceptShare = async (req, res) => {
   }
 };
 
-//  Get list of users an event is shared with
+// Get list of users an event is shared with
 const getSharedUsers = async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    const event = await Event.findOne({ _id: eventId, user: req.userId })
-      .populate('sharedWith.userId', 'firstName lastName email');
+    const event = await Event.findOne({
+      $or: [
+        { _id: eventId, user: req.userId },
+        { _id: eventId, 'sharedWith.userId': req.userId }
+      ]
+    }).populate('sharedWith.userId', 'firstName lastName email');
     
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const isOwner = !event.originalEvent;
+    const isOwner = event.user.toString() === req.userId;
     
     res.json({
       sharedWith: event.sharedWith,
@@ -154,18 +119,17 @@ const getSharedUsers = async (req, res) => {
   }
 };
 
-  // Remove sharing access for a user
+// Remove sharing access for a user
 const removeShare = async (req, res) => {
   try {
     const { eventId, shareId } = req.params;
 
-    // Find and update original event
-    const originalEvent = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!originalEvent) {
+    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const shareIndex = originalEvent.sharedWith.findIndex(
+    const shareIndex = event.sharedWith.findIndex(
       share => share._id.toString() === shareId
     );
 
@@ -173,23 +137,8 @@ const removeShare = async (req, res) => {
       return res.status(404).json({ message: req.t('events.share.shareNotFound') });
     }
 
-    const removedShare = originalEvent.sharedWith[shareIndex];
-    originalEvent.sharedWith.splice(shareIndex, 1);
-
-    // Update isShared status
-    if (originalEvent.sharedWith.length === 0) {
-      originalEvent.isShared = false;
-    }
-
-    await originalEvent.save();
-
-    // Remove shared event copy if user exists
-    if (removedShare.userId) {
-      await Event.findOneAndDelete({
-        user: removedShare.userId,
-        originalEvent: eventId
-      });
-    }
+    event.sharedWith.splice(shareIndex, 1);
+    await event.save();
 
     res.json({ message: req.t('events.share.removeSuccess') });
   } catch (err) {
@@ -198,7 +147,7 @@ const removeShare = async (req, res) => {
   }
 };
 
-//  Update permission level for a shared user
+// Update permission level for a shared user
 const updateSharePermission = async (req, res) => {
   try {
     const { eventId, shareId } = req.params;
@@ -228,51 +177,10 @@ const updateSharePermission = async (req, res) => {
   }
 };
 
-//  Sync changes from original event to all shared copies
-const syncSharedEvents = async (originalEventId) => {
-  try {
-    const originalEvent = await Event.findById(originalEventId);
-    if (!originalEvent || !originalEvent.isShared) return;
-
-    const sharedEvents = await Event.find({ originalEvent: originalEventId });
-
-    for (const sharedEvent of sharedEvents) {
-      sharedEvent.title = originalEvent.title;
-      sharedEvent.date = originalEvent.date;
-      sharedEvent.time = originalEvent.time;
-      sharedEvent.type = originalEvent.type;
-      sharedEvent.isSeparatedSeating = originalEvent.isSeparatedSeating;
-      sharedEvent.guestCount = originalEvent.guestCount;
-      sharedEvent.notes = originalEvent.notes;
-      
-      sharedEvent.venues = originalEvent.venues.map(v => ({
-        name: v.name,
-        address: v.address,
-        phone: v.phone,
-        website: v.website,
-        _id: v._id
-      }));
-      
-      sharedEvent.vendors = originalEvent.vendors.map(v => ({
-        name: v.name,
-        category: v.category,
-        phone: v.phone,
-        notes: v.notes,
-        _id: v._id
-      }));
-
-      await sharedEvent.save();
-    }
-  } catch (err) {
-    console.error('Error syncing shared events:', err);
-  }
-};
-
 module.exports = {
   shareEvent,
   acceptShare,
   getSharedUsers,
   removeShare,
-  updateSharePermission,
-  syncSharedEvents
+  updateSharePermission
 };

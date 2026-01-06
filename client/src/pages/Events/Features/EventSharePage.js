@@ -257,7 +257,7 @@ const EventSharePage = () => {
               </div>
             </div>
 
-            {eventInfo && eventInfo.originalEvent && (
+            {eventInfo && !isOwner && (
               <div className="shared-event-alert">
                 <div className="alert-icon">👥</div>
                 <div className="alert-text">
@@ -327,7 +327,7 @@ const EventSharePage = () => {
               </div>
             )}
 
-            {!eventInfo?.originalEvent && (
+            {isOwner && (
               <div className="shared-users-section">
                 <h3 className="section-title">
                   {t('events.features.share.sharedWith')}

@@ -15,7 +15,8 @@ const GuestsList = ({
   genderFilter = 'all',
   onGenderFilterChange = null,
   maleArrangement = {},
-  femaleArrangement = {}
+  femaleArrangement = {},
+  canEdit = true
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -507,7 +508,7 @@ const GuestsList = ({
                   <div
                     key={guest._id}
                     className={`guest-item unseated ${isHighlighted ? 'sync-highlighted' : ''} ${syncIndicator ? syncIndicator.className : ''}`}
-                    draggable
+                    draggable={canEdit}
                     onDragStart={(e) => handleDragStart(e, guest)}
                     onDragEnd={handleDragEnd}
                   >
@@ -558,7 +559,7 @@ const GuestsList = ({
                   <div
                     key={guest._id}
                     className={`guest-item seated ${isHighlighted ? 'sync-highlighted' : ''} ${syncIndicator ? syncIndicator.className : ''}`}
-                    draggable
+                    draggable={canEdit}
                     onDragStart={(e) => handleDragStart(e, guest)}
                     onDragEnd={handleDragEnd}
                   >

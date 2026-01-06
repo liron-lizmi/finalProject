@@ -1,42 +1,61 @@
 // server/controllers/eventController.js
 const Event = require('../models/Event');
 const User = require('../models/User');
-const { syncSharedEvents } = require('./shareController');
 
-// Get all events for current user including shared events
 const getUserEvents = async (req, res) => {
   try {
-    const events = await Event.find({ user: req.userId })
-      .populate('originalEvent', 'user title')
-      .populate({
-        path: 'originalEvent',
-        populate: {
-          path: 'user',
-          select: 'firstName lastName email'
-        }
-      })
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
+    }
+
+    const ownedEvents = await Event.find({ 
+      user: req.userId
+    }).sort({ date: 1 });
+
+    const sharedEvents = await Event.find({ 
+      user: { $ne: req.userId },
+      $or: [
+        { 'sharedWith.userId': req.userId },
+        { 'sharedWith.email': currentUser.email }
+      ]
+    })
+      .populate('user', 'firstName lastName email')
       .sort({ date: 1 });
 
-    // Add original owner info for shared events
-    const eventsWithOwnerInfo = events.map(event => {
-      if (event.originalEvent && event.originalEvent.user) {
-        return {
-          ...event.toObject(),
-          originalOwner: event.originalEvent.user
-        };
-      }
-      return event;
+    const ownedEventsWithMeta = ownedEvents.map(event => ({
+      ...event.toObject(),
+      isOwner: true,
+      permission: 'owner',
+      canEdit: true
+    }));
+
+    const sharedEventsWithMeta = sharedEvents.map(event => {
+      const shareInfo = event.sharedWith.find(
+        share => (share.userId && share.userId.toString() === req.userId) || 
+                 share.email === currentUser.email
+      );
+      
+      return {
+        ...event.toObject(),
+        isOwner: false,
+        permission: shareInfo?.permission || 'view',
+        canEdit: shareInfo?.permission === 'edit',
+        originalOwner: event.user,
+        accepted: shareInfo?.accepted || false
+      };
     });
 
-    res.json(eventsWithOwnerInfo);
+    const allEvents = [...ownedEventsWithMeta, ...sharedEventsWithMeta]
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json(allEvents);
   } catch (err) {
     console.error('Error fetching events:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
-
-// Create a new event
 const createEvent = async (req, res) => {
   try {
     const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
@@ -52,7 +71,7 @@ const createEvent = async (req, res) => {
       notes,
       venues: venues || [],
       vendors: vendors || [],
-      isSeparatedSeating: Boolean(isSeparatedSeating), // ADDED: Support for separated seating
+      isSeparatedSeating: Boolean(isSeparatedSeating),
       user: req.userId
     });
     
@@ -70,42 +89,41 @@ const createEvent = async (req, res) => {
   }
 };
 
-//  Update an event and sync with shared copies
+// Update an event
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
     
-    let event = await Event.findOne({ _id: id, user: req.userId });
-    let isSharedEvent = false;
-    let originalEventId = null;
-    let userSharedCopyId = id;
-
+    const event = await Event.findById(id);
+    
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    if (event.originalEvent) {
-      isSharedEvent = true;
-      originalEventId = event.originalEvent;
-      userSharedCopyId = event._id;
+    const isOwner = event.user.toString() === req.userId;
+    let canEdit = isOwner;
+
+    if (!isOwner) {
+      const shareInfo = event.sharedWith.find(
+        share => share.userId && share.userId.toString() === req.userId
+      );
       
-      const originalEvent = await Event.findById(event.originalEvent);
-      if (!originalEvent) {
+      if (!shareInfo) {
         return res.status(404).json({ message: req.t('events.notFound') });
       }
       
-      const shareInfo = originalEvent.sharedWith.find(
-        share => share.userId?.toString() === req.userId
-      );
-      
-      if (!shareInfo || shareInfo.permission !== 'edit') {
+      if (shareInfo.permission !== 'edit') {
         return res.status(403).json({ message: req.t('events.editDenied') });
       }
       
-      event = originalEvent;
+      canEdit = true;
     }
-    
+
+    if (!canEdit) {
+      return res.status(403).json({ message: req.t('events.editDenied') });
+    }
+
     const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
     let validTime = event.time;  
     
@@ -166,16 +184,6 @@ const updateEvent = async (req, res) => {
     }
     
     const updatedEvent = await event.save();
-    
-    if (updatedEvent.isShared) {
-      await syncSharedEvents(updatedEvent._id);
-    }
-    
-    if (isSharedEvent) {
-      const userSharedCopy = await Event.findById(userSharedCopyId);
-      return res.json(userSharedCopy || updatedEvent);
-    }
-    
     res.json(updatedEvent);
   } catch (err) {
     console.error('Error updating event:', err);
@@ -189,18 +197,15 @@ const updateEvent = async (req, res) => {
   }
 };
 
-//  Delete an event and its shared copies
+// Delete an event
 const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
+    
     const event = await Event.findOne({ _id: id, user: req.userId });
+    
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
-    }
-
-    // If this is an original event with shares, delete all shared copies
-    if (event.isShared && !event.originalEvent) {
-      await Event.deleteMany({ originalEvent: id });
     }
 
     await Event.findByIdAndDelete(id);
@@ -211,37 +216,43 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-// Get event by ID with permission check for shared events
+// Get event by ID with permission check
 const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    let event = await Event.findOne({ _id: id, user: req.userId });
-    if (event && !event.originalEvent) {
+    const event = await Event.findById(id);
+    
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
+    }
+
+    const isOwner = event.user.toString() === req.userId;
+    
+    if (isOwner) {
       const eventData = event.toObject();
-      eventData.userPermission = 'edit';
+      eventData.userPermission = 'owner';
       eventData.canEdit = true;
+      eventData.isOwner = true;
       return res.json(eventData);
     }
 
-    if (event && event.originalEvent) {
-      const originalEvent = await Event.findOne({
-        _id: event.originalEvent,
-        'sharedWith.userId': req.userId
-      });
+    const shareInfo = event.sharedWith.find(
+      share => (share.userId && share.userId.toString() === req.userId) ||
+               share.email === currentUser.email
+    );
 
-      if (originalEvent) {
-        const shareInfo = originalEvent.sharedWith.find(
-          share => share.userId?.toString() === req.userId
-        );
-
-        if (shareInfo) {
-          const eventData = event.toObject();
-          eventData.userPermission = shareInfo.permission;
-          eventData.canEdit = shareInfo.permission === 'edit';
-          return res.json(eventData);
-        }
-      }
+    if (shareInfo) {
+      const eventData = event.toObject();
+      eventData.userPermission = shareInfo.permission;
+      eventData.canEdit = shareInfo.permission === 'edit';
+      eventData.isOwner = false;
+      return res.json(eventData);
     }
 
     return res.status(404).json({ message: req.t('events.notFound') });
@@ -251,38 +262,33 @@ const getEventById = async (req, res) => {
   }
 };
 
-//  Check if user has edit permission for an event
+// Check if user has edit permission for an event
 const checkEditPermission = async (req, res) => {
   try {
     const { id } = req.params;
-    const event = await Event.findOne({ _id: id, user: req.userId });
+    
+    const event = await Event.findById(id);
     
     if (!event) {
-      // Check if it's a shared event
-      const originalEvent = await Event.findOne({
-        _id: id,
-        'sharedWith.userId': req.userId
-      });
-      
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      
-      const shareInfo = originalEvent.sharedWith.find(
-        share => share.userId?.toString() === req.userId
-      );
-      
-      return res.json({ canEdit: shareInfo?.permission === 'edit' });
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
     
-    // User owns the event
-    res.json({ canEdit: true });
+    if (event.user.toString() === req.userId) {
+      return res.json({ canEdit: true });
+    }
+    
+    const shareInfo = event.sharedWith.find(
+      share => share.userId && share.userId.toString() === req.userId
+    );
+    
+    return res.json({ canEdit: shareInfo?.permission === 'edit' });
   } catch (err) {
     console.error('Error checking edit permission:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
+// Get notifications
 const getNotifications = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -301,6 +307,7 @@ const getNotifications = async (req, res) => {
   }
 };
 
+// Mark notification as read
 const markNotificationRead = async (req, res) => {
   try {
     const { notificationId } = req.params;
@@ -322,6 +329,7 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
+// Accept notification and share
 const acceptNotificationAndShare = async (req, res) => {
   try {
     const { notificationId } = req.params;
@@ -340,12 +348,12 @@ const acceptNotificationAndShare = async (req, res) => {
       return res.status(400).json({ message: req.t('errors.invalidNotificationType') });
     }
     
-    const originalEvent = await Event.findById(notification.eventId);
-    if (!originalEvent) {
+    const event = await Event.findById(notification.eventId);
+    if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
     
-    const shareInfo = originalEvent.sharedWith.find(share => 
+    const shareInfo = event.sharedWith.find(share => 
       share.email === user.email || 
       (share.userId && share.userId.toString() === req.userId)
     );
@@ -356,7 +364,7 @@ const acceptNotificationAndShare = async (req, res) => {
     
     shareInfo.accepted = true;
     shareInfo.userId = req.userId;
-    await originalEvent.save();
+    await event.save();
     
     notification.read = true;
     await user.save();

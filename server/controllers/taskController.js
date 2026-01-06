@@ -9,25 +9,8 @@ const processedCodes = new Set();
 const getEventTasks = async (req, res) => {
   try {
     const { eventId } = req.params;
-    let actualEventId = eventId;
 
-    let event = await Event.findOne({ _id: eventId, user: req.userId }).lean();
-    
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      }).lean();
-      
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
-
-    const tasks = await Task.find({ event: actualEventId })
+    const tasks = await Task.find({ event: eventId })
       .select('title description dueDate dueTime priority status category reminderDate reminderTime reminderRecurrence notes createdAt')
       .sort({ dueDate: 1, priority: -1, createdAt: -1 })
       .lean();
@@ -43,39 +26,32 @@ const createTask = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    let actualEventId = eventId;
-    let originalOwnerId = req.userId;
-    let eventForValidation = null;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
 
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-      const originalEvent = await Event.findById(event.originalEvent);
-      originalOwnerId = originalEvent.user;
-      eventForValidation = originalEvent;
-    } else if (!event) {
-      const sharedEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
+    const isOwner = event.user.toString() === req.userId;
+    let canEdit = isOwner;
+
+    if (!isOwner) {
+      const shareInfo = event.sharedWith.find(
+        share => share.userId && share.userId.toString() === req.userId
+      );
       
-      if (!sharedEvent) {
+      if (!shareInfo) {
         return res.status(404).json({ message: req.t('events.notFound') });
       }
       
-      const userShare = sharedEvent.sharedWith.find(share => 
-        share.userId.toString() === req.userId.toString()
-      );
-      
-      if (!userShare || userShare.permission !== 'edit') {
+      if (shareInfo.permission !== 'edit') {
         return res.status(403).json({ message: req.t('events.accessDenied') });
       }
       
-      actualEventId = eventId;
-      originalOwnerId = sharedEvent.user;
-      eventForValidation = sharedEvent;
-    } else {
-      eventForValidation = event;
+      canEdit = true;
+    }
+
+    if (!canEdit) {
+      return res.status(403).json({ message: req.t('events.accessDenied') });
     }
 
     const { 
@@ -104,7 +80,7 @@ const createTask = async (req, res) => {
       });
     }
 
-    const eventDate = new Date(eventForValidation.date);
+    const eventDate = new Date(event.date);
     eventDate.setHours(0, 0, 0, 0);
     taskDueDate.setHours(0, 0, 0, 0);
     
@@ -153,8 +129,8 @@ const createTask = async (req, res) => {
       reminderTime: reminderTime || undefined,
       reminderRecurrence: reminderRecurrence || 'none',
       notes,
-      event: actualEventId,
-      user: originalOwnerId
+      event: eventId, 
+      user: req.userId  
     });
 
     const savedTask = await newTask.save();
@@ -180,41 +156,37 @@ const updateTask = async (req, res) => {
     const { eventId, taskId } = req.params;
     const updateData = req.body;
 
-    let actualEventId = eventId;
-    let eventForValidation = null;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
 
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-      const originalEvent = await Event.findById(event.originalEvent);
-      eventForValidation = originalEvent;
-    } else if (!event) {
-      const sharedEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
+    const isOwner = event.user.toString() === req.userId;
+    let canEdit = isOwner;
+
+    if (!isOwner) {
+      const shareInfo = event.sharedWith.find(
+        share => share.userId && share.userId.toString() === req.userId
+      );
       
-      if (!sharedEvent) {
+      if (!shareInfo) {
         return res.status(404).json({ message: req.t('events.notFound') });
       }
       
-      const userShare = sharedEvent.sharedWith.find(share => 
-        share.userId.toString() === req.userId.toString()
-      );
-      
-      if (!userShare || userShare.permission !== 'edit') {
+      if (shareInfo.permission !== 'edit') {
         return res.status(403).json({ message: req.t('events.accessDenied') });
       }
       
-      actualEventId = eventId;
-      eventForValidation = sharedEvent;
-    } else {
-      eventForValidation = event;
+      canEdit = true;
+    }
+
+    if (!canEdit) {
+      return res.status(403).json({ message: req.t('events.accessDenied') });
     }
 
     const task = await Task.findOne({ 
       _id: taskId, 
-      event: actualEventId
+      event: eventId
     });
 
     if (!task) {
@@ -229,7 +201,7 @@ const updateTask = async (req, res) => {
         });
       }
 
-      const eventDate = new Date(eventForValidation.date);
+      const eventDate = new Date(event.date);
       eventDate.setHours(0, 0, 0, 0);
       taskDueDate.setHours(0, 0, 0, 0);
 
@@ -269,18 +241,15 @@ const updateTask = async (req, res) => {
       updateData.reminderDate = taskReminderDate;
 
       const reminderDateTime = new Date(taskReminderDate);
-      const dueDate = updateData.dueDate || task.dueDate;
-      const dueDateTime = new Date(dueDate);
+      const dueDateTime = new Date(updateData.dueDate || task.dueDate);
 
-      const reminderTime = updateData.reminderTime || task.reminderTime;
-      const dueTime = updateData.dueTime || task.dueTime;
-
-      if (reminderTime) {
-        const [reminderHour, reminderMinute] = reminderTime.split(':');
+      if (updateData.reminderTime) {
+        const [reminderHour, reminderMinute] = updateData.reminderTime.split(':');
         reminderDateTime.setHours(parseInt(reminderHour), parseInt(reminderMinute), 0, 0);
       }
 
-      if (dueTime) {
+      if (updateData.dueTime || task.dueTime) {
+        const dueTime = updateData.dueTime || task.dueTime;
         const [dueHour, dueMinute] = dueTime.split(':');
         dueDateTime.setHours(parseInt(dueHour), parseInt(dueMinute), 0, 0);
       }
@@ -292,47 +261,13 @@ const updateTask = async (req, res) => {
       }
     }
 
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] !== undefined) {
-        task[key] = updateData[key];
-      }
-    });
-
+    Object.assign(task, updateData);
     const updatedTask = await task.save();
 
-    try {
-      const user = await User.findById(req.userId);
-
-      if (user && user.googleTokens && user.googleTokens.access_token && 
-          updatedTask.googleCalendarEventId && eventForValidation) {
-
-        const refreshedTokens = await googleCalendar.refreshTokenIfNeeded(user.googleTokens);
-        const oauth2Client = googleCalendar.setCredentials(refreshedTokens);
-
-        if (refreshedTokens !== user.googleTokens) {
-          await User.findByIdAndUpdate(req.userId, {
-            googleTokens: refreshedTokens
-          });
-        }
-
-        await googleCalendar.updateCalendarEvent(
-          updatedTask.googleCalendarEventId, 
-          updatedTask, 
-          eventForValidation,
-          oauth2Client
-        );
-      }
-    } catch (calendarError) {
-      console.log('Failed to update in Google Calendar:', calendarError.message);
-    }
-
-    res.json({
-      message: req.t('events.tasks.updateSuccess'),
-      task: updatedTask
-    });
+    res.json(updatedTask);
   } catch (err) {
     console.error('Error updating task:', err);
-
+    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -340,7 +275,7 @@ const updateTask = async (req, res) => {
         errors 
       });
     }
-
+    
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -349,65 +284,16 @@ const deleteTask = async (req, res) => {
   try {
     const { eventId, taskId } = req.params;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const sharedEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      });
-      
-      if (!sharedEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      
-      const userShare = sharedEvent.sharedWith.find(share => 
-        share.userId.toString() === req.userId.toString()
-      );
-      
-      if (!userShare || userShare.permission !== 'edit') {
-        return res.status(403).json({ message: req.t('events.accessDenied') });
-      }
-      
-      actualEventId = eventId;
-    }
-
     const task = await Task.findOne({ 
       _id: taskId, 
-      event: actualEventId
+      event: eventId 
     });
 
     if (!task) {
       return res.status(404).json({ message: req.t('events.tasks.notFound') });
     }
 
-    const googleCalendarEventId = task.googleCalendarEventId;
-
     await Task.findByIdAndDelete(taskId);
-
-    if (googleCalendarEventId) {
-      try {
-        const user = await User.findById(req.userId);
-
-        if (user && user.googleTokens && user.googleTokens.access_token) {
-          const refreshedTokens = await googleCalendar.refreshTokenIfNeeded(user.googleTokens);
-          const oauth2Client = googleCalendar.setCredentials(refreshedTokens);
-
-          if (refreshedTokens !== user.googleTokens) {
-            await User.findByIdAndUpdate(req.userId, {
-              googleTokens: refreshedTokens
-            });
-          }
-
-          await googleCalendar.deleteCalendarEvent(googleCalendarEventId, oauth2Client);
-        }
-      } catch (calendarError) {
-        console.log('Failed to delete from Google Calendar:', calendarError.message);
-      }
-    }
 
     res.json({ message: req.t('events.tasks.deleteSuccess') });
   } catch (err) {
@@ -421,35 +307,15 @@ const updateTaskStatus = async (req, res) => {
     const { eventId, taskId } = req.params;
     const { status } = req.body;
 
-    let actualEventId = eventId;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const sharedEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
+    if (!['pending', 'in_progress', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ 
+        message: req.t('events.validation.invalidStatus') 
       });
-      
-      if (!sharedEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      
-      const userShare = sharedEvent.sharedWith.find(share => 
-        share.userId.toString() === req.userId.toString()
-      );
-      
-      if (!userShare || userShare.permission !== 'edit') {
-        return res.status(403).json({ message: req.t('events.accessDenied') });
-      }
-      
-      actualEventId = eventId;
     }
 
     const task = await Task.findOne({ 
       _id: taskId, 
-      event: actualEventId
+      event: eventId 
     });
 
     if (!task) {
@@ -459,37 +325,7 @@ const updateTaskStatus = async (req, res) => {
     task.status = status;
     const updatedTask = await task.save();
 
-    try {
-      const user = await User.findById(req.userId);
-      const eventData = await Event.findById(actualEventId);
-
-      if (user && user.googleTokens && user.googleTokens.access_token && 
-          updatedTask.googleCalendarEventId && eventData) {
-
-        const refreshedTokens = await googleCalendar.refreshTokenIfNeeded(user.googleTokens);
-        const oauth2Client = googleCalendar.setCredentials(refreshedTokens);
-
-        if (refreshedTokens !== user.googleTokens) {
-          await User.findByIdAndUpdate(req.userId, {
-            googleTokens: refreshedTokens
-          });
-        }
-
-        await googleCalendar.updateCalendarEvent(
-          updatedTask.googleCalendarEventId, 
-          updatedTask, 
-          eventData,
-          oauth2Client
-        );
-      }
-    } catch (calendarError) {
-      console.log('Failed to update status in Google Calendar:', calendarError.message);
-    }
-
-    res.json({
-      message: req.t('events.tasks.statusUpdateSuccess'),
-      task: updatedTask
-    });
+    res.json(updatedTask);
   } catch (err) {
     console.error('Error updating task status:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
@@ -499,23 +335,6 @@ const updateTaskStatus = async (req, res) => {
 const getTasksStatistics = async (req, res) => {
   try {
     const { eventId } = req.params;
-    let actualEventId = eventId;
-
-    let event = await Event.findOne({ _id: eventId, user: req.userId }).lean();
-    
-    if (event && event.originalEvent) {
-      actualEventId = event.originalEvent;
-    } else if (!event) {
-      const originalEvent = await Event.findOne({
-        _id: eventId,
-        'sharedWith.userId': req.userId
-      }).lean();
-      
-      if (!originalEvent) {
-        return res.status(404).json({ message: req.t('events.notFound') });
-      }
-      actualEventId = eventId;
-    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -523,7 +342,7 @@ const getTasksStatistics = async (req, res) => {
     const stats = await Task.aggregate([
       { 
         $match: { 
-          event: new mongoose.Types.ObjectId(actualEventId)
+          event: new mongoose.Types.ObjectId(eventId)
         } 
       },
       {
@@ -578,7 +397,6 @@ const getTasksStatistics = async (req, res) => {
   }
 };
 
-// Google Calendar Functions
 const getGoogleCalendarStatus = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -709,12 +527,21 @@ const syncWithGoogleCalendar = async (req, res) => {
       });
     }
 
-    const tasks = await Task.find({ event: eventId, user: req.userId });
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
+
+    const isOwner = event.user.toString() === req.userId;
+    const hasAccess = isOwner || event.sharedWith.some(
+      share => share.userId && share.userId.toString() === req.userId
+    );
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: req.t('events.accessDenied') });
+    }
+
+    const tasks = await Task.find({ event: eventId, user: req.userId });
 
     try {
       const syncResult = await googleCalendar.syncEventTasksWithCalendar(

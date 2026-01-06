@@ -1,4 +1,3 @@
-// models/Event.js
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 
@@ -118,16 +117,6 @@ const EventSchema = new mongoose.Schema({
       trim: true
     }
   }],
-  
-  originalEvent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',
-    default: null
-  },
-  isShared: {
-    type: Boolean,
-    default: false
-  },
   sharedWith: [{
     email: {
       type: String,

@@ -22,6 +22,28 @@ const Dashboard = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
 
+  const isSharedEvent = (event) => {
+    if (!event || !user) return false;
+    
+    const isShared = event.sharedWith && event.sharedWith.some(
+      share => share.userId && (share.userId === user.id || share.userId._id === user.id)
+    );
+    
+    const isNotOwner = event.user && event.user !== user.id && event.user._id !== user.id;
+    
+    return isShared && isNotOwner;
+  };
+
+  const getSharedPermission = (event) => {
+    if (!event || !user || !event.sharedWith) return null;
+    
+    const share = event.sharedWith.find(
+      share => share.userId && (share.userId === user.id || share.userId._id === user.id)
+    );
+    
+    return share ? share.permission : null;
+  };
+
   const params = new URLSearchParams(location.search);
   const shouldRedirect = params.get('source') === 'google';
 
@@ -308,9 +330,18 @@ const Dashboard = () => {
   };
 
   const getEventOwnerName = (event) => {
-    if (event.originalEvent && event.originalOwner) {
-      return `${event.originalOwner.firstName} ${event.originalOwner.lastName}`;
+    if (event.user && typeof event.user === 'object') {
+      const firstName = event.user.firstName || '';
+      const lastName = event.user.lastName || '';
+      return `${firstName} ${lastName}`.trim() || event.user.email || null;
     }
+    
+    if (event.originalOwner && typeof event.originalOwner === 'object') {
+      const firstName = event.originalOwner.firstName || '';
+      const lastName = event.originalOwner.lastName || '';
+      return `${firstName} ${lastName}`.trim() || event.originalOwner.email || null;
+    }
+    
     return null;
   };
 
@@ -426,8 +457,8 @@ const Dashboard = () => {
               <div className="events-grid">
                 {events.length > 0 ? (
                   events.map(event => (
-                    <div key={event._id} className={`event-card ${event.originalEvent ? 'shared-event' : ''}`}>
-                      {event.originalEvent && (
+                    <div key={event._id} className={`event-card ${isSharedEvent(event) ? 'shared-event' : ''}`}>
+                      {isSharedEvent(event) && (
                         <div className="shared-badge">
                           <span>{t('dashboard.sharedEvent')}</span>
                         </div>
@@ -437,7 +468,7 @@ const Dashboard = () => {
                         
                         <div className="event-details-content">
                         
-                          {event.originalEvent && (
+                          {isSharedEvent(event) && (
                             <div className="shared-by">
                               {t('dashboard.sharedBy')}: <strong>{getEventOwnerName(event) || t('dashboard.unknown')}</strong>
                             </div>
@@ -473,8 +504,8 @@ const Dashboard = () => {
                         <button className="event-details-btn" onClick={() => handleEventDetails(event._id)}>
                           {t('dashboard.viewDetails')}
                         </button>
-                        {!event.originalEvent && (
-                          <button className="event-delete-btn" onClick={() => handleDeleteEventClick(event._id, event.title)}>
+                       {!isSharedEvent(event) && (
+                        <button className="event-delete-btn" onClick={() => handleDeleteEventClick(event._id, event.title)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="3 6 5 6 21 6"></polyline>
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>

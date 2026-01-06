@@ -65,8 +65,7 @@ const EventRidesPage = ({ permissionLoading = false }) => {
   };
 
   const copyRideLink = () => {
-    const actualEventId = event.originalEvent || eventId;
-    const rideLink = `${window.location.origin}/rides/${actualEventId}`;
+    const rideLink = `${window.location.origin}/rides/${eventId}`;
     navigator.clipboard.writeText(rideLink);
   };
 

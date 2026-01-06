@@ -6,49 +6,11 @@ const Seating = require('../models/Seating');
 const getEventGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
-    let guestsToReturn = [];
     
-    const currentEventGuests = await Guest.find({ event: eventId })
+    const guests = await Guest.find({ event: eventId })
       .sort({ lastName: 1, firstName: 1 });
-    guestsToReturn = [...currentEventGuests];
         
-    const currentEvent = await Event.findById(eventId);
-    
-    if (currentEvent) {
-      if (currentEvent.originalEvent) {
-        const originalEventGuests = await Guest.find({ event: currentEvent.originalEvent })
-          .sort({ lastName: 1, firstName: 1 });
-        guestsToReturn = [...guestsToReturn, ...originalEventGuests];
-      }
-      else {
-        const sharedCopies = await Event.find({ originalEvent: eventId });
-        
-        for (let copy of sharedCopies) {
-          const copyGuests = await Guest.find({ event: copy._id })
-            .sort({ lastName: 1, firstName: 1 });
-          guestsToReturn = [...guestsToReturn, ...copyGuests];
-        }
-      }
-    }
-    
-    const uniqueGuests = [];
-    const seenPhones = new Set();
-    
-    for (let guest of guestsToReturn) {
-      if (guest.phone && !seenPhones.has(guest.phone)) {
-        seenPhones.add(guest.phone);
-        uniqueGuests.push(guest);
-      } else if (!guest.phone) {
-        uniqueGuests.push(guest);
-      }
-    }
-        
-    res.json(uniqueGuests.sort((a, b) => {
-      const lastNameCompare = a.lastName.localeCompare(b.lastName);
-      return lastNameCompare !== 0 ? lastNameCompare : a.firstName.localeCompare(b.firstName);
-    }));
-    
-
+    res.json(guests);
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -63,8 +25,6 @@ const addGuest = async (req, res) => {
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
-
-    const targetEventId = event.originalEvent || eventId;
 
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
@@ -86,7 +46,7 @@ const addGuest = async (req, res) => {
       lastName: lastName.trim(),
       phone: phone.trim(),
       group: finalGroup,
-      event: targetEventId,
+      event: eventId,  
       user: req.userId,
       attendingCount: 1
     };
@@ -95,8 +55,7 @@ const addGuest = async (req, res) => {
       guestData.customGroup = finalCustomGroup;
     }
 
-    const targetEvent = await Event.findById(targetEventId);
-    if (targetEvent && targetEvent.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
+    if (event.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
       guestData.gender = gender;
     }
 
@@ -104,7 +63,7 @@ const addGuest = async (req, res) => {
     const savedGuest = await newGuest.save();
     
     if (savedGuest.rsvpStatus === 'confirmed') {
-      await triggerSeatingSync(targetEventId, req.userId, 'guest_added', {
+      await triggerSeatingSync(eventId, req.userId, 'guest_added', {
         guestId: savedGuest._id,
         guest: savedGuest
       });
@@ -188,7 +147,7 @@ const bulkImportGuests = async (req, res) => {
         phone: guest.phone ? guest.phone.trim() : '',
         group: finalGroup,
         customGroup: finalCustomGroup,
-        event: eventId,
+        event: eventId, 
         user: req.userId,
         attendingCount: 1,
         rsvpStatus: 'pending',
@@ -216,7 +175,6 @@ const bulkImportGuests = async (req, res) => {
         }
 
       } catch (insertError) {
-        
         if (insertError.insertedDocs) {
           results.imported = insertError.insertedDocs.length;
         }
@@ -262,27 +220,12 @@ const deleteGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
 
-    let guest = await Guest.findById(guestId);
+    const guest = await Guest.findOne({ 
+      _id: guestId, 
+      event: eventId 
+    });
 
     if (!guest) {
-      return res.status(404).json({ message: req.t('guests.notFound') });
-    }
-
-    const currentEvent = await Event.findById(eventId);
-    let isAuthorized = false;
-    
-    if (guest.event.toString() === eventId) {
-      isAuthorized = true;
-    } else if (currentEvent) {
-      if (currentEvent.originalEvent && guest.event.toString() === currentEvent.originalEvent.toString()) {
-        isAuthorized = true;
-      } else if (!currentEvent.originalEvent) {
-        const sharedCopies = await Event.find({ originalEvent: eventId });
-        isAuthorized = sharedCopies.some(copy => guest.event.toString() === copy._id.toString());
-      }
-    }
-    
-    if (!isAuthorized) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
@@ -292,12 +235,7 @@ const deleteGuest = async (req, res) => {
 
     if (wasConfirmed) {
       await triggerSeatingSync(eventId, req.userId, 'guest_deleted', {
-        guestId,
-        guest: {
-          firstName: guest.firstName,
-          lastName: guest.lastName,
-          attendingCount: guest.attendingCount
-        }
+        guestId: guestId
       });
     }
 
@@ -310,69 +248,55 @@ const deleteGuest = async (req, res) => {
 const updateGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
-    const event = await Event.findById(eventId);
-    const targetEventId = event?.originalEvent || eventId;
-    const { firstName, lastName, phone, group, customGroup } = req.body;
-    
-    let guest = await Guest.findById(guestId);
+    const { firstName, lastName, phone, group, customGroup, gender } = req.body;
+
+    const guest = await Guest.findOne({ 
+      _id: guestId, 
+      event: eventId 
+    });
 
     if (!guest) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
-     const currentEvent = await Event.findById(eventId);
-    let isAuthorized = false;
-    
-    if (guest.event.toString() === eventId) {
-      isAuthorized = true;
-    } else if (currentEvent) {
-      if (currentEvent.originalEvent && guest.event.toString() === currentEvent.originalEvent.toString()) {
-        isAuthorized = true;
-      } else if (!currentEvent.originalEvent) {
-        const sharedCopies = await Event.find({ originalEvent: eventId });
-        isAuthorized = sharedCopies.some(copy => guest.event.toString() === copy._id.toString());
-      }
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
-    
-    if (!isAuthorized) {
-      return res.status(404).json({ message: req.t('guests.notFound') });
-    }
-
-    const wasConfirmed = guest.rsvpStatus === 'confirmed';
-    const oldAttendingCount = guest.attendingCount || 1;
 
     if (firstName !== undefined) guest.firstName = firstName.trim();
     if (lastName !== undefined) guest.lastName = lastName.trim();
     if (phone !== undefined) guest.phone = phone.trim();
-    
-    if (group !== undefined) {
-      let finalGroup = group || 'other';
-      let finalCustomGroup = undefined;
 
+    if (group !== undefined) {
       if (group === 'custom' || !['family', 'friends', 'work', 'other'].includes(group)) {
         if (customGroup && customGroup.trim()) {
-          finalGroup = customGroup.trim();
-          finalCustomGroup = customGroup.trim();
+          guest.group = customGroup.trim();
+          guest.customGroup = customGroup.trim();
         } else if (!['family', 'friends', 'work', 'other'].includes(group)) {
-          finalGroup = group;
-          finalCustomGroup = group;
+          guest.group = group;
+          guest.customGroup = group;
         } else {
-          finalGroup = 'other';
+          guest.group = 'other';
+          guest.customGroup = undefined;
         }
+      } else {
+        guest.group = group;
+        guest.customGroup = undefined;
       }
-
-      guest.group = finalGroup;
-      guest.customGroup = finalCustomGroup;
     }
 
+    if (event.isSeparatedSeating && gender && ['male', 'female'].includes(gender)) {
+      guest.gender = gender;
+    }
+
+    const wasConfirmed = guest.rsvpStatus === 'confirmed';
     const updatedGuest = await guest.save();
 
-    if (wasConfirmed && (firstName || lastName || group || customGroup)) {
-      await triggerSeatingSync(eventId, req.userId, 'guest_details_updated', {
-        guestId,
-        guest: updatedGuest,
-        oldAttendingCount,
-        newAttendingCount: updatedGuest.attendingCount
+    if (wasConfirmed) {
+      await triggerSeatingSync(eventId, req.userId, 'guest_updated', {
+        guestId: updatedGuest._id,
+        guest: updatedGuest
       });
     }
 
@@ -385,7 +309,7 @@ const updateGuest = async (req, res) => {
         errors 
       });
     }
-    
+
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -393,144 +317,70 @@ const updateGuest = async (req, res) => {
 const updateGuestRSVP = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
-    const { rsvpStatus, guestNotes, attendingCount, maleCount, femaleCount } = req.body;
+    const { rsvpStatus, attendingCount, maleCount, femaleCount, guestNotes } = req.body;
 
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event && !(await Event.findOne({ _id: eventId, 'sharedWith.userId': req.userId }))) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
-    
-    let guest = await Guest.findOne({ _id: guestId, event: eventId });
-    
-    if (!guest && event && event.originalEvent) {
-      guest = await Guest.findOne({ _id: guestId, event: event.originalEvent });
-    }
-    
-    if (!guest) {
-      const sharedCopies = await Event.find({ 
-        $or: [
-          { originalEvent: eventId },
-          { _id: event?.originalEvent }
-        ]
-      });
-      
-      for (let copy of sharedCopies) {
-        guest = await Guest.findOne({ _id: guestId, event: copy._id });
-        if (guest) break;
-      }
-    }
-    
+    const guest = await Guest.findOne({ 
+      _id: guestId, 
+      event: eventId 
+    });
+
     if (!guest) {
       return res.status(404).json({ message: req.t('guests.notFound') });
     }
 
-    const oldStatus = guest.rsvpStatus;
-    const oldAttendingCount = guest.attendingCount || 1;
-    const oldMaleCount = guest.maleCount || 0;
-    const oldFemaleCount = guest.femaleCount || 0;
-    let syncTriggerData = null;
-
-    if (rsvpStatus !== undefined) {
-      guest.rsvpStatus = rsvpStatus;
-      guest.rsvpReceivedAt = Date.now();
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
-    
+
+    const wasConfirmed = guest.rsvpStatus === 'confirmed';
+    const willBeConfirmed = rsvpStatus === 'confirmed';
+
+    guest.rsvpStatus = rsvpStatus;
+
+    if (rsvpStatus === 'confirmed') {
+      if (event.isSeparatedSeating) {
+        guest.maleCount = Math.max(0, maleCount || 0);
+        guest.femaleCount = Math.max(0, femaleCount || 0);
+        guest.attendingCount = guest.maleCount + guest.femaleCount;
+      } else {
+        guest.attendingCount = Math.max(1, attendingCount || 1);
+      }
+      guest.rsvpReceivedAt = new Date();
+    } else {
+      guest.attendingCount = 0;
+      guest.maleCount = 0;
+      guest.femaleCount = 0;
+    }
+
     if (guestNotes !== undefined) {
       guest.guestNotes = guestNotes;
     }
 
-    if (event.isSeparatedSeating) {
-      if (maleCount !== undefined) {
-        guest.maleCount = rsvpStatus === 'confirmed' ? Math.max(0, parseInt(maleCount)) : 0;
-      }
-      if (femaleCount !== undefined) {
-        guest.femaleCount = rsvpStatus === 'confirmed' ? Math.max(0, parseInt(femaleCount)) : 0;
-      }
-      guest.attendingCount = (guest.maleCount || 0) + (guest.femaleCount || 0);
-    } else {
-      if (attendingCount !== undefined) {
-        const count = parseInt(attendingCount);
-        if (!isNaN(count) && count >= 0) {
-          guest.attendingCount = count;
-        }
-      } else if (rsvpStatus === 'declined') {
-        guest.attendingCount = 0;
-      } else if (rsvpStatus === 'confirmed' && (!guest.attendingCount || guest.attendingCount < 1)) {
-        guest.attendingCount = 1;
-      }
-    }
-
     const updatedGuest = await guest.save();
-    const newAttendingCount = updatedGuest.attendingCount || 1;
-    const newMaleCount = updatedGuest.maleCount || 0;
-    const newFemaleCount = updatedGuest.femaleCount || 0;
 
-    if (oldStatus !== rsvpStatus) {
-      if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
-        syncTriggerData = {
-          type: 'status_became_confirmed',
-          guestId,
-          guest: updatedGuest,
-          oldStatus,
-          newStatus: rsvpStatus,
-          isSeparated: event.isSeparatedSeating,
-          maleCount: newMaleCount,
-          femaleCount: newFemaleCount
-        };
-      } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
-        syncTriggerData = {
-          type: 'status_no_longer_confirmed',
-          guestId,
-          guest: updatedGuest,
-          oldStatus,
-          newStatus: rsvpStatus
-        };
-      }
-    } else if (rsvpStatus === 'confirmed') {
-       if (event.isSeparatedSeating) {
-        if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
-          const changedGenders = [];
-          if (oldMaleCount !== newMaleCount) {
-            changedGenders.push('male');
-          }
-          if (oldFemaleCount !== newFemaleCount) {
-            changedGenders.push('female');
-          }
-          
-          syncTriggerData = {
-            type: 'attending_count_changed',
-            guestId,
-            guest: updatedGuest,
-            oldCount: oldAttendingCount,
-            newCount: newAttendingCount,
-            oldMaleCount,
-            newMaleCount,
-            oldFemaleCount,
-            newFemaleCount,
-            isSeparated: true,
-            changedGenders
-          };
-        }
-      } else if (oldAttendingCount !== newAttendingCount) {
-        syncTriggerData = {
-          type: 'attending_count_changed',
-          guestId,
-          guest: updatedGuest,
-          oldCount: oldAttendingCount,
-          newCount: newAttendingCount
-        };
-      }
+    const countChanged = willBeConfirmed && (guest.attendingCount !== attendingCount || guest.maleCount !== maleCount || guest.femaleCount !== femaleCount);
+
+    if (wasConfirmed !== willBeConfirmed || countChanged) {
+      await triggerSeatingSync(eventId, req.userId, 'rsvp_changed', {
+        guestId: updatedGuest._id,
+        guest: updatedGuest,
+        wasConfirmed,
+        willBeConfirmed,
+        countChanged
+      });
     }
 
-    if (syncTriggerData) {
-      await triggerSeatingSync(guest.event, guest.user, 'rsvp_updated', syncTriggerData);
-    }
-
-    res.json({
-      message: req.t('guests.rsvp.updateSuccess'),
-      guest: updatedGuest
-    });
+    res.json(updatedGuest);
   } catch (err) {
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ 
+        message: req.t('errors.validationError'),
+        errors 
+      });
+    }
+
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -538,26 +388,22 @@ const updateGuestRSVP = async (req, res) => {
 const getEventGroups = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
 
-    const guests = await Guest.find({ event: eventId, user: req.userId }, 'group customGroup');
-    
-    const groups = new Set();
+    const guests = await Guest.find({ event: eventId });
+
+    const groupSet = new Set();
+
     guests.forEach(guest => {
-      if (['family', 'friends', 'work', 'other'].includes(guest.group)) {
-        groups.add(guest.group);
-      } else if (guest.customGroup) {
-        groups.add(guest.customGroup);
-      } else {
-        groups.add(guest.group);
+      if (guest.customGroup) {
+        groupSet.add(guest.customGroup);
+      } else if (guest.group) {
+        groupSet.add(guest.group);
       }
     });
 
-    res.json(Array.from(groups));
+    const groups = Array.from(groupSet);
+
+    res.json({ groups });
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -566,36 +412,30 @@ const getEventGroups = async (req, res) => {
 const getGuestStats = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') });
-    }
 
-    const guests = await Guest.find({ event: eventId, user: req.userId });
-    
+    const guests = await Guest.find({ event: eventId });
+
     const stats = {
-      total: guests.length,
-      confirmed: guests.filter(g => g.rsvpStatus === 'confirmed').length,
-      declined: guests.filter(g => g.rsvpStatus === 'declined').length,
-      pending: guests.filter(g => g.rsvpStatus === 'pending').length,
-      no_response: guests.filter(g => g.rsvpStatus === 'no_response').length,
-      byGroup: {}
+      totalGuests: guests.length,
+      confirmed: 0,
+      declined: 0,
+      pending: 0,
+      totalAttending: 0,
+      totalMale: 0,
+      totalFemale: 0
     };
 
     guests.forEach(guest => {
-      const group = guest.customGroup || guest.group;
-      if (!stats.byGroup[group]) {
-        stats.byGroup[group] = {
-          total: 0,
-          confirmed: 0,
-          declined: 0,
-          pending: 0,
-          no_response: 0
-        };
+      if (guest.rsvpStatus === 'confirmed') {
+        stats.confirmed++;
+        stats.totalAttending += guest.attendingCount || 0;
+        stats.totalMale += guest.maleCount || 0;
+        stats.totalFemale += guest.femaleCount || 0;
+      } else if (guest.rsvpStatus === 'declined') {
+        stats.declined++;
+      } else {
+        stats.pending++;
       }
-      stats.byGroup[group].total++;
-      stats.byGroup[group][guest.rsvpStatus]++;
     });
 
     res.json(stats);
@@ -607,199 +447,90 @@ const getGuestStats = async (req, res) => {
 const updateGuestRSVPPublic = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { phone, rsvpStatus, guestNotes, attendingCount, maleCount, femaleCount } = req.body;
+    const { phone, rsvpStatus, attendingCount, maleCount, femaleCount, guestNotes } = req.body;
 
-    if (!phone || !phone.trim()) {
-      return res.status(400).json({ message: 'נדרש מספר טלפון' });
+    if (!phone) {
+      return res.status(400).json({ message: req.t('guests.errors.phoneRequired') || 'מספר טלפון נדרש' });
     }
 
-    const cleanPhone = phone.trim();
-    
-    const currentEvent = await Event.findById(eventId);
-    let guest = null;
-    
-    guest = await Guest.findOne({ phone: cleanPhone, event: eventId });
-    
-    if (!guest && currentEvent) {
-      if (currentEvent.originalEvent) {
-        guest = await Guest.findOne({ 
-          phone: cleanPhone, 
-          event: currentEvent.originalEvent 
-        });
-      }
-      
-      if (!guest && !currentEvent.originalEvent) {
-        const sharedCopies = await Event.find({ originalEvent: eventId });
-        for (let copy of sharedCopies) {
-          guest = await Guest.findOne({ 
-            phone: cleanPhone, 
-            event: copy._id 
-          });
-          if (guest) break;
-        }
-      }
-      
-      if (!guest) {
-        const relatedUserIds = [currentEvent.user];
-        if (currentEvent.sharedWith && currentEvent.sharedWith.length > 0) {
-          currentEvent.sharedWith.forEach(share => {
-            if (share.userId) {
-              relatedUserIds.push(share.userId);
-            }
-          });
-        }
-        
-        guest = await Guest.findOne({ 
-          phone: cleanPhone,
-          user: { $in: relatedUserIds }
-        });
-      }
+    const cleanPhone = phone.replace(/\s/g, '');
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
     }
-    
+
+    const guest = await Guest.findOne({ 
+      phone: cleanPhone, 
+      event: eventId 
+    });
+
     if (!guest) {
-      return res.status(404).json({ 
-        message: req.t('guests.errors.phoneNotFound')
-      });
+      return res.status(404).json({ message: req.t('guests.errors.phoneNotFound') || 'מספר טלפון לא נמצא' });
     }
 
-    const oldStatus = guest.rsvpStatus;
-    const oldAttendingCount = guest.attendingCount || 1;
-    const oldMaleCount = guest.maleCount || 0;
-    const oldFemaleCount = guest.femaleCount || 0;
-    let syncTriggerData = null;
+    const wasConfirmed = guest.rsvpStatus === 'confirmed';
+    const willBeConfirmed = rsvpStatus === 'confirmed';
 
     guest.rsvpStatus = rsvpStatus;
-    guest.rsvpReceivedAt = new Date();
-    
+
+    if (rsvpStatus === 'confirmed') {
+      if (event.isSeparatedSeating) {
+        guest.maleCount = Math.max(0, maleCount || 0);
+        guest.femaleCount = Math.max(0, femaleCount || 0);
+        guest.attendingCount = guest.maleCount + guest.femaleCount;
+      } else {
+        guest.attendingCount = Math.max(1, attendingCount || 1);
+      }
+      guest.rsvpReceivedAt = new Date();
+    } else {
+      guest.attendingCount = 0;
+      guest.maleCount = 0;
+      guest.femaleCount = 0;
+    }
+
     if (guestNotes !== undefined) {
       guest.guestNotes = guestNotes;
     }
-    
-    if (currentEvent.isSeparatedSeating) {
-      if (rsvpStatus === 'confirmed') {
-        guest.maleCount = maleCount >= 0 ? maleCount : 0;
-        guest.femaleCount = femaleCount >= 0 ? femaleCount : 0;
-        guest.attendingCount = guest.maleCount + guest.femaleCount;
-      } else if (rsvpStatus === 'declined') {
-        guest.maleCount = 0;
-        guest.femaleCount = 0;
-        guest.attendingCount = 0;
-      }
-    } else {
-      if (rsvpStatus === 'confirmed') {
-        guest.attendingCount = attendingCount && attendingCount >= 1 ? attendingCount : 1;
-      } else if (rsvpStatus === 'declined') {
-        guest.attendingCount = 0;
-      }
-    }
 
     const updatedGuest = await guest.save();
-    const newAttendingCount = updatedGuest.attendingCount || 1;
-    const newMaleCount = updatedGuest.maleCount || 0;
-    const newFemaleCount = updatedGuest.femaleCount || 0;
 
-    if (oldStatus !== rsvpStatus) {
-      if (rsvpStatus === 'confirmed' && oldStatus !== 'confirmed') {
-        syncTriggerData = {
-          type: 'status_became_confirmed',
-          guestId: updatedGuest._id,
-          guest: updatedGuest,
-          oldStatus,
-          newStatus: rsvpStatus,
-          isSeparated: currentEvent.isSeparatedSeating,
-          maleCount: newMaleCount,
-          femaleCount: newFemaleCount
-        };
-      } else if (oldStatus === 'confirmed' && rsvpStatus !== 'confirmed') {
-        syncTriggerData = {
-          type: 'status_no_longer_confirmed',
-          guestId: updatedGuest._id,
-          guest: updatedGuest,
-          oldStatus,
-          newStatus: rsvpStatus
-        };
-      }
-    } else if (rsvpStatus === 'confirmed') {
-      if (currentEvent.isSeparatedSeating) {
-        if (oldMaleCount !== newMaleCount || oldFemaleCount !== newFemaleCount) {
-          const changedGenders = [];
-          if (oldMaleCount !== newMaleCount) {
-            changedGenders.push('male');
-          }
-          if (oldFemaleCount !== newFemaleCount) {
-            changedGenders.push('female');
-          }
-          
-          syncTriggerData = {
-            type: 'attending_count_changed',
-            guestId,
-            guest: updatedGuest,
-            oldCount: oldAttendingCount,
-            newCount: newAttendingCount,
-            oldMaleCount,
-            newMaleCount,
-            oldFemaleCount,
-            newFemaleCount,
-            isSeparated: true,
-            changedGenders
-          };
-        }
-      } else if (oldAttendingCount !== newAttendingCount) {
-        syncTriggerData = {
-          type: 'attending_count_changed',
-          guestId: updatedGuest._id,
-          guest: updatedGuest,
-          oldCount: oldAttendingCount,
-          newCount: newAttendingCount
-        };
-      }
+    if (wasConfirmed !== willBeConfirmed) {
+      await triggerSeatingSync(eventId, event.user, 'rsvp_changed', {
+        guestId: updatedGuest._id,
+        guest: updatedGuest,
+        wasConfirmed,
+        willBeConfirmed
+      });
     }
 
-    if (syncTriggerData) {
-      await triggerSeatingSync(eventId, updatedGuest.user, 'public_rsvp_updated', syncTriggerData);
-    }
-    
     res.json({
-      message: req.t('guests.rsvp.updateSuccess'),
-      guest: {
-        firstName: updatedGuest.firstName,
-        lastName: updatedGuest.lastName,
-        rsvpStatus: updatedGuest.rsvpStatus,
-        attendingCount: updatedGuest.attendingCount,
-        maleCount: updatedGuest.maleCount,
-        femaleCount: updatedGuest.femaleCount
-      }
+      message: req.t('guests.rsvp.updateSuccess') || 'אישור השתתפות עודכן בהצלחה',
+      guest: updatedGuest
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError')});
+    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
   }
 };
 
 const getEventForRSVP = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
-    let event = await Event.findById(eventId, 'eventName date location originalEvent isSeparatedSeating');
 
+    const event = await Event.findById(eventId);
     if (!event) {
-      return res.status(404).json({ message: 'אירוע לא נמצא' });
-    }
-
-    if (event.originalEvent) {
-      const originalEvent = await Event.findById(event.originalEvent, 'eventName date location isSeparatedSeating');
-      if (originalEvent) {
-        event = originalEvent;
-      }
+      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
     }
 
     res.json({
-      eventName: event.eventName,
+      eventId: event._id,
+      eventTitle: event.title,
       eventDate: event.date,
-      eventLocation: event.location,
+      eventTime: event.time,
       isSeparatedSeating: event.isSeparatedSeating || false
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError')});
+    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
   }
 };
 
@@ -807,67 +538,22 @@ const checkGuestByPhone = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { phone } = req.body;
-    
-    if (!phone || !phone.trim()) {
-      return res.status(400).json({ message: 'נדרש מספר טלפון' });
+
+    if (!phone) {
+      return res.status(400).json({ message: req.t('guests.errors.phoneRequired') || 'מספר טלפון נדרש' });
     }
 
-    const cleanPhone = phone.trim();
-    
-    const currentEvent = await Event.findById(eventId);
-    
-    let guest = null;
-    let searchedEvents = [];
-    
-    guest = await Guest.findOne({ phone: cleanPhone, event: eventId });
-    searchedEvents.push(eventId);
-    
-    if (guest) {
-      // Guest found
-    } else {
-      if (currentEvent) {
-        if (currentEvent.originalEvent) {
-          guest = await Guest.findOne({ 
-            phone: cleanPhone, 
-            event: currentEvent.originalEvent 
-          });
-          searchedEvents.push(currentEvent.originalEvent.toString());
-        }
-        
-        if (!guest && !currentEvent.originalEvent) {
-          const sharedCopies = await Event.find({ originalEvent: eventId });
-          
-          for (let copy of sharedCopies) {
-            guest = await Guest.findOne({ 
-              phone: cleanPhone, 
-              event: copy._id 
-            });
-            searchedEvents.push(copy._id.toString());
-            
-            if (guest) {
-              break;
-            }
-          }
-        }
-        
-        if (!guest) {
-          const relatedUserIds = [currentEvent.user];
-          
-          if (currentEvent.sharedWith && currentEvent.sharedWith.length > 0) {
-            currentEvent.sharedWith.forEach(share => {
-              if (share.userId) {
-                relatedUserIds.push(share.userId);
-              }
-            });
-          }
-          
-          guest = await Guest.findOne({ 
-            phone: cleanPhone,
-            user: { $in: relatedUserIds }
-          });
-        }
-      }
+    const cleanPhone = phone.replace(/\s/g, '');
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
     }
+
+    const guest = await Guest.findOne({ 
+      phone: cleanPhone, 
+      event: eventId 
+    });
         
     if (!guest) {
       return res.status(404).json({ 
@@ -895,17 +581,25 @@ const generateRSVPLink = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
     }
 
-    const actualEventId = event.originalEvent || eventId;
-    const rsvpLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/rsvp/${actualEventId}`;
+    const hasAccess = event.user.toString() === req.userId || 
+                     event.sharedWith.some(share => 
+                       share.userId && share.userId.toString() === req.userId
+                     );
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: req.t('errors.accessDenied') });
+    }
+
+    const rsvpLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/rsvp/${eventId}`;
     
     res.json({ 
       rsvpLink,
-      eventName: event.eventName 
+      eventName: event.title 
     });
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
@@ -917,9 +611,19 @@ const updateGuestGift = async (req, res) => {
     const { eventId, guestId } = req.params;
     const { hasGift, giftDescription, giftValue } = req.body;
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const hasAccess = event.user.toString() === req.userId || 
+                     event.sharedWith.some(share => 
+                       share.userId && share.userId.toString() === req.userId && 
+                       share.permission === 'edit'
+                     );
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: req.t('errors.accessDenied') });
     }
 
     if (new Date() <= new Date(event.date)) {
@@ -927,12 +631,10 @@ const updateGuestGift = async (req, res) => {
         message: req.t('guests.gifts.eventNotPassed') 
       });
     }
-
-    const targetEventId = event.originalEvent || eventId;
     
     const guest = await Guest.findOne({ 
       _id: guestId, 
-      event: targetEventId
+      event: eventId 
     });
     
     if (!guest) {
@@ -949,7 +651,7 @@ const updateGuestGift = async (req, res) => {
 
     try {
       const Budget = require('../models/Budget');
-      const budget = await Budget.findOne({ event: targetEventId });
+      const budget = await Budget.findOne({ event: eventId });
       
       if (budget) {
         budget.incomes = budget.incomes.filter(income => 
@@ -1030,7 +732,7 @@ const getSeatingSync = async (req, res) => {
   try {
     const { eventId } = req.params;
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
@@ -1066,7 +768,7 @@ const markSyncProcessed = async (req, res) => {
     const { eventId } = req.params;
     const { triggerTimestamps } = req.body;
     
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
+    const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }

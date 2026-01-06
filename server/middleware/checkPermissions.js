@@ -1,8 +1,8 @@
 // server/middleware/checkPermissions.js
 const Event = require('../models/Event');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
-//  Middleware to check if user has edit permission for an event
 const checkEditPermission = async (req, res, next) => {
   try {
     const eventId = req.params.eventId || req.params.id;
@@ -11,40 +11,44 @@ const checkEditPermission = async (req, res, next) => {
       return res.status(400).json({ message: req.t('errors.invalidEventId') });
     }
     
-    const ownedEvent = await Event.findOne({ _id: eventId, user: req.userId });
-    if (ownedEvent && !ownedEvent.originalEvent) {
+    const event = await Event.findById(eventId);
+    
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
+    }
+
+    if (event.user.toString() === req.userId) {
       req.canEdit = true;
-      req.userPermission = 'edit';
+      req.userPermission = 'owner';
+      req.isEventOwner = true;
       return next();
     }
 
-    if (ownedEvent && ownedEvent.originalEvent) {
-      const originalEvent = await Event.findOne({
-        _id: ownedEvent.originalEvent,
-        'sharedWith.userId': req.userId
-      });
+    const shareInfo = event.sharedWith.find(
+      share => (share.userId && share.userId.toString() === req.userId) ||
+               share.email === currentUser.email
+    );
 
-      if (originalEvent) {
-        const shareInfo = originalEvent.sharedWith.find(
-          share => share.userId?.toString() === req.userId
-        );
-
-        if (shareInfo) {
-          req.canEdit = shareInfo.permission === 'edit';
-          req.userPermission = shareInfo.permission;
-          
-          if (req.method !== 'GET' && !req.canEdit) {
-            return res.status(403).json({ message: req.t('events.editDenied') });
-          }
-          
-          return next();
-        }
+    if (shareInfo) {
+      req.canEdit = shareInfo.permission === 'edit';
+      req.userPermission = shareInfo.permission;
+      req.isEventOwner = false;
+      
+      if (req.method !== 'GET' && !req.canEdit) {
+        return res.status(403).json({ message: req.t('events.editDenied') });
       }
+      
+      return next();
     }
 
     return res.status(404).json({ message: req.t('events.notFound') });
   } catch (err) {
-    console.error('Error checking permissions:', err);
+    console.error('Error checking edit permissions:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -57,35 +61,38 @@ const checkViewPermission = async (req, res, next) => {
       return res.status(400).json({ message: req.t('errors.invalidEventId') });
     }
     
-    const ownedEvent = await Event.findOne({ _id: eventId, user: req.userId });
-    if (ownedEvent && !ownedEvent.originalEvent) {
-      req.canEdit = true;
-      req.userPermission = 'edit';
-      return next();
+    const event = await Event.findById(eventId);
+    
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    if (ownedEvent && ownedEvent.originalEvent) {
-      const originalEvent = await Event.findOne({
-        _id: ownedEvent.originalEvent,
-        'sharedWith.userId': req.userId
-      });
+    const currentUser = await User.findById(req.userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: req.t('errors.userNotFound') });
+    }
 
-      if (originalEvent) {
-        const shareInfo = originalEvent.sharedWith.find(
-          share => share.userId?.toString() === req.userId
-        );
+    if (event.user.toString() === req.userId) {
+      req.canEdit = true;
+      req.userPermission = 'owner';
+      req.isEventOwner = true;
+      return next();
+    }
+    const shareInfo = event.sharedWith.find(
+      share => (share.userId && share.userId.toString() === req.userId) ||
+               share.email === currentUser.email
+    );
 
-        if (shareInfo) {
-          req.canEdit = shareInfo.permission === 'edit';
-          req.userPermission = shareInfo.permission;
-          return next();
-        }
-      }
+    if (shareInfo) {
+      req.canEdit = shareInfo.permission === 'edit';
+      req.userPermission = shareInfo.permission;
+      req.isEventOwner = false;
+      return next();
     }
 
     return res.status(404).json({ message: req.t('events.notFound') });
   } catch (err) {
-    console.error('Error checking permissions:', err);
+    console.error('Error checking view permissions:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -98,8 +105,13 @@ const checkIsEventOwner = async (req, res, next) => {
       return res.status(400).json({ message: req.t('errors.invalidEventId') });
     }
     
-    const ownedEvent = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!ownedEvent || ownedEvent.originalEvent) {
+    const event = await Event.findById(eventId);
+    
+    if (!event) {
+      return res.status(404).json({ message: req.t('events.notFound') });
+    }
+
+    if (event.user.toString() !== req.userId) {
       return res.status(403).json({ message: req.t('events.onlyOwnerCanShare') });
     }
     
