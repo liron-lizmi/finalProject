@@ -773,60 +773,60 @@
     },
     "features": {
       "title": "Advanced Event Planning Tools",
-      "description": "Our platform offers a variety of smart tools that will assist you at every stage from planning your event to managing it in real time.",
+      "description": "Our platform offers a variety of smart tools to assist you in every step of planning and managing your event.",
       "venue": {
         "title": "Perfect Venue Selection",
-        "description": "Find the ideal venue for your event with smart filtering by location, budget, guest capacity and atmosphere. Discover halls, event gardens and unique places that perfectly match your requirements, get personalized recommendations, and compare different options in one place.",
-        "cta": "Discover Venues"
+        "description": "Find the ideal venue for your event with search options from the central database. Explore halls, gardens, and unique locations, view detailed information, and save your choice as part of your event management.",
+        "cta": "Explore Venues"
       },
       "vendors": {
         "title": "Smart Vendor Management",
-        "description": "Manage all your vendors in one place - music, catering, photography, design and more. Compare price quotes, save important documents and manage efficient communication with all parties involved. The system alerts you to important deadlines and helps you track planning progress.",
+        "description": "Manage all your vendors in one place – music, catering, photography, decoration, and more. The system allows you to search vendors, view their details, save them to your event, and manage all vendors in a structured and organized way.",
         "cta": "Manage Vendors"
       },
       "guests": {
-        "title": "Smart Guest List",
-        "description": "Easily manage guest lists, send personalized digital invitations and track RSVPs in real time. Our smart tool helps you stay in touch with guests before and after the event, collect menu preferences, and manage related events such as bachelor/bachelorette parties or henna ceremonies.",
+        "title": "Guest List Management",
+        "description": "Easily create and manage your guest lists, and track RSVPs. The system allows adding and importing guests in multiple convenient ways, keeping all data organized and synchronized.",
         "cta": "Manage Guests"
       },
       "seating": {
-        "title": "Intuitive Seating Arrangements",
-        "description": "AI algorithm for optimal seating arrangement for your guests, taking into account family dynamics, personal preferences and special needs. The interactive interface allows you to easily plan and change seating arrangements, share with family members for feedback, and export detailed diagrams to vendors.",
+        "title": "User-Friendly Seating Arrangements",
+        "description": "The system allows you to arrange guests at tables manually or automatically, based on guest data. You can view seating arrangements graphically or in a table format and export them for external use.",
         "cta": "Plan Seating"
       },
       "timeline": {
-        "title": "Precise Schedule Management",
-        "description": "Plan your event with a smart schedule for every step. Get notifications about payment deadlines, vendor meetings, and important tasks. Our tool ensures you don't miss any important details on the way to the perfect event, offers rides to event attendees, and allows you to share your schedule with family or a professional event planner.",
+        "title": "Schedule and Task Management",
+        "description": "Plan your event with a smart schedule for every stage. Receive reminders for important tasks and track progress throughout the planning process. You can also sync tasks with your personal Google Calendar.",
         "cta": "Manage Schedule"
       },
       "budget": {
         "title": "Smart Budget Management",
-        "description": "Track your budget and event expenses in real time. Our smart tool helps you focus on what really matters, identify places to save and ensure you stay within your defined budget. Get insights into spending patterns, compare price quotes, and receive alerts when approaching budget limits.",
+        "description": "Track your event budget and expenses clearly and efficiently. The system allows managing income and expenses, monitoring the budget, and viewing visual summaries with graphs to maintain control throughout the planning process.",
         "cta": "Manage Budget"
       }
     },
     "process": {
-      "title": "Simple and Effective Planning Process",
-      "description": "From the initial idea to the day of the event, the PlanIt system accompanies you every step of the way",
+      "title": "Simple and Organized Planning Process",
+      "description": "From the initial idea to the day of the event, PlanIt guides you through every step.",
       "step1": {
-        "title": "Define Your Event",
-        "description": "Create an account with PlanIt and define the type of event, date, number of guests and budget. The system will adapt itself to your specific needs and create a personal work plan."
+        "title": "Event Setup",
+        "description": "Create an account in PlanIt and set the event type and date. There is also an option for separate seating arrangements if needed."
       },
       "step2": {
-        "title": "Choose Venue and Vendors",
-        "description": "The system will suggest personalized options for venues and vendors that match your requirements and budget. You can compare prices, read reviews, and make informed decisions in one place."
+        "title": "Venue and Vendors",
+        "description": "The system allows you to search and view details of venues and vendors from the central database. You can save your selections as part of your event and access all relevant information in one organized place."
       },
       "step3": {
-        "title": "Manage Invitations and Guests",
-        "description": "Send custom designed digital invitations, track RSVPs, and manage special notes such as menu preferences or special needs. The system centralizes all information in one place and enables easy communication with guests."
+        "title": "Guest Management",
+        "description": "The system allows you to create and manage your guest list and track RSVPs. All information is stored and synchronized with other event components."
       },
       "step4": {
         "title": "Final Planning and Logistics",
-        "description": "Design seating arrangements, final coordination with vendors and build a detailed schedule for the event day. The system ensures that all the small details are taken care of and that everything is ready for the big day."
+        "description": "Arrange seating, set up the budget, and create a structured task list. The system ensures all details are covered and everything is ready for the big day."
       },
       "step5": {
-        "title": "Real-time Event Management",
-        "description": "Get access to all important data on the day of the event, share tasks with team members, and document special moments in the digital event journal. Even after the event, you'll be able to send thanks to guests and vendors and summarize your successful event."
+        "title": "Event Sharing",
+        "description": "The system allows you to invite additional users to view or edit the event details."
       }
     },
     "testimonials": {
@@ -1490,7 +1490,8 @@
       "addGuests": "Add Guests",
       "minCapacity": "Minimum capacity",
       "capacityTooSmall": "The requested capacity ({{requested}}) is too small. There are {{current}} guests already assigned.",
-      "cannotReduceCapacity": "Cannot reduce capacity — there are guests already assigned."
+      "cannotReduceCapacity": "Cannot reduce capacity — there are guests already assigned.",
+      "deleteTableConfirm": "Are you sure you want to delete the table"
     },
     "guestsList": {
       "title": "Guest List",
@@ -1514,8 +1515,8 @@
         "seatedOnly": "Seated",
         "unseatedOnly": "Unseated"
       },
-      "maleSymbol": "♂",
-      "femaleSymbol": "♀",
+      "maleSymbol": "men",
+      "femaleSymbol": "women",
       "maleGuests": "Male Guests",
       "femaleGuests": "Female Guests"
     },
@@ -1689,12 +1690,6 @@
       "seatedFemaleGuests": "Seated Women",
       "unseatedMaleGuests": "Unassigned Men",
       "unseatedFemaleGuests": "Unassigned Women",
-      "existingMaleTablesNotEnough": "{{tablesCount}} existing men's tables ({{capacity}} seats) are not sufficient",
-      "existingFemaleTablesNotEnough": "{{tablesCount}} existing women's tables ({{capacity}} seats) are not sufficient",
-      "noMaleTablesYet": "No men's tables yet. Let's create them!",
-      "noFemaleTablesYet": "No women's tables yet. Let's create them!",
-      "needAdditionalTablesForUnseatedMale": "Additional tables are needed for unassigned men",
-      "needAdditionalTablesForUnseatedFemale": "Additional tables are needed for unassigned women",
       "existingMaleTables": "Existing Men's Tables",
       "existingFemaleTables": "Existing Women's Tables",
       "plannedNewMaleTables": "Planned New Men's Tables",

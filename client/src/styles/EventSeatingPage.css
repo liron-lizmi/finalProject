@@ -2339,18 +2339,6 @@
   margin-bottom: 20px;
 }
 
-.table-creation-info {
-  margin-bottom: 20px;
-}
-
-.guest-summary {
-  background: #e3f2fd;
-  padding: 10px;
-  border-radius: 6px;
-  margin-top: 10px;
-  text-align: center;
-}
-
 .table-settings {
   margin: 20px 0;
 }
@@ -3070,7 +3058,7 @@
 .add-rule-form {
   display: flex;
   flex-direction: row; 
-  justify-content: flex-end; 
+  justify-content: flex-start;
   align-items: center;
   gap: 10px;
   margin-bottom: 15px;
@@ -3078,8 +3066,22 @@
   width: 100%;
 }
 
+.seating-rules-config .add-rule-form {
+  direction: ltr;
+}
+
+.seating-rules-config .add-rule-form .guest-select,
+.seating-rules-config .add-rule-form .add-rule-btn {
+  order: unset !important;
+}
+
+.seating-rules-config .add-rule-form .validation-message {
+  width: 100%;
+  order: 4;
+}
+
 .add-rule-form .guest-select {
-  order: 3; 
+  order: unset; 
 }
 
 .add-rule-form .add-rule-btn {

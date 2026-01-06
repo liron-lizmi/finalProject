@@ -58,7 +58,7 @@ const EventSeatingPage = () => {
   const [femaleTables, setFemaleTables] = useState([]);
   const [maleArrangement, setMaleArrangement] = useState({});
   const [femaleArrangement, setFemaleArrangement] = useState({});
-  const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
+  const [genderFilter, setGenderFilter] = useState('all'); 
  
   const canvasRef = useRef(null);
   const [canEdit, setCanEdit] = useState(true);
@@ -523,6 +523,19 @@ const EventSeatingPage = () => {
   );
 
   const generateAISeating = useCallback(async (aiPreferences) => {
+    console.log('[EventSeatingPage] 🤖 generateAISeating called');
+    console.log('  - AI preferences:', aiPreferences);
+    
+    console.log('[EventSeatingPage] 📊 Current seating state:');
+    console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
+    console.log(`  - maleTablesCount: ${maleTables.length}`);
+    console.log(`  - femaleTablesCount: ${femaleTables.length}`);
+    console.log(`  - tablesCount: ${tables.length}`);
+    console.log(`  - confirmedGuestsCount: ${confirmedGuests.length}`);
+    console.log(`  - hasMaleArrangement: ${Object.keys(maleArrangement).length > 0}`);
+    console.log(`  - hasFemaleArrangement: ${Object.keys(femaleArrangement).length > 0}`);
+    console.log(`  - hasSeatingArrangement: ${Object.keys(seatingArrangement).length > 0}`);
+
     try {
       setLoading(true);
     
@@ -548,24 +561,49 @@ const EventSeatingPage = () => {
         allTables: aiPreferences.allTables || tables,
         isSeparatedSeating: false
       };
+
+      console.log('[EventSeatingPage] 📤 Sending AI generation request:');
+      console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
+      console.log(`  - preserveExisting: ${aiPreferences.preserveExisting}`);
+      console.log(`  - clearExisting: ${aiPreferences.clearExisting}`);
+      console.log(`  - maleTablesCount: ${requestBody.maleTables?.length || 0}`);
+      console.log(`  - femaleTablesCount: ${requestBody.femaleTables?.length || 0}`);
+      console.log(`  - tablesCount: ${requestBody.tables?.length || 0}`);
+      console.log(`  - guestsCount: ${confirmedGuests.length}`);
     
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {
         method: 'POST',
         body: JSON.stringify(requestBody)
       });
 
-      if (!response) return false;
+      if (!response) {
+        console.log('[EventSeatingPage] ❌ No response from AI generation');
+        return false;
+      }
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[EventSeatingPage] 📥 Received AI generation response');
+        console.log(`  - isSeparatedSeating: ${data.isSeparatedSeating}`);
+        console.log(`  - maleTablesCount: ${data.maleTables?.length || 0}`);
+        console.log(`  - femaleTablesCount: ${data.femaleTables?.length || 0}`);
+        console.log(`  - tablesCount: ${data.tables?.length || 0}`);
+        console.log(`  - hasMaleArrangement: ${data.maleArrangement ? Object.keys(data.maleArrangement).length : 0} tables`);
+        console.log(`  - hasFemaleArrangement: ${data.femaleArrangement ? Object.keys(data.femaleArrangement).length : 0} tables`);
+        console.log(`  - hasArrangement: ${data.arrangement ? Object.keys(data.arrangement).length : 0} tables`);
       
         if (isSeparatedSeating) {
+          console.log('[EventSeatingPage] 👥 Processing separated seating response');
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
         
           let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleTables;
           let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleTables;
         
+          console.log('[EventSeatingPage] 📋 Tables before name update:');
+          console.log(`  - maleCount: ${finalMaleTables.length}`);
+          console.log(`  - femaleCount: ${finalFemaleTables.length}`);
+
           if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
             finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
           }
@@ -573,8 +611,16 @@ const EventSeatingPage = () => {
             finalFemaleTables = updateTableNamesWithGroups(finalFemaleTables, data.femaleArrangement);
           }
         
+          console.log('[EventSeatingPage] ✅ Setting final tables:');
+          console.log(`  - maleCount: ${finalMaleTables.length}`);
+          console.log(`  - femaleCount: ${finalFemaleTables.length}`);
+
           setMaleTables(finalMaleTables);
           setFemaleTables(finalFemaleTables);
+        
+          console.log('[generateAISeating] Resetting canvas viewport to (0, 0)');
+          setCanvasOffset({ x: 0, y: 0 });
+          setCanvasScale(1);
         
           const layoutData = {
             maleTables: finalMaleTables,
@@ -584,13 +630,14 @@ const EventSeatingPage = () => {
             isSeparatedSeating: true,
             preferences,
             layoutSettings: {
-              canvasScale,
-              canvasOffset
+              canvasScale: 1,
+              canvasOffset: { x: 0, y: 0 }
             }
           };
         
           autoSave(layoutData);
         } else {
+          console.log('[EventSeatingPage] 👥 Processing mixed seating response');
           setSeatingArrangement(data.arrangement);
         
           let finalTables = data.tables && data.tables.length > 0 ? data.tables : tables;
@@ -601,14 +648,18 @@ const EventSeatingPage = () => {
         
           setTables(finalTables);
         
+          console.log('[generateAISeating] Resetting canvas viewport to (0, 0)');
+          setCanvasOffset({ x: 0, y: 0 });
+          setCanvasScale(1);
+        
           const layoutData = {
             tables: finalTables,
             arrangement: data.arrangement,
             isSeparatedSeating: false,
             preferences,
             layoutSettings: {
-              canvasScale,
-              canvasOffset
+              canvasScale: 1,
+              canvasOffset: { x: 0, y: 0 }
             }
           };
         
@@ -621,6 +672,7 @@ const EventSeatingPage = () => {
         const newFingerprint = createGuestFingerprint(confirmedGuests);
         setLastSyncData(newFingerprint);
       
+        console.log('[EventSeatingPage] ✅ AI seating generation completed successfully');
         return isSeparatedSeating ? {
           maleArrangement: data.maleArrangement,
           femaleArrangement: data.femaleArrangement,
@@ -632,10 +684,12 @@ const EventSeatingPage = () => {
         };
       } else {
         const errorData = await response.json().catch(() => ({}));
+        console.error('[EventSeatingPage] ❌ AI generation failed:', errorData);
         setError(errorData.message || t('seating.errors.aiGeneration'));
         return false;
       }
     } catch (err) {
+      console.error('[EventSeatingPage] ❌ Error in generateAISeating:', err);
       setError(t('errors.networkError'));
       return false;
     } finally {
@@ -644,6 +698,22 @@ const EventSeatingPage = () => {
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, preferences, confirmedGuests, seatingArrangement, maleArrangement, femaleArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint, isSeparatedSeating]);
 
   const fetchTableSuggestion = useCallback(async (options) => {
+    console.log('[EventSeatingPage] 🚀 fetchTableSuggestion called');
+    console.log('  - allowGroupMixing:', options.allowGroupMixing);
+    console.log('  - groupMixingRules:', options.groupMixingRules);
+    console.log('  - groupPolicies:', options.groupPolicies);
+    console.log('  - preferredTableSize:', options.preferredTableSize);
+    console.log('  - preserveExisting:', options.preserveExisting);
+    
+    console.log('[EventSeatingPage] 📊 Current state:');
+    console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
+    console.log(`  - tablesCount: ${tables.length}`);
+    console.log(`  - maleTablesCount: ${maleTables.length}`);
+    console.log(`  - femaleTablesCount: ${femaleTables.length}`);
+    console.log(`  - hasSeatingArrangement: ${Object.keys(seatingArrangement).length > 0}`);
+    console.log(`  - hasMaleArrangement: ${Object.keys(maleArrangement).length > 0}`);
+    console.log(`  - hasFemaleArrangement: ${Object.keys(femaleArrangement).length > 0}`);
+
     try {
       const requestBody = {
         allowGroupMixing: options.allowGroupMixing,
@@ -660,6 +730,17 @@ const EventSeatingPage = () => {
         preserveExisting: options.preserveExisting
       };
 
+      console.log('[EventSeatingPage] 📤 Sending request body:');
+      console.log(`  - allowGroupMixing: ${requestBody.allowGroupMixing}`);
+      console.log(`  - groupMixingRules:`, requestBody.groupMixingRules);
+      console.log(`  - groupPolicies:`, requestBody.groupPolicies);
+      console.log(`  - preferredTableSize: ${requestBody.preferredTableSize}`);
+      console.log(`  - isSeparatedSeating: ${requestBody.isSeparatedSeating}`);
+      console.log(`  - existingTables: ${requestBody.existingTables.length} tables`);
+      console.log(`  - existingMaleTables: ${requestBody.existingMaleTables.length} tables`);
+      console.log(`  - existingFemaleTables: ${requestBody.existingFemaleTables.length} tables`);
+      console.log(`  - preserveExisting: ${requestBody.preserveExisting}`);
+
       const response = await makeApiRequest(`/api/events/${eventId}/seating/suggest-tables`, {
         method: 'POST',
         body: JSON.stringify(requestBody)
@@ -667,11 +748,29 @@ const EventSeatingPage = () => {
 
       if (response && response.ok) {
         const data = await response.json();
+        console.log('[EventSeatingPage] 📥 Received response data');
+        console.log(`  - totalTables: ${data.totalTables || 'N/A'}`);
+        
+        if (data.tableSettings) {
+          console.log('[EventSeatingPage] 📋 Mixed mode tableSettings:', data.tableSettings);
+        }
+        if (data.maleTableSettings) {
+          console.log('[EventSeatingPage] 👨 Male tableSettings:', data.maleTableSettings);
+        }
+        if (data.femaleTableSettings) {
+          console.log('[EventSeatingPage] 👩 Female tableSettings:', data.femaleTableSettings);
+        }
+        if (data.details) {
+          console.log('[EventSeatingPage] 📊 Details:', data.details);
+        }
+        
         return data;
       }
+      
+      console.log('[EventSeatingPage] ❌ Response not OK:', response?.status);
       return null;
     } catch (err) {
-      console.error('Error fetching table suggestion:', err);
+      console.error('[EventSeatingPage] ❌ Error fetching table suggestion:', err);
       return null;
     }
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating]);
@@ -2622,23 +2721,13 @@ const EventSeatingPage = () => {
   useEffect(() => {
     const initializeData = async () => {
       await fetchEventPermissions();
-      const guestData = await fetchConfirmedGuests();
-      const seatingData = await fetchSeatingArrangement();
-      
-      if (seatingData) {
-        const hasExistingArrangement = seatingData.isSeparatedSeating 
-          ? (seatingData.maleTables?.length > 0 || seatingData.femaleTables?.length > 0)
-          : (seatingData.tables?.length > 0);
-        
-        if (hasExistingArrangement) {
-          checkAndHandlePendingSync(true);
-        }
-      }
+      await fetchConfirmedGuests();
+      await fetchSeatingArrangement();
     };
 
     initializeData();
-  }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement, checkAndHandlePendingSync]);
-
+  }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement]);
+  
   const getCurrentTables = useCallback(() => {
     if (isSeparatedSeating) {
       if (genderFilter === 'male') return maleTables;

@@ -61,6 +61,11 @@ const TableSchema = new mongoose.Schema({
   createdForSync: {
     type: Boolean,
     default: false
+  },
+  order: {
+    type: Number,
+    required: true,
+    default: 0
   }
 }, { _id: false });
 

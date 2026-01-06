@@ -689,7 +689,7 @@ const SeatingCanvas = forwardRef(({
       }
     }
 
-    if (draggedTable.current && dragOffset.current && onTableUpdate) {
+    if (draggedTable.current && dragOffset.current && onTableUpdate && canEdit) {
       try {
         const displayWidth = rect.width;
         const displayHeight = rect.height;
@@ -761,7 +761,7 @@ const SeatingCanvas = forwardRef(({
         canvas.style.cursor = 'default';
       }
     }
-  }, [draggedTable, isDragging, lastPanPoint, scale, offset, onTableUpdate, onOffsetChange, getTableAtPosition, isAddingTable, constrainPosition, hoveredTable, draggedGuest]);
+  }, [canEdit, draggedTable, isDragging, lastPanPoint, scale, offset, onTableUpdate, onOffsetChange, getTableAtPosition, isAddingTable, constrainPosition, hoveredTable, draggedGuest]);
 
   const handleMouseUp = useCallback((event) => {
     try {
@@ -774,7 +774,6 @@ const SeatingCanvas = forwardRef(({
         }
       }
     } catch (error) {
-      // Silent error handling
     } finally {
       draggedTable.current = null;
       dragOffset.current = null;
@@ -788,6 +787,11 @@ const SeatingCanvas = forwardRef(({
   }, []);
 
   const handleDragOver = useCallback((event) => {
+    if (!canEdit) {
+      event.preventDefault();
+      return;
+    }
+
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
     
@@ -825,9 +829,15 @@ const SeatingCanvas = forwardRef(({
   }, []);
 
   const handleDrop = useCallback((event) => {
+
     event.preventDefault();
     setContextMenu(null);
     setDragOverTable(null);
+
+    if (!canEdit) {
+      event.preventDefault();
+      return;
+    }
     
     if (!draggedGuest) {
       return;
@@ -854,7 +864,8 @@ const SeatingCanvas = forwardRef(({
     }
     
     onTableDrop(table.id);
-  }, [getTableAtPosition, draggedGuest, onTableDrop, isSeparatedSeating, getTableGender]);
+  }, [canEdit, getTableAtPosition, draggedGuest, onTableDrop, isSeparatedSeating, getTableGender]);
+
 
   useEffect(() => {
     if (!draggedGuest) {

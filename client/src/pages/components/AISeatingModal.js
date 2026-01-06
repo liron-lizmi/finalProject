@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const AISeatingModal = ({
@@ -67,7 +67,7 @@ const AISeatingModal = ({
 
   const [showGroupPolicies, setShowGroupPolicies] = useState(false);
 
-  const [genderView, setGenderView] = useState('male'); // 'male' or 'female'
+  const [genderView, setGenderView] = useState('male');
   const [maleTableSettings, setMaleTableSettings] = useState([
     { type: 'round', capacity: 10, count: 0 },
     { type: 'round', capacity: 12, count: 0 },
@@ -83,29 +83,32 @@ const AISeatingModal = ({
   const [customMaleTableSettings, setCustomMaleTableSettings] = useState([]);
   const [customFemaleTableSettings, setCustomFemaleTableSettings] = useState([]);
 
+  const isFetchingRef = useRef(false);
+  const lastFetchKey = useRef('');
+
   const canAddMustSitRule = React.useMemo(() => {
   if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
     return { canAdd: false, reason: '' };
   }
-  
+ 
   if (newMustSitRule.guest1Id === newMustSitRule.guest2Id) {
     return { canAdd: false, reason: t('seating.ai.errorSameGuest') };
   }
-  
+ 
   const guest1 = guests.find(g => g._id === newMustSitRule.guest1Id);
   const guest2 = guests.find(g => g._id === newMustSitRule.guest2Id);
-  
+ 
   if (!guest1 || !guest2) {
     return { canAdd: false, reason: '' };
   }
-  
+ 
   const group1 = guest1.customGroup || guest1.group;
   const group2 = guest2.customGroup || guest2.group;
-  
+ 
   if (group1 !== group2) {
     return { canAdd: false, reason: t('seating.ai.errorDifferentGroups') };
   }
-  
+ 
   return { canAdd: true, reason: '' };
 }, [newMustSitRule.guest1Id, newMustSitRule.guest2Id, guests]);
 
@@ -173,7 +176,7 @@ const AISeatingModal = ({
       .filter(g => g.femaleCount && g.femaleCount > 0)
       .map(g => ({
         ...g,
-        attendingCount: g.femaleCount 
+        attendingCount: g.femaleCount
       }));
   }, [guests, isSeparatedSeating]);
 
@@ -187,9 +190,11 @@ const AISeatingModal = ({
       setShowGroupMixingConfig(false);
       setShowSeatingRules(false);
       setGenderView('male');
+      isFetchingRef.current = false;
+      lastFetchKey.current = '';
     } else if (initialLoad) {
       setInitialLoad(false);
-      
+     
       const loadInitialSuggestion = async () => {
         if (preferences) {
           setSeatingRules({
@@ -197,25 +202,25 @@ const AISeatingModal = ({
             cannotSitTogether: preferences.keepSeparate || []
           });
         }
-        
+       
         if (isSeparatedSeating) {
           const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
           const totalFemaleGuests = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
           const totalMaleCapacity = maleTables.reduce((sum, table) => sum + table.capacity, 0);
           const totalFemaleCapacity = femaleTables.reduce((sum, table) => sum + table.capacity, 0);
-          
+         
           if (hasExistingArrangement && (Object.keys(maleArrangement).length > 0 || Object.keys(femaleArrangement).length > 0)) {
             setShowExistingArrangementWarning(true);
             return;
           }
-          
+         
           if (totalMaleCapacity < totalMaleGuests || maleTables.length === 0) {
             setShowTableCreation(true);
             if (maleTables.length === 0) {
               await autoSuggestTables(totalMaleGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'male');
             }
           }
-          
+         
           if (totalFemaleCapacity < totalFemaleGuests || femaleTables.length === 0) {
             setShowTableCreation(true);
             if (femaleTables.length === 0) {
@@ -225,12 +230,12 @@ const AISeatingModal = ({
         } else {
           const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
           const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-          
+         
           if (hasExistingArrangement && Object.keys(seatingArrangement).length > 0) {
             setShowExistingArrangementWarning(true);
             return;
           }
-          
+         
           if (totalCapacity < totalGuests || tables.length === 0) {
             setShowTableCreation(true);
             if (tables.length === 0) {
@@ -241,74 +246,133 @@ const AISeatingModal = ({
           }
         }
       };
-      
+     
       loadInitialSuggestion();
     }
-  }, [isOpen, initialLoad, tables.length, maleTables.length, femaleTables.length, guests, maleGuests, femaleGuests, tables, maleTables, femaleTables, hasExistingArrangement, seatingArrangement, maleArrangement, femaleArrangement, preferences, isSeparatedSeating]);
+  }, [isOpen, initialLoad]); 
 
   useEffect(() => {
-    if (isOpen && showTableCreation && aiPreferences.allowGroupMixing &&
-        Object.keys(aiPreferences.groupPolicies).length > 0) {
-      
-      const updateSuggestion = async () => {
-        if (isSeparatedSeating) {
-          const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
-          const totalFemaleGuests = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
-          const totalMaleCapacity = maleTables.reduce((sum, table) => sum + table.capacity, 0);
-          const totalFemaleCapacity = femaleTables.reduce((sum, table) => sum + table.capacity, 0);
-          
-          let maleGuestsNeedingSeats = 0;
-          let femaleGuestsNeedingSeats = 0;
-          
-          if (existingArrangementAction === 'continue') {
-            const seatedMaleGuestsCount = getSeatedGuestsCount('male');
-            const seatedFemaleGuestsCount = getSeatedGuestsCount('female');
-            maleGuestsNeedingSeats = totalMaleGuests - seatedMaleGuestsCount;
-            femaleGuestsNeedingSeats = totalFemaleGuests - seatedFemaleGuestsCount;
-          } else {
-            maleGuestsNeedingSeats = totalMaleGuests;
-            femaleGuestsNeedingSeats = totalFemaleGuests;
-          }
-          
-          if (totalMaleCapacity < maleGuestsNeedingSeats || maleTables.length === 0) {
-            await autoSuggestTables(maleGuestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'male');
-          }
-          
-          if (totalFemaleCapacity < femaleGuestsNeedingSeats || femaleTables.length === 0) {
-            await autoSuggestTables(femaleGuestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'female');
-          }
-        } else {
-          const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
-          const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-          
-          let guestsNeedingSeats = 0;
-          
-          if (existingArrangementAction === 'continue') {
-            const seatedGuestsCount = getSeatedGuestsCount();
-            guestsNeedingSeats = totalGuests - seatedGuestsCount;
-          } else {
-            guestsNeedingSeats = totalGuests;
-          }
-          
-          if (totalCapacity < guestsNeedingSeats || tables.length === 0) {
-            await autoSuggestTables(guestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
-          }
-        }
-      };
-      
-      updateSuggestion();
+    if (!isOpen || initialLoad || !showTableCreation) {
+      return;
     }
-  }, [isOpen, showTableCreation, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, guests, maleGuests, femaleGuests, tables, maleTables, femaleTables, existingArrangementAction, isSeparatedSeating]);
+
+    if (!aiPreferences.allowGroupMixing || Object.keys(aiPreferences.groupPolicies).length === 0) {
+      return;
+    }
+     
+    const updateSuggestion = async () => {
+      console.log('[AISeatingModal] 🔄 updateSuggestion called');
+      console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
+      console.log(`  - maleTablesCount: ${maleTables.length}`);
+      console.log(`  - femaleTablesCount: ${femaleTables.length}`);
+      console.log(`  - tablesCount: ${tables.length}`);
+
+      if (isSeparatedSeating) {
+        const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
+        const totalFemaleGuests = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
+        const totalMaleCapacity = maleTables.reduce((sum, table) => sum + table.capacity, 0);
+        const totalFemaleCapacity = femaleTables.reduce((sum, table) => sum + table.capacity, 0);
+
+        console.log('[AISeatingModal] 👥 Gender-separated stats:');
+        console.log(`  - totalMaleGuests: ${totalMaleGuests}`);
+        console.log(`  - totalFemaleGuests: ${totalFemaleGuests}`);
+        console.log(`  - totalMaleCapacity: ${totalMaleCapacity}`);
+        console.log(`  - totalFemaleCapacity: ${totalFemaleCapacity}`);
+        console.log(`  - maleTablesCount: ${maleTables.length}`);
+        console.log(`  - femaleTablesCount: ${femaleTables.length}`);
+       
+        let maleGuestsNeedingSeats = 0;
+        let femaleGuestsNeedingSeats = 0;
+       
+        if (existingArrangementAction === 'continue') {
+          const seatedMaleGuestsCount = getSeatedGuestsCount('male');
+          const seatedFemaleGuestsCount = getSeatedGuestsCount('female');
+          maleGuestsNeedingSeats = totalMaleGuests - seatedMaleGuestsCount;
+          femaleGuestsNeedingSeats = totalFemaleGuests - seatedFemaleGuestsCount;
+        } else {
+          maleGuestsNeedingSeats = totalMaleGuests;
+          femaleGuestsNeedingSeats = totalFemaleGuests;
+        }
+
+        console.log('[AISeatingModal] 🎯 Checking male tables:');
+        console.log(`  - totalMaleCapacity: ${totalMaleCapacity}`);
+        console.log(`  - maleGuestsNeedingSeats: ${maleGuestsNeedingSeats}`);
+        console.log(`  - willCallAPI: ${totalMaleCapacity < maleGuestsNeedingSeats}`);
+       
+        if (totalMaleCapacity < maleGuestsNeedingSeats) {
+          console.log('[AISeatingModal] 📞 Calling autoSuggestTables for MALE');
+          await autoSuggestTables(maleGuestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'male');
+        }
+
+        console.log('[AISeatingModal] 🎯 Checking female tables:');
+        console.log(`  - totalFemaleCapacity: ${totalFemaleCapacity}`);
+        console.log(`  - femaleGuestsNeedingSeats: ${femaleGuestsNeedingSeats}`);
+        console.log(`  - willCallAPI: ${totalFemaleCapacity < femaleGuestsNeedingSeats}`);
+       
+        if (totalFemaleCapacity < femaleGuestsNeedingSeats) {
+          console.log('[AISeatingModal] 📞 Calling autoSuggestTables for FEMALE');
+          await autoSuggestTables(femaleGuestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'female');
+        }
+      } else {
+        const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+        const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
+
+        console.log('[AISeatingModal] 👥 Mixed mode stats:');
+        console.log(`  - totalGuests: ${totalGuests}`);
+        console.log(`  - totalCapacity: ${totalCapacity}`);
+        console.log(`  - tablesCount: ${tables.length}`);
+       
+        let guestsNeedingSeats = 0;
+       
+        if (existingArrangementAction === 'continue') {
+          const seatedGuestsCount = getSeatedGuestsCount();
+          guestsNeedingSeats = totalGuests - seatedGuestsCount;
+        } else {
+          guestsNeedingSeats = totalGuests;
+        }
+
+        console.log('[AISeatingModal] 🎯 Checking tables:');
+        console.log(`  - totalCapacity: ${totalCapacity}`);
+        console.log(`  - guestsNeedingSeats: ${guestsNeedingSeats}`);
+        console.log(`  - willCallAPI: ${totalCapacity < guestsNeedingSeats}`);
+       
+        if (totalCapacity < guestsNeedingSeats) {
+          console.log('[AISeatingModal] 📞 Calling autoSuggestTables for MIXED mode');
+          await autoSuggestTables(guestsNeedingSeats, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
+        }
+      }
+    };
+   
+    updateSuggestion();
+  }, [aiPreferences.allowGroupMixing, aiPreferences.groupPolicies]); 
 
   const autoSuggestTables = async (guestsNeedingSeats, allowMixing = null, customGroupPolicies = null, gender = null, customGroupMixingRules = null) => {
+    console.log(`[AISeatingModal] 🎯 autoSuggestTables called:`);
+    console.log(`  - guestsNeedingSeats: ${guestsNeedingSeats}`);
+    console.log(`  - allowMixing: ${allowMixing}`);
+    console.log(`  - gender: ${gender}`);
+    console.log(`  - customGroupPolicies:`, customGroupPolicies);
+
     if (guestsNeedingSeats === 0) {
+      console.log(`[AISeatingModal] ⏭️ Skipping: No guests needing seats`);
       return;
     }
 
     if (!onFetchTableSuggestion) {
+      console.log(`[AISeatingModal] ⚠️ No onFetchTableSuggestion function provided`);
       return;
     }
 
+    const fetchKey = `${guestsNeedingSeats}-${allowMixing}-${gender}-${JSON.stringify(customGroupPolicies)}`;
+    
+    if (isFetchingRef.current || lastFetchKey.current === fetchKey) {
+      console.log('⏭️ Skipping duplicate API call:', fetchKey);
+      return;
+    }
+
+    console.log('📞 API call with key:', fetchKey);
+    isFetchingRef.current = true;
+    lastFetchKey.current = fetchKey;
     setIsFetchingSuggestion(true);
 
     try {
@@ -322,7 +386,17 @@ const AISeatingModal = ({
 
       const result = await onFetchTableSuggestion(options);
 
+      console.log(`[AISeatingModal] 📥 Received API response`);
+      if (result) {
+        console.log(`  - Has result: true`);
+        if (result.tableSettings) console.log(`  - tableSettings:`, result.tableSettings);
+        if (result.maleTableSettings) console.log(`  - maleTableSettings:`, result.maleTableSettings);
+        if (result.femaleTableSettings) console.log(`  - femaleTableSettings:`, result.femaleTableSettings);
+        if (result.totalTables) console.log(`  - totalTables: ${result.totalTables}`);
+      }
+
       if (!result) {
+        console.log(`[AISeatingModal] ❌ No result from API`);
         setIsFetchingSuggestion(false);
         return;
       }
@@ -330,17 +404,25 @@ const AISeatingModal = ({
       if (isSeparatedSeating && gender) {
         const isGenderMale = gender === 'male';
         const settings = isGenderMale ? result.maleTableSettings : result.femaleTableSettings;
-        
+       
         if (settings) {
+          console.log(`[AISeatingModal] 📊 Updating ${gender} table settings`);
+          console.log(`  - Settings received:`, settings);
           const currentSettings = isGenderMale ? maleTableSettings : femaleTableSettings;
           const newSettings = currentSettings.map(s => ({ ...s, count: 0 }));
 
           Object.entries(settings).forEach(([capacity, count]) => {
             const index = newSettings.findIndex(s => s.capacity === parseInt(capacity));
             if (index !== -1) {
+              console.log(`  ✅ Setting capacity ${capacity} to count ${count}`);
               newSettings[index].count = count;
+            } else {
+              console.log(`  ⚠️ Capacity ${capacity} not found in predefined settings`);
             }
           });
+
+          console.log(`[AISeatingModal] 📋 New ${gender} settings:`, newSettings);
+          console.log(`[AISeatingModal] 🔢 Total ${gender} tables count: ${newSettings.reduce((sum, s) => sum + s.count, 0)}`);
 
           if (isGenderMale) {
             setMaleTableSettings(newSettings);
@@ -363,7 +445,13 @@ const AISeatingModal = ({
     } catch (error) {
       console.error('Error fetching table suggestion:', error);
     } finally {
+      isFetchingRef.current = false;
       setIsFetchingSuggestion(false);
+      setTimeout(() => {
+        if (lastFetchKey.current === fetchKey) {
+          lastFetchKey.current = '';
+        }
+      }, 500);
     }
   };
 
@@ -543,13 +631,13 @@ const AISeatingModal = ({
         group1: newGroupMixRule.group1,
         group2: newGroupMixRule.group2
       }];
-      
+     
       setAiPreferences(prev => ({
         ...prev,
         groupMixingRules: newRules
       }));
       setNewGroupMixRule({ group1: '', group2: '' });
-      
+     
       if (showTableCreation) {
         if (isSeparatedSeating) {
           const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
@@ -566,12 +654,12 @@ const AISeatingModal = ({
 
   const removeGroupMixRule = async (ruleId) => {
     const newRules = aiPreferences.groupMixingRules.filter(rule => rule.id !== ruleId);
-    
+   
     setAiPreferences(prev => ({
       ...prev,
       groupMixingRules: newRules
     }));
-    
+   
     if (showTableCreation) {
       if (isSeparatedSeating) {
         const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
@@ -589,25 +677,25 @@ const AISeatingModal = ({
     if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
       return;
     }
-    
+   
     if (newMustSitRule.guest1Id === newMustSitRule.guest2Id) {
       return;
     }
-    
+   
     const guest1 = guests.find(g => g._id === newMustSitRule.guest1Id);
     const guest2 = guests.find(g => g._id === newMustSitRule.guest2Id);
-    
+   
     if (!guest1 || !guest2) {
       return;
     }
-    
+   
     const group1 = guest1.customGroup || guest1.group;
     const group2 = guest2.customGroup || guest2.group;
-    
+   
     if (group1 !== group2) {
       return;
     }
-    
+   
     setSeatingRules(prev => ({
       ...prev,
       mustSitTogether: [...prev.mustSitTogether, {
@@ -616,7 +704,7 @@ const AISeatingModal = ({
         guest2Id: newMustSitRule.guest2Id
       }]
     }));
-    
+   
     setNewMustSitRule({ guest1Id: '', guest2Id: '' });
   };
 
@@ -672,6 +760,16 @@ const AISeatingModal = ({
   };
 
   const handleCreateTables = async () => {
+    const CANVAS_HEIGHT = 1600;
+    const BOUNDARY_PADDING = 150;
+    const SPACING_X = 200;
+    const SPACING_Y = 180;
+    const COLS = 4;
+    const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
+    const START_X = 300;  
+    const START_Y = 250;  
+    const FEMALE_START_X = 1200;
+
     if (isSeparatedSeating) {
       const maleTablesList = [];
       const femaleTablesList = [];
@@ -683,20 +781,16 @@ const AISeatingModal = ({
       const totalFemaleTables = femaleTableSettings.reduce((sum, s) => sum + s.count, 0) +
                               customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0);
      
-      const maleCols = Math.ceil(Math.sqrt(totalMaleTables + maleTables.length));
-      const spacing = 200;
-      const maleStartX = 300;
-      const startY = 250;
+      const maleCols = COLS;
+      const femaleCols = COLS;
      
-      const femaleCols = Math.ceil(Math.sqrt(totalFemaleTables + femaleTables.length));
-      const femaleStartX = 1200;
-     
-      let currentTable = maleTables.length;
+      let currentTable = 0;
      
       maleTableSettings.forEach(setting => {
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / maleCols);
           const col = currentTable % maleCols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -704,13 +798,14 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: maleStartX + col * spacing,
-              y: startY + row * spacing
+              x: START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
               ? { width: 120, height: 120 }
-              : { width: 160, height: 100 }
+              : { width: 160, height: 100 },
+            order: currentTable
           };
           maleTablesList.push(table);
           maleTableCounter++;
@@ -723,6 +818,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / maleCols);
           const col = currentTable % maleCols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -730,13 +826,14 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: maleStartX + col * spacing,
-              y: startY + row * spacing
+              x: START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
               ? { width: Math.max(80, Math.min(200, 60 + (setting.capacity * 8))), height: Math.max(80, Math.min(200, 60 + (setting.capacity * 8))) }
-              : { width: Math.max(120, (60 + (setting.capacity * 8)) * 1.4), height: Math.max(60, (60 + (setting.capacity * 8)) * 0.7) }
+              : { width: Math.max(120, (60 + (setting.capacity * 8)) * 1.4), height: Math.max(60, (60 + (setting.capacity * 8)) * 0.7) },
+            order: currentTable
           };
           maleTablesList.push(table);
           maleTableCounter++;
@@ -745,12 +842,13 @@ const AISeatingModal = ({
         }
       });
      
-      let currentFemaleTable = femaleTables.length;
+      let currentFemaleTable = 0;  
      
       femaleTableSettings.forEach(setting => {
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentFemaleTable / femaleCols);
           const col = currentFemaleTable % femaleCols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentFemaleTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -758,13 +856,14 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: femaleStartX + col * spacing,
-              y: startY + row * spacing
+              x: FEMALE_START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
               ? { width: 120, height: 120 }
-              : { width: 160, height: 100 }
+              : { width: 160, height: 100 },
+            order: currentFemaleTable
           };
           femaleTablesList.push(table);
           femaleTableCounter++;
@@ -776,6 +875,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentFemaleTable / femaleCols);
           const col = currentFemaleTable % femaleCols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentFemaleTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -783,18 +883,29 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: femaleStartX + col * spacing,
-              y: startY + row * spacing
+              x: FEMALE_START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
               ? { width: Math.max(80, Math.min(200, 60 + (setting.capacity * 8))), height: Math.max(80, Math.min(200, 60 + (setting.capacity * 8))) }
-              : { width: Math.max(120, (60 + (setting.capacity * 8)) * 1.4), height: Math.max(60, (60 + (setting.capacity * 8)) * 0.7) }
+              : { width: Math.max(120, (60 + (setting.capacity * 8)) * 1.4), height: Math.max(60, (60 + (setting.capacity * 8)) * 0.7) },
+            order: currentFemaleTable
           };
           femaleTablesList.push(table);
           femaleTableCounter++;
           currentFemaleTable++;
         }
+      });
+
+      console.log('[AISeatingModal] 📋 About to create tables:');
+      console.log('  maleTablesList:', maleTablesList.length, 'tables');
+      maleTablesList.forEach(t => {
+        console.log(`    ${t.name}: capacity=${t.capacity}`);
+      });
+      console.log('  femaleTablesList:', femaleTablesList.length, 'tables');
+      femaleTablesList.forEach(t => {
+        console.log(`    ${t.name}: capacity=${t.capacity}`);
       });
      
       if (maleTablesList.length > 0 || femaleTablesList.length > 0) {
@@ -833,26 +944,26 @@ const AISeatingModal = ({
           const result = await handleGenerate(aiPreferencesWithExisting);
          
           if (result && result.maleArrangement && result.femaleArrangement) {
-            const updatedMaleTables = maleTablesList.map(table => {
+            const updatedMaleTables = result.maleTables?.map(table => {
               const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
               return {
-                ...table,
+                ...table, 
                 name: generateTableNameWithGroup(tableNumber, table.id, result.maleArrangement, maleGuests)
               };
-            });
-           
-            const updatedFemaleTables = femaleTablesList.map(table => {
+            }) || [];
+            
+            const updatedFemaleTables = result.femaleTables?.map(table => {
               const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
               return {
-                ...table,
+                ...table,  
                 name: generateTableNameWithGroup(tableNumber, table.id, result.femaleArrangement, femaleGuests)
               };
-            });
-           
+            }) || [];
+            
             if (updatedMaleTables.length > 0) {
               await onAddTables(updatedMaleTables, 'male');
             }
-           
+            
             if (updatedFemaleTables.length > 0) {
               await onAddTables(updatedFemaleTables, 'female');
             }
@@ -886,17 +997,15 @@ const AISeatingModal = ({
       const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) +
                         customTableSettings.reduce((sum, s) => sum + s.count, 0);
      
-      const cols = Math.ceil(Math.sqrt(totalTables + tables.length));
-      const spacing = 200;
-      const startX = 300;
-      const startY = 250;
+      const cols = COLS;
      
-      let currentTable = tables.length;
+      let currentTable = 0;
      
       tableSettings.forEach(setting => {
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / cols);
           const col = currentTable % cols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -904,8 +1013,8 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: startX + col * spacing,
-              y: startY + row * spacing
+              x: START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
@@ -922,6 +1031,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / cols);
           const col = currentTable % cols;
+          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -929,8 +1039,8 @@ const AISeatingModal = ({
             type: setting.type,
             capacity: setting.capacity,
             position: {
-              x: startX + col * spacing,
-              y: startY + row * spacing
+              x: START_X + col * SPACING_X,
+              y: y
             },
             rotation: 0,
             size: setting.type === 'round'
@@ -971,38 +1081,35 @@ const AISeatingModal = ({
             const backendTables = result.tables || [];
 
             const mergedTables = backendTables.filter(t => t.id && t.id.startsWith('merged_'));
-            
-            const emergencyTables = backendTables.filter(t => 
+           
+            const emergencyTables = backendTables.filter(t =>
               !t.id.startsWith('merged_') && !tablesToCreate.find(created => created.id === t.id)
             );
-            
+           
             const allTablesToUpdate = [];
-            
+           
             mergedTables.forEach((mergedTable, mergedIndex) => {
               const tableNumber = parseInt(mergedTable.name.match(/\d+/)?.[0] || '1');
-              const cols = Math.ceil(Math.sqrt(tables.length + tablesToCreate.length + mergedTables.length + emergencyTables.length));
-              const spacing = 200;
-              const startX = 300;
-              const startY = 250;
-              const tableIndex = tables.length + tablesToCreate.length + mergedIndex;
+              const tableIndex = mergedIndex; 
               const row = Math.floor(tableIndex / cols);
               const col = tableIndex % cols;
-                            
+              const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+                           
               allTablesToUpdate.push({
                 ...mergedTable,
                 name: generateTableNameWithGroup(tableNumber, mergedTable.id, result.arrangement, guests),
                 position: {
-                  x: startX + col * spacing,
-                  y: startY + row * spacing
+                  x: START_X + col * SPACING_X,
+                  y: y
                 },
-                size: mergedTable.capacity === 24 
+                size: mergedTable.capacity === 24
                   ? { width: 180, height: 180 }
                   : mergedTable.capacity === 12
                   ? { width: 140, height: 140 }
                   : { width: 120, height: 120 }
               });
             });
-            
+           
             tablesToCreate.forEach(table => {
               const backendTable = backendTables.find(bt => bt.id === table.id);
               if (backendTable) {
@@ -1013,24 +1120,20 @@ const AISeatingModal = ({
                 });
               }
             });
-            
+           
             emergencyTables.forEach((emergencyTable, emergencyIndex) => {
               const tableNumber = parseInt(emergencyTable.name.match(/\d+/)?.[0] || '1');
-              const totalExistingTables = tables.length + tablesToCreate.length + mergedTables.length;
-              const cols = Math.ceil(Math.sqrt(totalExistingTables + emergencyTables.length));
-              const spacing = 200;
-              const startX = 300;
-              const startY = 250;
-              const tableIndex = totalExistingTables + emergencyIndex;
+              const tableIndex = emergencyIndex; 
               const row = Math.floor(tableIndex / cols);
               const col = tableIndex % cols;
-                            
+              const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+                           
               allTablesToUpdate.push({
                 ...emergencyTable,
                 name: generateTableNameWithGroup(tableNumber, emergencyTable.id, result.arrangement, guests),
                 position: {
-                  x: startX + col * spacing,
-                  y: startY + row * spacing
+                  x: START_X + col * SPACING_X,
+                  y: y
                 },
                 size: emergencyTable.type === 'round'
                   ? { width: 120, height: 120 }
@@ -1267,99 +1370,6 @@ const AISeatingModal = ({
                   </button>
                 </div>
               )}
-             
-              <div className="table-creation-info">
-                {isSeparatedSeating ? (
-                  genderView === 'male' ? (
-                    existingArrangementAction === 'continue' ? (
-                      <>
-                        <p>{t('seating.ai.needAdditionalTablesForUnseatedMale')}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.unseatedMaleGuests')}: {unseatedMaleGuestsCount}</strong>
-                          <br />
-                          <span>{t('seating.ai.availableSeats')}: {Math.max(0, totalMaleCapacity - seatedMaleGuestsCount)}</span>
-                        </div>
-                      </>
-                    ) : maleTables.length > 0 ? (
-                      <>
-                        <p>{t('seating.ai.existingMaleTablesNotEnough', { tablesCount: maleTables.length, capacity: totalMaleCapacity })}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.totalMaleGuests')}: {totalMaleGuests}</strong>
-                          <br />
-                          <span>{t('seating.ai.existingCapacity')}: {totalMaleCapacity}</span>
-                          <br />
-                          <span>{t('seating.ai.additionalNeeded')}: {Math.max(0, totalMaleGuests - totalMaleCapacity)} {t('seating.ai.seats')}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <p>{t('seating.ai.noMaleTablesYet')}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.totalMaleGuests')}: {totalMaleGuests}</strong>
-                        </div>
-                      </>
-                    )
-                  ) : (
-                    existingArrangementAction === 'continue' ? (
-                      <>
-                        <p>{t('seating.ai.needAdditionalTablesForUnseatedFemale')}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.unseatedFemaleGuests')}: {unseatedFemaleGuestsCount}</strong>
-                          <br />
-                          <span>{t('seating.ai.availableSeats')}: {Math.max(0, totalFemaleCapacity - seatedFemaleGuestsCount)}</span>
-                        </div>
-                      </>
-                    ) : femaleTables.length > 0 ? (
-                      <>
-                        <p>{t('seating.ai.existingFemaleTablesNotEnough', { tablesCount: femaleTables.length, capacity: totalFemaleCapacity })}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.totalFemaleGuests')}: {totalFemaleGuests}</strong>
-                          <br />
-                          <span>{t('seating.ai.existingCapacity')}: {totalFemaleCapacity}</span>
-                          <br />
-                          <span>{t('seating.ai.additionalNeeded')}: {Math.max(0, totalFemaleGuests - totalFemaleCapacity)} {t('seating.ai.seats')}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <p>{t('seating.ai.noFemaleTablesYet')}</p>
-                        <div className="guest-summary">
-                          <strong>{t('seating.ai.totalFemaleGuests')}: {totalFemaleGuests}</strong>
-                        </div>
-                      </>
-                    )
-                  )
-                ) : (
-                  existingArrangementAction === 'continue' ? (
-                    <>
-                      <p>{t('seating.ai.needAdditionalTablesForUnseated')}</p>
-                      <div className="guest-summary">
-                        <strong>{t('seating.ai.unseatedGuests')}: {unseatedGuestsCount}</strong>
-                        <br />
-                        <span>{t('seating.ai.availableSeats')}: {Math.max(0, totalCapacity - seatedGuestsCount)}</span>
-                      </div>
-                    </>
-                  ) : tables.length > 0 ? (
-                    <>
-                      <p>{t('seating.ai.existingTablesNotEnough', { tablesCount: tables.length, capacity: totalCapacity })}</p>
-                      <div className="guest-summary">
-                        <strong>{t('seating.ai.totalGuests')}: {totalGuests}</strong>
-                        <br />
-                        <span>{t('seating.ai.existingCapacity')}: {totalCapacity}</span>
-                        <br />
-                        <span>{t('seating.ai.additionalNeeded')}: {Math.max(0, totalGuests - totalCapacity)} {t('seating.ai.seats')}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p>{t('seating.ai.noTablesYet')}</p>
-                      <div className="guest-summary">
-                        <strong>{t('seating.ai.totalGuests')}: {totalGuests}</strong>
-                      </div>
-                    </>
-                  )
-                )}
-              </div>
 
               <div className="table-settings">
                 <h5>{t('seating.ai.predefinedTables')}:</h5>
@@ -1696,6 +1706,19 @@ const AISeatingModal = ({
                       <h5>{t('seating.ai.mustSitTogether')}</h5>
                       <div className="add-rule-form">
                         <select
+                          value={newMustSitRule.guest2Id}
+                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest2Id: e.target.value, guest1Id: '' }))}
+                          className="guest-select"
+                        >
+                          <option value="">{t('seating.ai.selectFirstGuest')}</option>
+                          {guests.map(guest => (
+                            <option key={guest._id} value={guest._id}>
+                              {guest.firstName} {guest.lastName}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
                           value={newMustSitRule.guest1Id}
                           onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest1Id: e.target.value }))}
                           className="guest-select"
@@ -1719,20 +1742,7 @@ const AISeatingModal = ({
                             ));
                           })()}
                         </select>
-                      
-                        <select
-                          value={newMustSitRule.guest2Id}
-                          onChange={(e) => setNewMustSitRule(prev => ({ ...prev, guest2Id: e.target.value, guest1Id: '' }))}
-                          className="guest-select"
-                        >
-                          <option value="">{t('seating.ai.selectFirstGuest')}</option>
-                          {guests.map(guest => (
-                            <option key={guest._id} value={guest._id}>
-                              {guest.firstName} {guest.lastName}
-                            </option>
-                          ))}
-                        </select>
-                      
+
                         <button
                           type="button"
                           onClick={addMustSitRule}
@@ -1756,10 +1766,10 @@ const AISeatingModal = ({
                             const guest1 = guests.find(g => g._id === rule.guest1Id);
                             const guest2 = guests.find(g => g._id === rule.guest2Id);
                             if (!guest1 || !guest2) return null;
-                            
+                           
                             const guest1Name = `${guest1.firstName} ${guest1.lastName}`;
                             const guest2Name = `${guest2.firstName} ${guest2.lastName}`;
-                            
+                           
                             return (
                               <div key={rule.id} className="validation-message success">
                                 {t('seating.ai.mustSitTogetherRule', { guest1: guest1Name, guest2: guest2Name })}
@@ -1818,7 +1828,7 @@ const AISeatingModal = ({
                             </option>
                           ))}
                         </select>
-                      
+                     
                         <select
                           value={newGroupMixRule.group2}
                           onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group2: e.target.value }))}
@@ -1831,7 +1841,7 @@ const AISeatingModal = ({
                             </option>
                           ))}
                         </select>
-                      
+                     
                         <button
                           type="button"
                           onClick={addGroupMixRule}
