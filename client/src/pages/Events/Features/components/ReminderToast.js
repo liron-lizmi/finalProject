@@ -241,7 +241,7 @@ const ReminderToast = ({ tasks, onTaskClick, canEdit = true}) => {
       case 'overdue':
         return t('events.features.tasks.reminders.taskOverdue');
       case 'recurring':
-        return t('events.features.tasks.reminders.recurringReminder');
+        return t('events.features.tasks.form.recurringReminder');
       case 'original':
       default:
         return t('events.features.tasks.reminders.reminder');

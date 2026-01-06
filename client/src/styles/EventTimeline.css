@@ -2770,15 +2770,15 @@
 /* Override for add task button to keep its black color */
 .add-task-btn:disabled,
 .add-task-btn:disabled:hover {
-  background-color: #333 !important;
+  background-color: #d4b99e !important;
   color: #fff !important;
-  border-color: #333 !important;
+  border-color: #d4b99e !important;
   opacity: 0.7 !important;
 }
 
 .btn-primary:disabled,
 .btn-primary:disabled:hover {
-  background: #000 !important;
+  background: #d4b99e !important;
   color: white !important;
   opacity: 0.7 !important;
 }

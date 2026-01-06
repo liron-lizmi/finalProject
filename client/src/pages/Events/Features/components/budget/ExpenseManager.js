@@ -296,7 +296,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
               </div>
 
               <div className="form-group">
-                <label>{t('events.features.budget.description')}</label>
+                <label>{t('events.features.budget.descriptionPlaceholder')}</label>
                 <input
                   type="text"
                   name="description"

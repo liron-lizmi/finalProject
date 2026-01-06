@@ -82,6 +82,8 @@
 
 .total-budget-section {
   margin-bottom: 30px;
+  display: flex;     
+  gap: 30px;
 }
 
 .budget-label {

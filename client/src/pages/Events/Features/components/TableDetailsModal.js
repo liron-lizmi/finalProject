@@ -19,7 +19,8 @@ const TableDetailsModal = ({
   femaleArrangement,
   canEdit = true
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
   
   const [formData, setFormData] = useState({
     name: '',
@@ -30,6 +31,11 @@ const TableDetailsModal = ({
 
   const [showAddGuests, setShowAddGuests] = useState(false);
   const [searchGuestTerm, setSearchGuestTerm] = useState('');
+  const [showInvalidCapacityModal, setShowInvalidCapacityModal] = useState(false);
+  const [showCapacityTooSmallModal, setShowCapacityTooSmallModal] = useState(false);
+  const [showNotEnoughSpaceModal, setShowNotEnoughSpaceModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [capacityErrorData, setCapacityErrorData] = useState({ current: 0, requested: 0 });
 
   const tableInfo = useMemo(() => {
     if (!table || !isSeparatedSeating) {
@@ -207,40 +213,45 @@ const TableDetailsModal = ({
   };
 
   const handleSave = () => {
-    const capacity = parseInt(formData.capacity, 10);
-    
-    if (isNaN(capacity) || capacity < 8 || capacity > 24) {
-      alert(t('seating.table.invalidCapacity'));
-      return;
-    }
+  const capacity = parseInt(formData.capacity, 10);
+  
+  if (isNaN(capacity) || capacity < 8 || capacity > 24) {
+    setShowInvalidCapacityModal(true);
+    return;
+  }
 
-    if (capacity < currentOccupancy) {
-      alert(t('seating.table.capacityTooSmall', { 
-        current: currentOccupancy, 
-        requested: capacity 
-      }));
-      return;
-    }
-    
-    const newSize = calculateTableSize(formData.type, capacity);
-    
-    onUpdateTable(table.id, {
-      name: formData.name,
-      capacity: capacity,
-      type: formData.type,
-      notes: formData.notes,
-      size: newSize
-    });
-    
-    onClose();
-  };
+  if (capacity < currentOccupancy) {
+    setCapacityErrorData({ current: currentOccupancy, requested: capacity });
+    setShowCapacityTooSmallModal(true);
+    return;
+  }
+  
+  const newSize = calculateTableSize(formData.type, capacity);
+  
+  onUpdateTable(table.id, {
+    name: formData.name,
+    capacity: capacity,
+    type: formData.type,
+    notes: formData.notes,
+    size: newSize
+  });
+  
+  onClose();
+};
 
   const handleDelete = () => {
-    if (window.confirm(t('seating.table.confirmDelete'))) {
-      onDeleteTable(table.id);
-      onClose();
-    }
-  };
+  setShowDeleteConfirmModal(true);
+};
+
+const confirmDelete = () => {
+  onDeleteTable(table.id);
+  setShowDeleteConfirmModal(false);
+  onClose();
+};
+
+const cancelDelete = () => {
+  setShowDeleteConfirmModal(false);
+};
 
   const handleCapacityChange = (newCapacity) => {
     const capacity = parseInt(newCapacity, 10);
@@ -274,7 +285,7 @@ const TableDetailsModal = ({
     }
 
     if (currentOccupancy + guestSize > table.capacity) {
-      alert(t('seating.table.notEnoughSpace'));
+      setShowNotEnoughSpaceModal(true);
       return;
     }
 
@@ -605,6 +616,112 @@ const TableDetailsModal = ({
           </button>
         </div>
       </div>
+
+      {/* Modal: Invalid Capacity */}
+      {showInvalidCapacityModal && (
+        <div className="modal-overlay" onClick={() => setShowInvalidCapacityModal(false)}>
+          <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('general.error')}</h3>
+              <button className="modal-close" onClick={() => setShowInvalidCapacityModal(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.table.invalidCapacity')}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel" onClick={() => setShowInvalidCapacityModal(false)}>
+                {t('general.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Capacity Too Small */}
+      {showCapacityTooSmallModal && (
+        <div className="modal-overlay" onClick={() => setShowCapacityTooSmallModal(false)}>
+          <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('general.error')}</h3>
+              <button className="modal-close" onClick={() => setShowCapacityTooSmallModal(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.table.capacityTooSmall', { 
+                current: capacityErrorData.current, 
+                requested: capacityErrorData.requested 
+              })}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel" onClick={() => setShowCapacityTooSmallModal(false)}>
+                {t('general.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Not Enough Space */}
+      {showNotEnoughSpaceModal && (
+        <div className="modal-overlay" onClick={() => setShowNotEnoughSpaceModal(false)}>
+          <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('general.error')}</h3>
+              <button className="modal-close" onClick={() => setShowNotEnoughSpaceModal(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.table.notEnoughSpace')}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel" onClick={() => setShowNotEnoughSpaceModal(false)}>
+                {t('general.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirm Delete Table */}
+      {showDeleteConfirmModal && (
+        <div className="modal-overlay" onClick={cancelDelete}>
+          <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{t('seating.table.confirmDelete')}</h3>
+              <button className="modal-close" onClick={cancelDelete}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.table.deleteTableConfirm')}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn cancel" onClick={cancelDelete}>
+                {t('common.cancel')}
+              </button>
+              <button className="modal-btn delete" onClick={confirmDelete}>
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
