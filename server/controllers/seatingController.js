@@ -5326,7 +5326,6 @@ function generateOptimalSeatingWithExisting(guests, tables, preferences, existin
   const clusterMap = mixingMode === 'rules' ? buildMixingClusters(preferences.groupMixingRules) : new Map();
 
   const groupPolicies = preferences.groupPolicies || {};
-  Object.keys(groupPolicies).forEach(key => console.log(`[GROUP POLICY DEBUG] קבוצה "${key}" => מדיניות: ${groupPolicies[key]}`));
   const separateGroupsList = [];
   const separateGroupSizes = {};
  
@@ -10025,11 +10024,6 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
    
   }
 
-  console.log(`[runDryGenerateOptimalSeating] 📊 Tables by capacity:`, tablesCopy.reduce((acc, t) => {
-    acc[t.capacity] = (acc[t.capacity] || 0) + 1;
-    return acc;
-  }, {}));
-
   tablesCopy = tablesCopy.filter(table => {
     const hasGuestsInResult = result.arrangement[table.id] && result.arrangement[table.id].length > 0;
     const hasGuestsInTable = table.assignedGuests && table.assignedGuests.length > 0;
@@ -10050,11 +10044,6 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
  
     return hasGuests;
   });
-
-  console.log(`[runDryGenerateOptimalSeating] 📊 Tables by capacity:`, tablesCopy.reduce((acc, t) => {
-    acc[t.capacity] = (acc[t.capacity] || 0) + 1;
-    return acc;
-  }, {}));
 
   tablesCopy.sort((a, b) => {
     if (a.capacity !== b.capacity) {
@@ -10085,9 +10074,25 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
       table.position = { x, y };
     });
   } else {
+    const CANVAS_HEIGHT = 1600;
+    const BOUNDARY_PADDING = 150;
+    const START_X = 300;
+    const START_Y = 250;
+    const SPACING_X = 200;
+    const SPACING_Y = 180;
+    const COLS = 4;
+    const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
+
     tablesCopy.forEach((table, index) => {
       table.name = `שולחן ${index + 1}`;
       table.order = index;
+      
+      const row = Math.floor(index / COLS);
+      const col = index % COLS;
+      const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+      const x = START_X + col * SPACING_X;
+      
+      table.position = { x, y };
     });
   }
 
