@@ -587,7 +587,7 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content">
-        <button className="modal-close" onClick={onClose} style={{position: 'absolute', top: '10px', left: '10px', zIndex: 1001}}>
+        <button className="modal-close" onClick={onClose}>
           ✕
         </button>
 
@@ -646,9 +646,8 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
                     onClick={() => canEdit && toggleCalendar('dueDate')}
                     disabled={!canEdit}
                   />
-                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'} ${!canEdit ? 'icon-readonly' : ''}`}
                    onClick={() => canEdit && toggleCalendar('dueDate')}
-                   style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
                    > 
                     <span role="img" aria-label="calendar">📅</span>
                   </div>
@@ -674,9 +673,8 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
                   className={`time-input ${formData.dueTime ? 'filled' : ''}`}
                   disabled={!canEdit}
                 />
-                <div className={`time-icon due-time-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                <div className={`time-icon due-time-icon ${isRTL ? 'rtl' : 'ltr'} ${!canEdit ? 'icon-readonly' : ''}`}
                 onClick={() => canEdit && setShowDueTimePicker(!showDueTimePicker)}
-                style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
                 >
                   <span role="img" aria-label="clock">🕒</span>
                 </div>
@@ -744,9 +742,8 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
                     onClick={() => canEdit && toggleCalendar('reminderDate')}
                     disabled={!canEdit}
                   />
-                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'}`}
+                  <div className={`task-calendar-icon ${isRTL ? 'rtl' : 'ltr'} ${!canEdit ? 'icon-readonly' : ''}`}
                    onClick={() => canEdit && toggleCalendar('reminderDate')}
-                   style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
                    >
                     <span role="img" aria-label="calendar">📅</span>
                   </div>
@@ -773,9 +770,8 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
                   className={`time-input ${formData.reminderTime ? 'filled' : ''} ${!formData.reminderDate ? 'disabled' : ''}`}
                 />
                 <div 
-                  className={`time-icon reminder-time-icon ${isRTL ? 'rtl' : 'ltr'} ${!formData.reminderDate ? 'disabled' : ''}`} 
+                  className={`time-icon reminder-time-icon ${isRTL ? 'rtl' : 'ltr'} ${!formData.reminderDate ? 'disabled' : ''} ${!canEdit ? 'icon-readonly' : ''}`}
                   onClick={() => canEdit && formData.reminderDate && setShowReminderTimePicker(!showReminderTimePicker)}
-                  style={{ pointerEvents: canEdit ? 'auto' : 'none', opacity: canEdit ? 1 : 0.5 }}
                 >
                   <span role="img" aria-label="clock">🕒</span>
                 </div>

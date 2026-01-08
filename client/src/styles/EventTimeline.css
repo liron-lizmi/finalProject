@@ -1487,6 +1487,10 @@
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1001;
 }
 
 .modal-close:hover {
@@ -1502,6 +1506,11 @@
 [dir="ltr"] .modal-close {
   right: 10px;
   left: auto;
+}
+
+.icon-readonly {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .disconnect-modal {
