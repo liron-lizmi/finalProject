@@ -1697,6 +1697,7 @@
       "totalMaleCapacity": "קיבולת גברים כוללת",
       "totalFemaleCapacity": "קיבולת נשים כוללת",
       "populatedFemaleTables": "שולחנות נשים מאוכלסות",
+      "populatedMaleTables": "שולחנות גברים מאוכלסות",
       "createTablesAndArrangeSeparated": "צור שולחנות וסדר ישיבה בהפרדה",
       "startArrangingWithExistingTablesSeparated": "סדר עם שולחנות קיימים (הפרדה)",
       "seatingRulesTitle": "חוקי ישיבה",

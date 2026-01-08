@@ -1696,9 +1696,10 @@
       "plannedNewFemaleTables": "Planned New Women's Tables",
       "totalMaleCapacity": "Total Male Capacity",
       "totalFemaleCapacity": "Total Female Capacity",
+      "populatedFemaleTables": "Populated Female Tables",
+      "populatedMaleTables": "Populated Male Tables",
       "createTablesAndArrangeSeparated": "Create tables and arrange separate seating",
       "startArrangingWithExistingTablesSeparated": "Arrange with existing tables (separated)",
-      "existingArrangementDescriptionSeparated": "You have {{maleTablesCount}} men's tables and {{femaleTablesCount}} women's tables with {{seatedMaleGuests}}/{{totalMaleGuests}} men and {{seatedFemaleGuests}}/{{totalFemaleGuests}} women already seated.",
       "seatingRulesTitle": "Seating Rules",
       "seatingRules": {
         "mustSitTogether": {

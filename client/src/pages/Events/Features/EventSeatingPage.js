@@ -50,6 +50,7 @@ const EventSeatingPage = () => {
   const [affectedGuests, setAffectedGuests] = useState([]);
   const [pendingSyncTriggers, setPendingSyncTriggers] = useState([]);
   const [isSyncOptionsModalOpen, setIsSyncOptionsModalOpen] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
  
   const [isSeparatedSeating, setIsSeparatedSeating] = useState(false);
   const [lastServerUpdate, setLastServerUpdate] = useState(null);
@@ -523,19 +524,6 @@ const EventSeatingPage = () => {
   );
 
   const generateAISeating = useCallback(async (aiPreferences) => {
-    console.log('[EventSeatingPage] 🤖 generateAISeating called');
-    console.log('  - AI preferences:', aiPreferences);
-    
-    console.log('[EventSeatingPage] 📊 Current seating state:');
-    console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
-    console.log(`  - maleTablesCount: ${maleTables.length}`);
-    console.log(`  - femaleTablesCount: ${femaleTables.length}`);
-    console.log(`  - tablesCount: ${tables.length}`);
-    console.log(`  - confirmedGuestsCount: ${confirmedGuests.length}`);
-    console.log(`  - hasMaleArrangement: ${Object.keys(maleArrangement).length > 0}`);
-    console.log(`  - hasFemaleArrangement: ${Object.keys(femaleArrangement).length > 0}`);
-    console.log(`  - hasSeatingArrangement: ${Object.keys(seatingArrangement).length > 0}`);
-
     try {
       setLoading(true);
     
@@ -561,15 +549,6 @@ const EventSeatingPage = () => {
         allTables: aiPreferences.allTables || tables,
         isSeparatedSeating: false
       };
-
-      console.log('[EventSeatingPage] 📤 Sending AI generation request:');
-      console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
-      console.log(`  - preserveExisting: ${aiPreferences.preserveExisting}`);
-      console.log(`  - clearExisting: ${aiPreferences.clearExisting}`);
-      console.log(`  - maleTablesCount: ${requestBody.maleTables?.length || 0}`);
-      console.log(`  - femaleTablesCount: ${requestBody.femaleTables?.length || 0}`);
-      console.log(`  - tablesCount: ${requestBody.tables?.length || 0}`);
-      console.log(`  - guestsCount: ${confirmedGuests.length}`);
     
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {
         method: 'POST',
@@ -577,32 +556,18 @@ const EventSeatingPage = () => {
       });
 
       if (!response) {
-        console.log('[EventSeatingPage] ❌ No response from AI generation');
         return false;
       }
 
       if (response.ok) {
         const data = await response.json();
-        console.log('[EventSeatingPage] 📥 Received AI generation response');
-        console.log(`  - isSeparatedSeating: ${data.isSeparatedSeating}`);
-        console.log(`  - maleTablesCount: ${data.maleTables?.length || 0}`);
-        console.log(`  - femaleTablesCount: ${data.femaleTables?.length || 0}`);
-        console.log(`  - tablesCount: ${data.tables?.length || 0}`);
-        console.log(`  - hasMaleArrangement: ${data.maleArrangement ? Object.keys(data.maleArrangement).length : 0} tables`);
-        console.log(`  - hasFemaleArrangement: ${data.femaleArrangement ? Object.keys(data.femaleArrangement).length : 0} tables`);
-        console.log(`  - hasArrangement: ${data.arrangement ? Object.keys(data.arrangement).length : 0} tables`);
       
         if (isSeparatedSeating) {
-          console.log('[EventSeatingPage] 👥 Processing separated seating response');
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
         
           let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleTables;
           let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleTables;
-        
-          console.log('[EventSeatingPage] 📋 Tables before name update:');
-          console.log(`  - maleCount: ${finalMaleTables.length}`);
-          console.log(`  - femaleCount: ${finalFemaleTables.length}`);
 
           if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
             finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
@@ -610,15 +575,10 @@ const EventSeatingPage = () => {
           if (data.femaleArrangement && Object.keys(data.femaleArrangement).length > 0) {
             finalFemaleTables = updateTableNamesWithGroups(finalFemaleTables, data.femaleArrangement);
           }
-        
-          console.log('[EventSeatingPage] ✅ Setting final tables:');
-          console.log(`  - maleCount: ${finalMaleTables.length}`);
-          console.log(`  - femaleCount: ${finalFemaleTables.length}`);
 
           setMaleTables(finalMaleTables);
           setFemaleTables(finalFemaleTables);
         
-          console.log('[generateAISeating] Resetting canvas viewport to (0, 0)');
           setCanvasOffset({ x: 0, y: 0 });
           setCanvasScale(1);
         
@@ -637,7 +597,6 @@ const EventSeatingPage = () => {
         
           autoSave(layoutData);
         } else {
-          console.log('[EventSeatingPage] 👥 Processing mixed seating response');
           setSeatingArrangement(data.arrangement);
         
           let finalTables = data.tables && data.tables.length > 0 ? data.tables : tables;
@@ -648,7 +607,6 @@ const EventSeatingPage = () => {
         
           setTables(finalTables);
         
-          console.log('[generateAISeating] Resetting canvas viewport to (0, 0)');
           setCanvasOffset({ x: 0, y: 0 });
           setCanvasScale(1);
         
@@ -672,7 +630,6 @@ const EventSeatingPage = () => {
         const newFingerprint = createGuestFingerprint(confirmedGuests);
         setLastSyncData(newFingerprint);
       
-        console.log('[EventSeatingPage] ✅ AI seating generation completed successfully');
         return isSeparatedSeating ? {
           maleArrangement: data.maleArrangement,
           femaleArrangement: data.femaleArrangement,
@@ -684,12 +641,10 @@ const EventSeatingPage = () => {
         };
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('[EventSeatingPage] ❌ AI generation failed:', errorData);
         setError(errorData.message || t('seating.errors.aiGeneration'));
         return false;
       }
     } catch (err) {
-      console.error('[EventSeatingPage] ❌ Error in generateAISeating:', err);
       setError(t('errors.networkError'));
       return false;
     } finally {
@@ -698,21 +653,6 @@ const EventSeatingPage = () => {
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, preferences, confirmedGuests, seatingArrangement, maleArrangement, femaleArrangement, canvasScale, canvasOffset, autoSave, t, updateTableNamesWithGroups, createGuestFingerprint, isSeparatedSeating]);
 
   const fetchTableSuggestion = useCallback(async (options) => {
-    console.log('[EventSeatingPage] 🚀 fetchTableSuggestion called');
-    console.log('  - allowGroupMixing:', options.allowGroupMixing);
-    console.log('  - groupMixingRules:', options.groupMixingRules);
-    console.log('  - groupPolicies:', options.groupPolicies);
-    console.log('  - preferredTableSize:', options.preferredTableSize);
-    console.log('  - preserveExisting:', options.preserveExisting);
-    
-    console.log('[EventSeatingPage] 📊 Current state:');
-    console.log(`  - isSeparatedSeating: ${isSeparatedSeating}`);
-    console.log(`  - tablesCount: ${tables.length}`);
-    console.log(`  - maleTablesCount: ${maleTables.length}`);
-    console.log(`  - femaleTablesCount: ${femaleTables.length}`);
-    console.log(`  - hasSeatingArrangement: ${Object.keys(seatingArrangement).length > 0}`);
-    console.log(`  - hasMaleArrangement: ${Object.keys(maleArrangement).length > 0}`);
-    console.log(`  - hasFemaleArrangement: ${Object.keys(femaleArrangement).length > 0}`);
 
     try {
       const requestBody = {
@@ -730,17 +670,6 @@ const EventSeatingPage = () => {
         preserveExisting: options.preserveExisting
       };
 
-      console.log('[EventSeatingPage] 📤 Sending request body:');
-      console.log(`  - allowGroupMixing: ${requestBody.allowGroupMixing}`);
-      console.log(`  - groupMixingRules:`, requestBody.groupMixingRules);
-      console.log(`  - groupPolicies:`, requestBody.groupPolicies);
-      console.log(`  - preferredTableSize: ${requestBody.preferredTableSize}`);
-      console.log(`  - isSeparatedSeating: ${requestBody.isSeparatedSeating}`);
-      console.log(`  - existingTables: ${requestBody.existingTables.length} tables`);
-      console.log(`  - existingMaleTables: ${requestBody.existingMaleTables.length} tables`);
-      console.log(`  - existingFemaleTables: ${requestBody.existingFemaleTables.length} tables`);
-      console.log(`  - preserveExisting: ${requestBody.preserveExisting}`);
-
       const response = await makeApiRequest(`/api/events/${eventId}/seating/suggest-tables`, {
         method: 'POST',
         body: JSON.stringify(requestBody)
@@ -748,29 +677,12 @@ const EventSeatingPage = () => {
 
       if (response && response.ok) {
         const data = await response.json();
-        console.log('[EventSeatingPage] 📥 Received response data');
-        console.log(`  - totalTables: ${data.totalTables || 'N/A'}`);
-        
-        if (data.tableSettings) {
-          console.log('[EventSeatingPage] 📋 Mixed mode tableSettings:', data.tableSettings);
-        }
-        if (data.maleTableSettings) {
-          console.log('[EventSeatingPage] 👨 Male tableSettings:', data.maleTableSettings);
-        }
-        if (data.femaleTableSettings) {
-          console.log('[EventSeatingPage] 👩 Female tableSettings:', data.femaleTableSettings);
-        }
-        if (data.details) {
-          console.log('[EventSeatingPage] 📊 Details:', data.details);
-        }
         
         return data;
       }
       
-      console.log('[EventSeatingPage] ❌ Response not OK:', response?.status);
       return null;
     } catch (err) {
-      console.error('[EventSeatingPage] ❌ Error fetching table suggestion:', err);
       return null;
     }
   }, [eventId, makeApiRequest, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating]);
@@ -968,7 +880,13 @@ const EventSeatingPage = () => {
     try {
       if (isSeparatedSeating && gender) {
         if (gender === 'male') {
-          const newMaleTables = [...maleTables, ...tablesToAdd];
+          const existingIds = new Set(maleTables.map(t => t.id));
+          const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+          const updatedExistingTables = maleTables.map(existingTable => {
+            const update = tablesToAdd.find(t => t.id === existingTable.id);
+            return update ? { ...existingTable, ...update } : existingTable;
+          });
+          const newMaleTables = [...updatedExistingTables, ...trulyNewTables];
           setMaleTables(newMaleTables);
          
           const layoutData = {
@@ -992,7 +910,13 @@ const EventSeatingPage = () => {
             throw new Error(t('seating.errors.saveTablesFailed'));
           }
         } else {
-          const newFemaleTables = [...femaleTables, ...tablesToAdd];
+          const existingIds = new Set(femaleTables.map(t => t.id));
+          const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+          const updatedExistingTables = femaleTables.map(existingTable => {
+            const update = tablesToAdd.find(t => t.id === existingTable.id);
+            return update ? { ...existingTable, ...update } : existingTable;
+          });
+          const newFemaleTables = [...updatedExistingTables, ...trulyNewTables];
           setFemaleTables(newFemaleTables);
          
           const layoutData = {
@@ -1017,7 +941,15 @@ const EventSeatingPage = () => {
           }
         }
       } else {
-        const newTables = [...tables, ...tablesToAdd];
+        const existingIds = new Set(tables.map(t => t.id));
+        const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+        
+        const updatedExistingTables = tables.map(existingTable => {
+          const update = tablesToAdd.find(t => t.id === existingTable.id);
+          return update ? { ...existingTable, ...update } : existingTable;
+        });
+        
+        const newTables = [...updatedExistingTables, ...trulyNewTables];
         setTables(newTables);
        
         const layoutData = {
@@ -2043,79 +1975,69 @@ const EventSeatingPage = () => {
     }
   }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement, saveSeatingArrangement, tables, maleTables, femaleTables, preferences, canvasScale, canvasOffset, t, manuallyEditedTableNames, updateTableNamesWithGroups, editingTable]);
 
-  const clearAllSeating = useCallback(() => {
-    if (!canEdit) {
-      setError(t('events.accessDenied'));
-      return;
-    }
+  
+const clearAllSeating = useCallback(() => {
+  if (!canEdit) {
+    setError(t('events.accessDenied'));
+    return;
+  }
 
-    const hasAnythingToDelete = isSeparatedSeating
-      ?
-        (maleArrangement && Object.keys(maleArrangement).length > 0) ||
-        (femaleArrangement && Object.keys(femaleArrangement).length > 0) ||
-        (maleTables && maleTables.length > 0) ||
-        (femaleTables && femaleTables.length > 0) ||
-        (tables && tables.length > 0) ||
-        (seatingArrangement && Object.keys(seatingArrangement).length > 0)
-      :
-        (tables && tables.length > 0) ||
-        (seatingArrangement && Object.keys(seatingArrangement).length > 0);
+  const hasAnythingToDelete = isSeparatedSeating
+    ? (maleArrangement && Object.keys(maleArrangement).length > 0) ||
+      (femaleArrangement && Object.keys(femaleArrangement).length > 0) ||
+      (maleTables && maleTables.length > 0) ||
+      (femaleTables && femaleTables.length > 0) ||
+      (tables && tables.length > 0) ||
+      (seatingArrangement && Object.keys(seatingArrangement).length > 0)
+    : (tables && tables.length > 0) ||
+      (seatingArrangement && Object.keys(seatingArrangement).length > 0);
 
-    if (!hasAnythingToDelete) {
-      return;
-    }
+  if (!hasAnythingToDelete) return;
 
-    if (window.confirm(t('seating.confirmClearAll'))) {
-     
-      if (isSeparatedSeating) {
-        setMaleArrangement({});
-        setFemaleArrangement({});
-        setMaleTables([]);
-        setFemaleTables([]);
-        setTables([]);
-        setSeatingArrangement({});
-       
-        autoSave({
-          tables: [],
-          arrangement: {},
-          maleTables: [],
-          femaleTables: [],
-          maleArrangement: {},
-          femaleArrangement: {},
-          isSeparatedSeating: true,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        });
-      } else {
-        const newArrangement = {};
-        const newTables = [];
-       
-        setSeatingArrangement(newArrangement);
-        setTables(newTables);
-       
-        autoSave({
-          tables: newTables,
-          arrangement: newArrangement,
-          isSeparatedSeating: false,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        });
-      }
-     
-      setSelectedTable(null);
-      setEditingTable(null);
-      setError('');
-      setManuallyEditedTableNames(new Set());
-      setLastSyncData(null);
-     
+  setIsClearModalOpen(true);
+}, [canEdit, isSeparatedSeating, maleArrangement, femaleArrangement, maleTables, femaleTables, tables, seatingArrangement, t]);
+
+  const handleConfirmClearAll = useCallback(() => {
+    if (isSeparatedSeating) {
+      setMaleArrangement({});
+      setFemaleArrangement({});
+      setMaleTables([]);
+      setFemaleTables([]);
+      setTables([]);
+      setSeatingArrangement({});
+      
+      autoSave({
+        tables: [],
+        arrangement: {},
+        maleTables: [],
+        femaleTables: [],
+        maleArrangement: {},
+        femaleArrangement: {},
+        isSeparatedSeating: true,
+        preferences,
+        layoutSettings: { canvasScale, canvasOffset }
+      });
+    } else {
+      setSeatingArrangement({});
+      setTables([]);
+      
+      autoSave({
+        tables: [],
+        arrangement: {},
+        isSeparatedSeating: false,
+        preferences,
+        layoutSettings: { canvasScale, canvasOffset }
+      });
     }
-  }, [preferences, canvasScale, canvasOffset, autoSave, t, canEdit, isSeparatedSeating, maleArrangement, femaleArrangement, maleTables, femaleTables, tables, seatingArrangement]);
+    
+    setSelectedTable(null);
+    setEditingTable(null);
+    setError('');
+    setManuallyEditedTableNames(new Set());
+    setLastSyncData(null);
+    
+    setIsClearModalOpen(false);
+  }, [isSeparatedSeating, preferences, canvasScale, canvasOffset, autoSave]);
 
   const handleCanvasClick = useCallback((event) => {
     if (!isAddingTable) return;
@@ -2619,7 +2541,6 @@ const EventSeatingPage = () => {
         showSyncNotification('error', errorData.message || t('seating.sync.manualSyncFailed'));
       }
     } catch (error) {
-      console.error('manualSync error:', error);
       showSyncNotification('error', t('seating.sync.manualSyncFailed'));
     } finally {
       setSyncInProgress(false);
@@ -2721,12 +2642,28 @@ const EventSeatingPage = () => {
   useEffect(() => {
     const initializeData = async () => {
       await fetchEventPermissions();
-      await fetchConfirmedGuests();
-      await fetchSeatingArrangement();
+      const guestData = await fetchConfirmedGuests();
+      const seatingData = await fetchSeatingArrangement();
+      
+      const hasExistingSeating = seatingData && (
+        (seatingData.isSeparatedSeating && 
+          ((seatingData.maleTables && seatingData.maleTables.length > 0) || 
+          (seatingData.femaleTables && seatingData.femaleTables.length > 0))) ||
+        (!seatingData.isSeparatedSeating && seatingData.tables && seatingData.tables.length > 0)
+      );
+      
+      if (hasExistingSeating) {
+        await checkAndHandlePendingSync();
+      }
+      
+      if (guestData && guestData.confirmed) {
+        const initialFingerprint = createGuestFingerprint(guestData.confirmed);
+        setLastSyncData(initialFingerprint);
+      }
     };
 
     initializeData();
-  }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement]);
+  }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement, checkAndHandlePendingSync, createGuestFingerprint]);
   
   const getCurrentTables = useCallback(() => {
     if (isSeparatedSeating) {
@@ -3225,6 +3162,52 @@ const EventSeatingPage = () => {
           isSeparatedSeating={isSeparatedSeating}
           canEdit={canEdit}
         />
+
+         {isClearModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>{t('dashboard.confirmDelete')}</h3>
+                <button className="modal-close" onClick={() => setIsClearModalOpen(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                <p>{t('seating.confirmClearAll')}</p>
+              </div>
+              <div className="modal-footer">
+                <button className="modal-btn delete" onClick={handleConfirmClearAll}>
+                  {t('common.delete')}
+                </button>
+                <button className="modal-btn cancel" onClick={() => setIsClearModalOpen(false)}>
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        {isClearModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{t('dashboard.confirmDelete')}</h3>
+              <button className="modal-close" onClick={() => setIsClearModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.confirmClearAll')}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn delete" onClick={handleConfirmClearAll}>
+                {t('common.delete')}
+              </button>
+              <button className="modal-btn cancel" onClick={() => setIsClearModalOpen(false)}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </FeaturePageTemplate>
   );
