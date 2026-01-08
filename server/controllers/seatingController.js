@@ -1975,7 +1975,7 @@ const proposeSyncOptions = async (req, res) => {
       }
     }
 
-    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    const seating = await Seating.findOne({ event: eventId });
     if (!seating) {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
@@ -4033,7 +4033,7 @@ const applySyncOption = async (req, res) => {
       }
     }
 
-    let seating = await Seating.findOne({ event: eventId, user: req.userId });
+    let seating = await Seating.findOne({ event: eventId });
     if (!seating) {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
@@ -4375,7 +4375,7 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
       }
     }
 
-    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    const seating = await Seating.findOne({ event: eventId });
     if (!seating) {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
@@ -4653,7 +4653,7 @@ const generateAISeating = async (req, res) => {
       groupPolicies: preferences?.groupPolicies || {}
     };
 
-    let seating = await Seating.findOne({ event: eventId, user: req.userId });
+    let seating = await Seating.findOne({ event: eventId });
 
     if (isSeparatedSeating) {
       const hasSplitCounts = guests.some(g => g.maleCount !== undefined || g.femaleCount !== undefined);
@@ -4894,7 +4894,6 @@ const generateAISeating = async (req, res) => {
       } else {
         seating = new Seating({
           event: eventId,
-          user: req.userId,
           maleTables: maleTablesList,
           femaleTables: femaleTablesList,
           maleArrangement: aiMaleArrangement,
@@ -5001,7 +5000,6 @@ const generateAISeating = async (req, res) => {
       } else {
         seating = new Seating({
           event: eventId,
-          user: req.userId,
           tables: tablesToUse,
           arrangement: aiArrangement,
           isSeparatedSeating: false,
@@ -9501,7 +9499,7 @@ const exportSeatingChart = async (req, res) => {
       }
     }
    
-    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    const seating = await Seating.findOne({ event: eventId });
     if (!seating) {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
@@ -9743,7 +9741,6 @@ const validateSeatingArrangement = async (req, res) => {
 
     const tempSeating = new Seating({
       event: eventId,
-      user: req.userId,
       tables,
       arrangement: arrangement || {}
     });
@@ -9774,19 +9771,18 @@ const cloneSeatingArrangement = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
-    const sourceSeating = await Seating.findOne({ event: eventId, user: req.userId });
+    const sourceSeating = await Seating.findOne({ event: eventId });
     if (!sourceSeating) {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
 
-    const existingTargetSeating = await Seating.findOne({ event: targetEventId, user: req.userId });
+    const existingTargetSeating = await Seating.findOne({ event: targetEventId });
     if (existingTargetSeating) {
       return res.status(400).json({ message: req.t('seating.errors.targetAlreadyHasSeating') });
     }
 
     const newSeating = new Seating({
       event: targetEventId,
-      user: req.userId,
       tables: sourceSeating.tables.map(table => ({
         ...table,
         id: `temp_${tableIndex + 1}_${Math.random().toString(36).substr(2, 9)}`
@@ -9849,7 +9845,7 @@ const getSeatingSubjestions = async (req, res) => {
       }
     }
 
-    const seating = await Seating.findOne({ event: eventId, user: req.userId });
+    const seating = await Seating.findOne({ event: eventId });
     const guests = await Guest.find({
       event: eventId,
       rsvpStatus: 'confirmed'
