@@ -246,7 +246,8 @@
       "separateGroupsApplied": "{{count}} groups kept separate",
       "optionGenerationError": "Error generating synchronization option",
       "groupMixingEnabled": "Group mixing enabled",
-      "noGroupMixingApplied": "Group separation maintained"
+      "noGroupMixingApplied": "Group separation maintained",
+      "guestsMovedToUnassigned": "guests moved to unassigned list"
     },
     "errors": {
       "fetchFailed": "Failed to load seating arrangement",

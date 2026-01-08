@@ -290,7 +290,6 @@ const cancelDelete = () => {
     }
 
     onSeatGuest(guestIdParam, table.id);
-    setShowAddGuests(false);
     setSearchGuestTerm('');
   };
 

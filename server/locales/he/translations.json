@@ -246,7 +246,8 @@
       "separateGroupsApplied": "{{count}} קבוצות נשמרו בנפרד",
       "optionGenerationError": "שגיאה ביצירת אופציית סנכרון",
       "groupMixingEnabled": "ערבוב קבוצות מופעל",
-      "noGroupMixingApplied": "שמירה על הפרדה בין קבוצות"
+      "noGroupMixingApplied": "שמירה על הפרדה בין קבוצות",
+      "guestsMovedToUnassigned": "מוזמנים הועברו לרשימת הלא משובצים"
       },
     "errors": {
       "fetchFailed": "שגיאה בטעינת סידור המקומות",

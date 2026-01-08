@@ -27,6 +27,8 @@ const SeatingTableView = ({
   const [selectedTableForGuest, setSelectedTableForGuest] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [newTableCapacity, setNewTableCapacity] = useState(12);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState(null);
 
   const getCurrentTablesAndArrangement = useMemo(() => {
 
@@ -419,6 +421,14 @@ const SeatingTableView = ({
     return gender === 'male' ? '♂️ ' : '♀️ ';
   };
 
+  const handleConfirmDelete = () => {
+    if (tableToDelete) {
+      onDeleteTable(tableToDelete.id);
+      setIsDeleteModalOpen(false);
+      setTableToDelete(null);
+    }
+  };
+
   return (
     <div className="seating-table-view">
       <div className="table-view-controls">
@@ -589,9 +599,8 @@ const SeatingTableView = ({
                   <button
                     className="delete-table-btn"
                     onClick={() => {
-                      if (window.confirm(t('seating.tableView.confirmDeleteTable'))) {
-                        onDeleteTable(table.id);
-                      }
+                      setTableToDelete(table);
+                      setIsDeleteModalOpen(true);
                     }}
                     title={t('seating.tableView.deleteTable')}
                     disabled={!canEdit}
@@ -620,6 +629,29 @@ const SeatingTableView = ({
         </div>
       </div>
 
+      {isDeleteModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{t('seating.tableView.deleteTable')}</h3>
+              <button className="modal-close" onClick={() => setIsDeleteModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.tableView.confirmDeleteTable')}</p>
+              {tableToDelete && <div className="event-to-delete">{tableToDelete.name}</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn delete" onClick={handleConfirmDelete}>
+                {t('seating.tableView.deleteTable')}
+              </button>
+              <button className="modal-btn cancel" onClick={() => setIsDeleteModalOpen(false)}>
+                {t('seating.table.cancelAddGuests')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+   
     </div>
   );
 };
