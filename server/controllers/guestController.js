@@ -348,10 +348,18 @@ const updateGuestRSVP = async (req, res) => {
       }
       guest.rsvpReceivedAt = new Date();
     } else {
-      guest.attendingCount = 0;
-      guest.maleCount = 0;
-      guest.femaleCount = 0;
-    }
+        guest.attendingCount = 0;
+        guest.maleCount = 0;
+        guest.femaleCount = 0;
+        
+        if (guest.rideInfo && guest.rideInfo.status && guest.rideInfo.status !== 'not_set') {
+          guest.rideInfo = {
+            status: 'not_set',
+            contactHistory: guest.rideInfo.contactHistory || [],
+            lastUpdated: new Date()
+          };
+        }
+      }
 
     if (guestNotes !== undefined) {
       guest.guestNotes = guestNotes;
@@ -484,10 +492,18 @@ const updateGuestRSVPPublic = async (req, res) => {
       }
       guest.rsvpReceivedAt = new Date();
     } else {
-      guest.attendingCount = 0;
-      guest.maleCount = 0;
-      guest.femaleCount = 0;
-    }
+        guest.attendingCount = 0;
+        guest.maleCount = 0;
+        guest.femaleCount = 0;
+        
+        if (guest.rideInfo && guest.rideInfo.status && guest.rideInfo.status !== 'not_set') {
+          guest.rideInfo = {
+            status: 'not_set',
+            contactHistory: guest.rideInfo.contactHistory || [],
+            lastUpdated: new Date()
+          };
+        }
+      }
 
     if (guestNotes !== undefined) {
       guest.guestNotes = guestNotes;

@@ -281,10 +281,6 @@ const getSuggestedRides = async (req, res) => {
       'rideInfo.address': { $exists: true, $ne: '' }
     }).select('firstName lastName phone rideInfo').lean();
 
-    offeringGuests.forEach(g => {
-      console.log('Offering guest address:', g.rideInfo.address);
-    });
-
     const guestsWithDistance = await Promise.all(
       offeringGuests.map(async (guest) => {
         const distance = await calculateDistance(userAddress, guest.rideInfo.address);
