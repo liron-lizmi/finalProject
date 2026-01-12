@@ -49,7 +49,7 @@ const AISeatingModal = ({
   const [existingArrangementAction, setExistingArrangementAction] = useState('');
   const [initialLoad, setInitialLoad] = useState(true);
   const [isFetchingSuggestion, setIsFetchingSuggestion] = useState(false);
-
+  const [capacityWarning, setCapacityWarning] = useState('');
   const [showGroupMixingConfig, setShowGroupMixingConfig] = useState(false);
   const [newGroupMixRule, setNewGroupMixRule] = useState({
     group1: '',
@@ -308,6 +308,225 @@ const AISeatingModal = ({
    
     updateSuggestion();
   }, [aiPreferences.allowGroupMixing, aiPreferences.groupPolicies]); 
+
+ useEffect(() => {
+  if (!showTableCreation) {
+    setCapacityWarning('');
+    return;
+  }
+
+  const calculateBufferPercent = (customSettings, allowMixing, groupMixingRules, groupPolicies, isSeparated = false) => {
+    const hasSmallTables = customSettings.some(s => s.count > 0 && s.capacity < 10);
+    const hasMediumTables = customSettings.some(s => s.count > 0 && s.capacity >= 10 && s.capacity <= 12);
+    const hasNonStandardTables = customSettings.some(s => s.count > 0 && 
+      ((s.capacity >= 13 && s.capacity <= 23) || (s.capacity >= 25 && s.capacity <= 30)));
+    
+    if (allowMixing && (!groupMixingRules || groupMixingRules.length === 0)) {
+      if (isSeparated) {
+        if (hasSmallTables) return 1.35;
+        if (hasNonStandardTables) return 1.35;
+        if (hasMediumTables) return 1.25;
+        return 1.20;
+      }
+      if (hasSmallTables) return 1.15;
+      if (hasNonStandardTables) return 1.15;
+      if (hasMediumTables) return 1.10;
+      return 1.05;
+    }
+    
+    if ((groupMixingRules && groupMixingRules.length > 0) || (groupPolicies && Object.keys(groupPolicies).length > 0)) {
+      if (isSeparated) {
+        if (hasSmallTables) return 1.50;
+        if (hasNonStandardTables) return 1.50;
+        if (hasMediumTables) return 1.40;
+        return 1.25;
+      }
+      if (hasSmallTables) return 1.25;
+      if (hasNonStandardTables) return 1.25;
+      if (hasMediumTables) return 1.15;
+      return 1.10;
+    }
+
+    if (isSeparated) {
+      if (hasSmallTables) return 2;
+      if (hasNonStandardTables) return 2.5;
+      if (hasMediumTables) return 1.95;
+      return 1.25;
+    }
+    
+    if (hasSmallTables) return 1.3;
+    if (hasNonStandardTables) return 1.35;
+    if (hasMediumTables) return 1.15;
+    return 1.10;
+  };
+
+  const checkCapacityForSide = (presetSettings, customSettings, existingTables, guestsCount) => {
+    const presetCapacity = presetSettings.reduce((sum, s) => sum + (s.count * s.capacity), 0);
+    const customCapacity = customSettings.reduce((sum, s) => sum + (s.count * s.capacity), 0);
+    const existingCapacity = existingTables.reduce((sum, table) => sum + table.capacity, 0);
+    const totalAvailable = presetCapacity + customCapacity + existingCapacity;
+    
+    const presetTablesCount = presetSettings.reduce((sum, s) => sum + s.count, 0);
+    const customTablesCount = customSettings.reduce((sum, s) => sum + s.count, 0);
+    const totalPlannedTables = presetTablesCount + customTablesCount;
+    const usingCustomOnly = presetTablesCount === 0 && customTablesCount > 0;
+    
+    const hasInvalidSize = customSettings.some(s => s.count > 0 && s.capacity < 8);
+    if (hasInvalidSize) {
+      return { valid: false, reason: 'invalidSize' };
+    }
+    
+    let largestTableCapacity = 0;
+    presetSettings.forEach(s => {
+      if (s.count > 0 && s.capacity > largestTableCapacity) largestTableCapacity = s.capacity;
+    });
+    customSettings.forEach(s => {
+      if (s.count > 0 && s.capacity > largestTableCapacity) largestTableCapacity = s.capacity;
+    });
+    
+    let requiredCapacity = guestsCount;
+    if (usingCustomOnly) {
+      const bufferPercent = calculateBufferPercent(
+        customSettings, 
+        aiPreferences.allowGroupMixing,
+        aiPreferences.groupMixingRules,
+        aiPreferences.groupPolicies,
+        isSeparatedSeating
+      );
+      requiredCapacity = Math.ceil(guestsCount * bufferPercent);
+    }
+    
+    if (totalPlannedTables === 0 && existingCapacity < guestsCount) {
+      return { valid: false, reason: 'noTables', missing: guestsCount - existingCapacity };
+    }
+    
+    if (totalAvailable < requiredCapacity) {
+      return { valid: false, reason: 'insufficientCapacity', missing: requiredCapacity - totalAvailable };
+    }
+    
+    return { valid: true };
+  };
+
+  if (isSeparatedSeating) {
+    const maleGuestsCount = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
+    const femaleGuestsCount = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
+    
+    const maleCheck = checkCapacityForSide(maleTableSettings, customMaleTableSettings, maleTables, maleGuestsCount);
+    const femaleCheck = checkCapacityForSide(femaleTableSettings, customFemaleTableSettings, femaleTables, femaleGuestsCount);
+    
+    const largestMaleGuestSize = guests.reduce((max, guest) => Math.max(max, guest.maleCount || 0), 0);
+    const largestFemaleGuestSize = guests.reduce((max, guest) => Math.max(max, guest.femaleCount || 0), 0);
+    
+    let largestMaleTableCapacity = 0;
+    maleTableSettings.forEach(s => { if (s.count > 0) largestMaleTableCapacity = Math.max(largestMaleTableCapacity, s.capacity); });
+    customMaleTableSettings.forEach(s => { if (s.count > 0) largestMaleTableCapacity = Math.max(largestMaleTableCapacity, s.capacity); });
+    
+    let largestFemaleTableCapacity = 0;
+    femaleTableSettings.forEach(s => { if (s.count > 0) largestFemaleTableCapacity = Math.max(largestFemaleTableCapacity, s.capacity); });
+    customFemaleTableSettings.forEach(s => { if (s.count > 0) largestFemaleTableCapacity = Math.max(largestFemaleTableCapacity, s.capacity); });
+    
+    if (largestMaleTableCapacity > 0 && largestMaleGuestSize > largestMaleTableCapacity) {
+      setCapacityWarning(t('seating.ai.guestTooLargeWarningMale', { 
+        guestSize: largestMaleGuestSize, 
+        tableSize: largestMaleTableCapacity 
+      }));
+      return;
+    }
+    
+    if (largestFemaleTableCapacity > 0 && largestFemaleGuestSize > largestFemaleTableCapacity) {
+      setCapacityWarning(t('seating.ai.guestTooLargeWarningFemale', { 
+        guestSize: largestFemaleGuestSize, 
+        tableSize: largestFemaleTableCapacity 
+      }));
+      return;
+    }
+    
+    if (!maleCheck.valid) {
+      if (maleCheck.reason === 'invalidSize') {
+        setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+      } else {
+        setCapacityWarning(t('seating.ai.insufficientMaleCapacityWarning', { missing: maleCheck.missing }));
+      }
+      return;
+    }
+    
+    if (!femaleCheck.valid) {
+      if (femaleCheck.reason === 'invalidSize') {
+        setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+      } else {
+        setCapacityWarning(t('seating.ai.insufficientFemaleCapacityWarning', { missing: femaleCheck.missing }));
+      }
+      return;
+    }
+    
+    setCapacityWarning('');
+    
+  } else {
+    const currentCustomSettings = customTableSettings;
+    const currentPresetSettings = tableSettings;
+
+    const presetCapacity = currentPresetSettings.reduce((sum, s) => sum + (s.count * s.capacity), 0);
+    const customCapacity = currentCustomSettings.reduce((sum, s) => sum + (s.count * s.capacity), 0);
+    const existingCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
+    const guestsNeeded = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+    const totalAvailable = presetCapacity + customCapacity + existingCapacity;
+    const totalPlannedTables = currentPresetSettings.reduce((sum, s) => sum + s.count, 0) + 
+                               currentCustomSettings.reduce((sum, s) => sum + s.count, 0);
+
+    const presetTablesCount = currentPresetSettings.reduce((sum, s) => sum + s.count, 0);
+    const customTablesCount = currentCustomSettings.reduce((sum, s) => sum + s.count, 0);
+    const usingCustomTablesOnly = presetTablesCount === 0 && customTablesCount > 0;
+
+    const largestGuestSize = guests.reduce((max, guest) => Math.max(max, guest.attendingCount || 1), 0);
+
+    let largestPlannedTableCapacity = 0;
+    currentPresetSettings.forEach(s => {
+      if (s.count > 0 && s.capacity > largestPlannedTableCapacity) {
+        largestPlannedTableCapacity = s.capacity;
+      }
+    });
+    currentCustomSettings.forEach(s => {
+      if (s.count > 0 && s.capacity > largestPlannedTableCapacity) {
+        largestPlannedTableCapacity = s.capacity;
+      }
+    });
+
+    let requiredCapacity = guestsNeeded;
+    if (usingCustomTablesOnly) {
+      const bufferPercent = calculateBufferPercent(
+        currentCustomSettings,
+        aiPreferences.allowGroupMixing,
+        aiPreferences.groupMixingRules,
+        aiPreferences.groupPolicies
+      );
+      requiredCapacity = Math.ceil(guestsNeeded * bufferPercent);
+    }
+
+    const hasInvalidCustomTableSize = currentCustomSettings.some(s => s.count > 0 && s.capacity < 8);
+    
+    if (hasInvalidCustomTableSize) {
+      setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+    }
+    else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded) {
+      const missingSeats = guestsNeeded - existingCapacity;
+      setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
+    }
+    else if (largestPlannedTableCapacity > 0 && largestGuestSize > largestPlannedTableCapacity) {
+      setCapacityWarning(t('seating.ai.guestTooLargeWarning', { 
+        guestSize: largestGuestSize, 
+        tableSize: largestPlannedTableCapacity 
+      }));
+    }
+    else if (totalAvailable < requiredCapacity) {
+      const missingSeats = requiredCapacity - totalAvailable;
+      setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
+    } else {
+      setCapacityWarning('');
+    }
+  }
+}, [showTableCreation, tableSettings, customTableSettings, maleTableSettings, femaleTableSettings, 
+    customMaleTableSettings, customFemaleTableSettings, guests, tables, maleTables, femaleTables,
+    isSeparatedSeating, t, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies]);
 
   const autoSuggestTables = async (guestsNeedingSeats, allowMixing = null, customGroupPolicies = null, gender = null, customGroupMixingRules = null, preserveExisting = false) => {
 
@@ -712,10 +931,15 @@ const AISeatingModal = ({
       let maleTableCounter = getNextTableNumber ? getNextTableNumber() : maleTables.length + 1;
       let femaleTableCounter = maleTableCounter;
      
-      const totalMaleTables = maleTableSettings.reduce((sum, s) => sum + s.count, 0) +
-                            customMaleTableSettings.reduce((sum, s) => sum + s.count, 0);
-      const totalFemaleTables = femaleTableSettings.reduce((sum, s) => sum + s.count, 0) +
-                              customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+      const presetMaleTablesCount = maleTableSettings.reduce((sum, s) => sum + s.count, 0);
+      const customMaleTablesCount = customMaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+      const totalMaleTables = presetMaleTablesCount + customMaleTablesCount;
+      const useMaleCustomTablesOnly = presetMaleTablesCount === 0 && customMaleTablesCount > 0;
+      
+      const presetFemaleTablesCount = femaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+      const customFemaleTablesCount = customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+      const totalFemaleTables = presetFemaleTablesCount + customFemaleTablesCount;
+      const useFemaleCustomTablesOnly = presetFemaleTablesCount === 0 && customFemaleTablesCount > 0;
      
       const maleCols = COLS;
       const femaleCols = COLS;
@@ -878,6 +1102,19 @@ const AISeatingModal = ({
             }
           }
          
+          setMaleTableSettings([
+            { type: 'round', capacity: 10, count: 0 },
+            { type: 'round', capacity: 12, count: 0 },
+            { type: 'rectangular', capacity: 24, count: 0 }
+          ]);
+          setFemaleTableSettings([
+            { type: 'round', capacity: 10, count: 0 },
+            { type: 'round', capacity: 12, count: 0 },
+            { type: 'rectangular', capacity: 24, count: 0 }
+          ]);
+          setCustomMaleTableSettings([]);
+          setCustomFemaleTableSettings([]);
+
           if (maleTablesList.length > 0) {
             await onAddTables(maleTablesList, 'male');
           }
@@ -888,8 +1125,8 @@ const AISeatingModal = ({
          
           await new Promise(resolve => setTimeout(resolve, 1500));
          
-          const allMaleTablesForGeneration = [...maleTables, ...maleTablesList];
-          const allFemaleTablesForGeneration = [...femaleTables, ...femaleTablesList];
+          const allMaleTablesForGeneration = useMaleCustomTablesOnly ? maleTablesList : [...maleTables, ...maleTablesList];
+          const allFemaleTablesForGeneration = useFemaleCustomTablesOnly ? femaleTablesList : [...femaleTables, ...femaleTablesList];
          
           const aiPreferencesWithExisting = {
             ...aiPreferences,
@@ -904,27 +1141,85 @@ const AISeatingModal = ({
             groupPolicies: aiPreferences.groupPolicies,
             isSeparatedSeating: true,
             maleTables: maleTablesList,
-            femaleTables: femaleTablesList
+            femaleTables: femaleTablesList,
+            useMaleCustomTablesOnly: useMaleCustomTablesOnly,
+            useFemaleCustomTablesOnly: useFemaleCustomTablesOnly,
+            preferences: {
+              ...aiPreferences,
+              useMaleCustomTablesOnly: useMaleCustomTablesOnly,
+              useFemaleCustomTablesOnly: useFemaleCustomTablesOnly
+            }
           };
          
           const result = await handleGenerate(aiPreferencesWithExisting);
          
           if (result && result.maleArrangement && result.femaleArrangement) {
-            const updatedMaleTables = result.maleTables?.map(table => {
+            let maleTablesToUpdate = result.maleTables || [];
+            let maleArrangementToUse = result.maleArrangement;
+            let femaleTablesToUpdate = result.femaleTables || [];
+            let femaleArrangementToUse = result.femaleArrangement;
+            
+            const maleCols = 4;
+            const femaleCols = 4;
+            
+            
+            if (useFemaleCustomTablesOnly) {
+              const totalFemaleGuestsToSeat = femaleGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
+              const seatedFemaleGuestsInArrangement = Object.values(result.femaleArrangement).reduce((sum, tableGuests) => {
+                return sum + tableGuests.reduce((guestSum, guestId) => {
+                  const guest = femaleGuests.find(g => g._id === guestId);
+                  return guestSum + (guest ? (guest.attendingCount || 1) : 0);
+                }, 0);
+              }, 0);
+              const allFemaleGuestsSeated = seatedFemaleGuestsInArrangement >= totalFemaleGuestsToSeat;
+              
+              if (allFemaleGuestsSeated) {
+                femaleTablesToUpdate = (result.femaleTables || []).filter(table => {
+                  const tableGuests = result.femaleArrangement[table.id] || [];
+                  return tableGuests.length > 0;
+                });
+                
+                femaleArrangementToUse = {};
+                femaleTablesToUpdate.forEach(table => {
+                  if (result.femaleArrangement[table.id]) {
+                    femaleArrangementToUse[table.id] = result.femaleArrangement[table.id];
+                  }
+                });
+
+                let femaleTableCounter = (useMaleCustomTablesOnly ? maleTablesToUpdate.length : (result.maleTables?.length || 0)) + 1;
+                if (getNextTableNumber) {
+                  femaleTableCounter = getNextTableNumber() + (useMaleCustomTablesOnly ? maleTablesToUpdate.length : (result.maleTables?.length || 0));
+                }
+                femaleTablesToUpdate = femaleTablesToUpdate.map((table, index) => {
+                  const row = Math.floor(index / femaleCols);
+                  const col = index % femaleCols;
+                  return {
+                    ...table,
+                    name: `${t('seating.tableName')} ${femaleTableCounter++}`,
+                    position: {
+                      x: FEMALE_START_X + col * SPACING_X,
+                      y: Math.min(START_Y + row * SPACING_Y, MAX_Y - 100)
+                    }
+                  };
+                });
+              }
+            }
+            
+            const updatedMaleTables = maleTablesToUpdate.map(table => {
               const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
               return {
                 ...table, 
-                name: generateTableNameWithGroup(tableNumber, table.id, result.maleArrangement, maleGuests)
+                name: generateTableNameWithGroup(tableNumber, table.id, maleArrangementToUse, maleGuests)
               };
-            }) || [];
+            });
             
-            const updatedFemaleTables = result.femaleTables?.map(table => {
+            const updatedFemaleTables = femaleTablesToUpdate.map(table => {
               const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
               return {
                 ...table,  
-                name: generateTableNameWithGroup(tableNumber, table.id, result.femaleArrangement, femaleGuests)
+                name: generateTableNameWithGroup(tableNumber, table.id, femaleArrangementToUse, femaleGuests)
               };
-            }) || [];
+            });
             
             if (updatedMaleTables.length > 0) {
               await onAddTables(updatedMaleTables, 'male');
@@ -1045,11 +1340,22 @@ const AISeatingModal = ({
             await onAddTables(repositionedExistingTables);
           }
          
+          setTableSettings([
+            { type: 'round', capacity: 10, count: 0 },
+            { type: 'round', capacity: 12, count: 0 },
+            { type: 'rectangular', capacity: 24, count: 0 }
+          ]);
+          setCustomTableSettings([]);
+
           await onAddTables(tablesToCreate);
          
           await new Promise(resolve => setTimeout(resolve, 1500));
          
-          const allTablesForGeneration = [...tables, ...tablesToCreate];
+          const presetTablesCount = tableSettings.reduce((sum, s) => sum + s.count, 0);
+          const customTablesCount = customTableSettings.reduce((sum, s) => sum + s.count, 0);
+          const useCustomTablesOnly = presetTablesCount === 0 && customTablesCount > 0;
+          
+          const allTablesForGeneration = useCustomTablesOnly ? tablesToCreate : [...tables, ...tablesToCreate];
          
           const aiPreferencesWithExisting = {
             ...aiPreferences,
@@ -1060,19 +1366,27 @@ const AISeatingModal = ({
             seatingRules,
             groupMixingRules: aiPreferences.groupMixingRules,
             groupPolicies: aiPreferences.groupPolicies,
-            isSeparatedSeating: false
+            isSeparatedSeating: false,
+            useCustomTablesOnly: useCustomTablesOnly,
+            preferences: {
+              ...aiPreferences,
+              useCustomTablesOnly: useCustomTablesOnly
+            }
           };
-         
+
           const result = await handleGenerate(aiPreferencesWithExisting);
 
           if (result && result.arrangement) {
             const backendTables = result.tables || [];
             
-            const allTablesToUpdate = backendTables.map(backendTable => {
+            let tablesToUpdate = backendTables;
+            let arrangementToUse = result.arrangement;
+            
+            const allTablesToUpdate = tablesToUpdate.map(backendTable => {
               const tableNumber = parseInt(backendTable.name.match(/\d+/)?.[0] || '1');
               return {
                 ...backendTable,
-                name: generateTableNameWithGroup(tableNumber, backendTable.id, result.arrangement, guests),
+                name: generateTableNameWithGroup(tableNumber, backendTable.id, arrangementToUse, guests),
                 size: backendTable.capacity === 24
                   ? { width: 160, height: 100 }
                   : backendTable.capacity === 12
@@ -1408,7 +1722,7 @@ const AISeatingModal = ({
                            
                             <input
                               type="number"
-                              min="4"
+                              min="8"
                               max="30"
                               value={setting.capacity}
                               onChange={(e) => updateCustomTableSetting(
@@ -1484,6 +1798,44 @@ const AISeatingModal = ({
                       {t('seating.ai.noCustomTablesMessage')}
                     </div>
                   )}
+
+                  {capacityWarning && (
+                    <div className="capacity-warning-message">
+                      ⚠️ {capacityWarning}
+                    </div>
+                  )}
+                  
+                  {!capacityWarning && (() => {
+                    if (isSeparatedSeating) {
+                      const malePresetCount = maleTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const maleCustomCount = customMaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const femalePresetCount = femaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const femaleCustomCount = customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const usingMaleCustomOnly = malePresetCount === 0 && maleCustomCount > 0;
+                      const usingFemaleCustomOnly = femalePresetCount === 0 && femaleCustomCount > 0;
+                      
+                      if (usingMaleCustomOnly || usingFemaleCustomOnly) {
+                        return (
+                          <div className="custom-tables-info-message">
+                            ℹ️ {t('seating.ai.customTablesOptimizationNote')}
+                          </div>
+                        );
+                      }
+                    } else {
+                      const presetCount = tableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const customCount = customTableSettings.reduce((sum, s) => sum + s.count, 0);
+                      const usingCustomOnly = presetCount === 0 && customCount > 0;
+                      
+                      if (usingCustomOnly) {
+                        return (
+                          <div className="custom-tables-info-message">
+                            ℹ️ {t('seating.ai.customTablesOptimizationNote')}
+                          </div>
+                        );
+                      }
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
 
@@ -1506,7 +1858,7 @@ const AISeatingModal = ({
                   ) : (
                     <>
                       <span>{t('seating.ai.existingTables')}: <strong>{tables.length}</strong> ({totalCapacity} {t('seating.ai.seats')})</span>
-                      <span>{t('seating.ai.plannedNewTables')}: <strong>{tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedCapacity} {t('seating.ai.seats')})</span>
+                      <span>{t('seating.ai.plannedNewTables')}: <strong>{tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong></span>
                       <span>{t('seating.ai.totalCapacity')}: <strong>{totalCapacity + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
                     </>
                   )}
@@ -1910,24 +2262,15 @@ const AISeatingModal = ({
               <button
                 className="create-tables-btn"
                 onClick={handleCreateTables}
-                disabled={isGenerating || !canEdit}
+                disabled={isGenerating || !canEdit || !!capacityWarning}
               >
                 {isGenerating ? (
                   t('seating.ai.creatingTablesAndArranging')
                 ) : (
                   isSeparatedSeating ? (
-                    (maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0) > 0) ||
-                    (femaleTableSettings.reduce((sum, s) => sum + s.count, 0) + customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0) > 0) ? (
-                      t('seating.ai.createTablesAndArrangeSeparated')
-                    ) : (
-                      t('seating.ai.startArrangingWithExistingTablesSeparated')
-                    )
+                    t('seating.ai.createTablesAndArrangeSeparated')
                   ) : (
-                    (tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0) > 0) ? (
-                      t('seating.ai.createTablesAndArrange')
-                    ) : (
-                      t('seating.ai.startArrangingWithExistingTables')
-                    )
+                    t('seating.ai.createTablesAndArrange')
                   )
                 )}
               </button>

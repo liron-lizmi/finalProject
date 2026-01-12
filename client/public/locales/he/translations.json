@@ -1701,6 +1701,13 @@
       "createTablesAndArrangeSeparated": "צור שולחנות וסדר ישיבה בהפרדה",
       "startArrangingWithExistingTablesSeparated": "סדר עם שולחנות קיימים (הפרדה)",
       "seatingRulesTitle": "חוקי ישיבה",
+      "insufficientCapacityWarning": "אין מספיק מקומות לכל המוזמנים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
+      "tableSizeTooSmallWarning": "גודל שולחן מינימלי הוא 8 מקומות",
+      "insufficientMaleCapacityWarning": "אין מספיק מקומות לגברים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
+      "insufficientFemaleCapacityWarning": "אין מספיק מקומות לנשים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
+      "guestTooLargeWarningMale": "יש אורח עם {{guestSize}} גברים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",
+      "guestTooLargeWarningFemale": "יש אורח עם {{guestSize}} נשים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",
+      "customTablesOptimizationNote": "השיבוץ ינסה למלא את השולחנות בצורה אופטימלית, לכן ייתכן שחלק מהשולחנות יישארו ריקים. תוכל למחוק אותם באופן ידני בלחיצה ימנית על השולחן.",
       "seatingRules": {
         "mustSitTogether": {
           "title": "חובה לשבת ביחד",

@@ -4299,129 +4299,14 @@
   background-color: #f0f4ef;
 }
 
-@media (max-width: 768px) {
-  .seating-gender-filter {
-    width: 100%;
-  }
-  
-  .seating-gender-filter .filter-button {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-
-  .add-table-group {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .capacity-select,
-  .add-table-btn {
-    width: 100%;
-  }
-  
-  .summary-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .toggle-section-btn {
-    width: 60% !important;
-    height: auto !important;
-    padding: 10px 15px !important;
-    margin: 15px auto !important;
-    display: block !important;
-  }
-
-  .seating-rules-config, 
-  .group-mixing-config, 
-  .add-rule-form, 
-  .add-mix-rule-form {
-    direction: rtl !important;
-    text-align: right !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-
-  .add-rule-form .guest-select, 
-  .add-rule-form .reason-input,
-  .add-mix-rule-form .group-select,
-  .add-mix-rule-form .priority-select {
-    width: 100% !important;
-    text-align: right !important;
-    direction: rtl !important;
-  }
-
-  .section-header {
-    flex-direction: row-reverse !important;
-    justify-content: space-between !important;
-    text-align: right !important;
-  }
-
-  .seating-rules-section .section-header h4,
-  .group-mixing-section .section-header h4 {
-    margin-top: 5px !important;
-    display: inline-block;
-  }
-
-  .section-header {
-    align-items: center !important;
-  }
-}
-
-@media (max-width: 1025px) {
-  .seating-rules-section .section-header,
-  .group-mixing-section .section-header,
-  .group-policies-section .section-header,
-  .section-header {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 12px 15px !important;
-    width: 100% !important;
-    direction: rtl !important;
-  }
-
-  .section-header h4,
-  .group-policies-section h5,
-  .seating-rules-section h4 {
-    margin: 0 !important;
-    font-size: 16px !important;
-    text-align: right !important;
-    padding-top: 2px !important;
-  }
-
-  .toggle-section-btn {
-    margin: 0 !important;
-    width: auto !important;
-    min-width: 100px !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: 34px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    order: 2;
-  }
-}
-
-@media (max-width: 1025px) {
-  .modal-footer {
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: center !important;
-    gap: 15px !important;
-    padding: 20px !important;
-  }
-
-  .modal-footer button,
-  .generate-button,
-  .cancel-button {
-    flex: 0 1 180px !important;
-    height: 45px !important;
-    margin: 0 !important;
-  }
+.capacity-warning-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  border: 1px solid #ffcdd2;
 }
 
 @media (max-width: 480px) {
@@ -4615,6 +4500,92 @@
   .header-cell:nth-child(6) {
     display: none !important;
   }
+
+  .seating-gender-filter {
+    width: 100%;
+  }
+  
+  .seating-gender-filter .filter-button {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .add-table-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .capacity-select,
+  .add-table-btn {
+    width: 100%;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .toggle-section-btn {
+    width: 60% !important;
+    height: auto !important;
+    padding: 10px 15px !important;
+    margin: 15px auto !important;
+    display: block !important;
+  }
+
+  .seating-rules-config, 
+  .group-mixing-config, 
+  .add-rule-form, 
+  .add-mix-rule-form {
+    direction: rtl !important;
+    text-align: right !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .add-rule-form .guest-select, 
+  .add-rule-form .reason-input,
+  .add-mix-rule-form .group-select,
+  .add-mix-rule-form .priority-select {
+    width: 100% !important;
+    text-align: right !important;
+    direction: rtl !important;
+  }
+
+  .section-header {
+    flex-direction: row-reverse !important;
+    justify-content: space-between !important;
+    text-align: right !important;
+  }
+
+  .seating-rules-section .section-header h4,
+  .group-mixing-section .section-header h4 {
+    margin-top: 5px !important;
+    display: inline-block;
+  }
+
+  .section-header {
+    align-items: center !important;
+  }
+}
+
+@media (max-width: 1025px) {
+  .modal-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    gap: 15px !important;
+    padding: 20px !important;
+  }
+
+  .modal-footer button,
+  .generate-button,
+  .cancel-button {
+    flex: 0 1 180px !important;
+    height: 45px !important;
+    margin: 0 !important;
+  }
 }
 
 @media print {
@@ -4636,5 +4607,40 @@
  
   .no-print {
     display: none !important;
+  }
+
+  .seating-rules-section .section-header,
+  .group-mixing-section .section-header,
+  .group-policies-section .section-header,
+  .section-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 12px 15px !important;
+    width: 100% !important;
+    direction: rtl !important;
+  }
+
+  .section-header h4,
+  .group-policies-section h5,
+  .seating-rules-section h4 {
+    margin: 0 !important;
+    font-size: 16px !important;
+    text-align: right !important;
+    padding-top: 2px !important;
+  }
+
+  .toggle-section-btn {
+    margin: 0 !important;
+    width: auto !important;
+    min-width: 100px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: 34px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    order: 2;
   }
 }

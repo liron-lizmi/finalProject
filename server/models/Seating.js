@@ -18,8 +18,8 @@ const TableSchema = new mongoose.Schema({
   capacity: {
     type: Number,
     required: true,
-    min: 2,
-    max: 24
+    min: 8,
+    max: 30
   },
   position: {
     x: {
