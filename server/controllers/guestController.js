@@ -335,6 +335,9 @@ const updateGuestRSVP = async (req, res) => {
 
     const wasConfirmed = guest.rsvpStatus === 'confirmed';
     const willBeConfirmed = rsvpStatus === 'confirmed';
+    const oldAttendingCount = guest.attendingCount || 0;
+    const oldMaleCount = guest.maleCount || 0;
+    const oldFemaleCount = guest.femaleCount || 0;
 
     guest.rsvpStatus = rsvpStatus;
 
@@ -367,15 +370,42 @@ const updateGuestRSVP = async (req, res) => {
 
     const updatedGuest = await guest.save();
 
-    const countChanged = willBeConfirmed && (guest.attendingCount !== attendingCount || guest.maleCount !== maleCount || guest.femaleCount !== femaleCount);
+    const newAttendingCount = updatedGuest.attendingCount || 0;
+    const newMaleCount = updatedGuest.maleCount || 0;
+    const newFemaleCount = updatedGuest.femaleCount || 0;
+    
+    const attendingCountIncreased = willBeConfirmed && wasConfirmed && (
+      (event.isSeparatedSeating && (newMaleCount > oldMaleCount || newFemaleCount > oldFemaleCount)) ||
+      (!event.isSeparatedSeating && newAttendingCount > oldAttendingCount)
+    );
 
-    if (wasConfirmed !== willBeConfirmed || countChanged) {
-      await triggerSeatingSync(eventId, req.userId, 'rsvp_changed', {
-        guestId: updatedGuest._id,
+
+    if (!wasConfirmed && willBeConfirmed) {
+      await triggerSeatingSync(eventId, req.userId, 'rsvp_updated', {
+        guestId: updatedGuest._id.toString(),
         guest: updatedGuest,
+        type: 'status_became_confirmed',
         wasConfirmed,
-        willBeConfirmed,
-        countChanged
+        willBeConfirmed
+      });
+    } else if (attendingCountIncreased) {
+      const changedGenders = [];
+      if (event.isSeparatedSeating) {
+        if (newMaleCount > oldMaleCount) changedGenders.push('male');
+        if (newFemaleCount > oldFemaleCount) changedGenders.push('female');
+      }
+      
+      await triggerSeatingSync(eventId, req.userId, 'rsvp_updated', {
+        guestId: updatedGuest._id.toString(),
+        guest: updatedGuest,
+        type: 'attending_count_increased',
+        oldCount: oldAttendingCount,
+        newCount: newAttendingCount,
+        oldMaleCount,
+        newMaleCount,
+        oldFemaleCount,
+        newFemaleCount,
+        changedGenders
       });
     }
 
@@ -479,6 +509,9 @@ const updateGuestRSVPPublic = async (req, res) => {
 
     const wasConfirmed = guest.rsvpStatus === 'confirmed';
     const willBeConfirmed = rsvpStatus === 'confirmed';
+    const oldAttendingCount = guest.attendingCount || 0;
+    const oldMaleCount = guest.maleCount || 0;
+    const oldFemaleCount = guest.femaleCount || 0;
 
     guest.rsvpStatus = rsvpStatus;
 
@@ -511,12 +544,41 @@ const updateGuestRSVPPublic = async (req, res) => {
 
     const updatedGuest = await guest.save();
 
-    if (wasConfirmed !== willBeConfirmed) {
-      await triggerSeatingSync(eventId, event.user, 'rsvp_changed', {
-        guestId: updatedGuest._id,
+    const newAttendingCount = updatedGuest.attendingCount || 0;
+    const newMaleCount = updatedGuest.maleCount || 0;
+    const newFemaleCount = updatedGuest.femaleCount || 0;
+    
+    const attendingCountIncreased = willBeConfirmed && wasConfirmed && (
+      (event.isSeparatedSeating && (newMaleCount > oldMaleCount || newFemaleCount > oldFemaleCount)) ||
+      (!event.isSeparatedSeating && newAttendingCount > oldAttendingCount)
+    );
+    
+    if (!wasConfirmed && willBeConfirmed) {
+      await triggerSeatingSync(eventId, event.user, 'rsvp_updated', {
+        guestId: updatedGuest._id.toString(),
         guest: updatedGuest,
+        type: 'status_became_confirmed',
         wasConfirmed,
         willBeConfirmed
+      });
+    } else if (attendingCountIncreased) {
+      const changedGenders = [];
+      if (event.isSeparatedSeating) {
+        if (newMaleCount > oldMaleCount) changedGenders.push('male');
+        if (newFemaleCount > oldFemaleCount) changedGenders.push('female');
+      }
+      
+      await triggerSeatingSync(eventId, event.user, 'rsvp_updated', {
+        guestId: updatedGuest._id.toString(),
+        guest: updatedGuest,
+        type: 'attending_count_increased',
+        oldCount: oldAttendingCount,
+        newCount: newAttendingCount,
+        oldMaleCount,
+        newMaleCount,
+        oldFemaleCount,
+        newFemaleCount,
+        changedGenders
       });
     }
 
@@ -701,7 +763,8 @@ const updateGuestGift = async (req, res) => {
 
 const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
   try {
-    const seating = await Seating.findOne({ event: eventId, user: userId });
+    
+    const seating = await Seating.findOne({ event: eventId });
     
     if (!seating) {
       return;
@@ -709,7 +772,7 @@ const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
 
     const recentTriggers = (seating.syncTriggers || []).filter(trigger => 
       !trigger.processed && 
-      (new Date() - trigger.timestamp) < 30000 &&
+      (new Date() - new Date(trigger.timestamp)) < 30000 &&
       trigger.changeType === changeType &&
       JSON.stringify(trigger.changeData) === JSON.stringify(changeData)
     );
@@ -725,8 +788,8 @@ const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
       processed: false
     };
 
-    await Seating.findOneAndUpdate(
-      { event: eventId, user: userId },
+    const result = await Seating.findOneAndUpdate(
+      { event: eventId },
       { 
         $push: { 
           syncTriggers: {
@@ -736,11 +799,11 @@ const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
         },
         $set: { lastSyncTrigger: new Date() }
       },
-      { upsert: false }
+      { upsert: false, new: true }
     );
 
   } catch (error) {
-    console.error('Error triggering seating sync:', error);
+    console.error('[triggerSeatingSync] Error:', error);
   }
 };
 

@@ -276,6 +276,22 @@ const EventSeatingPage = () => {
     const oldGuestsMap = new Map(oldGuests.map(g => [g.id, g]));
     const newGuestsMap = new Map(newGuests.map(g => [g.id, g]));
 
+    const isGuestSeated = (guestId) => {
+      if (isSeparatedSeating) {
+        const inMale = Object.values(maleArrangement || {}).some(guestIds => 
+          Array.isArray(guestIds) && guestIds.includes(guestId)
+        );
+        const inFemale = Object.values(femaleArrangement || {}).some(guestIds => 
+          Array.isArray(guestIds) && guestIds.includes(guestId)
+        );
+        return inMale || inFemale;
+      } else {
+        return Object.values(seatingArrangement || {}).some(guestIds => 
+          Array.isArray(guestIds) && guestIds.includes(guestId)
+        );
+      }
+    };
+
     newGuests.forEach(newGuest => {
       const oldGuest = oldGuestsMap.get(newGuest.id);
       if (!oldGuest) {
@@ -295,23 +311,18 @@ const EventSeatingPage = () => {
               guest: newGuest,
               previousStatus: oldGuest.status
             });
-          } else if (oldGuest.status === 'confirmed' && newGuest.status !== 'confirmed') {
-            changes.push({
-              type: 'no_longer_confirmed',
-              guestId: newGuest.id,
-              guest: newGuest,
-              previousStatus: oldGuest.status
-            });
           }
         }
 
         if (newGuest.status === 'confirmed' && oldGuest.status === 'confirmed') {
           const oldCount = oldGuest.attendingCount || 1;
           const newCount = newGuest.attendingCount || 1;
+          const guestIsSeated = isGuestSeated(newGuest.id);
          
-          if (oldCount !== newCount) {
+          if (newCount > oldCount && guestIsSeated) {
+          
             changes.push({
-              type: 'attending_count_changed',
+              type: 'attending_count_increased',
               guestId: newGuest.id,
               guest: newGuest,
               oldCount,
@@ -322,21 +333,12 @@ const EventSeatingPage = () => {
       }
     });
 
-    oldGuests.forEach(oldGuest => {
-      if (!newGuestsMap.has(oldGuest.id) && oldGuest.status === 'confirmed') {
-        changes.push({
-          type: 'guest_removed',
-          guestId: oldGuest.id,
-          guest: oldGuest
-        });
-      }
-    });
-
     return { hasChanges: changes.length > 0, changes };
-  }, []);
+  }, [isSeparatedSeating, seatingArrangement, maleArrangement, femaleArrangement]);
 
   const checkAndHandlePendingSync = useCallback(async (skipFingerprintUpdate = false) => {
     try {
+      
       const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
         method: 'POST'
       });
@@ -374,7 +376,7 @@ const EventSeatingPage = () => {
         }
       }
     } catch (error) {
-      console.error('checkAndHandlePendingSync error:', error);
+      console.error('[checkAndHandlePendingSync] Error:', error);
     }
   }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
