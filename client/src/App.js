@@ -1,11 +1,11 @@
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
-import AuthFailed from './pages/Auth/AuthFailed'; 
+import AuthFailed from './pages/Auth/AuthFailed';
 import Dashboard from './pages/Auth/dashboard';
 import VenuePage from './pages/Events/VenuePage';
 import CreateEventPage from './pages/Events/CreateEventPage';
@@ -23,10 +23,35 @@ import GoogleContactsCallback from './pages/components/GoogleContactsCallback';
 import RSVPPage from './pages/Events/Features/RSVPPage';
 import PublicRidesPage from './pages/Events/Features/PublicRidesPage';
 
+// Component to handle OAuth redirect fix
+const OAuthRedirectHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const isGoogleAuth = params.get('auth') === 'google';
+    const isDirect = params.get('direct') === 'true';
+
+    console.log('=== OAuthRedirectHandler ===');
+    console.log('Current pathname:', location.pathname);
+    console.log('isGoogleAuth:', isGoogleAuth);
+    console.log('isDirect:', isDirect);
+
+    // If we landed on /index.html with OAuth params, redirect to /dashboard
+    if ((location.pathname === '/index.html' || location.pathname === '/') && isGoogleAuth && isDirect) {
+      console.log('Redirecting OAuth from index.html to /dashboard');
+      navigate(`/dashboard${location.search}`, { replace: true });
+    }
+  }, [location, navigate]);
+
+  return null;
+};
 
 const App = () => {
   return (
     <Router>
+      <OAuthRedirectHandler />
       <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<HomePage />} />

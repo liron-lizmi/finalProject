@@ -104,16 +104,26 @@ const Dashboard = () => {
 
     const checkUserSession = async () => {
       try {
+        console.log('=== Dashboard OAuth Check ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Pathname:', window.location.pathname);
+        console.log('Search:', window.location.search);
+
         const urlParams = new URLSearchParams(location.search);
         const isGoogleAuth = urlParams.get('auth') === 'google';
         const isDirect = urlParams.get('direct') === 'true';
 
+        console.log('isGoogleAuth:', isGoogleAuth);
+        console.log('isDirect:', isDirect);
+
         if (isGoogleAuth && isDirect) {
+          console.log('Google OAuth callback detected!');
           setLoading(false);
-          
+
           try {
-            
+            console.log('Getting current Appwrite session...');
             const session = await account.getSession('current');
+            console.log('Session retrieved:', session);
             
             const userData = await account.get();
 

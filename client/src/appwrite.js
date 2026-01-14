@@ -11,6 +11,11 @@ const account = new Account(client);
 
 const createOAuth2Session = async (provider, successUrl, failureUrl) => {
     try {
+        console.log('=== OAuth Flow Started ===');
+        console.log('Provider:', provider);
+        console.log('Success URL:', successUrl);
+        console.log('Failure URL:', failureUrl);
+        console.log('Current origin:', window.location.origin);
 
         if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
@@ -36,15 +41,18 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
             }
                         
             try {
+                console.log('Calling Appwrite createOAuth2Session...');
                 await account.createOAuth2Session(provider, successUrl, failureUrl);
+                console.log('OAuth2Session created successfully');
             } catch (oauthError) {
                 console.error('OAuth creation failed:', oauthError);
-                
+
                 const oauthUrl = `https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/${provider}` +
                     `?project=67e96550002c983cae42` +
                     `&success=${encodeURIComponent(successUrl)}` +
                     `&failure=${encodeURIComponent(failureUrl)}`;
-                
+
+                console.log('Fallback OAuth URL:', oauthUrl);
                 window.location.href = oauthUrl;
             }
         }
