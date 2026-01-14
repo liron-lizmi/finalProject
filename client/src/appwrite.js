@@ -4,7 +4,7 @@ import { Client, Account } from 'appwrite';
 const client = new Client();
 
 client
-    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setEndpoint('https://fra.cloud.appwrite.io/v1')
     .setProject('67e96550002c983cae42'); 
 
 const account = new Account(client);
@@ -40,7 +40,7 @@ const createOAuth2Session = async (provider, successUrl, failureUrl) => {
             } catch (oauthError) {
                 console.error('OAuth creation failed:', oauthError);
                 
-                const oauthUrl = `https://cloud.appwrite.io/v1/account/sessions/oauth2/${provider}` +
+                const oauthUrl = `https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/${provider}` +
                     `?project=67e96550002c983cae42` +
                     `&success=${encodeURIComponent(successUrl)}` +
                     `&failure=${encodeURIComponent(failureUrl)}`;
