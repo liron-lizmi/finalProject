@@ -97,7 +97,6 @@ const VendorsPage = ({ onSelectVendor }) => {
           options: [
             { value: 'bridal', labelKey: 'vendors.specificFilters.florist.bridal' },
             { value: 'arrangements', labelKey: 'vendors.specificFilters.florist.arrangements' },
-            { value: 'decorations', labelKey: 'vendors.specificFilters.florist.decorations' },
             { value: 'plants', labelKey: 'vendors.specificFilters.florist.plants' }
           ]
         };
@@ -108,8 +107,7 @@ const VendorsPage = ({ onSelectVendor }) => {
             { value: 'solo', labelKey: 'vendors.specificFilters.musician.solo' },
             { value: 'band', labelKey: 'vendors.specificFilters.musician.band' },
             { value: 'classical', labelKey: 'vendors.specificFilters.musician.classical' },
-            { value: 'modern', labelKey: 'vendors.specificFilters.musician.modern' },
-            { value: 'traditional', labelKey: 'vendors.specificFilters.musician.traditional' }
+            { value: 'modern', labelKey: 'vendors.specificFilters.musician.modern' }
           ]
         };
       case 'dj':
@@ -117,9 +115,7 @@ const VendorsPage = ({ onSelectVendor }) => {
           labelKey: 'vendors.specificFilters.dj.title',
           options: [
             { value: 'wedding', labelKey: 'vendors.specificFilters.dj.wedding' },
-            { value: 'party', labelKey: 'vendors.specificFilters.dj.party' },
-            { value: 'corporate', labelKey: 'vendors.specificFilters.dj.corporate' },
-            { value: 'with-equipment', labelKey: 'vendors.specificFilters.dj.withEquipment' }
+            { value: 'party', labelKey: 'vendors.specificFilters.dj.party' }
           ]
         };
       case 'decorator':
@@ -128,7 +124,6 @@ const VendorsPage = ({ onSelectVendor }) => {
           options: [
             { value: 'balloons', labelKey: 'vendors.specificFilters.decorator.balloons' },
             { value: 'lighting', labelKey: 'vendors.specificFilters.decorator.lighting' },
-            { value: 'furniture', labelKey: 'vendors.specificFilters.decorator.furniture' },
             { value: 'backdrops', labelKey: 'vendors.specificFilters.decorator.backdrops' }
           ]
         };
@@ -138,8 +133,7 @@ const VendorsPage = ({ onSelectVendor }) => {
           options: [
             { value: 'bridal', labelKey: 'vendors.specificFilters.makeup.bridal' },
             { value: 'event', labelKey: 'vendors.specificFilters.makeup.event' },
-            { value: 'with-hairstyling', labelKey: 'vendors.specificFilters.makeup.withHairstyling' },
-            { value: 'mobile', labelKey: 'vendors.specificFilters.makeup.mobile' }
+            { value: 'with-hairstyling', labelKey: 'vendors.specificFilters.makeup.withHairstyling' }
           ]
         };
       case 'transport':
