@@ -85,4 +85,4 @@ A comprehensive full-stack web application for planning and managing events. Fro
 
 Check out the live application: [PlanIt](https://planit-frontend-uf6v.onrender.com)
     
-@All rights reserved
+@PlanIt
