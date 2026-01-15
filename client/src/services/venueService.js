@@ -1,7 +1,9 @@
 // client/src/services/venueService.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/venues';
+const API_BASE_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/venues`
+  : 'http://localhost:5000/api/venues';
 
 class VenueService {
   
