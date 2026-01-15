@@ -234,42 +234,27 @@ const registerOAuth = async (req, res) => {
   try {
     const { email, firstName, lastName, provider, providerId } = req.body;
 
-    if (!email || !firstName || !providerId) {
-      return res.status(400).json({ 
+    if (!email || !firstName) {
+      return res.status(400).json({
         message: req.t('errors.incompleteOAuthData') || 'Missing required data for OAuth registration'
       });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    
-    let existingUser = await User.findOne({ 
-      'oauth.provider': provider,
-      'oauth.providerId': providerId 
-    });
-    
-    if (!existingUser) {
-      existingUser = await User.findOne({ email: normalizedEmail });
-      
-      if (existingUser) {
-        
-        if (existingUser.oauth && existingUser.oauth.providerId && existingUser.oauth.providerId !== providerId) {
-          return res.status(400).json({ 
-            message: req.t('errors.emailExistsWithDifferentProvider') || 'Email already exists with different OAuth account'
-          });
-        }
-        
-        if (!existingUser.oauth || !existingUser.oauth.providerId) {
-          existingUser.oauth = {
-            provider,
-            providerId
-          };
-          await existingUser.save();
-        }
-      }
-    }
-    
+
+    // Check if user already exists by email (primary identification)
+    let existingUser = await User.findOne({ email: normalizedEmail });
+
     if (existingUser) {
-      
+      // User exists - update OAuth info and return token
+      if (!existingUser.oauth || existingUser.oauth.providerId !== providerId) {
+        existingUser.oauth = {
+          provider,
+          providerId
+        };
+        await existingUser.save();
+      }
+
       const token = jwt.sign(
         { userId: existingUser._id },
         JWT_SECRET,
@@ -288,17 +273,18 @@ const registerOAuth = async (req, res) => {
       });
     }
 
+    // User doesn't exist - create new user
     const randomPassword = crypto.randomBytes(32).toString('hex');
 
     let userFirstName = firstName?.trim() || '';
     let userLastName = lastName?.trim() || '';
-    
+
     if (!userFirstName && !userLastName) {
       const emailParts = normalizedEmail.split('@')[0].split('.');
       userFirstName = emailParts[0] || 'User';
       userLastName = emailParts[1] || '';
     }
-    
+
     if (!userFirstName && userLastName) {
       userFirstName = userLastName;
       userLastName = '';
@@ -311,7 +297,7 @@ const registerOAuth = async (req, res) => {
       password: randomPassword,
       oauth: {
         provider,
-        providerId 
+        providerId
       }
     });
 
@@ -334,29 +320,32 @@ const registerOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    
+    console.error('OAuth registration error:', err);
+
+    // Handle duplicate key error (race condition)
     if (err.code === 11000) {
       try {
         const { email, providerId, provider } = req.body;
         const normalizedEmail = email.toLowerCase().trim();
-                
-        let user = await User.findOne({ 
-          'oauth.provider': provider,
-          'oauth.providerId': providerId 
-        });
-        
-        if (!user) {
-          user = await User.findOne({ email: normalizedEmail });
-        }
-        
+
+        let user = await User.findOne({ email: normalizedEmail });
+
         if (user) {
-          
+          // Update OAuth info
+          if (!user.oauth || user.oauth.providerId !== providerId) {
+            user.oauth = {
+              provider,
+              providerId
+            };
+            await user.save();
+          }
+
           const token = jwt.sign(
             { userId: user._id },
             JWT_SECRET,
             { expiresIn: '1d' }
           );
-          
+
           return res.status(200).json({
             token,
             user: {
@@ -372,8 +361,8 @@ const registerOAuth = async (req, res) => {
         console.error('Error finding existing user during duplicate handling:', findError);
       }
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: req.t('errors.serverError') || 'Server error occurred during OAuth registration'
     });
   }
@@ -382,42 +371,31 @@ const registerOAuth = async (req, res) => {
 const loginOAuth = async (req, res) => {
   try {
     const { email, provider, providerId } = req.body;
-    
-    if (!email || !providerId) {
-      return res.status(400).json({ 
-        message: req.t('errors.missingOAuthData') || 'Email and provider ID are required'
+
+    if (!email) {
+      return res.status(400).json({
+        message: req.t('errors.missingOAuthData') || 'Email is required'
       });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-        
-    let user = await User.findOne({ 
-      'oauth.provider': provider,
-      'oauth.providerId': providerId 
-    });
-    
+
+    // Find user by email (primary identification)
+    let user = await User.findOne({ email: normalizedEmail });
+
     if (!user) {
-      user = await User.findOne({ email: normalizedEmail });
-      
-      if (user) {
-        if (!user.oauth || !user.oauth.providerId) {
-          user.oauth = {
-            provider,
-            providerId
-          };
-          await user.save();
-        } else if (user.oauth.providerId !== providerId) {
-          return res.status(404).json({ 
-            message: req.t('errors.userNotFound') || 'User not found'
-          });
-        }
-      }
-    }
-    
-    if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         message: req.t('errors.userNotFound') || 'User not found'
       });
+    }
+
+    // Update or set OAuth info (providerId can change when Appwrite user is recreated)
+    if (!user.oauth || user.oauth.providerId !== providerId) {
+      user.oauth = {
+        provider,
+        providerId
+      };
+      await user.save();
     }
 
     const token = jwt.sign(
@@ -437,7 +415,8 @@ const loginOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ 
+    console.error('OAuth login error:', err);
+    res.status(500).json({
       message: req.t('errors.serverError') || 'Server error occurred during OAuth login'
     });
   }
