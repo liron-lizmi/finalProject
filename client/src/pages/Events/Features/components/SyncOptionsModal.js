@@ -17,6 +17,9 @@ const SyncOptionsModal = ({
   const [selectedOption, setSelectedOption] = useState(null);
   const [showingDetails, setShowingDetails] = useState({});
 
+  // Filter to only show conservative option (remove optimal)
+  const conservativeOptions = options.filter(opt => opt.strategy === 'conservative');
+
   if (!isOpen) return null;
 
   const handleApplyOption = () => {
@@ -34,7 +37,7 @@ const SyncOptionsModal = ({
       id: guest.id,
       gender: guest.gender
     }));
-    
+
     if (onMoveToUnassigned && guestsWithGender.length > 0) {
       onMoveToUnassigned(guestsWithGender);
     }
@@ -93,7 +96,7 @@ const SyncOptionsModal = ({
         </div>
 
         <div className="sync-options">
-          {options.map(option => (
+          {conservativeOptions.map(option => (
             <div key={option.id} className="sync-option">
               <div className="option-header">
                 <label className="option-selector">
@@ -105,14 +108,11 @@ const SyncOptionsModal = ({
                     onChange={() => setSelectedOption(option)}
                   />
                   <span className="option-title">
-                      {option.strategy === 'conservative' 
-                        ? t('seating.sync.conservativeTitle')
-                        : t('seating.sync.optimalTitle')
-                      }
+                    {t('seating.sync.conservativeTitle')}
                   </span>
                 </label>
-                
-                <button 
+
+                <button
                   className="details-toggle"
                   onClick={(e) => {
                     e.preventDefault();
@@ -121,18 +121,15 @@ const SyncOptionsModal = ({
                   }}
                   type="button"
                 >
-                  {showingDetails[option.id] 
+                  {showingDetails[option.id]
                     ? t('seating.sync.hideDetails')
                     : t('seating.sync.showDetails')
                   }
                 </button>
               </div>
-              
+
               <div className="option-description">
-                {option.strategy === 'conservative' 
-                  ? t('seating.sync.conservativeDescription')
-                  : t('seating.sync.optimalDescription')
-                }
+                {t('seating.sync.conservativeDescription')}
               </div>
 
               {showingDetails[option.id] && (
@@ -154,7 +151,7 @@ const SyncOptionsModal = ({
               )}
             </div>
           ))}
-          
+
           <div className="sync-option">
             <div className="option-header">
               <label className="option-selector">
@@ -170,22 +167,16 @@ const SyncOptionsModal = ({
                 </span>
               </label>
             </div>
-            
+
             <div className="option-description">
               {t('seating.sync.alternativeDescription')}
             </div>
           </div>
 
           <div className="sync-option-apply-wrapper">
-            <button 
+            <button
               className="apply-button"
-              onClick={() => {
-                if (selectedOption?.id === 'unassigned') {
-                  handleMoveToUnassigned();
-                } else {
-                  handleApplyOption();
-                }
-              }}
+              onClick={handleApplyOption}
               disabled={!canEdit || !selectedOption}
             >
               {t('seating.sync.applySelected')}

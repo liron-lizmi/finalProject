@@ -1777,8 +1777,6 @@
     "sync": {
       "conservativeOption": "Conservative Option",
       "conservativeDescription": "Keep the existing arrangement with minimal changes",
-      "optimalOption": "Optimal Option",
-      "optimalDescription": "Rearrange optimally for the best result",
       "guestsSeated": "{{count}} guests seated",
       "guestsMoved": "{{count}} guests moved",
       "tablesCreated": "{{count}} tables created",
@@ -1834,7 +1832,6 @@
       "pendingChanges": "Pending changes",
       "chooseOption": "Choose a sync option",
       "conservativeTitle": "Conservative Option",
-      "optimalTitle": "Optimal Option",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
       "plannedActions": "Planned actions",

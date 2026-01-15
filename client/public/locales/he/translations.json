@@ -1777,8 +1777,6 @@
     "sync": {
       "conservativeOption": "אפשרות שמרנית",
       "conservativeDescription": "שמירה על הסידור הקיים עם שינויים מינימליים",
-      "optimalOption": "אפשרות אופטימלית",
-      "optimalDescription": "סידור מחדש אופטימלי לתוצאה הטובה ביותר",
       "guestsSeated": "{{count}} מוזמנים הושבו",
       "guestsMoved": "{{count}} מוזמנים הוזזו",
       "tablesCreated": "{{count}} שולחנות נוצרו",
@@ -1835,7 +1833,6 @@
       "pendingChanges": "שינויים ממתינים",
       "chooseOption": "בחר אפשרות סנכרון",
       "conservativeTitle": "אפשרות שמרנית",
-      "optimalTitle": "אפשרות אופטימלית",
       "showDetails": "הצג פרטים",
       "hideDetails": "הסתר פרטים",
       "plannedActions": "פעולות מתוכננות",
