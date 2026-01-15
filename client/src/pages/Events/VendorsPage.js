@@ -413,8 +413,9 @@ const searchVendors = async (shouldAppend = false) => {
     }
     
     setHasMore(result.hasMore || false);
-    
-    if (newVendors.length > 0 && map && window.google) {
+
+    const currentMap = mapInstance.current || map;
+    if (newVendors.length > 0 && currentMap && window.google) {
       if (!shouldAppend) {
         addMarkers(newVendors);
       } else {
