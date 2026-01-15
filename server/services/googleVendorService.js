@@ -10,16 +10,16 @@ class GoogleVendorService {
     }
   }
 
-  // Builds a search query string based on vendor type, search term, and filters 
+  // Builds a search query string based on vendor type, search term, and filters
   buildSearchQuery(vendorType, searchTerm = '', filters = {}) {
     if (searchTerm && searchTerm.trim() !== '') {
         return searchTerm;
     }
-    
+
     if (!vendorType || vendorType === 'all') {
         return 'event services wedding party vendors Israel';
     }
-    
+
     const queryMap = {
         catering: 'catering service kosher food Israel',
         photographer: 'photographer photography wedding Israel',
@@ -30,9 +30,9 @@ class GoogleVendorService {
         makeup: 'makeup artist beauty bridal Israel',
         transport: 'transportation rental wedding Israel'
     };
-    
+
     let query = queryMap[vendorType] || 'event services Israel';
-    
+
     if (vendorType === 'catering' && filters.kashrutLevel && filters.kashrutLevel !== 'all') {
         const kashrutMap = {
         'mehadrin': ' mehadrin',
@@ -43,7 +43,51 @@ class GoogleVendorService {
         };
         query += kashrutMap[filters.kashrutLevel] || '';
     }
-    
+
+    // Add specific filter keywords to search query
+    if (filters.specificFilters && filters.specificFilters.length > 0) {
+        const filterQueryMap = {
+            // Catering
+            'pareve': 'pareve fish sushi seafood',
+            'gluten-free': 'gluten free celiac',
+            'dairy': 'dairy milk cheese',
+            'meat': 'meat grill steak',
+            'vegan': 'vegan plant based',
+            'vegetarian': 'vegetarian salad vegetables',
+            // Florist
+            'bridal': 'bridal bouquet wedding',
+            'arrangements': 'flower arrangements floral design',
+            'plants': 'plants houseplants pots',
+            // Musician
+            'classical': 'classical violin piano orchestra chamber music',
+            'modern': 'modern pop rock band',
+            'solo': 'solo singer musician',
+            'band': 'band orchestra ensemble',
+            // Decorator
+            'backdrops': 'backdrop photo wall design studio',
+            'balloons': 'balloons balloon arch',
+            'lighting': 'lighting led event lights',
+            // Transport
+            'classic-cars': 'classic car vintage retro antique',
+            'luxury-cars': 'luxury car premium',
+            'limousines': 'limousine limo stretch',
+            'buses': 'bus minibus transportation',
+            // Photographer
+            'wedding': 'wedding photography',
+            'event': 'event photography party',
+            'portrait': 'portrait studio photography',
+            'commercial': 'commercial advertising product',
+            // Makeup
+            'with-hairstyling': 'makeup hair styling'
+        };
+
+        filters.specificFilters.forEach(filter => {
+            if (filterQueryMap[filter]) {
+                query += ' ' + filterQueryMap[filter];
+            }
+        });
+    }
+
     return query;
     }
 

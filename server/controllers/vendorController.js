@@ -62,52 +62,49 @@ const applyServerFilters = (vendors, filters) => {
 
     if (filters.specificFilters && filters.specificFilters.length > 0) {
       const filterKeywords = {
-        // Catering
-        'dairy': ['חלבי', 'dairy', 'חלב', 'milk', 'פיצה', 'pizza', 'פסטה', 'pasta', 'גבינות', 'cheeses'],
-        'meat': ['בשרי', 'meat', 'בשר', 'שווארמה', 'shawarma', 'סטייק', 'steak', 'גריל', 'grill'],
-        'pareve': ['פרווה', 'pareve', 'parev', 'דגים', 'fish', 'סושי', 'sushi', 'seafood', 'פירות ים'],
-        'vegan': ['טבעוני', 'vegan', 'צמחי', 'plant-based', 'טבעונות'],
-        'vegetarian': ['צמחוני', 'vegetarian', 'ירקות', 'vegetables', 'סלט', 'salad'],
-        'gluten-free': ['ללא גלוטן', 'gluten free', 'gluten-free', 'glutenfree', 'צליאק', 'celiac'],
+        // Catering - expanded with more relevant food terms
+        'dairy': ['חלבי', 'dairy', 'חלב', 'milk', 'פיצה', 'pizza', 'פסטה', 'pasta', 'גבינות', 'cheeses', 'גבינה', 'cheese', 'מאפים', 'bakery', 'לחם', 'bread'],
+        'meat': ['בשרי', 'meat', 'בשר', 'שווארמה', 'shawarma', 'סטייק', 'steak', 'גריל', 'grill', 'המבורגר', 'burger', 'צלייה', 'barbecue', 'bbq'],
+        'pareve': ['פרווה', 'pareve', 'parev', 'דגים', 'fish', 'סושי', 'sushi', 'seafood', 'פירות ים', 'ים', 'sea', 'דג', 'salmon', 'סלמון', 'טונה', 'tuna', 'פלפל', 'אסייתי', 'asian', 'יפני', 'japanese'],
+        'vegan': ['טבעוני', 'vegan', 'צמחי', 'plant-based', 'טבעונות', 'בריא', 'healthy', 'טבע', 'organic', 'אורגני', 'ירוק', 'green'],
+        'vegetarian': ['צמחוני', 'vegetarian', 'ירקות', 'vegetables', 'סלט', 'salad', 'ירק', 'טבעוני', 'vegan', 'בריא', 'healthy'],
+        'gluten-free': ['ללא גלוטן', 'gluten free', 'gluten-free', 'glutenfree', 'צליאק', 'celiac', 'בריא', 'healthy', 'אלרגיה', 'allergy', 'דיאטה', 'diet', 'טבעי', 'natural'],
 
         // Photographer
-        'wedding': ['חתונה', 'wedding', 'כלה', 'bride', 'חתן', 'groom', 'צילומי חתונה', 'wedding photography'],
-        'event': ['אירוע', 'event', 'אירועים', 'events', 'מסיבה', 'party', 'בר מצווה', 'bar mitzvah', 'בת מצווה', 'bat mitzvah', 'יום הולדת', 'birthday'],
-        'portrait': ['פורטרט', 'portrait', 'צילומי סטודיו', 'studio photography', 'סטודיו', 'studio', 'הריון', 'תינוק'],
-        'commercial': ['מסחרי', 'commercial', 'פרסום', 'advertising', 'מוצר', 'product', 'תדמית', 'branding', 'קטלוג', 'catalog'],
+        'wedding': ['חתונה', 'wedding', 'כלה', 'bride', 'חתן', 'groom', 'צילומי חתונה', 'wedding photography', 'צילום', 'photo', 'photography', 'צלם', 'photographer'],
+        'event': ['אירוע', 'event', 'אירועים', 'events', 'מסיבה', 'party', 'בר מצווה', 'bar mitzvah', 'בת מצווה', 'bat mitzvah', 'יום הולדת', 'birthday', 'צילום', 'photo', 'photography', 'צלם', 'photographer'],
+        'portrait': ['פורטרט', 'portrait', 'צילומי סטודיו', 'studio photography', 'סטודיו', 'studio', 'הריון', 'תינוק', 'צילום', 'photo', 'photography', 'צלם', 'photographer'],
+        'commercial': ['מסחרי', 'commercial', 'פרסום', 'advertising', 'מוצר', 'product', 'תדמית', 'branding', 'קטלוג', 'catalog', 'צילום', 'photo', 'photography', 'צלם', 'photographer'],
 
-        // Florist
-        'bridal': ['זר כלה', 'bridal bouquet', 'כלה', 'bridal', 'חתונה', 'wedding', 'זר לכלה'],
-        'arrangements': ['סידורי פרחים', 'flower arrangements', 'סידור פרחים', 'floral arrangement', 'עיצוב פרחים', 'floral design', 'זרי פרחים'],
-        'plants': ['צמחים', 'plants', 'עציצים', 'pots', 'צמחי בית', 'houseplants', 'צמחיה'],
+        // Florist - expanded with more flower-related terms
+        'bridal': ['זר כלה', 'bridal bouquet', 'כלה', 'bridal', 'חתונה', 'wedding', 'זר לכלה', 'פרחים', 'flowers', 'florist', 'זר', 'bouquet', 'פרח', 'flower', 'חנות פרחים', 'flower shop'],
+        'arrangements': ['סידורי פרחים', 'flower arrangements', 'סידור פרחים', 'floral arrangement', 'עיצוב פרחים', 'floral design', 'זרי פרחים', 'פרחים', 'flowers', 'florist', 'פרח', 'flower', 'זר', 'bouquet', 'חנות פרחים', 'flower shop'],
+        'plants': ['צמחים', 'plants', 'עציצים', 'pots', 'צמחי בית', 'houseplants', 'צמחיה', 'פרחים', 'flowers', 'florist', 'משתלה', 'nursery', 'גן', 'garden', 'צמח', 'plant', 'עציץ', 'pot'],
 
-        // Musician
-        'solo': ['סולו', 'solo', 'זמר', 'singer', 'נגן', 'musician', 'זמרת'],
-        'band': ['להקה', 'band', 'תזמורת', 'orchestra', 'הרכב', 'ensemble', 'להקת'],
-        'classical': ['קלאסי', 'classical', 'קלאסית', 'כינור', 'violin', 'פסנתר', 'piano', 'צ\'לו', 'cello', 'קאמרית', 'chamber'],
-        'modern': ['מודרני', 'modern', 'פופ', 'pop', 'רוק', 'rock', 'אלקטרוני', 'electronic', 'היפ הופ', 'hip hop'],
+        // Musician - expanded with more music terms
+        'solo': ['סולו', 'solo', 'זמר', 'singer', 'נגן', 'musician', 'זמרת', 'מוזיקה', 'music', 'הופעה', 'performance', 'שיר', 'song', 'אמן', 'artist'],
+        'band': ['להקה', 'band', 'תזמורת', 'orchestra', 'הרכב', 'ensemble', 'להקת', 'מוזיקה', 'music', 'הופעה', 'performance', 'הופעות', 'shows'],
+        'classical': ['קלאסי', 'classical', 'קלאסית', 'כינור', 'violin', 'פסנתר', 'piano', 'צ\'לו', 'cello', 'קאמרית', 'chamber', 'מוזיקה', 'music', 'תזמורת', 'orchestra', 'נגן', 'musician', 'הופעה', 'performance', 'מיתרים', 'strings', 'קונצרט', 'concert', 'פילהרמונית', 'philharmonic', 'סימפונית', 'symphony', 'נבל', 'harp', 'חליל', 'flute'],
+        'modern': ['מודרני', 'modern', 'פופ', 'pop', 'רוק', 'rock', 'אלקטרוני', 'electronic', 'היפ הופ', 'hip hop', 'מוזיקה', 'music', 'להקה', 'band'],
 
         // DJ
-        'party': ['מסיבה', 'party', 'מסיבות', 'parties', 'דיג\'יי למסיבות'],
-        'wedding': ['חתונה', 'wedding', 'חתונות', 'weddings', 'דיג\'יי לחתונה'],
+        'party': ['מסיבה', 'party', 'מסיבות', 'parties', 'דיג\'יי למסיבות', 'dj', 'די ג\'יי', 'דיג\'יי', 'מועדון', 'club'],
 
-        // Decorator
-        'balloons': ['בלונים', 'balloons', 'בלון', 'balloon', 'קשת בלונים', 'balloon arch'],
-        'lighting': ['תאורה', 'lighting', 'תאורת אירועים', 'event lighting', 'לד', 'led', 'הארה', 'illumination'],
-        'backdrops': ['רקע', 'backdrop', 'רקעים', 'backdrops', 'רקע לצילום', 'photo backdrop', 'קיר צילום'],
+        // Decorator - expanded with more design terms
+        'balloons': ['בלונים', 'balloons', 'בלון', 'balloon', 'קשת בלונים', 'balloon arch', 'עיצוב', 'design', 'קישוט', 'decoration', 'אירוע', 'event', 'מסיבה', 'party'],
+        'lighting': ['תאורה', 'lighting', 'תאורת אירועים', 'event lighting', 'לד', 'led', 'הארה', 'illumination', 'עיצוב', 'design', 'קישוט', 'decoration', 'אור', 'light', 'אורות', 'lights'],
+        'backdrops': ['רקע', 'backdrop', 'רקעים', 'backdrops', 'רקע לצילום', 'photo backdrop', 'קיר צילום', 'עיצוב', 'design', 'קישוט', 'decoration', 'אירוע', 'event', 'הפקה', 'production', 'סטודיו', 'studio', 'צילום', 'photo', 'פוטו', 'קיר', 'wall', 'דקורציה', 'decor'],
 
         // Makeup
-        'bridal': ['איפור כלות', 'bridal makeup', 'כלה', 'bridal', 'איפור לכלה'],
-        'event': ['איפור אירועים', 'event makeup', 'איפור למסיבה', 'party makeup'],
-        'with-hairstyling': ['איפור ושיער', 'makeup and hair', 'שיער ואיפור', 'תסרוקת', 'hairstyling', 'עיצוב שיער'],
+        'with-hairstyling': ['איפור ושיער', 'makeup and hair', 'שיער ואיפור', 'תסרוקת', 'hairstyling', 'עיצוב שיער', 'איפור', 'makeup', 'beauty', 'יופי', 'מעצבת', 'stylist', 'סלון', 'salon'],
 
-        // Transport
-        'luxury-cars': ['רכב יוקרה', 'luxury car', 'מכונית יוקרה', 'luxury vehicle', 'רכב מפואר'],
-        'buses': ['אוטובוס', 'bus', 'הסעות', 'transportation', 'מיניבוס', 'minibus'],
-        'limousines': ['לימוזין', 'limousine', 'לימו', 'limo', 'stretch limo'],
-        'classic-cars': ['רכב קלאסי', 'classic car', 'וינטג\'', 'vintage', 'רטרו', 'retro', 'רכב עתיק', 'antique car']
+        // Transport - expanded with more vehicle terms
+        'luxury-cars': ['רכב יוקרה', 'luxury car', 'מכונית יוקרה', 'luxury vehicle', 'רכב מפואר', 'פרימיום', 'premium', 'מרצדס', 'mercedes', 'bmw', 'אאודי', 'audi', 'לקסוס', 'lexus'],
+        'buses': ['אוטובוס', 'bus', 'הסעות', 'transportation', 'מיניבוס', 'minibus', 'הסעה', 'transport', 'נוסעים', 'passengers'],
+        'limousines': ['לימוזין', 'limousine', 'לימו', 'limo', 'stretch limo', 'הסעות', 'transportation', 'יוקרה', 'luxury', 'stretch'],
+        'classic-cars': ['רכב קלאסי', 'classic car', 'וינטג\'', 'vintage', 'רטרו', 'retro', 'רכב עתיק', 'antique car', 'קלאסי', 'classic', 'ישן', 'old', 'היסטורי', 'historic', 'אספנות', 'collector', 'מכונית קלאסית', 'אוטו', 'auto']
       };
-      
+
       const hasMatchingFilter = filters.specificFilters.some(filter => {
         const keywords = filterKeywords[filter];
         if (keywords) {
@@ -115,7 +112,7 @@ const applyServerFilters = (vendors, filters) => {
         }
         return vendorText.includes(filter);
       });
-      
+
       if (!hasMatchingFilter) return false;
     }
 
