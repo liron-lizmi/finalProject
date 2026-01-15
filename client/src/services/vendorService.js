@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/events/temp/vendors';
+const API_BASE_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/vendors`
+  : 'http://localhost:5000/api/vendors';
 
 class VendorService {
 
@@ -58,23 +60,6 @@ class VendorService {
   // Placeholder method for clearing filters cache
   clearFiltersCache(filters, searchQuery) {
     return Promise.resolve();
-  }
-
-  async getVendorDetails(placeId, language = 'he') {
-    try {
-        if (!placeId) {
-        throw new Error('placeId is required');
-        }
-
-        const response = await axios.get(`/api/vendors/details/${placeId}`, {
-        params: { language }
-        });
-
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching vendor details:', error);
-        throw error;
-    }
   }
 }
 
