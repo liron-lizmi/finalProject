@@ -123,16 +123,22 @@ const Dashboard = () => {
             console.log('Getting current Appwrite session...');
             const session = await account.getSession('current');
             console.log('Session retrieved:', session);
-            
+            console.log('Session providerUid:', session.providerUid);
+
             const userData = await account.get();
+            console.log('User data:', userData);
+            console.log('User $id:', userData.$id);
 
             if (session && session.provider === 'google' && userData.email) {
               const actualUserEmail = userData.email.toLowerCase().trim();
-                            
-              const checkResponse = await axios.post('/api/auth/check-user-exists', { 
-                email: actualUserEmail 
+              const googleUserId = session.providerUid || userData.$id;
+
+              console.log('Using Google User ID:', googleUserId);
+
+              const checkResponse = await axios.post('/api/auth/check-user-exists', {
+                email: actualUserEmail
               });
-                            
+
               if (!checkResponse.data.exists) {
                 const names = userData.name ? userData.name.split(' ') : ['', ''];
                 const firstName = names[0] || '';
@@ -143,9 +149,9 @@ const Dashboard = () => {
                   firstName: firstName,
                   lastName: lastName,
                   provider: 'google',
-                  providerId: userData.$id 
+                  providerId: googleUserId
                 });
-                                
+
                 if (registerResponse.data.token) {
                   localStorage.setItem('token', registerResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
@@ -159,13 +165,13 @@ const Dashboard = () => {
                   return;
                 }
               } else {
-                
+
                 const loginResponse = await axios.post('/api/auth/login-oauth', {
                   email: actualUserEmail,
                   provider: 'google',
-                  providerId: userData.$id 
+                  providerId: googleUserId
                 });
-                                
+
                 if (loginResponse.data.token) {
                   localStorage.setItem('token', loginResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
