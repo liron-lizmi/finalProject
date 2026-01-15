@@ -7783,8 +7783,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
 });
 
   if (preferences.seatingRules && preferences.seatingRules.mustSitTogether) {
-    preferences.seatingRules.mustSitTogether.for
-Each(rule => {
+    preferences.seatingRules.mustSitTogether.forEach(rule => {
       const guest1 = guests.find(g => g._id.toString() === rule.guest1Id);
       const guest2 = guests.find(g => g._id.toString() === rule.guest2Id);
      
