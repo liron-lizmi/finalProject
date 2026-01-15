@@ -1101,19 +1101,6 @@ const AISeatingModal = ({
               await onAddTables(repositionedFemaleTables, 'female');
             }
           }
-         
-          setMaleTableSettings([
-            { type: 'round', capacity: 10, count: 0 },
-            { type: 'round', capacity: 12, count: 0 },
-            { type: 'rectangular', capacity: 24, count: 0 }
-          ]);
-          setFemaleTableSettings([
-            { type: 'round', capacity: 10, count: 0 },
-            { type: 'round', capacity: 12, count: 0 },
-            { type: 'rectangular', capacity: 24, count: 0 }
-          ]);
-          setCustomMaleTableSettings([]);
-          setCustomFemaleTableSettings([]);
 
           if (maleTablesList.length > 0) {
             await onAddTables(maleTablesList, 'male');
@@ -1339,13 +1326,6 @@ const AISeatingModal = ({
             });
             await onAddTables(repositionedExistingTables);
           }
-         
-          setTableSettings([
-            { type: 'round', capacity: 10, count: 0 },
-            { type: 'round', capacity: 12, count: 0 },
-            { type: 'rectangular', capacity: 24, count: 0 }
-          ]);
-          setCustomTableSettings([]);
 
           await onAddTables(tablesToCreate);
          
