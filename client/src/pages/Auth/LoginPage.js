@@ -98,10 +98,15 @@ const LoginPage = () => {
 
  const handleGoogleLogin = async () => {
   try {
-    
+    console.log('=== Starting Google OAuth Flow ===');
+
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
+    // Mark that we're starting OAuth flow
+    localStorage.setItem('oauth_flow', 'google');
+    localStorage.setItem('oauth_timestamp', Date.now().toString());
+
     try {
       const sessions = await account.listSessions();
       for (const session of sessions.sessions) {
@@ -115,14 +120,16 @@ const LoginPage = () => {
     } catch (sessionError) {
       console.log('No sessions to delete');
     }
-        
+
     await createOAuth2Session(
-      'google', 
-      `${window.location.origin}/dashboard?auth=google&direct=true&t=${Date.now()}`, 
-      `${window.location.origin}/login?auth=failed&t=${Date.now()}`
+      'google',
+      `${window.location.origin}/dashboard`,
+      `${window.location.origin}/login?auth=failed`
     );
   } catch (error) {
     console.error('Google login error:', error);
+    localStorage.removeItem('oauth_flow');
+    localStorage.removeItem('oauth_timestamp');
     setServerError(t('auth.googleLoginError'));
   }
 };

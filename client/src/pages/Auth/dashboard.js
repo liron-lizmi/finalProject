@@ -106,17 +106,16 @@ const Dashboard = () => {
       try {
         console.log('=== Dashboard OAuth Check ===');
         console.log('Current URL:', window.location.href);
-        console.log('Pathname:', window.location.pathname);
-        console.log('Search:', window.location.search);
 
-        const urlParams = new URLSearchParams(location.search);
-        const isGoogleAuth = urlParams.get('auth') === 'google';
-        const isDirect = urlParams.get('direct') === 'true';
+        // Check if this is an OAuth callback
+        const oauthFlow = localStorage.getItem('oauth_flow');
+        const oauthTimestamp = localStorage.getItem('oauth_timestamp');
+        const isRecentOAuth = oauthTimestamp && (Date.now() - parseInt(oauthTimestamp)) < 60000; // 60 seconds
 
-        console.log('isGoogleAuth:', isGoogleAuth);
-        console.log('isDirect:', isDirect);
+        console.log('OAuth Flow:', oauthFlow);
+        console.log('Is Recent OAuth:', isRecentOAuth);
 
-        if (isGoogleAuth && isDirect) {
+        if (oauthFlow === 'google' && isRecentOAuth) {
           console.log('Google OAuth callback detected!');
           setLoading(false);
 
@@ -150,10 +149,12 @@ const Dashboard = () => {
                 if (registerResponse.data.token) {
                   localStorage.setItem('token', registerResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(registerResponse.data.user));
+                  localStorage.removeItem('oauth_flow');
+                  localStorage.removeItem('oauth_timestamp');
                   setUser(registerResponse.data.user);
-                  
+
                   Promise.all([fetchEvents(), fetchNotifications()]);
-                  
+
                   navigate('/dashboard', { replace: true });
                   return;
                 }
@@ -168,10 +169,12 @@ const Dashboard = () => {
                 if (loginResponse.data.token) {
                   localStorage.setItem('token', loginResponse.data.token);
                   localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+                  localStorage.removeItem('oauth_flow');
+                  localStorage.removeItem('oauth_timestamp');
                   setUser(loginResponse.data.user);
-                  
+
                   Promise.all([fetchEvents(), fetchNotifications()]);
-                  
+
                   navigate('/dashboard', { replace: true });
                   return;
                 }
@@ -180,16 +183,22 @@ const Dashboard = () => {
               throw new Error("Invalid OAuth session");
             }
           } catch (oauthError) {
-            
+            console.error('OAuth Error:', oauthError);
+
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            
+            localStorage.removeItem('oauth_flow');
+            localStorage.removeItem('oauth_timestamp');
+
             try {
-              await account.deleteSession('current');
+              const sessions = await account.listSessions();
+              if (sessions.sessions.length > 0) {
+                await account.deleteSession('current');
+              }
             } catch (deleteError) {
               console.log("No session to delete");
             }
-            
+
             navigate('/login?error=session_expired', { replace: true });
             return;
           }
