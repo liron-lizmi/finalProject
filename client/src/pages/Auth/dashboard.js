@@ -117,13 +117,34 @@ const Dashboard = () => {
 
         if (oauthFlow === 'google' && isRecentOAuth) {
           console.log('Google OAuth callback detected!');
-          setLoading(false);
+          setLoading(true); // Keep loading while processing OAuth
 
           try {
-            console.log('Getting current Appwrite session...');
-            const session = await account.getSession('current');
-            console.log('Session retrieved:', session);
-            console.log('Session providerUid:', session.providerUid);
+            // Wait a moment for Appwrite to create the session
+            console.log('Waiting for Appwrite session to initialize...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Try to get session with retry mechanism
+            let session = null;
+            let retries = 3;
+
+            for (let i = 0; i < retries; i++) {
+              try {
+                console.log(`Attempt ${i + 1}/${retries}: Getting current Appwrite session...`);
+                session = await account.getSession('current');
+                console.log('Session retrieved:', session);
+                console.log('Session providerUid:', session.providerUid);
+                break; // Success - exit loop
+              } catch (sessionError) {
+                console.log(`Attempt ${i + 1} failed:`, sessionError.message);
+                if (i < retries - 1) {
+                  console.log('Retrying in 1 second...');
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                } else {
+                  throw sessionError; // Last attempt failed
+                }
+              }
+            }
 
             const userData = await account.get();
             console.log('User data:', userData);
