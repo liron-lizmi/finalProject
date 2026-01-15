@@ -274,55 +274,43 @@ const VendorsPage = ({ onSelectVendor }) => {
   useEffect(() => {
     if (isEffectRun.current) return;
     isEffectRun.current = true;
-  
-    const setupGoogleMaps = () => {
-      initMap();
-    };
-  
-  const loadGoogleMapsAPI = () => {
+
     if (window.google && window.google.maps) {
-      setupGoogleMaps();
-      return;
-    }
+      initMap();
+    } else {
+      const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-    if (existingScript) {
-      if (!window.google || !window.google.maps) {
-        window.initGoogleMapsCallback = setupGoogleMaps;
+      if (!API_KEY) {
+        console.error("Missing Google Maps API key");
+        setLoading(false);
         return;
+      }
+
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+
+      if (existingScript) {
+        const checkGoogleMaps = setInterval(() => {
+          if (window.google && window.google.maps) {
+            clearInterval(checkGoogleMaps);
+            initMap();
+          }
+        }, 100);
+
+        setTimeout(() => clearInterval(checkGoogleMaps), 10000);
       } else {
-        setupGoogleMaps();
-        return;
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initVendorsMapCallback&language=${isRTL ? 'he' : 'en'}&region=IL`;
+        script.async = true;
+        script.defer = true;
+
+        window.initVendorsMapCallback = () => {
+          initMap();
+        };
+
+        scriptRef.current = script;
+        document.head.appendChild(script);
       }
     }
-
-    window.googleMapsLoaded = true;
-    const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-    
-    if (!API_KEY) {
-      console.error("Missing Google Maps API key");
-      setLoading(false);
-      return;
-    }
-    
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=googleMapsCallback&v=weekly&loading=async&language=${isRTL ? 'he' : 'en'}&region=IL`;
-    script.async = true;
-    script.defer = true;
-
-    window.googleMapsCallback = () => {
-      setupGoogleMaps();
-      if (window.initGoogleMapsCallback) {
-        window.initGoogleMapsCallback();
-        window.initGoogleMapsCallback = null;
-      }
-    };
-    
-    scriptRef.current = script;
-    document.head.appendChild(script);
-  };
-  
-  loadGoogleMapsAPI();
   
   return () => {
     if (scriptRef.current && scriptRef.current.parentNode && !window.google) {
@@ -360,50 +348,28 @@ const VendorsPage = ({ onSelectVendor }) => {
     
     try {
       const mapOptions = {
-        center: { lat: 31.7683, lng: 35.2137 },
-        zoom: 11,
-        gestureHandling: 'greedy',
-        disableDefaultUI: false,
-        zoomControl: true,
-        mapTypeControl: false,
-        scaleControl: false,
-        streetViewControl: false,
-        rotateControl: false,
-        fullscreenControl: false,
-        styles: getMapStyles()
+        center: { lat: 31.5, lng: 34.75 },
+        zoom: 7
       };
-      
+
       const newMap = new window.google.maps.Map(mapRef.current, mapOptions);
-      
+
       mapInstance.current = newMap;
-      
       setMap(newMap);
-      
+
       if (window.google.maps.Geocoder) {
         geocoder.current = new window.google.maps.Geocoder();
       }
-      
-      const placesDiv = document.createElement('div');
-      document.body.appendChild(placesDiv);
-      
-      if (window.google.maps.places && window.google.maps.places.PlacesService) {
-        placesService.current = new window.google.maps.places.PlacesService(placesDiv);
-      } else {
-        console.error("Google Maps Places Service is not available");
-      }
-      
-      const israelCenter = { lat: 31.5, lng: 34.75 };
-      newMap.setCenter(israelCenter);
-      newMap.setZoom(7);
 
-      if (placesService.current) {
-        if (!initialLoadDone) {
-          setInitialLoadDone(true);
-          searchVendors(false);
-        }
-      } else {
-        console.error("Places service not available for search");
-        setLoading(false);
+      if (window.google.maps.places && window.google.maps.places.PlacesService) {
+        const placesDiv = document.createElement('div');
+        document.body.appendChild(placesDiv);
+        placesService.current = new window.google.maps.places.PlacesService(placesDiv);
+      }
+
+      if (!initialLoadDone) {
+        setInitialLoadDone(true);
+        searchVendors(false);
       }
     } catch (error) {
       console.error("Error in initMap:", error);
