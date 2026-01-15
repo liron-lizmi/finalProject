@@ -83,36 +83,6 @@ A comprehensive full-stack web application for planning and managing events. Fro
 
 ## Live Demo
 
-Check out the live application: [PlanIt](https://your-frontend-url.onrender.com)
-
-Project Structure
-
-finalProject/
-├── client/                     # React frontend
-│   ├── public/                 # Static assets
-│   └── src/
-│       ├── pages/              # Page components
-│       │   ├── Auth/           # Authentication pages
-│       │   └── Events/         # Event management pages
-│       │       ├── Budget/     # Budget tracking
-│       │       ├── Guests/     # Guest management
-│       │       ├── Rides/      # Ride sharing
-│       │       ├── Seating/    # Seating arrangements
-│       │       ├── Vendors/    # Vendor management
-│       │       ├── Venue/      # Venue selection
-│       │       └── shared/     # Tasks & Calendar
-│       ├── services/           # API services
-│       ├── hooks/              # Custom React hooks
-│       ├── utils/              # Utility functions
-│       └── styles/             # CSS stylesheets
-│
-└── server/                     # Express backend
-    ├── config/                 # Configuration
-    ├── controllers/            # Route handlers
-    ├── middleware/             # Auth & validation
-    ├── models/                 # Mongoose schemas
-    ├── routes/                 # API routes
-    ├── services/               # External services
-    └── locales/                # i18n translations
+Check out the live application: [PlanIt] (https://planit-frontend-uf6v.onrender.com)
     
 @All rights reserved
