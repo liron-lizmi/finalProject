@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useModal } from '../../../hooks/useModal'; 
+import { useModal } from '../../../hooks/useModal';
 import FeaturePageTemplate from './FeaturePageTemplate';
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventSharePage.css';
 
 const EventSharePage = () => {
@@ -37,7 +38,7 @@ const EventSharePage = () => {
   const loadEventInfo = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await apiFetch(`/api/events/${eventId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept-Language': localStorage.getItem('language') || 'he'
@@ -56,7 +57,7 @@ const EventSharePage = () => {
   const loadSharedUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/shared-users`, {
+      const response = await apiFetch(`/api/events/${eventId}/shared-users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept-Language': localStorage.getItem('language') || 'he'
@@ -78,7 +79,7 @@ const EventSharePage = () => {
   const checkEditPermission = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`/api/events/${eventId}`, {
+    const response = await apiFetch(`/api/events/${eventId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept-Language': localStorage.getItem('language') || 'he'
@@ -109,7 +110,7 @@ const EventSharePage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/share`, {
+      const response = await apiFetch(`/api/events/${eventId}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +160,7 @@ const EventSharePage = () => {
   const executeRemoveShare = async (shareId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/share/${shareId}`, {
+      const response = await apiFetch(`/api/events/${eventId}/share/${shareId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -184,7 +185,7 @@ const EventSharePage = () => {
   const handleUpdatePermission = async (shareId, newPermission) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/share/${shareId}`, {
+      const response = await apiFetch(`/api/events/${eventId}/share/${shareId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

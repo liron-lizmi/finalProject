@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../../../hooks/useModal';
+import { apiFetch } from '../../../../../utils/api';
 
 const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
       setLoading(true);
       const token = localStorage.getItem('token');
       const categoryParam = selectedCategory !== 'all' ? `?category=${selectedCategory}` : '';
-      const response = await fetch(`/api/events/${eventId}/budget/expenses${categoryParam}`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/expenses${categoryParam}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -80,7 +81,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
       
       const method = editingExpense ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,7 +125,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
   const executeDelete = async (expenseId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/budget/expenses/${expenseId}`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/expenses/${expenseId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,7 +158,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
   const togglePaymentStatus = async (expense) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/budget/expenses/${expense._id}`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/expenses/${expense._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

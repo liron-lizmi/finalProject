@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../../../../utils/api';
 
 const GoogleAuthCallback = () => {
   const { t } = useTranslation();
@@ -56,7 +57,7 @@ const GoogleAuthCallback = () => {
           return;
         }
 
-        const response = await fetch('/api/tasks/google-calendar/callback', {
+        const response = await apiFetch('/api/tasks/google-calendar/callback', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

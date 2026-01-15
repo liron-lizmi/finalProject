@@ -1,6 +1,7 @@
 // client/src/pages/Events/Features/components/budget/BudgetCharts.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { apiFetch } from '../../../../../utils/api';
 
 const BudgetCharts = ({ budget, eventId, chartColors }) => {
   const { t } = useTranslation();
@@ -16,7 +17,7 @@ const BudgetCharts = ({ budget, eventId, chartColors }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/budget/summary`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/summary`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

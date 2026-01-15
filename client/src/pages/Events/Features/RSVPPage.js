@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/RSVPPage.css';
 
 const RSVPPage = () => {
@@ -52,7 +53,7 @@ const RSVPPage = () => {
 
   const fetchEventInfo = async () => {
     try {
-      const response = await fetch(`/api/rsvp/${eventId}/info`);
+      const response = await apiFetch(`/api/rsvp/${eventId}/info`);
       if (response.ok) {
         const data = await response.json();
         setEventInfo(data);
@@ -81,7 +82,7 @@ const RSVPPage = () => {
     setError('');
 
     try {
-      const response = await fetch(`/api/rsvp/${eventId}/check-phone`, {
+      const response = await apiFetch(`/api/rsvp/${eventId}/check-phone`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -149,7 +150,7 @@ const RSVPPage = () => {
         requestBody.attendingCount = rsvpStatus === 'confirmed' ? attendingCount : 0;
       }
 
-      const response = await fetch(`/api/rsvp/${eventId}/submit`, {
+      const response = await apiFetch(`/api/rsvp/${eventId}/submit`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

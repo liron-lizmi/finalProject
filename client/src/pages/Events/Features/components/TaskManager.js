@@ -7,6 +7,7 @@ import GoogleCalendarSync from './GoogleCalendarSync';
 import InternalCalendar from './InternalCalendar';
 import ReminderToast from './ReminderToast';
 import FeaturePageTemplate from '../FeaturePageTemplate';
+import { apiFetch } from '../../../../utils/api';
 import '../../../../styles/EventTimeline.css';
 
 const TaskManager = ({ eventId, permissionLoading = false }) => {
@@ -60,7 +61,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
     try {
       const token = getAuthToken();
       if (!token) return;
-      const response = await fetch(`/api/events/${actualEventId}`, {
+      const response = await apiFetch(`/api/events/${actualEventId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed');
@@ -74,7 +75,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
     try {
       const token = getAuthToken();
       if (!token) return;
-      const response = await fetch(`/api/events/${actualEventId}`, {
+      const response = await apiFetch(`/api/events/${actualEventId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed');
@@ -89,7 +90,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       if (!token) { if (showErrorMsg) showError(t('auth.notLoggedIn')); return; }
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const response = await fetch(`/api/tasks/event/${actualEventId}`, {
+      const response = await apiFetch(`/api/tasks/event/${actualEventId}`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         signal: controller.signal
       });
@@ -106,7 +107,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
   const fetchStatistics = useCallback(async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/tasks/event/${actualEventId}/statistics`, {
+      const response = await apiFetch(`/api/tasks/event/${actualEventId}/statistics`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed');
@@ -122,7 +123,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       const isEditing = editingTask !== null;
       const url = isEditing ? `/api/tasks/event/${actualEventId}/${editingTask._id}` : `/api/tasks/event/${actualEventId}`;
       const method = isEditing ? 'PUT' : 'POST';
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData)
@@ -147,7 +148,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
     setShowDeleteModal(false);
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/tasks/event/${actualEventId}/${deletingTaskId}`, {
+      const response = await apiFetch(`/api/tasks/event/${actualEventId}/${deletingTaskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
@@ -162,7 +163,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
     if (!canEdit) { showError(t('events.accessDenied')); return; }
     try {
       const token = getAuthToken();
-      const response = await fetch(`/api/tasks/event/${actualEventId}/${taskId}/status`, {
+      const response = await apiFetch(`/api/tasks/event/${actualEventId}/${taskId}/status`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })

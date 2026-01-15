@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { apiFetch } from '../../../../../utils/api';
 
 const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAlertThresholdChange, canEdit }) => {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/budget/summary`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/summary`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -66,7 +67,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
                 const newThreshold = parseInt(e.target.value);
                 try {
                   const token = localStorage.getItem('token');
-                  const response = await fetch(`/api/events/${eventId}/budget/alert-threshold`, {
+                  const response = await apiFetch(`/api/events/${eventId}/budget/alert-threshold`, {
                     method: 'PUT',
                     headers: {
                       'Authorization': `Bearer ${token}`,

@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../../utils/api';
 
 const GoogleContactsCallback = () => {
   const { t } = useTranslation();
@@ -69,7 +70,7 @@ const GoogleContactsCallback = () => {
             return;
         }
 
-        const response = await fetch(`/api/events/${eventId}/guests/google-contacts/callback`, {
+        const response = await apiFetch(`/api/events/${eventId}/guests/google-contacts/callback`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

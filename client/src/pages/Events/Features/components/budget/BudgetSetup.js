@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { apiFetch } from '../../../../../utils/api';
 
 const defaultCategoryAllocations = {
   venue: 0.30,
@@ -90,7 +91,7 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated, canEdit = true}
       const url = `/api/events/${eventId}/budget`;
       const method = isEditing ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,

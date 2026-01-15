@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { apiFetch } from '../../../../utils/api';
 
 const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClose  }) => {
   const { t } = useTranslation();
@@ -34,7 +35,7 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
         return;
       }
 
-      const response = await fetch('/api/tasks/google-calendar/status', {
+      const response = await apiFetch('/api/tasks/google-calendar/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -84,7 +85,7 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
       const currentPath = location.pathname + location.search + location.hash;
       sessionStorage.setItem('googleAuthReturnTo', currentPath);
 
-      const response = await fetch('/api/tasks/google-calendar/auth-url', {
+      const response = await apiFetch('/api/tasks/google-calendar/auth-url', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -110,7 +111,7 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('/api/tasks/google-calendar/disconnect', {
+      const response = await apiFetch('/api/tasks/google-calendar/disconnect', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +139,7 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
       setSyncing(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/tasks/event/${eventId}/sync-calendar`, {
+      const response = await apiFetch(`/api/tasks/event/${eventId}/sync-calendar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

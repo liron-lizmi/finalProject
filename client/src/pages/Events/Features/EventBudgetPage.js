@@ -7,6 +7,7 @@ import BudgetSetup from './components/budget/BudgetSetup';
 import ExpenseManager from './components/budget/ExpenseManager';
 import IncomeManager from './components/budget/IncomeManager'; // הוסף את זה
 import BudgetCharts from './components/budget/BudgetCharts';
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventBudgetPage.css';
 
 const EventBudgetPage = () => {
@@ -24,7 +25,7 @@ const EventBudgetPage = () => {
   const fetchEventPermissions = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${id}`, {
+      const response = await apiFetch(`/api/events/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -62,7 +63,7 @@ const EventBudgetPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${id}/budget`, {
+      const response = await apiFetch(`/api/events/${id}/budget`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -100,7 +101,7 @@ const EventBudgetPage = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${id}/budget/summary`, {
+      const response = await apiFetch(`/api/events/${id}/budget/summary`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

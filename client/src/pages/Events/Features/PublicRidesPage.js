@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../hooks/useModal';
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/PublicRidesPage.css';
 
 const PublicRidesPage = () => {
@@ -81,7 +82,7 @@ const PublicRidesPage = () => {
   // Fetches event information from the API
   const fetchEventInfo = async () => {
     try {
-      const response = await fetch(`/api/rides/${eventId}/info`);
+      const response = await apiFetch(`/api/rides/${eventId}/info`);
       if (response.ok) {
         const data = await response.json();
         setEventInfo(data);
@@ -112,7 +113,7 @@ const PublicRidesPage = () => {
     setError('');
 
     try {
-      const response = await fetch(`/api/rides/${eventId}/check-phone`, {
+      const response = await apiFetch(`/api/rides/${eventId}/check-phone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone })
@@ -165,7 +166,7 @@ const fetchOtherGuests = async () => {
   try {
     // Add cache buster to ensure fresh data
     const timestamp = new Date().getTime();
-    const response = await fetch(`/api/rides/${eventId}/guests?t=${timestamp}`, {
+    const response = await apiFetch(`/api/rides/${eventId}/guests?t=${timestamp}`, {
       cache: 'no-cache',
       headers: {
         'Cache-Control': 'no-cache',
@@ -201,7 +202,7 @@ const fetchOtherGuests = async () => {
  // Fetches suggested rides based on location proximity
  const fetchSuggestedRides = async () => {
   try {
-    const response = await fetch(`/api/rides/${eventId}/suggestions`, {
+    const response = await apiFetch(`/api/rides/${eventId}/suggestions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -262,7 +263,7 @@ const handleRideInfoSubmit = async (e) => {
   setError('');
 
   try {
-    const response = await fetch(`/api/rides/${eventId}/update`, {
+    const response = await apiFetch(`/api/rides/${eventId}/update`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, rideInfo })
@@ -303,7 +304,7 @@ const handleRideInfoSubmit = async (e) => {
  // Records contact action and updates status
   const handleContactAction = async (contactedGuestId, action) => {
     try {
-      const response = await fetch(`/api/rides/${eventId}/contact`, {
+      const response = await apiFetch(`/api/rides/${eventId}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -333,7 +334,7 @@ const handleRideInfoSubmit = async (e) => {
   // Cancels an arranged ride
   const handleCancelRide = async (contactedGuestId) => {
     try {
-      const response = await fetch(`/api/rides/${eventId}/cancel`, {
+      const response = await apiFetch(`/api/rides/${eventId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

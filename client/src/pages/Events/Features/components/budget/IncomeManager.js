@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../../../hooks/useModal';
+import { apiFetch } from '../../../../../utils/api';
 
 const IncomeManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => {
   const { t } = useTranslation();
@@ -61,7 +62,7 @@ const IncomeManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => 
       
       const method = editingIncome ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -103,7 +104,7 @@ const IncomeManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => 
   const executeDelete = async (incomeId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/events/${eventId}/budget/incomes/${incomeId}`, {
+      const response = await apiFetch(`/api/events/${eventId}/budget/incomes/${incomeId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

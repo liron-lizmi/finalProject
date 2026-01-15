@@ -8,6 +8,7 @@ import TableDetailsModal from './components/TableDetailsModal';
 import AISeatingModal from '../../components/AISeatingModal';
 import SeatingTableView from './components/SeatingTableView';
 import SyncOptionsModal from './components/SyncOptionsModal';
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventSeatingPage.css';
 
 const EventSeatingPage = () => {
@@ -112,7 +113,7 @@ const EventSeatingPage = () => {
     };
 
     try {
-      const response = await fetch(url, mergedOptions);
+      const response = await apiFetch(url, mergedOptions);
       if (response.status === 401) {
         handleAuthError();
         return null;

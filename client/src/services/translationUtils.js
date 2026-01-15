@@ -1,4 +1,5 @@
 // client/translationUtils.js
+import { apiFetch } from '../utils/api';
 
 
 //  Checks if text contains Hebrew characters
@@ -26,7 +27,7 @@ export const translateText = async (text, targetLang = 'en') => {
       }
     }
      
-    const response = await fetch(
+    const response = await apiFetch(
       `https://translate.googleapis.com/translate_a/single?client=gtx&sl=he&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`,
       {
         method: 'GET',

@@ -8,6 +8,7 @@ import FeaturePageTemplate from './FeaturePageTemplate';
 import ImportModal from '../../components/ImportModal';
 import GiftsModal from './components/GiftsModal';
 import RSVPManualModal from './components/RSVPManualModal'
+import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventGuestsPage.css';
 
 const EventGuestsPage = () => {
@@ -322,7 +323,7 @@ const EventGuestsPage = () => {
         return;
       }
 
-      const response = await fetch(`/api/events/${eventId}/guests`, {
+      const response = await apiFetch(`/api/events/${eventId}/guests`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -375,7 +376,7 @@ const EventGuestsPage = () => {
     };
 
     try {
-      const response = await fetch(url, mergedOptions);
+      const response = await apiFetch(url, mergedOptions);
       
       if (response.status === 401) {
         handleAuthError();
