@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../hooks/useModal';
-import FeaturePageTemplate from './FeaturePageTemplate';
-import ImportModal from '../../components/ImportModal';
+import FeaturePageTemplate from '../shared/FeaturePageTemplate';
+import ImportModal from './components/ImportModal';
 import GiftsModal from './components/GiftsModal';
 import RSVPManualModal from './components/RSVPManualModal'
 import { apiFetch } from '../../../utils/api';

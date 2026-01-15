@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { apiFetch } from '../../utils/api';
+import { apiFetch } from '../../../../utils/api';
 
 const GoogleContactsCallback = () => {
   const { t } = useTranslation();

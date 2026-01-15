@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useModal } from '../../../../../hooks/useModal';
-import { apiFetch } from '../../../../../utils/api';
+import { useModal } from '../../../../hooks/useModal';
+import { apiFetch } from '../../../../utils/api';
 
 const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => {
   const { t } = useTranslation();

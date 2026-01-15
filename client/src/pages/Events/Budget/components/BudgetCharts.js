@@ -1,7 +1,7 @@
 // client/src/pages/Events/Features/components/budget/BudgetCharts.js
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch } from '../../../../../utils/api';
+import { apiFetch } from '../../../../utils/api';
 
 const BudgetCharts = ({ budget, eventId, chartColors }) => {
   const { t } = useTranslation();

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../hooks/useModal';
 import axios from 'axios';
-import FeaturePageTemplate from './FeaturePageTemplate';
+import FeaturePageTemplate from '../shared/FeaturePageTemplate';
 import '../../../styles/EventRidesPage.css';
 
 const EventRidesPage = ({ permissionLoading = false }) => {

@@ -7,21 +7,21 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import AuthFailed from './pages/Auth/AuthFailed';
 import Dashboard from './pages/Auth/dashboard';
-import VenuePage from './pages/Events/VenuePage';
+import VenuePage from './pages/Events/Venue/VenuePage';
 import CreateEventPage from './pages/Events/CreateEventPage';
 import EventDetailsPage from './pages/Events/EventDetailsPage';
-import EventVenuePage from './pages/Events/Features/EventVenuePage';
-import EventVendorsPage from './pages/Events/Features/EventVendorsPage';
-import EventGuestsPage from './pages/Events/Features/EventGuestsPage';
-import EventSeatingPage from './pages/Events/Features/EventSeatingPage';
-import EventRidesPage from './pages/Events/Features/EventRidesPage';
-import EventBudgetPage from './pages/Events/Features/EventBudgetPage';
-import EventSharePage from './pages/Events/Features/EventSharePage';
-import TaskManager from './pages/Events/Features/components/TaskManager';
-import GoogleAuthCallback from './pages/Events/Features/components/GoogleAuthCallback';
-import GoogleContactsCallback from './pages/components/GoogleContactsCallback';
-import RSVPPage from './pages/Events/Features/RSVPPage';
-import PublicRidesPage from './pages/Events/Features/PublicRidesPage';
+import EventVenuePage from './pages/Events/Venue/EventVenuePage';
+import EventVendorsPage from './pages/Events/Vendors/EventVendorsPage';
+import EventGuestsPage from './pages/Events/Guests/EventGuestsPage';
+import EventSeatingPage from './pages/Events/Seating/EventSeatingPage';
+import EventRidesPage from './pages/Events/Rides/EventRidesPage';
+import EventBudgetPage from './pages/Events/Budget/EventBudgetPage';
+import EventSharePage from './pages/Events/Share/EventSharePage';
+import TaskManager from './pages/Events/shared/components/TaskManager';
+import GoogleAuthCallback from './pages/Events/shared/components/GoogleAuthCallback';
+import GoogleContactsCallback from './pages/Events/Guests/components/GoogleContactsCallback';
+import RSVPPage from './pages/Events/Guests/RSVPPage';
+import PublicRidesPage from './pages/Events/Rides/PublicRidesPage';
 
 // Component to handle OAuth redirect fix
 const OAuthRedirectHandler = () => {

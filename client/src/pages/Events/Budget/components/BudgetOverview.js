@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch } from '../../../../../utils/api';
+import { apiFetch } from '../../../../utils/api';
 
 const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAlertThresholdChange, canEdit }) => {
   const { t } = useTranslation();

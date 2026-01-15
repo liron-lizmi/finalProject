@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
-import VenuePage from '../VenuePage';
+import VenuePage from './VenuePage';
 import '../../../styles/VenuePage.css';
 
 const EventVenuePage = () => {

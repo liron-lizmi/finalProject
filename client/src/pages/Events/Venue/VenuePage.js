@@ -1,9 +1,9 @@
 import React,  { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import '../../styles/VenuePage.css';
-import venueService from '../../services/venueService';
-import { translateItems} from '../../services/translationUtils';
+import '../../../styles/VenuePage.css';
+import venueService from '../../../services/venueService';
+import { translateItems} from '../../../services/translationUtils';
 
 window.googleMapsLoaded = window.googleMapsLoaded || false;
 

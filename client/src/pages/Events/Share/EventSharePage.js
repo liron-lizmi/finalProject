@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../hooks/useModal';
-import FeaturePageTemplate from './FeaturePageTemplate';
+import FeaturePageTemplate from '../shared/FeaturePageTemplate';
 import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventSharePage.css';
 

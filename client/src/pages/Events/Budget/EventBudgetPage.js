@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams} from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import FeaturePageTemplate from './FeaturePageTemplate';
-import BudgetOverview from './components/budget/BudgetOverview';
-import BudgetSetup from './components/budget/BudgetSetup';
-import ExpenseManager from './components/budget/ExpenseManager';
-import IncomeManager from './components/budget/IncomeManager'; // הוסף את זה
-import BudgetCharts from './components/budget/BudgetCharts';
+import FeaturePageTemplate from '../shared/FeaturePageTemplate';
+import BudgetOverview from './components/BudgetOverview';
+import BudgetSetup from './components/BudgetSetup';
+import ExpenseManager from './components/ExpenseManager';
+import IncomeManager from './components/IncomeManager';
+import BudgetCharts from './components/BudgetCharts';
 import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventBudgetPage.css';
 

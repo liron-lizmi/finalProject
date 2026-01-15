@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch } from '../../../../../utils/api';
+import { apiFetch } from '../../../../utils/api';
 
 const defaultCategoryAllocations = {
   venue: 0.30,
