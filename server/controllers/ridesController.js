@@ -10,7 +10,7 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const calculateDistance = async (address1, address2) => {
   // Create cache key
   const cacheKey = `${address1.toLowerCase().trim()}|${address2.toLowerCase().trim()}`;
-  
+
   const cachedResult = distanceCache.get(cacheKey);
   if (cachedResult && Date.now() - cachedResult.timestamp < CACHE_DURATION) {
     return cachedResult.distance;
@@ -19,11 +19,11 @@ const calculateDistance = async (address1, address2) => {
   // If addresses are identical or very similar
   const addr1Lower = address1.toLowerCase().trim();
   const addr2Lower = address2.toLowerCase().trim();
-  
+
   if (addr1Lower === addr2Lower) {
     return 0.1;
   }
-  
+
   if (addr1Lower.includes(addr2Lower) || addr2Lower.includes(addr1Lower)) {
     return 0.5;
   }
@@ -31,10 +31,10 @@ const calculateDistance = async (address1, address2) => {
   // Call Google Distance Matrix API
   try {
     const apiKey = process.env.GOOGLE_DISTANCE_MATRIX_API_KEY;
-    
+
     if (!apiKey) {
       console.error('Google Maps API key is missing!');
-      return fallbackDistance(address1, address2); 
+      return null;
     }
 
     const url = 'https://maps.googleapis.com/maps/api/distancematrix/json';
@@ -45,154 +45,32 @@ const calculateDistance = async (address1, address2) => {
       language: 'he',
       region: 'il'
     };
-    
+
     const response = await axios.get(url, { params });
-    
-    if (response.data.status === 'OK' && 
+
+    if (response.data.status === 'OK' &&
         response.data.rows[0]?.elements[0]?.status === 'OK') {
-      
+
       const distanceInMeters = response.data.rows[0].elements[0].distance.value;
       const distanceInKm = distanceInMeters / 1000;
-      
+
       // Save to cache
       distanceCache.set(cacheKey, {
         distance: distanceInKm,
         timestamp: Date.now()
       });
-      
+
       return distanceInKm;
-      
+
     } else {
-      console.warn('Google API returned no result, using fallback');
-      return fallbackDistance(address1, address2);
+      console.warn('Google API returned no result for addresses:', address1, address2);
+      return null;
     }
-    
+
   } catch (error) {
     console.error('Error calling Google Distance Matrix API:', error.message);
-    return fallbackDistance(address1, address2);
-  }
-};
-
-// Fallback distance calculation 
-const fallbackDistance = (address1, address2) => {
-  const addr1Lower = address1.toLowerCase().trim();
-  const addr2Lower = address2.toLowerCase().trim();
-  
-  const cityVariations = {
-    'תל אביב': ['תל אביב', 'ת"א', 'תל-אביב', 'tel aviv', 'תא', 'תל אביב יפו', 'tlv'],
-    'ירושלים': ['ירושלים', 'ירושלם', 'jerusalem', 'י-ם', 'ירוש', 'ים', 'jlm'],
-    'חיפה': ['חיפה', 'haifa', 'חיפא'],
-    'באר שבע': ['באר שבע', 'באר-שבע', 'beer sheva', 'ב"ש', 'be\'er sheva'],
-    'פתח תקווה': ['פתח תקווה', 'פתח-תקווה', 'פת"ק', 'petah tikva'],
-    'נתניה': ['נתניה', 'netanya'],
-    'רחובות': ['רחובות', 'rehovot'],
-    'מודיעין': ['מודיעין', 'modiin', 'מודיעין עילית', 'מודיעין מכבים רעות'],
-    'רעננה': ['רעננה', 'raanana'],
-    'הרצליה': ['הרצליה', 'herzliya'],
-    'רמת גן': ['רמת גן', 'רמת-גן', 'ramat gan'],
-    'בני ברק': ['בני ברק', 'בני-ברק', 'bnei brak'],
-    'גבעתיים': ['גבעתיים', 'givatayim'],
-    'אשדוד': ['אשדוד', 'ashdod'],
-    'אשקלון': ['אשקלון', 'ashkelon'],
-    'בית שמש': ['בית שמש', 'בית-שמש', 'bet shemesh'],
-    'ביתר עילית': ['ביתר עילית', 'ביתר', 'beitar illit', 'ביתר-עילית'],
-    'מעלה אדומים': ['מעלה אדומים', 'מעלה-אדומים', 'maale adumim'],
-    'אלעד': ['אלעד', 'elad'],
-    'כפר סבא': ['כפר סבא', 'כפר-סבא', 'kfar saba'],
-    'הוד השרון': ['הוד השרון', 'הוד-השרון', 'hod hasharon'],
-    'ראשון לציון': ['ראשון לציון', 'ראשון', 'rishon lezion'],
-    'אפרת': ['אפרת', 'efrat', 'אפרת'],
-    'גוש עציון': ['גוש עציון', 'gush etzion'],
-    'מעלות דפנה': ['מעלות דפנה', 'maalot dafna'],
-    'רמות': ['רמות', 'ramot'],
-    'גבעת זאב': ['גבעת זאב', 'givat zeev', 'גבעת-זאב'],
-    'מבשרת ציון': ['מבשרת ציון', 'mevaseret zion', 'מבשרת'],
-    'אבו גוש': ['אבו גוש', 'abu gosh'],
-    'קרית ארבע': ['קרית ארבע', 'kiryat arba'],
-    'חברון': ['חברון', 'hebron'],
-    'אריאל': ['אריאל', 'ariel'],
-    'מעלה אפרים': ['מעלה אפרים', 'maaleh efraim'],
-    'עפרה': ['עפרה', 'ofra'],
-    'בית אל': ['בית אל', 'beit el', 'bet el'],
-    'עלי': ['עלי', 'eli'],
-    'שילה': ['שילה', 'shilo'],
-    'עמנואל': ['עמנואל', 'emanuel'],
-    'כרמיאל': ['כרמיאל', 'karmiel'],
-    'צפת': ['צפת', 'safed', 'tzfat'],
-    'טבריה': ['טבריה', 'tiberias'],
-    'נצרת עילית': ['נצרת עילית', 'nof hagalil', 'נוף הגליל'],
-    'עכו': ['עכו', 'acre', 'akko'],
-    'נהריה': ['נהריה', 'nahariya'],
-    'קרית שמונה': ['קרית שמונה', 'kiryat shmona'],
-    'אילת': ['אילת', 'eilat'],
-    'דימונה': ['דימונה', 'dimona'],
-    'ערד': ['ערד', 'arad'],
-    'קרית גת': ['קרית גת', 'kiryat gat'],
-    'קרית מלאכי': ['קרית מלאכי', 'kiryat malachi'],
-    'יבנה': ['יבנה', 'yavne'],
-    'גדרה': ['גדרה', 'gedera'],
-    'נס ציונה': ['נס ציונה', 'nes ziona']
-  };
-  
-  const findCity = (address) => {
-    for (const [mainCity, variations] of Object.entries(cityVariations)) {
-      for (const variation of variations) {
-        if (address.includes(variation.toLowerCase())) {
-          return mainCity;
-        }
-      }
-    }
     return null;
-  };
-  
-  const city1 = findCity(addr1Lower);
-  const city2 = findCity(addr2Lower);
-  
-  if (!city1 || !city2) {
-    return 12;
   }
-  
-  if (city1 === city2) {
-    return Math.random() * 3 + 0.5;
-  }
-  
-  const jerusalemAreas = ['ירושלים', 'בית שמש', 'מודיעין', 'ביתר עילית', 'מעלה אדומים', 
-                          'אפרת', 'גוש עציון', 'מעלות דפנה', 'רמות', 'גבעת זאב', 
-                          'מבשרת ציון', 'אבו גוש', 'קרית ארבע'];
-  const isJerusalemArea1 = jerusalemAreas.includes(city1);
-  const isJerusalemArea2 = jerusalemAreas.includes(city2);
-  
-  if (isJerusalemArea1 && isJerusalemArea2) {
-    return Math.random() * 12 + 8;
-  }
-  
-  const gushDanAreas = ['תל אביב', 'רמת גן', 'גבעתיים', 'בני ברק', 'פתח תקווה', 
-                        'רעננה', 'הרצליה', 'הוד השרון', 'כפר סבא', 'ראשון לציון', 
-                        'רחובות', 'נס ציונה', 'גדרה', 'יבנה'];
-  const isGushDan1 = gushDanAreas.includes(city1);
-  const isGushDan2 = gushDanAreas.includes(city2);
-  
-  if (isGushDan1 && isGushDan2) {
-    return Math.random() * 15 + 5;
-  }
-  
-  const northAreas = ['חיפה', 'כרמיאל', 'צפת', 'טבריה', 'נצרת עילית', 'עכו', 'נהריה', 'קרית שמונה'];
-  const isNorth1 = northAreas.includes(city1);
-  const isNorth2 = northAreas.includes(city2);
-  
-  if (isNorth1 && isNorth2) {
-    return Math.random() * 20 + 10;
-  }
-  
-  const southAreas = ['באר שבע', 'אילת', 'דימונה', 'ערד', 'אשדוד', 'אשקלון', 'קרית גת', 'קרית מלאכי'];
-  const isSouth1 = southAreas.includes(city1);
-  const isSouth2 = southAreas.includes(city2);
-  
-  if (isSouth1 && isSouth2) {
-    return Math.random() * 25 + 15;
-  }
-  
-  return Math.random() * 50 + 30;
 };
 
 //  Retrieves basic event information for rides page
@@ -284,18 +162,25 @@ const getSuggestedRides = async (req, res) => {
     const guestsWithDistance = await Promise.all(
       offeringGuests.map(async (guest) => {
         const distance = await calculateDistance(userAddress, guest.rideInfo.address);
-      return {
-        ...guest,
-        distance: distance.toFixed(1),
-        numericDistance: distance
-      };
-    })
-  );
+        // Skip guests where distance calculation failed
+        if (distance === null) {
+          return null;
+        }
+        return {
+          ...guest,
+          distance: distance.toFixed(1),
+          numericDistance: distance
+        };
+      })
+    );
 
-    const sortedGuests = guestsWithDistance.sort((a, b) => a.numericDistance - b.numericDistance);
+    // Filter out null results (failed distance calculations)
+    const validGuests = guestsWithDistance.filter(guest => guest !== null);
+
+    const sortedGuests = validGuests.sort((a, b) => a.numericDistance - b.numericDistance);
 
     const closeSuggestions = sortedGuests.filter(guest => guest.numericDistance < 25);
-    
+
     const suggestions = closeSuggestions.slice(0, 3);
 
     res.json({ suggestions });
