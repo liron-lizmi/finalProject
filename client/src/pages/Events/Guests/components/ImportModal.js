@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import googleContactsAPI from './GoogleContacts';
-import '../../styles/ImportModal.css';
+import '../../../../styles/ImportModal.css';
 
 const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
   const { t } = useTranslation();
