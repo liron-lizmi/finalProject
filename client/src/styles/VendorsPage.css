@@ -2302,6 +2302,41 @@ html[dir="ltr"] .vp-change-vendor-button {
   padding: 0 !important;
 }
 
+
+/* Load More Button */
+.vp-load-more-container {
+  text-align: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.vp-load-more-button {
+  background: #a68b76;
+  color: white;
+  padding: 14px 30px;
+  border: none;
+  border-radius: 30px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(166, 139, 118, 0.2);
+}
+
+.vp-load-more-button:hover {
+  background: #d4b99e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(166, 139, 118, 0.3);
+}
+
+.vp-load-more-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
 @media (max-width: 480px) {
   .vendors-header, .vp-vendors-header {
     position: relative !important;

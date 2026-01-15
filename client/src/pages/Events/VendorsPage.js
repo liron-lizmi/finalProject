@@ -398,29 +398,30 @@ const searchVendors = async (shouldAppend = false) => {
     );
 
     let newVendors = result.vendors || [];
-    
+
     if (isEnglish) {
       newVendors = await translateItems(newVendors, 'en');
     }
-    
+
+    let vendorsToDisplay;
     if (shouldAppend) {
-      const updatedVendors = [...displayedVendors, ...newVendors];
-      setDisplayedVendors(updatedVendors);
+      // Filter out duplicates based on place_id
+      const existingIds = new Set(displayedVendors.map(v => v.place_id));
+      const uniqueNewVendors = newVendors.filter(v => !existingIds.has(v.place_id));
+      vendorsToDisplay = [...displayedVendors, ...uniqueNewVendors];
+      setDisplayedVendors(vendorsToDisplay);
       setCurrentPage(pageToLoad);
     } else {
+      vendorsToDisplay = newVendors;
       setDisplayedVendors(newVendors);
       setCurrentPage(1);
     }
-    
+
     setHasMore(result.hasMore || false);
 
     const currentMap = mapInstance.current || map;
-    if (newVendors.length > 0 && currentMap && window.google) {
-      if (!shouldAppend) {
-        addMarkers(newVendors);
-      } else {
-        addMarkers([...displayedVendors, ...newVendors]);
-      }
+    if (vendorsToDisplay.length > 0 && currentMap && window.google) {
+      addMarkers(vendorsToDisplay);
     }
     
   } catch (error) {
