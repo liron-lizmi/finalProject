@@ -2338,6 +2338,21 @@ html[dir="ltr"] .vp-change-vendor-button {
 
 
 @media (max-width: 480px) {
+  .vp-vendors-content {
+    flex-direction: column !important;
+  }
+
+  .vp-vendors-filters {
+    flex: 1 1 auto !important;
+    max-width: 100% !important;
+    position: static !important;
+    width: 100% !important;
+  }
+
+  .vp-vendors-results-container {
+    width: 100% !important;
+  }
+
   .vendors-header, .vp-vendors-header {
     position: relative !important;
     margin-top: 60px !important;
