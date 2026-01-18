@@ -64,7 +64,7 @@ const FeaturePageTemplate = ({
           <button className="back-button" onClick={handleBack}>
             {t('general.backToEventDetails')}
           </button>
-          <div className="header-logo">
+          <div className="header-logo" onClick={() => navigate('/')}>
             <img src="/images/logo.png" alt="Logo" className="logo-image" />
           </div>
         </div>
