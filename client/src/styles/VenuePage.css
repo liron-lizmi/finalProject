@@ -2249,9 +2249,24 @@ button:disabled:hover,
   border-color: #d4b99e !important;
 }
 
-/* --- Responsive Fixes (Shared) --- */
+/* --- Responsive --- */
 
 @media (max-width: 480px) {
+  .vup-venue-content {
+    flex-direction: column !important;
+  }
+
+  .vup-venue-filters {
+    flex: 1 1 auto !important;
+    max-width: 100% !important;
+    position: static !important;
+    width: 100% !important;
+  }
+
+  .vup-venue-results-container {
+    width: 100% !important;
+  }
+
   .event-venue-container {
     padding: 30px 4%;
   }

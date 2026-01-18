@@ -128,22 +128,6 @@ const applyServerFilters = (venues, filters, language = 'en') => {
       if (!matchesType) return false;
     }
 
-    if (filters.capacity && filters.capacity !== '') {
-      const capacityLimit = parseInt(filters.capacity);
-      let estimatedCapacity = venue.user_ratings_total ? 
-        Math.max(venue.user_ratings_total * 1.5, 30) : 30;
-      
-      const hotelKeywords = language === 'he' ? ['מלון'] : ['hotel'];
-      const centerKeywords = language === 'he' ? ['מרכז'] : ['center'];
-      
-      if (hotelKeywords.some(kw => venueText.includes(kw)) || 
-          centerKeywords.some(kw => venueText.includes(kw))) {
-        estimatedCapacity *= 2;
-      }
-      
-      if (estimatedCapacity < capacityLimit) return false;
-    }
-
     if (filters.venueStyle && filters.venueStyle !== 'all') {
       const venueStyles = getVenueStyle(venue, language);
       if (!venueStyles.includes(filters.venueStyle)) {
@@ -177,13 +161,6 @@ const applyServerFilters = (venues, filters, language = 'en') => {
         t.includes('restaurant') || t.includes('food')
       );
       if (!hasCatering) return false;
-    }
-
-    if (filters.accommodation === 'true' || filters.accommodation === true) {
-      const hasAccommodation = venue.types?.includes('lodging') || 
-                              venue.types?.includes('hotel') ||
-                              venue.price_level >= 3;
-      if (!hasAccommodation) return false;
     }
 
     return true;
@@ -224,43 +201,37 @@ const processVenuesWithPhotos = (venues) => {
 
 const searchVenues = async (req, res) => {
   try {
-    const { 
-      query = '', 
-      area = 'all', 
+    const {
+      query = '',
+      area = 'all',
       venueType = 'all',
       venueStyle = 'all',
-      capacity = '',
       parking = false,
       accessibility = false,
       outdoorSpace = false,
       catering = false,
-      accommodation = false,
       page = 1,
       language = 'en'
     } = req.query;
 
     const pageNum = parseInt(page);
-    const filters = { 
-      area, 
-      venueType, 
-      venueStyle, 
-      capacity,
+    const filters = {
+      area,
+      venueType,
+      venueStyle,
       parking,
       accessibility,
       outdoorSpace,
-      catering,
-      accommodation
+      catering
     };
 
-    const hasFilters = area !== 'all' || 
-                      venueType !== 'all' || 
+    const hasFilters = area !== 'all' ||
+                      venueType !== 'all' ||
                       venueStyle !== 'all' ||
-                      capacity !== '' ||
                       parking === 'true' ||
                       accessibility === 'true' ||
                       outdoorSpace === 'true' ||
-                      catering === 'true' ||
-                      accommodation === 'true';
+                      catering === 'true';
 
     const cacheKey = CacheManager.generateKey(query, filters, pageNum);
     const cachedData = CacheManager.get(cacheKey);

@@ -36,13 +36,11 @@ const VenuePage = ({ onSelectVenue }) => {
     area: 'all',
     venueType: 'all',
     venueStyle: 'all',
-    capacity: '',
     amenities: {
       parking: false,
       accessibility: false,
       outdoorSpace: false,
-      catering: false,
-      accommodation: false
+      catering: false
     },
     distance: '50',
   });
@@ -464,25 +462,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             </select>
           </div>
          
-          <div className="vup-filter-group">
-            <label htmlFor="capacity">{t('events.features.venues.filters.capacityLabel')}</label>
-            <select
-              id="capacity"
-              name="capacity"
-              value={filters.capacity}
-              onChange={handleFilterChange}
-              className={isRTL ? 'vup-rtl-select' : 'vup-ltr-select'}
-            >
-              <option value="">{t('events.features.venues.filters.selectCapacity')}</option>
-              <option value="50">{t('events.features.venues.filters.upTo50')}</option>
-              <option value="100">{t('events.features.venues.filters.upTo100')}</option>
-              <option value="200">{t('events.features.venues.filters.upTo200')}</option>
-              <option value="300">{t('events.features.venues.filters.upTo300')}</option>
-              <option value="500">{t('events.features.venues.filters.upTo500')}</option>
-              <option value="1000">{t('events.features.venues.filters.above500')}</option>
-            </select>
-          </div>
-         
           <div className="vup-filter-group vup-amenities-group">
             <label>{t('events.features.venues.filters.amenitiesLabel')}</label>
             <div className="vup-checkbox-group">
@@ -524,16 +503,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
                   onChange={handleFilterChange}
                 />
                 {t('events.features.venues.filters.catering')}
-              </label>
-             
-              <label>
-                <input
-                  type="checkbox"
-                  name="accommodation"
-                  checked={filters.amenities.accommodation}
-                  onChange={handleFilterChange}
-                />
-                {t('events.features.venues.filters.accommodation')}
               </label>
             </div>
           </div>

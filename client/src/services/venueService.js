@@ -16,12 +16,10 @@ class VenueService {
             area: filters.area || 'all',
             venueType: filters.venueType || 'all',
             venueStyle: filters.venueStyle || 'all',
-            capacity: filters.capacity || '',
             parking: filters.amenities?.parking || false,
             accessibility: filters.amenities?.accessibility || false,
             outdoorSpace: filters.amenities?.outdoorSpace || false,
             catering: filters.amenities?.catering || false,
-            accommodation: filters.amenities?.accommodation || false,
             page: page,
             language: language
         },
