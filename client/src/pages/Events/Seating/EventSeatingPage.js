@@ -60,7 +60,7 @@ const EventSeatingPage = () => {
   const [femaleTables, setFemaleTables] = useState([]);
   const [maleArrangement, setMaleArrangement] = useState({});
   const [femaleArrangement, setFemaleArrangement] = useState({});
-  const [genderFilter, setGenderFilter] = useState('all'); 
+  const [genderFilter, setGenderFilter] = useState('all');
  
   const canvasRef = useRef(null);
   const [canEdit, setCanEdit] = useState(true);
@@ -279,15 +279,15 @@ const EventSeatingPage = () => {
 
     const isGuestSeated = (guestId) => {
       if (isSeparatedSeating) {
-        const inMale = Object.values(maleArrangement || {}).some(guestIds => 
+        const inMale = Object.values(maleArrangement || {}).some(guestIds =>
           Array.isArray(guestIds) && guestIds.includes(guestId)
         );
-        const inFemale = Object.values(femaleArrangement || {}).some(guestIds => 
+        const inFemale = Object.values(femaleArrangement || {}).some(guestIds =>
           Array.isArray(guestIds) && guestIds.includes(guestId)
         );
         return inMale || inFemale;
       } else {
-        return Object.values(seatingArrangement || {}).some(guestIds => 
+        return Object.values(seatingArrangement || {}).some(guestIds =>
           Array.isArray(guestIds) && guestIds.includes(guestId)
         );
       }
@@ -321,7 +321,7 @@ const EventSeatingPage = () => {
           const guestIsSeated = isGuestSeated(newGuest.id);
          
           if (newCount > oldCount && guestIsSeated) {
-          
+         
             changes.push({
               type: 'attending_count_increased',
               guestId: newGuest.id,
@@ -339,20 +339,20 @@ const EventSeatingPage = () => {
 
   const checkAndHandlePendingSync = useCallback(async (skipFingerprintUpdate = false) => {
     try {
-      
+     
       const processResponse = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
         method: 'POST'
       });
-    
+   
       if (processResponse && processResponse.ok) {
         const processResult = await processResponse.json();
-      
+     
         if (processResult.requiresUserDecision) {
           setSyncOptions(processResult.options || []);
           setAffectedGuests(processResult.affectedGuests || []);
           setPendingSyncTriggers(processResult.pendingTriggers || []);
           setIsSyncOptionsModalOpen(true);
-        
+       
           showSyncNotification('info', t('seating.sync.pendingChangesDetected'));
         } else if (processResult.hasChanges && processResult.seating) {
           if (isSeparatedSeating) {
@@ -364,7 +364,7 @@ const EventSeatingPage = () => {
             setTables(processResult.seating.tables || []);
             setSeatingArrangement(processResult.seating.arrangement || {});
           }
-        
+       
           if (!skipFingerprintUpdate) {
             const currentGuestData = await fetchConfirmedGuests();
             if (currentGuestData) {
@@ -372,7 +372,7 @@ const EventSeatingPage = () => {
               setLastSyncData(newFingerprint);
             }
           }
-        
+       
           showSyncNotification('success', processResult.message);
         }
       }
@@ -383,9 +383,9 @@ const EventSeatingPage = () => {
 
   const fetchSeatingArrangement = useCallback(async () => {
     try {
-      
+     
       const response = await makeApiRequest(`/api/events/${eventId}/seating`);
-            
+           
       if (!response) {
         return;
       }
@@ -529,7 +529,7 @@ const EventSeatingPage = () => {
   const generateAISeating = useCallback(async (aiPreferences) => {
     try {
       setLoading(true);
-    
+   
       const requestBody = isSeparatedSeating ? {
         maleTables,
         femaleTables,
@@ -552,7 +552,7 @@ const EventSeatingPage = () => {
         allTables: aiPreferences.allTables || tables,
         isSeparatedSeating: false
       };
-    
+   
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {
         method: 'POST',
         body: JSON.stringify(requestBody)
@@ -564,11 +564,11 @@ const EventSeatingPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-      
+     
         if (isSeparatedSeating) {
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
-        
+       
           let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleTables;
           let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleTables;
 
@@ -581,10 +581,10 @@ const EventSeatingPage = () => {
 
           setMaleTables(finalMaleTables);
           setFemaleTables(finalFemaleTables);
-        
+       
           setCanvasOffset({ x: 0, y: 0 });
           setCanvasScale(1);
-        
+       
           const layoutData = {
             maleTables: finalMaleTables,
             femaleTables: finalFemaleTables,
@@ -597,22 +597,22 @@ const EventSeatingPage = () => {
               canvasOffset: { x: 0, y: 0 }
             }
           };
-        
+       
           autoSave(layoutData);
         } else {
           setSeatingArrangement(data.arrangement);
-        
+       
           let finalTables = data.tables && data.tables.length > 0 ? data.tables : tables;
-        
+       
           if (data.arrangement && Object.keys(data.arrangement).length > 0) {
             finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
           }
-        
+       
           setTables(finalTables);
-        
+       
           setCanvasOffset({ x: 0, y: 0 });
           setCanvasScale(1);
-        
+       
           const layoutData = {
             tables: finalTables,
             arrangement: data.arrangement,
@@ -623,16 +623,16 @@ const EventSeatingPage = () => {
               canvasOffset: { x: 0, y: 0 }
             }
           };
-        
+       
           autoSave(layoutData);
         }
-      
+     
         setError('');
         setIsAIModalOpen(false);
-      
+     
         const newFingerprint = createGuestFingerprint(confirmedGuests);
         setLastSyncData(newFingerprint);
-      
+     
         return isSeparatedSeating ? {
           maleArrangement: data.maleArrangement,
           femaleArrangement: data.femaleArrangement,
@@ -680,10 +680,10 @@ const EventSeatingPage = () => {
 
       if (response && response.ok) {
         const data = await response.json();
-        
+       
         return data;
       }
-      
+     
       return null;
     } catch (err) {
       return null;
@@ -708,60 +708,60 @@ const EventSeatingPage = () => {
   }, []);
 
   const checkTableCollision = useCallback((newPosition, newSize, allTables) => {
-    
+   
     const COLLISION_PADDING = 20;
-    
+   
     for (const existingTable of allTables) {
       if (!existingTable.position || !existingTable.size) continue;
-      
+     
       const existingPos = existingTable.position;
       const existingSize = existingTable.size;
-      
+     
       const newLeft = newPosition.x - (newSize.width / 2) - COLLISION_PADDING;
       const newRight = newPosition.x + (newSize.width / 2) + COLLISION_PADDING;
       const newTop = newPosition.y - (newSize.height / 2) - COLLISION_PADDING;
       const newBottom = newPosition.y + (newSize.height / 2) + COLLISION_PADDING;
-      
+     
       const existingLeft = existingPos.x - (existingSize.width / 2);
       const existingRight = existingPos.x + (existingSize.width / 2);
       const existingTop = existingPos.y - (existingSize.height / 2);
       const existingBottom = existingPos.y + (existingSize.height / 2);
-      
-      const hasCollision = !(newRight < existingLeft || 
-                             newLeft > existingRight || 
-                             newBottom < existingTop || 
+     
+      const hasCollision = !(newRight < existingLeft ||
+                             newLeft > existingRight ||
+                             newBottom < existingTop ||
                              newTop > existingBottom);
-      
+     
       if (hasCollision) {
         return { hasCollision: true, collidingTable: existingTable };
       }
     }
-    
+   
     return { hasCollision: false };
   }, []);
 
   const findNonCollidingPosition = useCallback((requestedPosition, tableSize, allTables) => {
-    
+   
     const collision = checkTableCollision(requestedPosition, tableSize, allTables);
     if (!collision.hasCollision) {
       return requestedPosition;
     }
-    
+   
     const STEP = 50;
     for (let radius = STEP; radius <= 500; radius += STEP) {
       for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
         const x = requestedPosition.x + Math.cos(angle) * radius;
         const y = requestedPosition.y + Math.sin(angle) * radius;
-        
+       
         const testPosition = { x, y };
         const testCollision = checkTableCollision(testPosition, tableSize, allTables);
-        
+       
         if (!testCollision.hasCollision) {
           return testPosition;
         }
       }
     }
-    
+   
     return requestedPosition;
   }, [checkTableCollision]);
 
@@ -783,20 +783,20 @@ const EventSeatingPage = () => {
     const finalCapacity = capacity || tableCapacity;
     const finalType = type || tableType;
     const tableSize = calculateTableSize(finalType, finalCapacity);
-    
+   
        
     if (isSeparatedSeating) {
       setTables(prevTables => {
         const allTables = [...prevTables, ...maleTables, ...femaleTables];
-        
+
         const finalPosition = findNonCollidingPosition(position, tableSize, allTables);
-        
-        const tableNumbers = allTables.map(table => {
+
+        const tableNumbers = allTables.filter(t => !t.isDraft).map(table => {
           const match = table.name.match(/(\d+)/);
           return match ? parseInt(match[1], 10) : 0;
         });
-        const nextTableNumber = allTables.length === 0 ? 1 : Math.max(...tableNumbers) + 1;
-              
+        const nextTableNumber = tableNumbers.length === 0 ? 1 : Math.max(...tableNumbers) + 1;
+
         const newTable = {
           id: `table_${Date.now()}`,
           name: `${t('seating.tableName')} ${nextTableNumber}`,
@@ -806,43 +806,29 @@ const EventSeatingPage = () => {
           rotation: 0,
           size: tableSize,
           gender: null,
-          notes: ''
+          notes: '',
+          isDraft: true
         };
-       
+
         const newTables = [...prevTables, newTable];
-       
-        saveSeatingArrangement({
-          tables: newTables,
-          arrangement: seatingArrangement,
-          maleTables,
-          femaleTables,
-          maleArrangement,
-          femaleArrangement,
-          isSeparatedSeating: true,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        })
-       
+
         setIsAddingTable(false);
         setSelectedTable(newTable);
         setEditingTable(newTable);
         setIsTableModalOpen(true);
-       
+
         return newTables;
       });
     } else {
       setTables(prevTables => {
         const finalPosition = findNonCollidingPosition(position, tableSize, prevTables);
-        
-        const tableNumbers = prevTables.map(table => {
+
+        const tableNumbers = prevTables.filter(t => !t.isDraft).map(table => {
           const match = table.name.match(/(\d+)/);
           return match ? parseInt(match[1], 10) : 0;
         });
-        const nextTableNumber = prevTables.length === 0 ? 1 : Math.max(...tableNumbers) + 1;
-              
+        const nextTableNumber = tableNumbers.length === 0 ? 1 : Math.max(...tableNumbers) + 1;
+
         const newTable = {
           id: `table_${Date.now()}`,
           name: `${t('seating.tableName')} ${nextTableNumber}`,
@@ -852,27 +838,17 @@ const EventSeatingPage = () => {
           rotation: 0,
           size: tableSize,
           gender: null,
-          notes: ''
+          notes: '',
+          isDraft: true
         };
-       
+
         const newTables = [...prevTables, newTable];
-       
-        saveSeatingArrangement({
-          tables: newTables,
-          arrangement: seatingArrangement,
-          isSeparatedSeating: false,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        })
-       
+
         setIsAddingTable(false);
         setSelectedTable(newTable);
         setEditingTable(newTable);
         setIsTableModalOpen(true);
-       
+
         return newTables;
       });
     }
@@ -946,12 +922,12 @@ const EventSeatingPage = () => {
       } else {
         const existingIds = new Set(tables.map(t => t.id));
         const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
-        
+       
         const updatedExistingTables = tables.map(existingTable => {
           const update = tablesToAdd.find(t => t.id === existingTable.id);
           return update ? { ...existingTable, ...update } : existingTable;
         });
-        
+       
         const newTables = [...updatedExistingTables, ...trulyNewTables];
         setTables(newTables);
        
@@ -982,15 +958,15 @@ const EventSeatingPage = () => {
   }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, isSeparatedSeating]);
 
   const handleAddTableFromView = useCallback((newTable) => {
-    
+   
     const nextTableNumber = getNextTableNumber();
-    
+   
     const allExistingTables = [...tables, ...maleTables, ...femaleTables];
     const defaultPosition = { x: 1100, y: 300 };
     const tableSize = newTable.size || { width: 100, height: 100 };
-    
+   
     const finalPosition = findNonCollidingPosition(defaultPosition, tableSize, allExistingTables);
-        
+       
     const tableWithCorrectName = {
       ...newTable,
       name: `${t('seating.tableName')} ${nextTableNumber}`,
@@ -998,79 +974,39 @@ const EventSeatingPage = () => {
       position: finalPosition,
       size: tableSize,
       fromTableView: true,
-      autoPositioned: false
+      autoPositioned: false,
+      isDraft: true
     };
-        
+       
     if (isSeparatedSeating && genderFilter !== 'all') {
       if (genderFilter === 'male') {
         const newMaleTables = [...maleTables, tableWithCorrectName];
-        
+
         setMaleTables(newMaleTables);
-        
+
         setSelectedTable(tableWithCorrectName);
         setEditingTable(tableWithCorrectName);
         setIsTableModalOpen(true);
-        
-        saveSeatingArrangement({
-          tables,
-          arrangement: seatingArrangement,
-          maleTables: newMaleTables,
-          femaleTables,
-          maleArrangement,
-          femaleArrangement,
-          isSeparatedSeating: true,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        })
-        
+
       } else {
         const newFemaleTables = [...femaleTables, tableWithCorrectName];
-        
+
         setFemaleTables(newFemaleTables);
-        
+
         setSelectedTable(tableWithCorrectName);
         setEditingTable(tableWithCorrectName);
         setIsTableModalOpen(true);
-        
-        saveSeatingArrangement({
-          tables,
-          arrangement: seatingArrangement,
-          maleTables,
-          femaleTables: newFemaleTables,
-          maleArrangement,
-          femaleArrangement,
-          isSeparatedSeating: true,
-          preferences,
-          layoutSettings: {
-            canvasScale,
-            canvasOffset
-          }
-        })
       }
     } else {
       const newTables = [...tables, tableWithCorrectName];
-      
+
       setTables(newTables);
-      
+
       setSelectedTable(tableWithCorrectName);
       setEditingTable(tableWithCorrectName);
       setIsTableModalOpen(true);
-      
-      saveSeatingArrangement({
-        tables: newTables,
-        arrangement: seatingArrangement,
-        isSeparatedSeating: false,
-        preferences,
-        layoutSettings: {
-          canvasScale,
-          canvasOffset
-        }
-      })
     }
-    
+   
   }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, isSeparatedSeating, genderFilter, getNextTableNumber]);
 
   const updateTable = useCallback((tableId, updates) => {    
@@ -1082,42 +1018,42 @@ const EventSeatingPage = () => {
     if (isSeparatedSeating) {
       const isInMaleTables = maleTables.some(t => t.id === tableId);
       const isInFemaleTables = femaleTables.some(t => t.id === tableId);
-    
+   
       if (isInMaleTables) {
         let newMaleTables;
         let newMaleArrangement = { ...maleArrangement };
-      
+     
         if (updates === null) {
           newMaleTables = maleTables.filter(table => table.id !== tableId);
           delete newMaleArrangement[tableId];
           setSelectedTable(null);
-        
+       
           const newEditedNames = new Set(manuallyEditedTableNames);
           newEditedNames.delete(tableId);
           setManuallyEditedTableNames(newEditedNames);
         } else {
           const currentTable = maleTables.find(t => t.id === tableId);
-        
+       
           if (updates.name && currentTable && updates.name !== currentTable.name) {
             const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
             const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, maleArrangement, 'male');
-          
+         
             if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
               const newEditedNames = new Set(manuallyEditedTableNames);
               newEditedNames.add(tableId);
               setManuallyEditedTableNames(newEditedNames);
             }
           }
-        
+       
           newMaleTables = maleTables.map(table =>
             table.id === tableId ? { ...table, ...updates } : table
           );
-          
+         
         }
-      
+     
         setMaleTables(newMaleTables);
         setMaleArrangement(newMaleArrangement);
-        
+       
         const dataToSave = {
           tables,
           arrangement: seatingArrangement,
@@ -1132,44 +1068,44 @@ const EventSeatingPage = () => {
             canvasOffset
           }
         };
-        
+       
         saveSeatingArrangement(dataToSave)
-        
+       
       } else if (isInFemaleTables) {
         let newFemaleTables;
         let newFemaleArrangement = { ...femaleArrangement };
-      
+     
         if (updates === null) {
           newFemaleTables = femaleTables.filter(table => table.id !== tableId);
           delete newFemaleArrangement[tableId];
           setSelectedTable(null);
-        
+       
           const newEditedNames = new Set(manuallyEditedTableNames);
           newEditedNames.delete(tableId);
           setManuallyEditedTableNames(newEditedNames);
         } else {
           const currentTable = femaleTables.find(t => t.id === tableId);
-        
+       
           if (updates.name && currentTable && updates.name !== currentTable.name) {
             const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
             const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, femaleArrangement, 'female');
-          
+         
             if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
               const newEditedNames = new Set(manuallyEditedTableNames);
               newEditedNames.add(tableId);
               setManuallyEditedTableNames(newEditedNames);
             }
           }
-        
+       
           newFemaleTables = femaleTables.map(table =>
             table.id === tableId ? { ...table, ...updates } : table
           );
-          
+         
         }
-      
+     
         setFemaleTables(newFemaleTables);
         setFemaleArrangement(newFemaleArrangement);
-        
+       
         const dataToSave = {
           tables,
           arrangement: seatingArrangement,
@@ -1184,44 +1120,44 @@ const EventSeatingPage = () => {
             canvasOffset
           }
         };
-        
+       
         saveSeatingArrangement(dataToSave)
-        
+       
       } else {
         let newTables;
         let newArrangement = { ...seatingArrangement };
-      
+     
         if (updates === null) {
           newTables = tables.filter(table => table.id !== tableId);
           delete newArrangement[tableId];
           setSelectedTable(null);
-        
+       
           const newEditedNames = new Set(manuallyEditedTableNames);
           newEditedNames.delete(tableId);
           setManuallyEditedTableNames(newEditedNames);
         } else {
           const currentTable = tables.find(t => t.id === tableId);
-        
+       
           if (updates.name && currentTable && updates.name !== currentTable.name) {
             const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
             const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, seatingArrangement);
-          
+         
             if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
               const newEditedNames = new Set(manuallyEditedTableNames);
               newEditedNames.add(tableId);
               setManuallyEditedTableNames(newEditedNames);
             }
           }
-        
+       
           newTables = tables.map(table =>
             table.id === tableId ? { ...table, ...updates } : table
           );
-          
+         
         }
-      
+     
         setTables(newTables);
         setSeatingArrangement(newArrangement);
-        
+       
         const dataToSave = {
           tables: newTables,
           arrangement: newArrangement,
@@ -1236,44 +1172,44 @@ const EventSeatingPage = () => {
             canvasOffset
           }
         };
-        
+       
         saveSeatingArrangement(dataToSave)
       }
     } else {
       let newTables;
       let newArrangement = { ...seatingArrangement };
-    
+   
       if (updates === null) {
         newTables = tables.filter(table => table.id !== tableId);
         delete newArrangement[tableId];
         setSelectedTable(null);
-      
+     
         const newEditedNames = new Set(manuallyEditedTableNames);
         newEditedNames.delete(tableId);
         setManuallyEditedTableNames(newEditedNames);
       } else {
         const currentTable = tables.find(t => t.id === tableId);
-      
+     
         if (updates.name && currentTable && updates.name !== currentTable.name) {
           const tableNumber = parseInt(currentTable.name.match(/\d+/)?.[0] || '1');
           const autoGeneratedName = generateTableNameWithGroup(tableNumber, tableId, seatingArrangement);
-        
+       
           if (updates.name !== autoGeneratedName && updates.name !== currentTable.name) {
             const newEditedNames = new Set(manuallyEditedTableNames);
             newEditedNames.add(tableId);
             setManuallyEditedTableNames(newEditedNames);
           }
         }
-      
+     
         newTables = tables.map(table =>
           table.id === tableId ? { ...table, ...updates } : table
         );
-        
+       
       }
-    
+   
       setTables(newTables);
       setSeatingArrangement(newArrangement);
-      
+     
       const dataToSave = {
         tables: newTables,
         arrangement: newArrangement,
@@ -1284,10 +1220,10 @@ const EventSeatingPage = () => {
           canvasOffset
         }
       };
-      
+     
       saveSeatingArrangement(dataToSave)
     }
-    
+   
   }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, manuallyEditedTableNames, generateTableNameWithGroup, canEdit, isSeparatedSeating, calculateTableSize, t]);
 
   const deleteTable = useCallback((tableId) => {
@@ -1299,20 +1235,21 @@ const EventSeatingPage = () => {
     if (isSeparatedSeating) {
       const isInMaleTables = maleTables.some(t => t.id === tableId);
       const isInFemaleTables = femaleTables.some(t => t.id === tableId);
-     
+      const isInNeutralTables = tables.some(t => t.id === tableId);
+
       if (isInMaleTables) {
         const newMaleTables = maleTables.filter(table => table.id !== tableId);
         const newMaleArrangement = { ...maleArrangement };
         delete newMaleArrangement[tableId];
-       
+
         const newEditedNames = new Set(manuallyEditedTableNames);
         newEditedNames.delete(tableId);
         setManuallyEditedTableNames(newEditedNames);
-       
+
         setMaleTables(newMaleTables);
         setMaleArrangement(newMaleArrangement);
-       
-        autoSave({
+
+        saveSeatingArrangement({
           maleTables: newMaleTables,
           femaleTables,
           maleArrangement: newMaleArrangement,
@@ -1328,19 +1265,45 @@ const EventSeatingPage = () => {
         const newFemaleTables = femaleTables.filter(table => table.id !== tableId);
         const newFemaleArrangement = { ...femaleArrangement };
         delete newFemaleArrangement[tableId];
-       
+
         const newEditedNames = new Set(manuallyEditedTableNames);
         newEditedNames.delete(tableId);
         setManuallyEditedTableNames(newEditedNames);
-       
+
         setFemaleTables(newFemaleTables);
         setFemaleArrangement(newFemaleArrangement);
-       
-        autoSave({
+
+        saveSeatingArrangement({
           maleTables,
           femaleTables: newFemaleTables,
           maleArrangement,
           femaleArrangement: newFemaleArrangement,
+          isSeparatedSeating: true,
+          preferences,
+          layoutSettings: {
+            canvasScale,
+            canvasOffset
+          }
+        });
+      } else if (isInNeutralTables) {
+        const newTables = tables.filter(table => table.id !== tableId);
+        const newArrangement = { ...seatingArrangement };
+        delete newArrangement[tableId];
+
+        const newEditedNames = new Set(manuallyEditedTableNames);
+        newEditedNames.delete(tableId);
+        setManuallyEditedTableNames(newEditedNames);
+
+        setTables(newTables);
+        setSeatingArrangement(newArrangement);
+
+        saveSeatingArrangement({
+          tables: newTables,
+          arrangement: newArrangement,
+          maleTables,
+          femaleTables,
+          maleArrangement,
+          femaleArrangement,
           isSeparatedSeating: true,
           preferences,
           layoutSettings: {
@@ -1353,15 +1316,15 @@ const EventSeatingPage = () => {
       const newTables = tables.filter(table => table.id !== tableId);
       const newArrangement = { ...seatingArrangement };
       delete newArrangement[tableId];
-     
+
       const newEditedNames = new Set(manuallyEditedTableNames);
       newEditedNames.delete(tableId);
       setManuallyEditedTableNames(newEditedNames);
-     
+
       setTables(newTables);
       setSeatingArrangement(newArrangement);
-     
-      autoSave({
+
+      saveSeatingArrangement({
         tables: newTables,
         arrangement: newArrangement,
         isSeparatedSeating: false,
@@ -1372,7 +1335,7 @@ const EventSeatingPage = () => {
         }
       });
     }
-  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, autoSave, manuallyEditedTableNames, canEdit, isSeparatedSeating]);
+  }, [tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, manuallyEditedTableNames, canEdit, isSeparatedSeating]);
 
   const repositionTableByGender = useCallback((table, newGender, existingGenderTables, shouldReposition = true) => {
 
@@ -1382,7 +1345,7 @@ const EventSeatingPage = () => {
         gender: newGender
       };
     }
-    
+   
     const calculateNextAvailablePosition = (targetGender) => {
       const startX = targetGender === 'male' ? 300 : 1200;
       const startY = 250;
@@ -1400,7 +1363,7 @@ const EventSeatingPage = () => {
         if (t.id === table.id) {
           return;
         }
-        
+       
         if (t.position) {
           const posKey = `${Math.round(t.position.x)},${Math.round(t.position.y)}`;
           occupiedPositions.add(posKey);
@@ -1414,7 +1377,7 @@ const EventSeatingPage = () => {
         const x = startX + col * spacing;
         const y = startY + row * spacing;
         const posKey = `${x},${y}`;
-        
+       
         if (!occupiedPositions.has(posKey)) {
           return { x, y };
         }
@@ -1428,17 +1391,17 @@ const EventSeatingPage = () => {
         y: startY + lastRow * spacing
       };
     };
-    
+   
     const newPosition = calculateNextAvailablePosition(newGender);
-    
+   
     const repositionedTable = {
       ...table,
       gender: newGender,
       position: newPosition
     };
-  
+ 
     return repositionedTable;
-  }, [tables, maleTables, femaleTables]); 
+  }, [tables, maleTables, femaleTables]);
 
   const seatGuest = useCallback((guestId, tableId) => {
 
@@ -1546,14 +1509,14 @@ const EventSeatingPage = () => {
       }
      
       if (isNeutralTable) {
-        
+       
         const seatedGuests = currentArrangement[tableId] || [];
        
         if (seatedGuests.length === 0) {
-          
+         
           const newTables = tables.filter(t => t.id !== tableId);
-          
-          const isManuallyPlaced = table.position && 
+         
+          const isManuallyPlaced = table.position &&
             (table.position.x !== 300 || table.position.y !== 300) &&
             !table.fromTableView;
                    
@@ -1856,7 +1819,7 @@ const EventSeatingPage = () => {
                        
             updatedNeutralTables.push(neutralTable);
             updatedMaleTables.splice(tableIndex, 1);
-            
+           
             if (editingTable && editingTable.id === tableId) {
               setIsTableModalOpen(false);
               setEditingTable(null);
@@ -1865,9 +1828,9 @@ const EventSeatingPage = () => {
            
           }
         });
-        
+       
         updatedMaleTables = updateTableNamesWithGroups(updatedMaleTables, updatedMaleArrangement, 'male');
-        
+       
         updatedNeutralTables = updateTableNamesWithGroups(updatedNeutralTables, seatingArrangement, null);
        
         setMaleArrangement(updatedMaleArrangement);
@@ -1925,7 +1888,7 @@ const EventSeatingPage = () => {
                        
             updatedNeutralTables.push(neutralTable);
             updatedFemaleTables.splice(tableIndex, 1);
-            
+           
             if (editingTable && editingTable.id === tableId) {
               setIsTableModalOpen(false);
               setEditingTable(null);
@@ -1934,9 +1897,9 @@ const EventSeatingPage = () => {
            
           }
         });
-        
+       
         updatedFemaleTables = updateTableNamesWithGroups(updatedFemaleTables, updatedFemaleArrangement, 'female');
-        
+       
         updatedNeutralTables = updateTableNamesWithGroups(updatedNeutralTables, seatingArrangement, null);
        
         setFemaleArrangement(updatedFemaleArrangement);
@@ -1978,7 +1941,7 @@ const EventSeatingPage = () => {
     }
   }, [seatingArrangement, isSeparatedSeating, maleArrangement, femaleArrangement, saveSeatingArrangement, tables, maleTables, femaleTables, preferences, canvasScale, canvasOffset, t, manuallyEditedTableNames, updateTableNamesWithGroups, editingTable]);
 
-  
+ 
 const clearAllSeating = useCallback(() => {
   if (!canEdit) {
     setError(t('events.accessDenied'));
@@ -2008,7 +1971,7 @@ const clearAllSeating = useCallback(() => {
       setFemaleTables([]);
       setTables([]);
       setSeatingArrangement({});
-      
+     
       autoSave({
         tables: [],
         arrangement: {},
@@ -2023,7 +1986,7 @@ const clearAllSeating = useCallback(() => {
     } else {
       setSeatingArrangement({});
       setTables([]);
-      
+     
       autoSave({
         tables: [],
         arrangement: {},
@@ -2032,13 +1995,13 @@ const clearAllSeating = useCallback(() => {
         layoutSettings: { canvasScale, canvasOffset }
       });
     }
-    
+   
     setSelectedTable(null);
     setEditingTable(null);
     setError('');
     setManuallyEditedTableNames(new Set());
     setLastSyncData(null);
-    
+   
     setIsClearModalOpen(false);
   }, [isSeparatedSeating, preferences, canvasScale, canvasOffset, autoSave]);
 
@@ -2647,18 +2610,18 @@ const clearAllSeating = useCallback(() => {
       await fetchEventPermissions();
       const guestData = await fetchConfirmedGuests();
       const seatingData = await fetchSeatingArrangement();
-      
+     
       const hasExistingSeating = seatingData && (
-        (seatingData.isSeparatedSeating && 
-          ((seatingData.maleTables && seatingData.maleTables.length > 0) || 
+        (seatingData.isSeparatedSeating &&
+          ((seatingData.maleTables && seatingData.maleTables.length > 0) ||
           (seatingData.femaleTables && seatingData.femaleTables.length > 0))) ||
         (!seatingData.isSeparatedSeating && seatingData.tables && seatingData.tables.length > 0)
       );
-      
+     
       if (hasExistingSeating) {
         await checkAndHandlePendingSync();
       }
-      
+     
       if (guestData && guestData.confirmed) {
         const initialFingerprint = createGuestFingerprint(guestData.confirmed);
         setLastSyncData(initialFingerprint);
@@ -2667,14 +2630,17 @@ const clearAllSeating = useCallback(() => {
 
     initializeData();
   }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement, checkAndHandlePendingSync, createGuestFingerprint]);
-  
+ 
   const getCurrentTables = useCallback(() => {
+    // Filter out draft tables (tables being created but not yet saved)
+    const filterDrafts = (tablesList) => tablesList.filter(t => !t.isDraft);
+
     if (isSeparatedSeating) {
-      if (genderFilter === 'male') return maleTables;
-      if (genderFilter === 'female') return femaleTables;
-      return [...tables, ...maleTables, ...femaleTables];
+      if (genderFilter === 'male') return filterDrafts(maleTables);
+      if (genderFilter === 'female') return filterDrafts(femaleTables);
+      return [...filterDrafts(tables), ...filterDrafts(maleTables), ...filterDrafts(femaleTables)];
     }
-    return tables;
+    return filterDrafts(tables);
   }, [isSeparatedSeating, genderFilter, tables, maleTables, femaleTables]);
 
   const getCurrentArrangement = useCallback(() => {
@@ -2695,26 +2661,31 @@ const clearAllSeating = useCallback(() => {
   }, [confirmedGuests, isSeparatedSeating]);
 
   const stats = (() => {
+    // Filter out draft tables from statistics
+    const savedTables = tables.filter(t => !t.isDraft);
+    const savedMaleTables = maleTables.filter(t => !t.isDraft);
+    const savedFemaleTables = femaleTables.filter(t => !t.isDraft);
+
     if (isSeparatedSeating) {
       const totalMaleGuests = confirmedGuests.reduce((sum, g) => sum + (g.maleCount || 0), 0);
       const totalFemaleGuests = confirmedGuests.reduce((sum, g) => sum + (g.femaleCount || 0), 0);
       const totalGuests = totalMaleGuests + totalFemaleGuests;
-     
+
       const allMaleSeatedIds = Object.values(maleArrangement).flat();
       const allFemaleSeatedIds = Object.values(femaleArrangement).flat();
-     
+
       const maleSeatedPeople = allMaleSeatedIds.reduce((sum, guestId) => {
         const guest = confirmedGuests.find(g => g._id === guestId);
         if (!guest) return sum;
         return sum + (guest.maleCount || 0);
       }, 0);
-     
+
       const femaleSeatedPeople = allFemaleSeatedIds.reduce((sum, guestId) => {
         const guest = confirmedGuests.find(g => g._id === guestId);
         if (!guest) return sum;
         return sum + (guest.femaleCount || 0);
       }, 0);
-     
+
       const unseatedMaleGuests = Math.max(0, totalMaleGuests - maleSeatedPeople);
       const unseatedFemaleGuests = Math.max(0, totalFemaleGuests - femaleSeatedPeople);
 
@@ -2727,9 +2698,9 @@ const clearAllSeating = useCallback(() => {
         femaleSeatedGuests: femaleSeatedPeople,
         unseatedMaleGuests,
         unseatedFemaleGuests,
-        totalTables: tables.length + maleTables.length + femaleTables.length,
-        maleTables: maleTables.length,
-        femaleTables: femaleTables.length,
+        totalTables: savedTables.length + savedMaleTables.length + savedFemaleTables.length,
+        maleTables: savedMaleTables.length,
+        femaleTables: savedFemaleTables.length,
         occupiedTables: Object.keys(maleArrangement).length + Object.keys(femaleArrangement).length
       };
     } else {
@@ -2748,7 +2719,7 @@ const clearAllSeating = useCallback(() => {
       return {
         totalGuests,
         seatedGuests,
-        totalTables: tables.length,
+        totalTables: savedTables.length,
         occupiedTables: Object.keys(seatingArrangement).length
       };
     }
@@ -2958,21 +2929,21 @@ const clearAllSeating = useCallback(() => {
               </div>
             )}
           </div>
-          
+         
           <div className="vertical-divider"></div>
 
           <div className="guests-stat-item">
             <div className="summary-value large success-text">{stats.seatedGuests}</div>
             <div className="summary-label">{t('seating.stats.seatedGuests')}</div>
           </div>
-          
+         
           <div className="vertical-divider"></div>
 
           <div className="guests-stat-item">
             <div className="summary-value large">{stats.totalTables}</div>
             <div className="summary-label">{t('seating.stats.totalTables')}</div>
           </div>
-          
+         
           <div className="vertical-divider"></div>
 
           <div className="guests-stat-item">
@@ -3108,20 +3079,39 @@ const clearAllSeating = useCallback(() => {
           table={editingTable}
           guests={getFilteredGuests()}
           seatingArrangement={getCurrentArrangement()}
-          onClose={() => {
+          onClose={(wasSaved = false) => {
+            // If the table is a draft and was NOT saved, remove it from the state
+            if (editingTable && editingTable.isDraft && !wasSaved) {
+              if (isSeparatedSeating) {
+                const isInMaleTables = maleTables.some(t => t.id === editingTable.id);
+                const isInFemaleTables = femaleTables.some(t => t.id === editingTable.id);
+
+                if (isInMaleTables) {
+                  setMaleTables(maleTables.filter(t => t.id !== editingTable.id));
+                } else if (isInFemaleTables) {
+                  setFemaleTables(femaleTables.filter(t => t.id !== editingTable.id));
+                } else {
+                  setTables(tables.filter(t => t.id !== editingTable.id));
+                }
+              } else {
+                setTables(tables.filter(t => t.id !== editingTable.id));
+              }
+            } else if (!editingTable?.isDraft) {
+              // Update table names with groups as usual (only for non-draft tables)
+              if (isSeparatedSeating) {
+                const updatedMaleTables = updateTableNamesWithGroups(maleTables, maleArrangement, 'male');
+                const updatedFemaleTables = updateTableNamesWithGroups(femaleTables, femaleArrangement, 'female');
+                setMaleTables(updatedMaleTables);
+                setFemaleTables(updatedFemaleTables);
+              } else {
+                const updatedTables = updateTableNamesWithGroups(tables, seatingArrangement);
+                setTables(updatedTables);
+              }
+            }
+
             setIsTableModalOpen(false);
             setEditingTable(null);
             setSelectedTable(null);
-
-            if (isSeparatedSeating) {
-              const updatedMaleTables = updateTableNamesWithGroups(maleTables, maleArrangement, 'male');
-              const updatedFemaleTables = updateTableNamesWithGroups(femaleTables, femaleArrangement, 'female');
-              setMaleTables(updatedMaleTables);
-              setFemaleTables(updatedFemaleTables);
-            } else {
-              const updatedTables = updateTableNamesWithGroups(tables, seatingArrangement);
-              setTables(updatedTables);
-            }
           }}
           onUpdateTable={updateTable}
           onDeleteTable={deleteTable}

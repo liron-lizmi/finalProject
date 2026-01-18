@@ -214,7 +214,7 @@ const TableDetailsModal = ({
 
   const handleSave = () => {
   const capacity = parseInt(formData.capacity, 10);
-  
+
   if (isNaN(capacity) || capacity < 8 || capacity > 24) {
     setShowInvalidCapacityModal(true);
     return;
@@ -225,18 +225,19 @@ const TableDetailsModal = ({
     setShowCapacityTooSmallModal(true);
     return;
   }
-  
+
   const newSize = calculateTableSize(formData.type, capacity);
-  
+
   onUpdateTable(table.id, {
     name: formData.name,
     capacity: capacity,
     type: formData.type,
     notes: formData.notes,
+    isDraft: false,
     size: newSize
   });
-  
-  onClose();
+
+  onClose(true);
 };
 
   const handleDelete = () => {
