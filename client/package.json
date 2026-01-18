@@ -50,6 +50,7 @@
     "react-app-rewired": "^2.2.1"
   },
   "overrides": {
-    "nth-check": "^2.1.1"
+    "nth-check": "^2.1.1",
+    "diff": "^8.0.3"
   }
 }
