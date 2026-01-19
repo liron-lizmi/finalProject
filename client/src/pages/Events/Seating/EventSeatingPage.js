@@ -29,9 +29,11 @@ const EventSeatingPage = () => {
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [preferences, setPreferences] = useState({
-    groupTogether: [],
-    keepSeparate: [],
-    specialRequests: []
+    seatingRules: { mustSitTogether: [], cannotSitTogether: [] },
+    groupMixingRules: [],
+    groupPolicies: {},
+    allowGroupMixing: false,
+    preferredTableSize: 12
   });
   const [draggedGuest, setDraggedGuest] = useState(null);
   const [editingTable, setEditingTable] = useState(null);
@@ -416,9 +418,11 @@ const EventSeatingPage = () => {
         }
 
         setPreferences(data.preferences || {
-          groupTogether: [],
-          keepSeparate: [],
-          specialRequests: []
+          seatingRules: { mustSitTogether: [], cannotSitTogether: [] },
+          groupMixingRules: [],
+          groupPolicies: {},
+          allowGroupMixing: false,
+          preferredTableSize: 12
         });
        
         if (data.layoutSettings) {
@@ -440,9 +444,11 @@ const EventSeatingPage = () => {
         setMaleArrangement({});
         setFemaleArrangement({});
         setPreferences({
-          groupTogether: [],
-          keepSeparate: [],
-          specialRequests: []
+          seatingRules: { mustSitTogether: [], cannotSitTogether: [] },
+          groupMixingRules: [],
+          groupPolicies: {},
+          allowGroupMixing: false,
+          preferredTableSize: 12
         });
         return { tables: [], arrangement: {} };
       } else {
@@ -2632,7 +2638,6 @@ const clearAllSeating = useCallback(() => {
   }, [eventId, fetchEventPermissions, fetchConfirmedGuests, fetchSeatingArrangement, checkAndHandlePendingSync, createGuestFingerprint]);
  
   const getCurrentTables = useCallback(() => {
-    // Filter out draft tables (tables being created but not yet saved)
     const filterDrafts = (tablesList) => tablesList.filter(t => !t.isDraft);
 
     if (isSeparatedSeating) {
@@ -2661,7 +2666,6 @@ const clearAllSeating = useCallback(() => {
   }, [confirmedGuests, isSeparatedSeating]);
 
   const stats = (() => {
-    // Filter out draft tables from statistics
     const savedTables = tables.filter(t => !t.isDraft);
     const savedMaleTables = maleTables.filter(t => !t.isDraft);
     const savedFemaleTables = femaleTables.filter(t => !t.isDraft);
@@ -3080,7 +3084,6 @@ const clearAllSeating = useCallback(() => {
           guests={getFilteredGuests()}
           seatingArrangement={getCurrentArrangement()}
           onClose={(wasSaved = false) => {
-            // If the table is a draft and was NOT saved, remove it from the state
             if (editingTable && editingTable.isDraft && !wasSaved) {
               if (isSeparatedSeating) {
                 const isInMaleTables = maleTables.some(t => t.id === editingTable.id);
@@ -3097,7 +3100,6 @@ const clearAllSeating = useCallback(() => {
                 setTables(tables.filter(t => t.id !== editingTable.id));
               }
             } else if (!editingTable?.isDraft) {
-              // Update table names with groups as usual (only for non-draft tables)
               if (isSeparatedSeating) {
                 const updatedMaleTables = updateTableNamesWithGroups(maleTables, maleArrangement, 'male');
                 const updatedFemaleTables = updateTableNamesWithGroups(femaleTables, femaleArrangement, 'female');
@@ -3142,6 +3144,12 @@ const clearAllSeating = useCallback(() => {
           eventId={eventId}
           onAddTables={handleAddTablesFromAI}
           getNextTableNumber={getNextTableNumber}
+          onPreferencesChange={(newPrefs) => {
+            setPreferences(prev => ({
+              ...prev,
+              ...newPrefs
+            }));
+          }}
         />
 
         <SyncOptionsModal

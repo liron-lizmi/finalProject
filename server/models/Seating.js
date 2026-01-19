@@ -70,28 +70,6 @@ const TableSchema = new mongoose.Schema({
 }, { _id: false });
 
 const PreferenceSchema = new mongoose.Schema({
-  groupTogether: [{
-    id: String,
-    name: String,
-    guestIds: [String]
-  }],
-  keepSeparate: [{
-    id: String,
-    guest1Id: String,
-    guest2Id: String,
-    reason: String
-  }],
-  specialRequests: [{
-    id: String,
-    guestId: String,
-    request: String,
-    priority: {
-      type: String,
-      enum: ['low', 'medium', 'high'],
-      default: 'medium'
-    }
-  }],
-
   seatingRules: {
     mustSitTogether: [{
       id: String,
@@ -124,8 +102,7 @@ const PreferenceSchema = new mongoose.Schema({
   },
   
   groupPolicies: {
-    type: Map,
-    of: String, 
+    type: mongoose.Schema.Types.Mixed,
     default: {}
   }
 
@@ -207,9 +184,6 @@ const SeatingSchema = new mongoose.Schema({
   preferences: {
     type: PreferenceSchema,
     default: {
-      groupTogether: [],
-      keepSeparate: [],
-      specialRequests: [],
       seatingRules: {
         mustSitTogether: [],
         cannotSitTogether: []
@@ -218,7 +192,7 @@ const SeatingSchema = new mongoose.Schema({
       allowGroupMixing: false,
       preferredTableSize: 12,
       groupPolicies: {}
-      }
+    }
   },
   layoutSettings: {
     canvasScale: {

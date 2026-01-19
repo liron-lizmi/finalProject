@@ -18,7 +18,8 @@ const AISeatingModal = ({
   femaleArrangement = {},
   canEdit = true,
   onFetchTableSuggestion,
-  eventId
+  eventId,
+  onPreferencesChange
 }) => {
   const { t } = useTranslation();
   const [aiPreferences, setAiPreferences] = useState({
@@ -85,6 +86,7 @@ const AISeatingModal = ({
 
   const isFetchingRef = useRef(false);
   const lastFetchKey = useRef('');
+  const isInitializingPrefsRef = useRef(false);
 
   const canAddMustSitRule = React.useMemo(() => {
   if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
@@ -181,6 +183,35 @@ const AISeatingModal = ({
   }, [guests, isSeparatedSeating]);
 
   useEffect(() => {
+    if (isOpen && preferences) {
+      isInitializingPrefsRef.current = true;
+      setAiPreferences(prev => ({
+        ...prev,
+        allowGroupMixing: preferences.allowGroupMixing || false,
+        groupMixingRules: preferences.groupMixingRules || [],
+        groupPolicies: preferences.groupPolicies || {},
+        preferredTableSize: preferences.preferredTableSize || 12
+      }));
+      setTimeout(() => {
+        isInitializingPrefsRef.current = false;
+      }, 100);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isInitializingPrefsRef.current) return;
+    if (onPreferencesChange && isOpen) {
+      onPreferencesChange({
+        seatingRules: seatingRules,
+        allowGroupMixing: aiPreferences.allowGroupMixing,
+        groupMixingRules: aiPreferences.groupMixingRules,
+        groupPolicies: aiPreferences.groupPolicies,
+        preferredTableSize: aiPreferences.preferredTableSize
+      });
+    }
+  }, [seatingRules, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies, aiPreferences.preferredTableSize, isOpen, onPreferencesChange]);
+
+  useEffect(() => {
     if (!isOpen) {
       setIsGenerating(false);
       setShowTableCreation(false);
@@ -196,10 +227,10 @@ const AISeatingModal = ({
       setInitialLoad(false);
      
       const loadInitialSuggestion = async () => {
-        if (preferences) {
+        if (preferences?.seatingRules) {
           setSeatingRules({
-            mustSitTogether: preferences.groupTogether || [],
-            cannotSitTogether: preferences.keepSeparate || []
+            mustSitTogether: preferences.seatingRules.mustSitTogether || [],
+            cannotSitTogether: preferences.seatingRules.cannotSitTogether || []
           });
         }
        

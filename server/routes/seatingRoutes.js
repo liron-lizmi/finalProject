@@ -23,6 +23,10 @@ const { checkEditPermission, checkViewPermission } = require('../middleware/chec
 
 router.use(auth);
 
+router.use((req, res, next) => {
+  next();
+});
+
 router.get('/', checkViewPermission, getSeatingArrangement); 
 router.post('/', checkEditPermission, saveSeatingArrangement); 
 router.delete('/', checkEditPermission, deleteSeatingArrangement); 
