@@ -124,7 +124,7 @@ const SyncTriggerSchema = new mongoose.Schema({
       'bulk_guests_added',
       'status_became_confirmed',
       'status_no_longer_confirmed',
-      'attending_count_changed'
+      'attending_count_increased'
     ],
     required: true
   },

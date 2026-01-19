@@ -819,7 +819,7 @@ const processSeatingSync = async (req, res) => {
           hasChanges = true;
          
           if (trigger.changeData?.type === 'status_no_longer_confirmed' ||
-              trigger.changeData?.type === 'attending_count_changed') {
+              trigger.changeData?.type === 'attending_count_increased') {
             hasGuestRemovalOrUpdate = true;
           }
         }
@@ -1244,7 +1244,7 @@ const checkForConflictingChanges = async (seating, triggers, guests) => {
       return true;
     }
    
-    if (changeType === 'rsvp_updated' && changeData.type === 'attending_count_changed') {
+    if (changeType === 'rsvp_updated' && changeData.type === 'attending_count_increased') {
       const { guestId, newCount, oldCount } = changeData;
       const changeAmount = newCount - oldCount;
      
@@ -1418,7 +1418,7 @@ const processSingleTrigger = async (seating, trigger, guests, req) => {
         } else if (changeData.type === 'status_no_longer_confirmed') {
           const result = await unseatGuest(seating, changeData.guestId, guests, req);
           actions.push(...result.actions);
-        } else if (changeData.type === 'attending_count_changed') {
+        } else if (changeData.type === 'attending_count_increased') {
           const result = await handleAttendingCountChangeOnly(seating, changeData, guests, req);
           actions.push(...result.actions);
         }
@@ -3004,7 +3004,7 @@ const getAffectedGendersFromTriggers = (triggers) => {
     if (changeType === 'guest_added' || changeType === 'rsvp_updated') {
       if (changeData.changedGenders && changeData.changedGenders.length > 0) {
         changeData.changedGenders.forEach(gender => affectedGenders.add(gender));
-      } else if (changeData.type === 'attending_count_changed') {
+      } else if (changeData.type === 'attending_count_increased') {
         const { oldMaleCount, newMaleCount, oldFemaleCount, newFemaleCount } = changeData;
         if (oldMaleCount !== newMaleCount) {
           affectedGenders.add('male');
@@ -3103,7 +3103,7 @@ const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy
         } else if (changeData.type === 'status_no_longer_confirmed') {
           const result = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
           actions.push(...result.actions);
-        } else if (changeData.type === 'attending_count_changed') {
+        } else if (changeData.type === 'attending_count_increased') {
           const result = await simulateAttendingCountChange(optionSeating, changeData, guests, req, strategy);
           actions.push(...result.actions);
         }
