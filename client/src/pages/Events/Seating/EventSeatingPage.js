@@ -547,7 +547,10 @@ const EventSeatingPage = () => {
         preserveExisting: aiPreferences.preserveExisting,
         allMaleTables: aiPreferences.allMaleTables || maleTables,
         allFemaleTables: aiPreferences.allFemaleTables || femaleTables,
-        isSeparatedSeating: true
+        isSeparatedSeating: true,
+        useCustomTablesOnly: aiPreferences.useCustomTablesOnly,
+        useMaleCustomTablesOnly: aiPreferences.useMaleCustomTablesOnly,
+        useFemaleCustomTablesOnly: aiPreferences.useFemaleCustomTablesOnly
       } : {
         tables,
         preferences: { ...preferences, ...aiPreferences },
@@ -556,7 +559,8 @@ const EventSeatingPage = () => {
         clearExisting: aiPreferences.clearExisting,
         preserveExisting: aiPreferences.preserveExisting,
         allTables: aiPreferences.allTables || tables,
-        isSeparatedSeating: false
+        isSeparatedSeating: false,
+        useCustomTablesOnly: aiPreferences.useCustomTablesOnly
       };
    
       const response = await makeApiRequest(`/api/events/${eventId}/seating/ai-generate`, {

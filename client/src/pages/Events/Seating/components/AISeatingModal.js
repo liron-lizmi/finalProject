@@ -427,14 +427,19 @@ const AISeatingModal = ({
       requiredCapacity = Math.ceil(guestsCount * bufferPercent);
     }
     
+    // Skip capacity warnings when using custom tables only - emergency tables will be created if needed
+    if (usingCustomOnly) {
+      return { valid: true };
+    }
+
     if (totalPlannedTables === 0 && existingCapacity < guestsCount) {
       return { valid: false, reason: 'noTables', missing: guestsCount - existingCapacity };
     }
-    
+
     if (totalAvailable < requiredCapacity) {
       return { valid: false, reason: 'insufficientCapacity', missing: requiredCapacity - totalAvailable };
     }
-    
+
     return { valid: true };
   };
 
@@ -538,17 +543,18 @@ const AISeatingModal = ({
     if (hasInvalidCustomTableSize) {
       setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
     }
-    else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded) {
+    else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded && !usingCustomTablesOnly) {
       const missingSeats = guestsNeeded - existingCapacity;
       setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
     }
     else if (largestPlannedTableCapacity > 0 && largestGuestSize > largestPlannedTableCapacity) {
-      setCapacityWarning(t('seating.ai.guestTooLargeWarning', { 
-        guestSize: largestGuestSize, 
-        tableSize: largestPlannedTableCapacity 
+      setCapacityWarning(t('seating.ai.guestTooLargeWarning', {
+        guestSize: largestGuestSize,
+        tableSize: largestPlannedTableCapacity
       }));
     }
-    else if (totalAvailable < requiredCapacity) {
+    else if (totalAvailable < requiredCapacity && !usingCustomTablesOnly) {
+      // Skip capacity warning when using custom tables only - emergency tables will be created if needed
       const missingSeats = requiredCapacity - totalAvailable;
       setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
     } else {

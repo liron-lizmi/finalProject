@@ -5204,6 +5204,33 @@ const generateAISeating = async (req, res) => {
               }
             }
           });
+
+          // Check for unassigned male guests and create emergency tables if needed
+          const assignedMaleGuestIds = new Set(Object.values(aiMaleArrangement).flat());
+          const unassignedMaleGuestsAfterCustom = maleGuests.filter(g => !assignedMaleGuestIds.has(g._id.toString()));
+
+          if (unassignedMaleGuestsAfterCustom.length > 0) {
+            const unassignedMalePeopleCount = unassignedMaleGuestsAfterCustom.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+
+            // Create emergency tables for unassigned male guests
+            const emergencyMaleTables = createAdditionalTables(unassignedMalePeopleCount, maleTablesList.length, req, enhancedPreferences.preferredTableSize || 12);
+
+            // Run seating algorithm for unassigned male guests on emergency tables
+            const emergencyMaleResult = generateOptimalSeating(unassignedMaleGuestsAfterCustom, emergencyMaleTables, enhancedPreferences, 'male');
+
+            // Add emergency tables to the male tables list
+            emergencyMaleTables.forEach((emergencyTable) => {
+              emergencyTable.isEmergency = true;
+              maleTablesList.push(emergencyTable);
+            });
+
+            // Add emergency arrangement to the male arrangement
+            Object.entries(emergencyMaleResult.arrangement).forEach(([tableId, guestIds]) => {
+              if (guestIds && guestIds.length > 0) {
+                aiMaleArrangement[tableId] = guestIds;
+              }
+            });
+          }
         } else if (maleDryRunResult.tables && maleDryRunResult.tables.length > 0) {
           maleTablesList = maleDryRunResult.tables;
           aiMaleArrangement = maleDryRunResult.arrangement;
@@ -5300,6 +5327,33 @@ const generateAISeating = async (req, res) => {
               }
             }
           });
+
+          // Check for unassigned female guests and create emergency tables if needed
+          const assignedFemaleGuestIds = new Set(Object.values(aiFemaleArrangement).flat());
+          const unassignedFemaleGuestsAfterCustom = femaleGuests.filter(g => !assignedFemaleGuestIds.has(g._id.toString()));
+
+          if (unassignedFemaleGuestsAfterCustom.length > 0) {
+            const unassignedFemalePeopleCount = unassignedFemaleGuestsAfterCustom.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+
+            // Create emergency tables for unassigned female guests
+            const emergencyFemaleTables = createAdditionalTables(unassignedFemalePeopleCount, femaleTablesList.length, req, enhancedPreferences.preferredTableSize || 12);
+
+            // Run seating algorithm for unassigned female guests on emergency tables
+            const emergencyFemaleResult = generateOptimalSeating(unassignedFemaleGuestsAfterCustom, emergencyFemaleTables, enhancedPreferences, 'female');
+
+            // Add emergency tables to the female tables list
+            emergencyFemaleTables.forEach((emergencyTable) => {
+              emergencyTable.isEmergency = true;
+              femaleTablesList.push(emergencyTable);
+            });
+
+            // Add emergency arrangement to the female arrangement
+            Object.entries(emergencyFemaleResult.arrangement).forEach(([tableId, guestIds]) => {
+              if (guestIds && guestIds.length > 0) {
+                aiFemaleArrangement[tableId] = guestIds;
+              }
+            });
+          }
         } else if (femaleDryRunResult.tables && femaleDryRunResult.tables.length > 0) {
           femaleTablesList = femaleDryRunResult.tables;
           aiFemaleArrangement = femaleDryRunResult.arrangement;
@@ -5509,6 +5563,13 @@ const generateAISeating = async (req, res) => {
 
         const useCustom = useCustomTablesOnly || (preferences && preferences.useCustomTablesOnly);
 
+        console.log('=== DEBUG CUSTOM TABLES ===');
+        console.log('useCustomTablesOnly:', useCustomTablesOnly);
+        console.log('preferences?.useCustomTablesOnly:', preferences?.useCustomTablesOnly);
+        console.log('useCustom:', useCustom);
+        console.log('allTables?.length:', allTables?.length);
+        console.log('tablesToUse?.length:', tablesToUse?.length);
+
         if (useCustom && allTables && allTables.length > 0) {
           const originalTables = tablesToUse.map(t => ({
             id: t.id,
@@ -5634,7 +5695,7 @@ const generateAISeating = async (req, res) => {
               }
               
               const targetTable = bestTableSameGroup || bestTableEmpty || bestTableAnyGroup;
-              
+
               if (targetTable) {
                 if (!aiArrangement[targetTable.id]) {
                   aiArrangement[targetTable.id] = [];
@@ -5645,7 +5706,46 @@ const generateAISeating = async (req, res) => {
             }
           }
 
-          
+          // Check for still unassigned guests and create emergency tables if needed
+          const finalAssignedGuestIds = new Set(Object.values(aiArrangement).flat());
+          const stillUnassignedGuests = guests.filter(g => !finalAssignedGuestIds.has(g._id.toString()));
+
+          console.log('=== EMERGENCY TABLES CHECK ===');
+          console.log('Total guests:', guests.length);
+          console.log('Assigned guests:', finalAssignedGuestIds.size);
+          console.log('Still unassigned:', stillUnassignedGuests.length);
+          console.log('Tables before emergency:', tablesToUse.length);
+
+          if (stillUnassignedGuests.length > 0) {
+            const stillUnassignedPeopleCount = stillUnassignedGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+            console.log('Unassigned people count:', stillUnassignedPeopleCount);
+
+            // Create emergency tables for unassigned guests
+            const emergencyTables = createAdditionalTables(stillUnassignedPeopleCount, tablesToUse.length, req, enhancedPreferences.preferredTableSize || 12);
+            console.log('Emergency tables created:', emergencyTables.length);
+
+            // Run seating algorithm for unassigned guests on emergency tables
+            const emergencyResult = generateOptimalSeating(stillUnassignedGuests, emergencyTables, enhancedPreferences, null);
+            console.log('Emergency result arrangement keys:', Object.keys(emergencyResult.arrangement || {}).length);
+
+            // Add emergency tables to the tables list
+            emergencyTables.forEach((emergencyTable) => {
+              emergencyTable.isEmergency = true;
+              tablesToUse.push(emergencyTable);
+            });
+
+            // Add emergency arrangement to the main arrangement
+            Object.entries(emergencyResult.arrangement).forEach(([tableId, guestIds]) => {
+              if (guestIds && guestIds.length > 0) {
+                aiArrangement[tableId] = guestIds;
+              }
+            });
+
+            console.log('Tables after emergency:', tablesToUse.length);
+          } else {
+            console.log('No unassigned guests - no emergency tables needed');
+          }
+
         } else {
           const dryRunResult = runDryGenerateOptimalSeating(guests, tablesToUse, enhancedPreferences, null);
           if (!dryRunResult || !dryRunResult.arrangement || !dryRunResult.tables) {
