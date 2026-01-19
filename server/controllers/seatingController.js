@@ -5003,8 +5003,20 @@ const generateAISeating = async (req, res) => {
       isSeparatedSeating,
       useCustomTablesOnly,
       useMaleCustomTablesOnly,
-      useFemaleCustomTablesOnly
+      useFemaleCustomTablesOnly,
+      useModifiedPresetTables,
+      useMaleModifiedPresetTables,
+      useFemaleModifiedPresetTables
     } = req.body;
+
+    console.log('=== AI GENERATE SEATING - FLAGS RECEIVED ===');
+    console.log('isSeparatedSeating:', isSeparatedSeating);
+    console.log('useCustomTablesOnly:', useCustomTablesOnly);
+    console.log('useModifiedPresetTables:', useModifiedPresetTables);
+    console.log('useMaleCustomTablesOnly:', useMaleCustomTablesOnly);
+    console.log('useMaleModifiedPresetTables:', useMaleModifiedPresetTables);
+    console.log('useFemaleCustomTablesOnly:', useFemaleCustomTablesOnly);
+    console.log('useFemaleModifiedPresetTables:', useFemaleModifiedPresetTables);
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -5366,7 +5378,9 @@ const generateAISeating = async (req, res) => {
       }
 
       const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
-      if (!useMaleCustom) {
+      const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
+      const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
+      if (!useMaleUserSelected) {
         maleTablesList = maleTablesList.filter(table => {
           const tableGuests = aiMaleArrangement[table.id];
           const hasGuests = tableGuests && Array.isArray(tableGuests) && tableGuests.length > 0;
@@ -5375,15 +5389,17 @@ const generateAISeating = async (req, res) => {
       }
 
       const useFemaleCustom = useFemaleCustomTablesOnly || (preferences && preferences.useFemaleCustomTablesOnly);
-      if (!useFemaleCustom) {
+      const useFemaleModifiedPreset = useFemaleModifiedPresetTables || (preferences && preferences.useFemaleModifiedPresetTables);
+      const useFemaleUserSelected = useFemaleCustom || useFemaleModifiedPreset;
+      if (!useFemaleUserSelected) {
         femaleTablesList = femaleTablesList.filter(table => {
           const tableGuests = aiFemaleArrangement[table.id];
           const hasGuests = tableGuests && Array.isArray(tableGuests) && tableGuests.length > 0;
           return hasGuests;
         });
       }
-      
-      if (useMaleCustom) {
+
+      if (useMaleUserSelected) {
         maleTablesList.sort((a, b) => {
           const aHasGuests = (aiMaleArrangement[a.id] && aiMaleArrangement[a.id].length > 0) ? 1 : 0;
           const bHasGuests = (aiMaleArrangement[b.id] && aiMaleArrangement[b.id].length > 0) ? 1 : 0;
@@ -5394,8 +5410,8 @@ const generateAISeating = async (req, res) => {
         const newMaleTables = maleTablesList.filter(t => !t.isLocked);
         maleTablesList = [...lockedMaleTables, ...newMaleTables];
       }
-      
-      if (useFemaleCustom) {
+
+      if (useFemaleUserSelected) {
         femaleTablesList.sort((a, b) => {
           const aHasGuests = (aiFemaleArrangement[a.id] && aiFemaleArrangement[a.id].length > 0) ? 1 : 0;
           const bHasGuests = (aiFemaleArrangement[b.id] && aiFemaleArrangement[b.id].length > 0) ? 1 : 0;
@@ -5562,15 +5578,22 @@ const generateAISeating = async (req, res) => {
       } else {
 
         const useCustom = useCustomTablesOnly || (preferences && preferences.useCustomTablesOnly);
+        const useModifiedPreset = useModifiedPresetTables || (preferences && preferences.useModifiedPresetTables);
+        // Use user's selected tables if they chose custom tables OR modified preset tables
+        const useUserSelectedTables = useCustom || useModifiedPreset;
 
-        console.log('=== DEBUG CUSTOM TABLES ===');
+        console.log('=== DEBUG USER SELECTED TABLES (non-separated) ===');
         console.log('useCustomTablesOnly:', useCustomTablesOnly);
+        console.log('useModifiedPresetTables:', useModifiedPresetTables);
         console.log('preferences?.useCustomTablesOnly:', preferences?.useCustomTablesOnly);
+        console.log('preferences?.useModifiedPresetTables:', preferences?.useModifiedPresetTables);
         console.log('useCustom:', useCustom);
+        console.log('useModifiedPreset:', useModifiedPreset);
+        console.log('useUserSelectedTables:', useUserSelectedTables);
         console.log('allTables?.length:', allTables?.length);
         console.log('tablesToUse?.length:', tablesToUse?.length);
 
-        if (useCustom && allTables && allTables.length > 0) {
+        if (useUserSelectedTables && allTables && allTables.length > 0) {
           const originalTables = tablesToUse.map(t => ({
             id: t.id,
             capacity: t.capacity,
