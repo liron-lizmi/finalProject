@@ -530,6 +530,9 @@ const AISeatingModal = ({
       presetTablesCount > 0 &&
       JSON.stringify(currentPresetSettings.map(s => s.count)) !== JSON.stringify(suggestedTableSettings.map(s => s.count));
 
+    // Skip warnings when user selected any custom tables (emergency tables will be created if needed)
+    const usingUserSelectedTables = usingCustomTablesOnly || usingModifiedPresetTables || customTablesCount > 0;
+
     const largestGuestSize = guests.reduce((max, guest) => Math.max(max, guest.attendingCount || 1), 0);
 
     let largestPlannedTableCapacity = 0;
@@ -560,7 +563,7 @@ const AISeatingModal = ({
     if (hasInvalidCustomTableSize) {
       setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
     }
-    else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded && !usingCustomTablesOnly && !usingModifiedPresetTables) {
+    else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded && !usingUserSelectedTables) {
       const missingSeats = guestsNeeded - existingCapacity;
       setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
     }
@@ -570,17 +573,18 @@ const AISeatingModal = ({
         tableSize: largestPlannedTableCapacity
       }));
     }
-    else if (totalAvailable < requiredCapacity && !usingCustomTablesOnly && !usingModifiedPresetTables) {
-      // Skip capacity warning when using custom tables only or modified preset tables - emergency tables will be created if needed
+    else if (totalAvailable < requiredCapacity && !usingUserSelectedTables) {
+      // Skip capacity warning when user selected tables - emergency tables will be created if needed
       const missingSeats = requiredCapacity - totalAvailable;
       setCapacityWarning(t('seating.ai.insufficientCapacityWarning', { missing: missingSeats }));
     } else {
       setCapacityWarning('');
     }
   }
-}, [showTableCreation, tableSettings, customTableSettings, maleTableSettings, femaleTableSettings, 
+}, [showTableCreation, tableSettings, customTableSettings, maleTableSettings, femaleTableSettings,
     customMaleTableSettings, customFemaleTableSettings, guests, tables, maleTables, femaleTables,
-    isSeparatedSeating, t, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies]);
+    isSeparatedSeating, t, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies,
+    suggestedTableSettings, suggestedMaleTableSettings, suggestedFemaleTableSettings]);
 
   const autoSuggestTables = async (guestsNeedingSeats, allowMixing = null, customGroupPolicies = null, gender = null, customGroupMixingRules = null, preserveExisting = false) => {
 
@@ -1005,6 +1009,9 @@ const AISeatingModal = ({
         presetMaleTablesCount > 0 &&
         JSON.stringify(maleTableSettings.map(s => s.count)) !== JSON.stringify(suggestedMaleTableSettings.map(s => s.count));
 
+      // Use user's selected tables when they made any modifications (custom only, modified preset, or both)
+      const useMaleUserSelectedTables = useMaleCustomTablesOnly || useMaleModifiedPresetTables || customMaleTablesCount > 0;
+
       const presetFemaleTablesCount = femaleTableSettings.reduce((sum, s) => sum + s.count, 0);
       const customFemaleTablesCount = customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0);
       const totalFemaleTables = presetFemaleTablesCount + customFemaleTablesCount;
@@ -1015,7 +1022,10 @@ const AISeatingModal = ({
         !useFemaleCustomTablesOnly &&
         presetFemaleTablesCount > 0 &&
         JSON.stringify(femaleTableSettings.map(s => s.count)) !== JSON.stringify(suggestedFemaleTableSettings.map(s => s.count));
-     
+
+      // Use user's selected tables when they made any modifications (custom only, modified preset, or both)
+      const useFemaleUserSelectedTables = useFemaleCustomTablesOnly || useFemaleModifiedPresetTables || customFemaleTablesCount > 0;
+
       const maleCols = COLS;
       const femaleCols = COLS;
      
@@ -1186,10 +1196,11 @@ const AISeatingModal = ({
           }
          
           await new Promise(resolve => setTimeout(resolve, 1500));
-         
-          const allMaleTablesForGeneration = useMaleCustomTablesOnly ? maleTablesList : [...maleTables, ...maleTablesList];
-          const allFemaleTablesForGeneration = useFemaleCustomTablesOnly ? femaleTablesList : [...femaleTables, ...femaleTablesList];
-         
+
+          // Use user's selected tables when they made any modifications
+          const allMaleTablesForGeneration = useMaleUserSelectedTables ? maleTablesList : [...maleTables, ...maleTablesList];
+          const allFemaleTablesForGeneration = useFemaleUserSelectedTables ? femaleTablesList : [...femaleTables, ...femaleTablesList];
+
           const aiPreferencesWithExisting = {
             ...aiPreferences,
             preserveExisting: existingArrangementAction === 'continue',
@@ -1208,12 +1219,16 @@ const AISeatingModal = ({
             useFemaleCustomTablesOnly: useFemaleCustomTablesOnly,
             useMaleModifiedPresetTables: useMaleModifiedPresetTables,
             useFemaleModifiedPresetTables: useFemaleModifiedPresetTables,
+            useMaleUserSelectedTables: useMaleUserSelectedTables,
+            useFemaleUserSelectedTables: useFemaleUserSelectedTables,
             preferences: {
               ...aiPreferences,
               useMaleCustomTablesOnly: useMaleCustomTablesOnly,
               useFemaleCustomTablesOnly: useFemaleCustomTablesOnly,
               useMaleModifiedPresetTables: useMaleModifiedPresetTables,
-              useFemaleModifiedPresetTables: useFemaleModifiedPresetTables
+              useFemaleModifiedPresetTables: useFemaleModifiedPresetTables,
+              useMaleUserSelectedTables: useMaleUserSelectedTables,
+              useFemaleUserSelectedTables: useFemaleUserSelectedTables
             }
           };
          
@@ -1420,6 +1435,9 @@ const AISeatingModal = ({
             presetTablesCount > 0 &&
             JSON.stringify(tableSettings.map(s => s.count)) !== JSON.stringify(suggestedTableSettings.map(s => s.count));
 
+          // Use user's selected tables when they made any modifications (custom only, modified preset, or both)
+          const useUserSelectedTables = useCustomTablesOnly || useModifiedPresetTables || customTablesCount > 0;
+
           console.log('=== HANDLE CREATE TABLES (non-separated) ===');
           console.log('Current tableSettings:', JSON.stringify(tableSettings.map(s => ({ capacity: s.capacity, count: s.count }))));
           console.log('Suggested tableSettings:', suggestedTableSettings ? JSON.stringify(suggestedTableSettings.map(s => ({ capacity: s.capacity, count: s.count }))) : 'null');
@@ -1427,9 +1445,10 @@ const AISeatingModal = ({
           console.log('customTablesCount:', customTablesCount);
           console.log('useCustomTablesOnly:', useCustomTablesOnly);
           console.log('useModifiedPresetTables:', useModifiedPresetTables);
+          console.log('useUserSelectedTables:', useUserSelectedTables);
           console.log('tablesToCreate count:', tablesToCreate.length);
 
-          const allTablesForGeneration = useCustomTablesOnly ? tablesToCreate : [...tables, ...tablesToCreate];
+          const allTablesForGeneration = useUserSelectedTables ? tablesToCreate : [...tables, ...tablesToCreate];
 
           const aiPreferencesWithExisting = {
             ...aiPreferences,
@@ -1443,10 +1462,12 @@ const AISeatingModal = ({
             isSeparatedSeating: false,
             useCustomTablesOnly: useCustomTablesOnly,
             useModifiedPresetTables: useModifiedPresetTables,
+            useUserSelectedTables: useUserSelectedTables,
             preferences: {
               ...aiPreferences,
               useCustomTablesOnly: useCustomTablesOnly,
-              useModifiedPresetTables: useModifiedPresetTables
+              useModifiedPresetTables: useModifiedPresetTables,
+              useUserSelectedTables: useUserSelectedTables
             }
           };
 

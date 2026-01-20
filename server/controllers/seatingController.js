@@ -5006,7 +5006,10 @@ const generateAISeating = async (req, res) => {
       useFemaleCustomTablesOnly,
       useModifiedPresetTables,
       useMaleModifiedPresetTables,
-      useFemaleModifiedPresetTables
+      useFemaleModifiedPresetTables,
+      useUserSelectedTables: useUserSelectedTablesFromBody,
+      useMaleUserSelectedTables,
+      useFemaleUserSelectedTables
     } = req.body;
 
     console.log('=== AI GENERATE SEATING - FLAGS RECEIVED ===');
@@ -5579,16 +5582,20 @@ const generateAISeating = async (req, res) => {
 
         const useCustom = useCustomTablesOnly || (preferences && preferences.useCustomTablesOnly);
         const useModifiedPreset = useModifiedPresetTables || (preferences && preferences.useModifiedPresetTables);
-        // Use user's selected tables if they chose custom tables OR modified preset tables
-        const useUserSelectedTables = useCustom || useModifiedPreset;
+        const useUserSelectedFromBody = useUserSelectedTablesFromBody || (preferences && preferences.useUserSelectedTables);
+        // Use user's selected tables if they chose custom tables, modified preset tables, or explicitly selected
+        const useUserSelectedTables = useCustom || useModifiedPreset || useUserSelectedFromBody;
 
         console.log('=== DEBUG USER SELECTED TABLES (non-separated) ===');
         console.log('useCustomTablesOnly:', useCustomTablesOnly);
         console.log('useModifiedPresetTables:', useModifiedPresetTables);
+        console.log('useUserSelectedTablesFromBody:', useUserSelectedTablesFromBody);
         console.log('preferences?.useCustomTablesOnly:', preferences?.useCustomTablesOnly);
         console.log('preferences?.useModifiedPresetTables:', preferences?.useModifiedPresetTables);
+        console.log('preferences?.useUserSelectedTables:', preferences?.useUserSelectedTables);
         console.log('useCustom:', useCustom);
         console.log('useModifiedPreset:', useModifiedPreset);
+        console.log('useUserSelectedFromBody:', useUserSelectedFromBody);
         console.log('useUserSelectedTables:', useUserSelectedTables);
         console.log('allTables?.length:', allTables?.length);
         console.log('tablesToUse?.length:', tablesToUse?.length);
