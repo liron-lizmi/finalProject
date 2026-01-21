@@ -3919,45 +3919,29 @@ const createTableSimulation = (optionSeating, capacity, tableNumber, req, target
   let tableType = 'round';
   let width = 120;
   let height = 120;
- 
-  if (allExistingTables.length > 0) {
-    const typeCount = {};
-    allExistingTables.forEach(table => {
-      typeCount[table.type] = (typeCount[table.type] || 0) + 1;
-    });
-   
-    const mostCommonType = Object.keys(typeCount)
-      .reduce((a, b) => typeCount[a] > typeCount[b] ? a : b);
-   
-    if (mostCommonType === 'round' && capacity <= 12) {
-      tableType = 'round';
-      width = 120;
-      height = 120;
-    } else if (mostCommonType === 'rectangular') {
-      tableType = 'rectangular';
-      width = capacity > 12 ? 180 : 160;
-      height = 100;
-    } else {
-      if (capacity <= 10) {
-        tableType = 'round';
-        width = 120;
-        height = 120;
-      } else {
-        tableType = 'rectangular';
-        width = capacity > 12 ? 180 : 160;
-        height = 100;
-      }
-    }
+
+  if (capacity <= 12) {
+    tableType = 'round';
+    width = 120;
+    height = 120;
   } else {
-    if (capacity <= 10) {
-      tableType = 'round';
-      width = 120;
-      height = 120;
+    if (allExistingTables.length > 0) {
+      const typeCount = {};
+      allExistingTables.forEach(table => {
+        typeCount[table.type] = (typeCount[table.type] || 0) + 1;
+      });
+
+      const mostCommonType = Object.keys(typeCount)
+        .reduce((a, b) => typeCount[a] > typeCount[b] ? a : b);
+
+      if (mostCommonType === 'rectangular') {
+        tableType = 'rectangular';
+      }
     } else {
       tableType = 'rectangular';
-      width = capacity > 12 ? 180 : 160;
-      height = 100;
     }
+    width = capacity > 12 ? 180 : 160;
+    height = 100;
   }
 
   let posX, posY;
@@ -5157,8 +5141,10 @@ const generateAISeating = async (req, res) => {
         
       } else {
         const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
-        
-        if (useMaleCustom && allMaleTables && allMaleTables.length > 0) {
+        const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
+        const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
+
+        if (useMaleUserSelected && allMaleTables && allMaleTables.length > 0) {
           const originalMaleTables = maleTablesList.map(t => ({
             id: t.id,
             capacity: t.capacity,
@@ -5277,8 +5263,10 @@ const generateAISeating = async (req, res) => {
         
       } else {
         const useFemaleCustom = useFemaleCustomTablesOnly || (preferences && preferences.useFemaleCustomTablesOnly);
-        
-        if (useFemaleCustom && allFemaleTables && allFemaleTables.length > 0) {
+        const useFemaleModifiedPreset = useFemaleModifiedPresetTables || (preferences && preferences.useFemaleModifiedPresetTables);
+        const useFemaleUserSelected = useFemaleCustom || useFemaleModifiedPreset;
+
+        if (useFemaleUserSelected && allFemaleTables && allFemaleTables.length > 0) {
           const originalFemaleTables = femaleTablesList.map(t => ({
             id: t.id,
             capacity: t.capacity,
@@ -5405,7 +5393,7 @@ const generateAISeating = async (req, res) => {
       }
       
       const MALE_START_X = 300;
-      const FEMALE_START_X = 1300;
+      const FEMALE_START_X = 1400;
       const START_Y = 250;
       const SPACING_X = 200;
       const SPACING_Y = 180;
@@ -7059,7 +7047,7 @@ function calculateNextTablePosition(existingTables, gender = null) {
   const BOUNDARY_PADDING = 150;
  
   const MALE_START_X = 300;
-  const FEMALE_START_X = 1300;  
+  const FEMALE_START_X = 1400;
   const DEFAULT_START_Y = 280;
   const DEFAULT_SPACING_X = 200;
   const DEFAULT_SPACING_Y = 180;
@@ -8296,12 +8284,11 @@ lter(i =>
               id: tableId,
               name: `שולחן ${tableNumber}`,
               capacity: capacity,
-              type: tableType,
+              type: capacity > 12 ? 'rectangular' : 'round',
               position: calculateNextTablePosition(tables, gender),
               rotation: 0,
-              type: capacity >= 24 ? 'rectangular' : 'round',
-              size: capacity >= 24 
-                ? { width: 160, height: 100 }
+              size: capacity > 12
+                ? { width: capacity > 12 ? 180 : 160, height: 100 }
                 : { width: 120, height: 120 },
               assignedGuests: [],
               remainingCapacity: capacity,
@@ -8608,9 +8595,9 @@ lter(i =>
             type: tableType,
             position: calculateNextTablePosition(tables, gender),
             rotation: 0,
-            type: requiredCapacity >= 24 ? 'rectangular' : 'round',
-            size: requiredCapacity >= 24 
-              ? { width: 160, height: 100 }
+            type: requiredCapacity > 12 ? 'rectangular' : 'round',
+            size: requiredCapacity > 12
+              ? { width: requiredCapacity > 12 ? 180 : 160, height: 100 }
               : { width: 120, height: 120 },
             assignedGuests: [],
             remainingCapacity: requiredCapacity,
@@ -8738,9 +8725,9 @@ lter(i =>
             type: tableType,
             position: calculateNextTablePosition(tables, gender),
             rotation: 0,
-            type: requiredCapacity >= 24 ? 'rectangular' : 'round',
-            size: requiredCapacity >= 24 
-              ? { width: 160, height: 100 }
+            type: requiredCapacity > 12 ? 'rectangular' : 'round',
+            size: requiredCapacity > 12
+              ? { width: requiredCapacity > 12 ? 180 : 160, height: 100 }
               : { width: 120, height: 120 },
             assignedGuests: [],
             remainingCapacity: newCapacity,
@@ -8931,12 +8918,11 @@ lter(i =>
               id: tableId,
               name: `שולחן ${tableNumber}`,
               capacity: newCapacity,
-              type: tableType,
+              type: newCapacity > 12 ? 'rectangular' : 'round',
               position: calculateNextTablePosition(tables, gender),
               rotation: 0,
-              type: newCapacity >= 24 ? 'rectangular' : 'round',
-              size: newCapacity >= 24
-                ? { width: 160, height: 100 }
+              size: newCapacity > 12
+                ? { width: newCapacity > 12 ? 180 : 160, height: 100 }
                 : { width: 120, height: 120 },
               assignedGuests: [],
               remainingCapacity: newCapacity,
@@ -9164,15 +9150,13 @@ lter(i =>
        
         if (correctCapacity !== table.capacity) {
           table.capacity = correctCapacity;
-          table.type = correctCapacity >= 24 ? 'rectangular' : 'round';
+          table.type = correctCapacity > 12 ? 'rectangular' : 'round';
           table.remainingCapacity = correctCapacity - totalPeople;
-          
-          if (correctCapacity === 10) {
+
+          if (correctCapacity <= 12) {
             table.size = { width: 120, height: 120 };
-          } else if (correctCapacity === 12) {
-            table.size = { width: 120, height: 120 };
-          } else if (correctCapacity >= 24) {
-            table.size = { width: 160, height: 100 };
+          } else {
+            table.size = { width: correctCapacity > 12 ? 180 : 160, height: 100 };
           }
         }
       }
@@ -9239,9 +9223,9 @@ lter(i =>
     }, 0);
    
     table.capacity = capacity1;
-    table.type = capacity1 >= 24 ? 'rectangular' : 'round';
-    table.size = capacity1 >= 24 
-      ? { width: 160, height: 100 }
+    table.type = capacity1 > 12 ? 'rectangular' : 'round';
+    table.size = capacity1 > 12
+      ? { width: capacity1 > 12 ? 180 : 160, height: 100 }
       : { width: 120, height: 120 };
     table.remainingCapacity = capacity1 - people1;
     arrangement[table.id] = guests1;
@@ -9263,9 +9247,9 @@ lter(i =>
       id: `split_${table.id}_${Date.now()}`,
       name: `שולחן ${newTableNumber}`,
       capacity: capacity2,
-      type: capacity2 >= 24 ? 'rectangular' : 'round',
-      size: capacity2 >= 24 
-        ? { width: 160, height: 100 }
+      type: capacity2 > 12 ? 'rectangular' : 'round',
+      size: capacity2 > 12
+        ? { width: capacity2 > 12 ? 180 : 160, height: 100 }
         : { width: 120, height: 120 },
       position: newPosition,
       remainingCapacity: capacity2 - people2,
@@ -10295,7 +10279,7 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
   });
 
   if (gender === 'male' || gender === 'female') {
-    const START_X = gender === 'male' ? 300 : 1300;
+    const START_X = gender === 'male' ? 300 : 1400;
     const START_Y = 280;
     const SPACING_X = 200;
     const SPACING_Y = 180;
