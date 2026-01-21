@@ -969,9 +969,9 @@ const AISeatingModal = ({
     const SPACING_Y = 180;
     const COLS = isSeparatedSeating ? 5 : 10;
     const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
-    const START_X = 300;  
-    const START_Y = 250;  
-    const FEMALE_START_X = 1200;
+    const START_X = 300;
+    const START_Y = 250;
+    const FEMALE_START_X = 1400;
 
     if (isSeparatedSeating) {
       const maleTablesList = [];
@@ -1218,8 +1218,8 @@ const AISeatingModal = ({
             let femaleTablesToUpdate = result.femaleTables || [];
             let femaleArrangementToUse = result.femaleArrangement;
             
-            const maleCols = 4;
-            const femaleCols = 4;
+            const maleCols = 5;
+            const femaleCols = 5;
             
             
             if (useFemaleCustomTablesOnly) {
