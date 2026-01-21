@@ -1622,6 +1622,57 @@
   background-color: white;
 }
 
+.emergency-tables-list {
+  margin-top: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.emergency-table-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  gap: 10px;
+}
+
+.emergency-table-number {
+  font-weight: 600;
+  color: #856404;
+  min-width: 25px;
+}
+
+.emergency-table-name {
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.emergency-table-capacity {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.modal-btn.confirm {
+  background-color: #728a66 !important;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-btn.confirm:hover {
+  background-color: #728a66 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
 .footer-right {
   display: flex;
   gap: 12px;
@@ -3092,6 +3143,11 @@
   order: unset !important;
 }
 
+.seating-rules-config .add-rule-form .guest-select {
+  direction: rtl;
+  text-align: right;
+}
+
 .seating-rules-config .add-rule-form .validation-message {
   width: 100%;
   order: 4;
@@ -3197,7 +3253,7 @@
 .remove-rule-btn {
   background: none;
   border: none;
-  color: #666;
+  color: #f44336;
   font-size: 18px;
   cursor: pointer;
   padding: 4px;
@@ -3211,8 +3267,8 @@
 }
 
 .remove-rule-btn:hover {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  background: rgba(244, 67, 54, 0.2);
+  color: #d32f2f;
 }
 
 .table-size-preference {

@@ -36,6 +36,9 @@ const SeatingCanvas = forwardRef(({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [tableToDelete, setTableToDelete] = useState(null);
   const [dragOverTable, setDragOverTable] = useState(null);
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [emergencyTables, setEmergencyTables] = useState([]);
+  const [shownEmergencyTableIds, setShownEmergencyTableIds] = useState(new Set());
 
   const getTableGender = useCallback((table) => {
     if (!isSeparatedSeating) return null;
@@ -48,6 +51,36 @@ const SeatingCanvas = forwardRef(({
     }
     return null;
   }, [isSeparatedSeating, maleTables, femaleTables]);
+
+  // Detect new emergency tables and show modal
+  useEffect(() => {
+    const allTables = isSeparatedSeating
+      ? [...(maleTables || []), ...(femaleTables || [])]
+      : (tables || []);
+
+    // Debug: log tables with isEmergency
+    const emergencyTablesInList = allTables.filter(table => table.isEmergency);
+    if (emergencyTablesInList.length > 0) {
+      console.log('Emergency tables found:', emergencyTablesInList);
+    }
+
+    const newEmergencyTables = allTables.filter(table =>
+      table.isEmergency && !shownEmergencyTableIds.has(table.id)
+    );
+
+    if (newEmergencyTables.length > 0) {
+      console.log('New emergency tables to show:', newEmergencyTables);
+      setEmergencyTables(newEmergencyTables);
+      setIsEmergencyModalOpen(true);
+
+      // Mark these tables as shown so we don't show them again
+      setShownEmergencyTableIds(prev => {
+        const newSet = new Set(prev);
+        newEmergencyTables.forEach(table => newSet.add(table.id));
+        return newSet;
+      });
+    }
+  }, [tables, maleTables, femaleTables, isSeparatedSeating, shownEmergencyTableIds]);
 
   const CANVAS_WIDTH = 2400;  
   const CANVAS_HEIGHT = 1600; 
@@ -993,6 +1026,34 @@ const SeatingCanvas = forwardRef(({
               </button>
               <button className="modal-btn cancel" onClick={() => setIsDeleteModalOpen(false)}>
                 {t('seating.table.cancelAddGuests')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEmergencyModalOpen && emergencyTables.length > 0 && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{t('seating.emergencyTablesCreated')}</h3>
+              <button className="modal-close" onClick={() => setIsEmergencyModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>{t('seating.emergencyTablesMessage')}</p>
+              <div className="emergency-tables-list">
+                {emergencyTables.map((table, index) => (
+                  <div key={table.id} className="emergency-table-item">
+                    <span className="emergency-table-number">{index + 1}.</span>
+                    <span className="emergency-table-name">{table.name}</span>
+                    <span className="emergency-table-capacity">({table.capacity} {t('seating.ai.seats')})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn confirm" onClick={() => setIsEmergencyModalOpen(false)}>
+                {t('common.ok')}
               </button>
             </div>
           </div>

@@ -1219,6 +1219,7 @@
     "delete": "מחיקה",
     "or": "או",
     "save": "שמירה",
+    "ok": "אישור",
     "formats": {
       "pdf": "PDF",
       "excel": "Excel",
@@ -1361,6 +1362,8 @@
     "addTable": "הוסף שולחן",
     "cancelAddTable": "בטל הוספת שולחן",
     "confirmDeleteTable": "האם אתה בטוח שברצונך למחוק שולחן זה?",
+    "emergencyTablesCreated": "נוצרו שולחנות חירום",
+    "emergencyTablesMessage": "לא היה מספיק מקום בשולחנות שנבחרו, ולכן נוצרו שולחנות חירום נוספים:",
     "contextMenu": {
       "editTable": "ערוך שולחן",
       "deleteTable": "מחק שולחן",
@@ -1697,6 +1700,7 @@
       "tableSizeTooSmallWarning": "גודל שולחן מינימלי הוא 8 מקומות",
       "insufficientMaleCapacityWarning": "אין מספיק מקומות לגברים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
       "insufficientFemaleCapacityWarning": "אין מספיק מקומות לנשים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
+      "guestTooLargeWarning": "יש אורח עם {{guestSize}} אנשים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",
       "guestTooLargeWarningMale": "יש אורח עם {{guestSize}} גברים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",
       "guestTooLargeWarningFemale": "יש אורח עם {{guestSize}} נשים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",
       "customTablesOptimizationNote": "השיבוץ ינסה למלא את השולחנות בצורה אופטימלית, לכן ייתכן שחלק מהשולחנות יישארו ריקים. תוכל למחוק אותם באופן ידני בלחיצה ימנית על השולחן.",

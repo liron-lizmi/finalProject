@@ -62,6 +62,10 @@ const TableSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isEmergency: {
+    type: Boolean,
+    default: false
+  },
   order: {
     type: Number,
     required: true,

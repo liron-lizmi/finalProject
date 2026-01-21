@@ -1219,6 +1219,7 @@
     "delete": "Delete",
     "or": "or",
     "save": "Save",
+    "ok": "OK",
     "formats": {
       "pdf": "PDF",
       "excel": "Excel",
@@ -1361,6 +1362,8 @@
     "addTable": "Add Table",
     "cancelAddTable": "Cancel Adding Table",
     "confirmDeleteTable": "Are you sure you want to delete this table?",
+    "emergencyTablesCreated": "Emergency Tables Created",
+    "emergencyTablesMessage": "There wasn't enough space in the selected tables, so additional emergency tables were created:",
     "contextMenu": {
       "editTable": "Edit Table",
       "deleteTable": "Delete Table",
@@ -1697,6 +1700,7 @@
       "tableSizeTooSmallWarning": "Minimum table size is 8 seats",
       "insufficientMaleCapacityWarning": "Not enough seats for men. Missing {{missing}} seats. Please add tables.",
       "insufficientFemaleCapacityWarning": "Not enough seats for women. Missing {{missing}} seats. Please add tables.",
+      "guestTooLargeWarning": "A guest has {{guestSize}} people- larger than the biggest table ({{tableSize}} seats)",
       "guestTooLargeWarningMale": "A guest has {{guestSize}} men - larger than the biggest table ({{tableSize}} seats)",
       "guestTooLargeWarningFemale": "A guest has {{guestSize}} women - larger than the biggest table ({{tableSize}} seats)",
       "customTablesOptimizationNote": "The insert will try to fill the tables optimally, so some tables may remain empty. You can delete them manually by right-clicking on the table.",

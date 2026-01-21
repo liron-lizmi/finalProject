@@ -1153,7 +1153,7 @@ const AISeatingModal = ({
       if (maleTablesList.length > 0 || femaleTablesList.length > 0) {
         try {
           setIsGenerating(true);
-          
+
           if (existingArrangementAction === 'continue') {
             if (maleTables.length > 0) {
               const repositionedMaleTables = maleTables.map((table, index) => {
@@ -1310,7 +1310,7 @@ const AISeatingModal = ({
               await onAddTables(updatedFemaleTables, 'female');
             }
           }
-         
+
           onClose();
         } catch (error) {
           setIsGenerating(false);
@@ -1339,30 +1339,53 @@ const AISeatingModal = ({
       const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) +
                         customTableSettings.reduce((sum, s) => sum + s.count, 0);
      
-      const cols = COLS;
-     
+      const COLS_FIRST_SECTION = 5;
+      const COLS_OTHER_SECTIONS = 4;
+      const ROWS = 7;
+      const TABLES_FIRST_SECTION = ROWS * COLS_FIRST_SECTION; // 35 tables in first section
+      const TABLES_OTHER_SECTION = ROWS * COLS_OTHER_SECTIONS; // 28 tables in other sections
+      const SECTION_GAP = 200; // Gap between sections
+
+      // Helper function to calculate position
+      const calculatePosition = (tableIndex) => {
+        let row, col, sectionOffset;
+        if (tableIndex < TABLES_FIRST_SECTION) {
+          // First section - 5 columns
+          row = Math.floor(tableIndex / COLS_FIRST_SECTION);
+          col = tableIndex % COLS_FIRST_SECTION;
+          sectionOffset = 0;
+        } else {
+          // Other sections - 4 columns
+          const indexAfterFirst = tableIndex - TABLES_FIRST_SECTION;
+          const section = 1 + Math.floor(indexAfterFirst / TABLES_OTHER_SECTION);
+          const indexInSection = indexAfterFirst % TABLES_OTHER_SECTION;
+          row = Math.floor(indexInSection / COLS_OTHER_SECTIONS);
+          col = indexInSection % COLS_OTHER_SECTIONS;
+          sectionOffset = (COLS_FIRST_SECTION * SPACING_X + SECTION_GAP) + (section - 1) * (COLS_OTHER_SECTIONS * SPACING_X + SECTION_GAP);
+        }
+        return {
+          x: START_X + col * SPACING_X + sectionOffset,
+          y: Math.min(START_Y + row * SPACING_Y, MAX_Y - 100)
+        };
+      };
+
       let startingTableIndex = 0;
       if (existingArrangementAction === 'continue' && tables.length > 0) {
         startingTableIndex = tables.length;
       }
-     
+
       let currentTable = startingTableIndex;
-     
+
       tableSettings.forEach(setting => {
         for (let i = 0; i < setting.count; i++) {
-          const row = Math.floor(currentTable / cols);
-          const col = currentTable % cols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
-         
+          const position = calculatePosition(currentTable);
+
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
             name: `${t('seating.tableName')} ${tableCounter}`,
             type: setting.type,
             capacity: setting.capacity,
-            position: {
-              x: START_X + col * SPACING_X,
-              y: y
-            },
+            position: position,
             rotation: 0,
             size: setting.type === 'round'
               ? { width: 120, height: 120 }
@@ -1373,22 +1396,17 @@ const AISeatingModal = ({
           currentTable++;
         }
       });
-     
+
       customTableSettings.forEach(setting => {
         for (let i = 0; i < setting.count; i++) {
-          const row = Math.floor(currentTable / cols);
-          const col = currentTable % cols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
-         
+          const position = calculatePosition(currentTable);
+
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
             name: `${t('seating.tableName')} ${tableCounter}`,
             type: setting.type,
             capacity: setting.capacity,
-            position: {
-              x: START_X + col * SPACING_X,
-              y: y
-            },
+            position: position,
             rotation: 0,
             size: setting.type === 'round'
               ? { width: 120, height: 120 }
@@ -1404,18 +1422,13 @@ const AISeatingModal = ({
 
         try {
           setIsGenerating(true);
-          
+
           if (existingArrangementAction === 'continue' && tables.length > 0) {
             const repositionedExistingTables = tables.map((table, index) => {
-              const row = Math.floor(index / cols);
-              const col = index % cols;
-              const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+              const position = calculatePosition(index);
               return {
                 ...table,
-                position: {
-                  x: START_X + col * SPACING_X,
-                  y: y
-                }
+                position: position
               };
             });
             await onAddTables(repositionedExistingTables);
@@ -1496,7 +1509,7 @@ const AISeatingModal = ({
               await onAddTables(allTablesToUpdate);
             }
           }
-         
+
           onClose();
         } catch (error) {
           setIsGenerating(false);
@@ -1942,21 +1955,21 @@ const AISeatingModal = ({
                     genderView === 'male' ? (
                       <>
                         <span>{t('seating.ai.existingMaleTables')}: <strong>{maleTables.length}</strong> ({totalMaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.plannedNewMaleTables')}: <strong>{maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedMaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.totalMaleCapacity')}: <strong>{totalMaleCapacity + plannedMaleCapacity}</strong> {t('seating.ai.seats')}</span>
+                        <span>{t('seating.ai.plannedNewMaleTables')}: <strong>{isGenerating ? 0 : maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({isGenerating ? 0 : plannedMaleCapacity} {t('seating.ai.seats')})</span>
+                        <span>{t('seating.ai.totalMaleCapacity')}: <strong>{isGenerating ? totalMaleCapacity : totalMaleCapacity + plannedMaleCapacity}</strong> {t('seating.ai.seats')}</span>
                       </>
                     ) : (
                       <>
                         <span>{t('seating.ai.existingFemaleTables')}: <strong>{femaleTables.length}</strong> ({totalFemaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.plannedNewFemaleTables')}: <strong>{femaleTableSettings.reduce((sum, s) => sum + s.count, 0) + customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({plannedFemaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.totalFemaleCapacity')}: <strong>{totalFemaleCapacity + plannedFemaleCapacity}</strong> {t('seating.ai.seats')}</span>
+                        <span>{t('seating.ai.plannedNewFemaleTables')}: <strong>{isGenerating ? 0 : femaleTableSettings.reduce((sum, s) => sum + s.count, 0) + customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({isGenerating ? 0 : plannedFemaleCapacity} {t('seating.ai.seats')})</span>
+                        <span>{t('seating.ai.totalFemaleCapacity')}: <strong>{isGenerating ? totalFemaleCapacity : totalFemaleCapacity + plannedFemaleCapacity}</strong> {t('seating.ai.seats')}</span>
                       </>
                     )
                   ) : (
                     <>
                       <span>{t('seating.ai.existingTables')}: <strong>{tables.length}</strong> ({totalCapacity} {t('seating.ai.seats')})</span>
-                      <span>{t('seating.ai.plannedNewTables')}: <strong>{tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong></span>
-                      <span>{t('seating.ai.totalCapacity')}: <strong>{totalCapacity + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
+                      <span>{t('seating.ai.plannedNewTables')}: <strong>{isGenerating ? 0 : tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong></span>
+                      <span>{t('seating.ai.totalCapacity')}: <strong>{isGenerating ? totalCapacity : totalCapacity + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
                     </>
                   )}
                 </div>
@@ -2255,6 +2268,7 @@ const AISeatingModal = ({
                                   onClick={() => removeGroupMixRule(rule.id)}
                                   className="remove-rule-btn"
                                 >
+                                  ✕
                                 </button>
                               </div>
                             ))}
