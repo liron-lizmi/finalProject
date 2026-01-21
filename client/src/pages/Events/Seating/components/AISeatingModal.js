@@ -967,7 +967,7 @@ const AISeatingModal = ({
     const BOUNDARY_PADDING = 150;
     const SPACING_X = 200;
     const SPACING_Y = 180;
-    const COLS = isSeparatedSeating ? 4 : 5;
+    const COLS = isSeparatedSeating ? 5 : 10;
     const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
     const START_X = 300;  
     const START_Y = 250;  
@@ -1317,32 +1317,18 @@ const AISeatingModal = ({
       const tablesToCreate = [];
       let tableCounter = getNextTableNumber ? getNextTableNumber() : tables.length + 1;
      
-      const totalTables = tableSettings.reduce((sum, s) => sum + s.count, 0) +
+      const newTablesCount = tableSettings.reduce((sum, s) => sum + s.count, 0) +
                         customTableSettings.reduce((sum, s) => sum + s.count, 0);
-     
-      const COLS_FIRST_SECTION = 5;
-      const COLS_OTHER_SECTIONS = 4;
-      const ROWS = 7;
-      const TABLES_FIRST_SECTION = ROWS * COLS_FIRST_SECTION;
-      const TABLES_OTHER_SECTION = ROWS * COLS_OTHER_SECTIONS; 
-      const SECTION_GAP = 200;
+      const existingTablesCount = existingArrangementAction === 'continue' ? tables.length : 0;
+      const totalTables = existingTablesCount + newTablesCount;
+
+      const COLS = totalTables > 35 ? 10 : 5;
 
       const calculatePosition = (tableIndex) => {
-        let row, col, sectionOffset;
-        if (tableIndex < TABLES_FIRST_SECTION) {
-          row = Math.floor(tableIndex / COLS_FIRST_SECTION);
-          col = tableIndex % COLS_FIRST_SECTION;
-          sectionOffset = 0;
-        } else {
-          const indexAfterFirst = tableIndex - TABLES_FIRST_SECTION;
-          const section = 1 + Math.floor(indexAfterFirst / TABLES_OTHER_SECTION);
-          const indexInSection = indexAfterFirst % TABLES_OTHER_SECTION;
-          row = Math.floor(indexInSection / COLS_OTHER_SECTIONS);
-          col = indexInSection % COLS_OTHER_SECTIONS;
-          sectionOffset = (COLS_FIRST_SECTION * SPACING_X + SECTION_GAP) + (section - 1) * (COLS_OTHER_SECTIONS * SPACING_X + SECTION_GAP);
-        }
+        const row = Math.floor(tableIndex / COLS);
+        const col = tableIndex % COLS;
         return {
-          x: START_X + col * SPACING_X + sectionOffset,
+          x: START_X + col * SPACING_X,
           y: Math.min(START_Y + row * SPACING_Y, MAX_Y - 100)
         };
       };

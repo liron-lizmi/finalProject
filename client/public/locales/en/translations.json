@@ -1601,6 +1601,7 @@
       "warningNoGuests": "No confirmed guests",
       "existingArrangementFound": "Existing arrangement found",
       "existingArrangementDescription": "You already have a partial arrangement with {{tablesCount}} occupied tables and {{seatedGuests}} seated out of {{totalGuests}} guests.",
+      "existingArrangementDescriptionSeparated": "You already have a partial arrangement with {{maleTablesCount}} male tables and {{femaleTablesCount}} female tables.",
       "seatedGuests": "Seated Guests",
       "unseatedGuests": "Unseated Guests",
       "populatedTables": "Populated Tables",

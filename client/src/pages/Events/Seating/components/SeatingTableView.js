@@ -312,7 +312,7 @@ const SeatingTableView = ({
     const startX = targetGender === 'male' ? 300 : 1200;
     const startY = 250;
     const spacing = 200;
-    const cols = 3;
+    const cols = 5;
 
     if (!relevantTables || relevantTables.length === 0) {
       return { x: startX, y: startY };
@@ -382,9 +382,10 @@ const SeatingTableView = ({
     } else {
       relevantTables = tables;
       const tableCounter = relevantTables.length;
+      const cols = tableCounter > 35 ? 10 : 5;
       position = {
-        x: 300 + (tableCounter % 3) * 200,
-        y: 250 + Math.floor(tableCounter / 3) * 200
+        x: 300 + (tableCounter % cols) * 200,
+        y: 250 + Math.floor(tableCounter / cols) * 200
       };
     }
     

@@ -1601,6 +1601,7 @@
       "warningNoGuests": "אין מוזמנים שאישרו הגעה",
       "existingArrangementFound": "נמצא סידור הושבה קיים",
       "existingArrangementDescription": "יש לך כבר סידור חלקי עם {{tablesCount}} שולחנות מאוכלסים ו-{{seatedGuests}} אורחים משובצים מתוך {{totalGuests}}.",
+      "existingArrangementDescriptionSeparated": "יש לך כבר סידור חלקי עם {{maleTablesCount}} שולחנות גברים ו-{{femaleTablesCount}} שולחנות נשים.",
       "seatedGuests": "אורחים משובצים",
       "unseatedGuests": "אורחים לא משובצים",
       "populatedTables": "שולחנות מאוכלסים",

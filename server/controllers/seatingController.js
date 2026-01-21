@@ -5012,14 +5012,6 @@ const generateAISeating = async (req, res) => {
       useFemaleUserSelectedTables
     } = req.body;
 
-    console.log('=== AI GENERATE SEATING - FLAGS RECEIVED ===');
-    console.log('isSeparatedSeating:', isSeparatedSeating);
-    console.log('useCustomTablesOnly:', useCustomTablesOnly);
-    console.log('useModifiedPresetTables:', useModifiedPresetTables);
-    console.log('useMaleCustomTablesOnly:', useMaleCustomTablesOnly);
-    console.log('useMaleModifiedPresetTables:', useMaleModifiedPresetTables);
-    console.log('useFemaleCustomTablesOnly:', useFemaleCustomTablesOnly);
-    console.log('useFemaleModifiedPresetTables:', useFemaleModifiedPresetTables);
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -5228,13 +5220,10 @@ const generateAISeating = async (req, res) => {
 
             const existing24MaleTables = maleTablesList.filter(t => t.capacity === 24).length;
 
-            // Create emergency tables for unassigned male guests
             const emergencyMaleTables = createAdditionalTables(unassignedMalePeopleCount, maleTablesList.length, req, enhancedPreferences.preferredTableSize || 12, existing24MaleTables);
 
-            // Run seating algorithm for unassigned male guests on emergency tables
             const emergencyMaleResult = generateOptimalSeating(unassignedMaleGuestsAfterCustom, emergencyMaleTables, enhancedPreferences, 'male');
 
-            // Add emergency tables to the male tables list
             emergencyMaleTables.forEach((emergencyTable) => {
               emergencyTable.isEmergency = true;
               maleTablesList.push(emergencyTable);
@@ -5351,7 +5340,6 @@ const generateAISeating = async (req, res) => {
 
             const existing24FemaleTables = femaleTablesList.filter(t => t.capacity === 24).length;
 
-            // Create emergency tables for unassigned female guests
             const emergencyFemaleTables = createAdditionalTables(unassignedFemalePeopleCount, femaleTablesList.length, req, enhancedPreferences.preferredTableSize || 12, existing24FemaleTables);
 
             const emergencyFemaleResult = generateOptimalSeating(unassignedFemaleGuestsAfterCustom, emergencyFemaleTables, enhancedPreferences, 'female');
@@ -5421,7 +5409,7 @@ const generateAISeating = async (req, res) => {
       const START_Y = 250;
       const SPACING_X = 200;
       const SPACING_Y = 180;
-      const COLS = 4;
+      const COLS = 5;
       
       maleTablesList.forEach((table, index) => {
         table.name = `שולחן ${index + 1}`;
@@ -5551,37 +5539,21 @@ const generateAISeating = async (req, res) => {
           aiArrangement = currentArrangement;
         }
         
-        const COLS_FIRST_SECTION = 5;
-        const COLS_OTHER_SECTIONS = 4;
-        const ROWS = 7;
-        const TABLES_FIRST_SECTION = ROWS * COLS_FIRST_SECTION; 
-        const TABLES_OTHER_SECTION = ROWS * COLS_OTHER_SECTIONS; 
+        const COLS = tablesToUse.length > 35 ? 10 : 5;
         const START_X = 300;
         const START_Y = 250;
         const SPACING_X = 200;
         const SPACING_Y = 180;
-        const SECTION_GAP = 200; 
 
         tablesToUse.forEach((table, index) => {
           table.order = index;
           table.name = `שולחן ${index + 1}`;
 
-          let row, col, sectionOffset;
-          if (index < TABLES_FIRST_SECTION) {
-            row = Math.floor(index / COLS_FIRST_SECTION);
-            col = index % COLS_FIRST_SECTION;
-            sectionOffset = 0;
-          } else {
-            const indexAfterFirst = index - TABLES_FIRST_SECTION;
-            const section = 1 + Math.floor(indexAfterFirst / TABLES_OTHER_SECTION);
-            const indexInSection = indexAfterFirst % TABLES_OTHER_SECTION;
-            row = Math.floor(indexInSection / COLS_OTHER_SECTIONS);
-            col = indexInSection % COLS_OTHER_SECTIONS;
-            sectionOffset = (COLS_FIRST_SECTION * SPACING_X + SECTION_GAP) + (section - 1) * (COLS_OTHER_SECTIONS * SPACING_X + SECTION_GAP);
-          }
+          const row = Math.floor(index / COLS);
+          const col = index % COLS;
 
           table.position = {
-            x: START_X + col * SPACING_X + sectionOffset,
+            x: START_X + col * SPACING_X,
             y: START_Y + row * SPACING_Y
           };
         });
@@ -5591,22 +5563,7 @@ const generateAISeating = async (req, res) => {
         const useCustom = useCustomTablesOnly || (preferences && preferences.useCustomTablesOnly);
         const useModifiedPreset = useModifiedPresetTables || (preferences && preferences.useModifiedPresetTables);
         const useUserSelectedFromBody = useUserSelectedTablesFromBody || (preferences && preferences.useUserSelectedTables);
-        // Use user's selected tables if they chose custom tables, modified preset tables, or explicitly selected
         const useUserSelectedTables = useCustom || useModifiedPreset || useUserSelectedFromBody;
-
-        console.log('=== DEBUG USER SELECTED TABLES (non-separated) ===');
-        console.log('useCustomTablesOnly:', useCustomTablesOnly);
-        console.log('useModifiedPresetTables:', useModifiedPresetTables);
-        console.log('useUserSelectedTablesFromBody:', useUserSelectedTablesFromBody);
-        console.log('preferences?.useCustomTablesOnly:', preferences?.useCustomTablesOnly);
-        console.log('preferences?.useModifiedPresetTables:', preferences?.useModifiedPresetTables);
-        console.log('preferences?.useUserSelectedTables:', preferences?.useUserSelectedTables);
-        console.log('useCustom:', useCustom);
-        console.log('useModifiedPreset:', useModifiedPreset);
-        console.log('useUserSelectedFromBody:', useUserSelectedFromBody);
-        console.log('useUserSelectedTables:', useUserSelectedTables);
-        console.log('allTables?.length:', allTables?.length);
-        console.log('tablesToUse?.length:', tablesToUse?.length);
 
         if (useUserSelectedTables && allTables && allTables.length > 0) {
           const originalTables = tablesToUse.map(t => ({
@@ -5744,27 +5701,17 @@ const generateAISeating = async (req, res) => {
             }
           }
 
-          // Check for still unassigned guests and create emergency tables if needed
           const finalAssignedGuestIds = new Set(Object.values(aiArrangement).flat());
           const stillUnassignedGuests = guests.filter(g => !finalAssignedGuestIds.has(g._id.toString()));
 
-          console.log('=== EMERGENCY TABLES CHECK ===');
-          console.log('Total guests:', guests.length);
-          console.log('Assigned guests:', finalAssignedGuestIds.size);
-          console.log('Still unassigned:', stillUnassignedGuests.length);
-          console.log('Tables before emergency:', tablesToUse.length);
-
           if (stillUnassignedGuests.length > 0) {
             const stillUnassignedPeopleCount = stillUnassignedGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-            console.log('Unassigned people count:', stillUnassignedPeopleCount);
 
             const existing24Tables = tablesToUse.filter(t => t.capacity === 24).length;
 
             const emergencyTables = createAdditionalTables(stillUnassignedPeopleCount, tablesToUse.length, req, enhancedPreferences.preferredTableSize || 12, existing24Tables);
-            console.log('Emergency tables created:', emergencyTables.length);
 
             const emergencyResult = generateOptimalSeating(stillUnassignedGuests, emergencyTables, enhancedPreferences, null);
-            console.log('Emergency result arrangement keys:', Object.keys(emergencyResult.arrangement || {}).length);
 
             emergencyTables.forEach((emergencyTable) => {
               emergencyTable.isEmergency = true;
@@ -5777,11 +5724,7 @@ const generateAISeating = async (req, res) => {
               }
             });
 
-            console.log('Tables after emergency:', tablesToUse.length);
-          } else {
-            console.log('No unassigned guests - no emergency tables needed');
           }
-
           tablesToUse.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
 
         } else {
@@ -5795,37 +5738,21 @@ const generateAISeating = async (req, res) => {
         }
       }
 
-      const COLS_FIRST_SECTION = 5;
-      const COLS_OTHER_SECTIONS = 4;
-      const ROWS = 7;
-      const TABLES_FIRST_SECTION = ROWS * COLS_FIRST_SECTION; 
-      const TABLES_OTHER_SECTION = ROWS * COLS_OTHER_SECTIONS; 
+      const COLS = tablesToUse.length > 35 ? 10 : 5;
       const START_X = 300;
       const START_Y = 250;
       const SPACING_X = 200;
       const SPACING_Y = 180;
-      const SECTION_GAP = 200; 
 
       tablesToUse.forEach((table, index) => {
         table.order = index;
         table.name = `שולחן ${index + 1}`;
 
-        let row, col, sectionOffset;
-        if (index < TABLES_FIRST_SECTION) {
-          row = Math.floor(index / COLS_FIRST_SECTION);
-          col = index % COLS_FIRST_SECTION;
-          sectionOffset = 0;
-        } else {
-          const indexAfterFirst = index - TABLES_FIRST_SECTION;
-          const section = 1 + Math.floor(indexAfterFirst / TABLES_OTHER_SECTION);
-          const indexInSection = indexAfterFirst % TABLES_OTHER_SECTION;
-          row = Math.floor(indexInSection / COLS_OTHER_SECTIONS);
-          col = indexInSection % COLS_OTHER_SECTIONS;
-          sectionOffset = (COLS_FIRST_SECTION * SPACING_X + SECTION_GAP) + (section - 1) * (COLS_OTHER_SECTIONS * SPACING_X + SECTION_GAP);
-        }
+        const row = Math.floor(index / COLS);
+        const col = index % COLS;
 
         table.position = {
-          x: START_X + col * SPACING_X + sectionOffset,
+          x: START_X + col * SPACING_X,
           y: START_Y + row * SPACING_Y
         };
       });
@@ -6195,7 +6122,7 @@ function createAdditionalTables(neededCapacity, startingNumber, req, preferredSi
   const START_Y = 200;
   const SPACING_X = 200;
   const SPACING_Y = 180;
-  const COLS = 4;
+  const COLS = startingNumber > 30 ? 10 : 5;
   const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
   const MAX_ROWS = Math.floor((MAX_Y - START_Y) / SPACING_Y);
 
@@ -7071,7 +6998,7 @@ function findBestGuestCombination(guests, tableCapacity) {
 
 function calculateNextTablePositionForGender(existingTables) {
   const SPACING = 200;
-  const COLS = 3;
+  const COLS = 5;
  
   if (!existingTables || existingTables.length === 0) {
     return { x: 300, y: 250 };
@@ -7134,9 +7061,9 @@ function calculateNextTablePosition(existingTables, gender = null) {
   const MALE_START_X = 300;
   const FEMALE_START_X = 1300;  
   const DEFAULT_START_Y = 280;
-  const DEFAULT_SPACING_X = 200; 
-  const DEFAULT_SPACING_Y = 180;  
-  const COLS = 4;  
+  const DEFAULT_SPACING_X = 200;
+  const DEFAULT_SPACING_Y = 180;
+  const COLS = 5;
   const START_X = gender === 'female' ? FEMALE_START_X : MALE_START_X;
  
   if (!existingTables || existingTables.length === 0) {
@@ -10372,7 +10299,7 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
     const START_Y = 280;
     const SPACING_X = 200;
     const SPACING_Y = 180;
-    const COLS = 4;
+    const COLS = 5;
     
     tablesCopy.forEach((table, index) => {
       table.order = index;
@@ -10389,34 +10316,18 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
     const START_Y = 250;
     const SPACING_X = 200;
     const SPACING_Y = 180;
-    const COLS_FIRST_SECTION = 5;
-    const COLS_OTHER_SECTIONS = 4;
-    const ROWS = 7;
-    const TABLES_FIRST_SECTION = ROWS * COLS_FIRST_SECTION; 
-    const TABLES_OTHER_SECTION = ROWS * COLS_OTHER_SECTIONS; 
-    const SECTION_GAP = 200; 
+    const COLS = tablesCopy.length > 35 ? 10 : 5;
     const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
 
     tablesCopy.forEach((table, index) => {
       table.name = `שולחן ${index + 1}`;
       table.order = index;
 
-      let row, col, sectionOffset;
-      if (index < TABLES_FIRST_SECTION) {
-        row = Math.floor(index / COLS_FIRST_SECTION);
-        col = index % COLS_FIRST_SECTION;
-        sectionOffset = 0;
-      } else {
-        const indexAfterFirst = index - TABLES_FIRST_SECTION;
-        const section = 1 + Math.floor(indexAfterFirst / TABLES_OTHER_SECTION);
-        const indexInSection = indexAfterFirst % TABLES_OTHER_SECTION;
-        row = Math.floor(indexInSection / COLS_OTHER_SECTIONS);
-        col = indexInSection % COLS_OTHER_SECTIONS;
-        sectionOffset = (COLS_FIRST_SECTION * SPACING_X + SECTION_GAP) + (section - 1) * (COLS_OTHER_SECTIONS * SPACING_X + SECTION_GAP);
-      }
+      const row = Math.floor(index / COLS);
+      const col = index % COLS;
 
       const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
-      const x = START_X + col * SPACING_X + sectionOffset;
+      const x = START_X + col * SPACING_X;
 
       table.position = { x, y };
     });

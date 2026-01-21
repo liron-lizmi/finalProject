@@ -526,7 +526,7 @@ const EventSeatingPage = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           saveSeatingArrangement(data);
-        }, 1500);
+        }, 1000);
       };
     })(),
     [saveSeatingArrangement]
@@ -1386,7 +1386,7 @@ const EventSeatingPage = () => {
       const startX = targetGender === 'male' ? 300 : 1200;
       const startY = 250;
       const spacing = 200;
-      const cols = 3;
+      const cols = 5;
 
       const allExistingTables = [
         ...(tables || []),
