@@ -643,12 +643,8 @@ html, body {
   flex-direction: row; 
 }
 
+.create-event-actions .cancel-button,
 .create-event-actions .submit-button {
-  margin-inline-end: 30px !important;
-}
-
-.cancel-button,
-.submit-button {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -670,15 +666,19 @@ html, body {
   flex: 0 0 auto !important;
 }
 
-.cancel-button:hover,
-.submit-button:hover {
+.create-event-actions .submit-button {
+  margin-inline-end: 30px !important;
+}
+
+.create-event-actions .cancel-button:hover,
+.create-event-actions .submit-button:hover {
   box-shadow: 0 6px 20px rgba(212, 185, 158, 0.4) !important;
   background: linear-gradient(135deg, #c4a98e, #b49878) !important;
   color: white !important;
   transform: none !important;
 }
 
-.submit-button:disabled {
+.create-event-actions .submit-button:disabled {
   opacity: 0.7 !important;
   cursor: not-allowed !important;
   transform: none !important;
@@ -864,14 +864,14 @@ label[for="eventTime"] {
     justify-content: flex-end !important;
   }
   
-  .cancel-button,
-  .submit-button {
+  .create-event-actions .cancel-button,
+  .create-event-actions .submit-button {
     padding: 15px 30px !important;
     font-size: 1rem !important;
     min-width: 130px !important;
     max-width: 150px !important;
   }
- 
+
   .event-form-container {
     padding: 30px 20px;
   }
@@ -922,8 +922,8 @@ label[for="eventTime"] {
     direction: rtl !important;
   }
 
-  .cancel-button,
-  .submit-button {
+  .create-event-actions .cancel-button,
+  .create-event-actions .submit-button {
     width: 100% !important;
     height: 50px !important;
     padding: 0 !important;
@@ -935,14 +935,6 @@ label[for="eventTime"] {
     justify-content: center !important;
     margin: 0 !important;
     white-space: nowrap !important;
-  }
-
-  .cancel-button {
-    max-width: none !important;
-    min-width: 0 !important;
-  }
-
-  .submit-button {
     max-width: none !important;
     min-width: 0 !important;
   }
@@ -965,17 +957,17 @@ label[for="eventTime"] {
   .create-event-actions {
     gap: 12px !important;
   }
-  
+
   .rtl.create-event-actions {
     justify-content: flex-start !important;
   }
-  
+
   .ltr.create-event-actions {
     justify-content: flex-end !important;
   }
-  
-  .cancel-button,
-  .submit-button {
+
+  .create-event-actions .cancel-button,
+  .create-event-actions .submit-button {
     padding: 15px 30px !important;
     font-size: 1rem !important;
     min-width: 130px !important;

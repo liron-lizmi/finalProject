@@ -1311,14 +1311,16 @@ body {
 }
 
 .notifications-dismiss {
-  background: #d4b99e; 
+  background: #d4b99e;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 6px; 
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
+  align-self: flex-start;
+  margin-top: 10px;
 }
 
 .notifications-dismiss:hover {
