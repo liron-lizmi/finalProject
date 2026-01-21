@@ -582,13 +582,15 @@ const EventSeatingPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-     
+
         if (isSeparatedSeating) {
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
-       
-          let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleTables;
-          let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleTables;
+
+          const maleFallback = aiPreferences.clearExisting ? (aiPreferences.allMaleTables || []) : maleTables;
+          const femaleFallback = aiPreferences.clearExisting ? (aiPreferences.allFemaleTables || []) : femaleTables;
+          let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleFallback;
+          let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleFallback;
 
           if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
             finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
@@ -619,8 +621,9 @@ const EventSeatingPage = () => {
           autoSave(layoutData);
         } else {
           setSeatingArrangement(data.arrangement);
-       
-          let finalTables = data.tables && data.tables.length > 0 ? data.tables : tables;
+
+          const tablesFallback = aiPreferences.clearExisting ? (aiPreferences.allTables || []) : tables;
+          let finalTables = data.tables && data.tables.length > 0 ? data.tables : tablesFallback;
        
           if (data.arrangement && Object.keys(data.arrangement).length > 0) {
             finalTables = updateTableNamesWithGroups(finalTables, data.arrangement);
@@ -873,17 +876,22 @@ const EventSeatingPage = () => {
    
   }, [maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, calculateTableSize, canEdit, isSeparatedSeating, tableCapacity, tableType]);
 
-  const handleAddTablesFromAI = useCallback(async (tablesToAdd, gender = null) => {
+  const handleAddTablesFromAI = useCallback(async (tablesToAdd, gender = null, clearExisting = false) => {
     try {
       if (isSeparatedSeating && gender) {
         if (gender === 'male') {
-          const existingIds = new Set(maleTables.map(t => t.id));
-          const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
-          const updatedExistingTables = maleTables.map(existingTable => {
-            const update = tablesToAdd.find(t => t.id === existingTable.id);
-            return update ? { ...existingTable, ...update } : existingTable;
-          });
-          const newMaleTables = [...updatedExistingTables, ...trulyNewTables];
+          let newMaleTables;
+          if (clearExisting) {
+            newMaleTables = tablesToAdd;
+          } else {
+            const existingIds = new Set(maleTables.map(t => t.id));
+            const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+            const updatedExistingTables = maleTables.map(existingTable => {
+              const update = tablesToAdd.find(t => t.id === existingTable.id);
+              return update ? { ...existingTable, ...update } : existingTable;
+            });
+            newMaleTables = [...updatedExistingTables, ...trulyNewTables];
+          }
           setMaleTables(newMaleTables);
          
           const layoutData = {
@@ -907,13 +915,18 @@ const EventSeatingPage = () => {
             throw new Error(t('seating.errors.saveTablesFailed'));
           }
         } else {
-          const existingIds = new Set(femaleTables.map(t => t.id));
-          const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
-          const updatedExistingTables = femaleTables.map(existingTable => {
-            const update = tablesToAdd.find(t => t.id === existingTable.id);
-            return update ? { ...existingTable, ...update } : existingTable;
-          });
-          const newFemaleTables = [...updatedExistingTables, ...trulyNewTables];
+          let newFemaleTables;
+          if (clearExisting) {
+            newFemaleTables = tablesToAdd;
+          } else {
+            const existingIds = new Set(femaleTables.map(t => t.id));
+            const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+            const updatedExistingTables = femaleTables.map(existingTable => {
+              const update = tablesToAdd.find(t => t.id === existingTable.id);
+              return update ? { ...existingTable, ...update } : existingTable;
+            });
+            newFemaleTables = [...updatedExistingTables, ...trulyNewTables];
+          }
           setFemaleTables(newFemaleTables);
          
           const layoutData = {
@@ -938,15 +951,20 @@ const EventSeatingPage = () => {
           }
         }
       } else {
-        const existingIds = new Set(tables.map(t => t.id));
-        const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
-       
-        const updatedExistingTables = tables.map(existingTable => {
-          const update = tablesToAdd.find(t => t.id === existingTable.id);
-          return update ? { ...existingTable, ...update } : existingTable;
-        });
-       
-        const newTables = [...updatedExistingTables, ...trulyNewTables];
+        let newTables;
+        if (clearExisting) {
+          newTables = tablesToAdd;
+        } else {
+          const existingIds = new Set(tables.map(t => t.id));
+          const trulyNewTables = tablesToAdd.filter(t => !existingIds.has(t.id));
+
+          const updatedExistingTables = tables.map(existingTable => {
+            const update = tablesToAdd.find(t => t.id === existingTable.id);
+            return update ? { ...existingTable, ...update } : existingTable;
+          });
+
+          newTables = [...updatedExistingTables, ...trulyNewTables];
+        }
         setTables(newTables);
        
         const layoutData = {
