@@ -1699,6 +1699,7 @@
       "seatingRulesTitle": "חוקי ישיבה",
       "insufficientCapacityWarning": "אין מספיק מקומות לכל המוזמנים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
       "tableSizeTooSmallWarning": "גודל שולחן מינימלי הוא 8 מקומות",
+      "tableSizeTooBigWarning": "גודל שולחן מקסימלי הוא 36 מקומות",
       "insufficientMaleCapacityWarning": "אין מספיק מקומות לגברים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
       "insufficientFemaleCapacityWarning": "אין מספיק מקומות לנשים. חסרים {{missing}} מקומות. יש להוסיף שולחנות.",
       "guestTooLargeWarning": "יש אורח עם {{guestSize}} אנשים - גדול מהשולחן הגדול ביותר ({{tableSize}} מקומות)",

@@ -1699,6 +1699,7 @@
       "seatingRulesTitle": "Seating Rules",
       "insufficientCapacityWarning": "There are not enough seats for all the guests. {{missing}} seats are missing. Tables need to be added.",
       "tableSizeTooSmallWarning": "Minimum table size is 8 seats",
+      "tableSizeTooBigWarning": "Maximum table size is 36 seats",
       "insufficientMaleCapacityWarning": "Not enough seats for men. Missing {{missing}} seats. Please add tables.",
       "insufficientFemaleCapacityWarning": "Not enough seats for women. Missing {{missing}} seats. Please add tables.",
       "guestTooLargeWarning": "A guest has {{guestSize}} people- larger than the biggest table ({{tableSize}} seats)",

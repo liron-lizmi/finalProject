@@ -411,9 +411,14 @@ const AISeatingModal = ({
       presetTablesCount > 0 &&
       JSON.stringify(presetSettings.map(s => s.count)) !== JSON.stringify(suggestedSettings.map(s => s.count));
     
-    const hasInvalidSize = customSettings.some(s => s.count > 0 && s.capacity < 8);
-    if (hasInvalidSize) {
-      return { valid: false, reason: 'invalidSize' };
+    const hasInvalidSizeTooSmall = customSettings.some(s => s.count > 0 && s.capacity < 8);
+    if (hasInvalidSizeTooSmall) {
+      return { valid: false, reason: 'invalidSizeTooSmall' };
+    }
+
+    const hasInvalidSizeTooBig = customSettings.some(s => s.count > 0 && s.capacity > 36);
+    if (hasInvalidSizeTooBig) {
+      return { valid: false, reason: 'invalidSizeTooBig' };
     }
     
     let largestTableCapacity = 0;
@@ -486,17 +491,21 @@ const AISeatingModal = ({
     }
     
     if (!maleCheck.valid) {
-      if (maleCheck.reason === 'invalidSize') {
+      if (maleCheck.reason === 'invalidSizeTooSmall') {
         setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+      } else if (maleCheck.reason === 'invalidSizeTooBig') {
+        setCapacityWarning(t('seating.ai.tableSizeTooBigWarning'));
       } else {
         setCapacityWarning(t('seating.ai.insufficientMaleCapacityWarning', { missing: maleCheck.missing }));
       }
       return;
     }
-    
+
     if (!femaleCheck.valid) {
-      if (femaleCheck.reason === 'invalidSize') {
+      if (femaleCheck.reason === 'invalidSizeTooSmall') {
         setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+      } else if (femaleCheck.reason === 'invalidSizeTooBig') {
+        setCapacityWarning(t('seating.ai.tableSizeTooBigWarning'));
       } else {
         setCapacityWarning(t('seating.ai.insufficientFemaleCapacityWarning', { missing: femaleCheck.missing }));
       }
@@ -553,10 +562,14 @@ const AISeatingModal = ({
       requiredCapacity = Math.ceil(guestsNeeded * bufferPercent);
     }
 
-    const hasInvalidCustomTableSize = currentCustomSettings.some(s => s.count > 0 && s.capacity < 8);
-    
-    if (hasInvalidCustomTableSize) {
+    const hasInvalidCustomTableSizeTooSmall = currentCustomSettings.some(s => s.count > 0 && s.capacity < 8);
+    const hasInvalidCustomTableSizeTooBig = currentCustomSettings.some(s => s.count > 0 && s.capacity > 36);
+
+    if (hasInvalidCustomTableSizeTooSmall) {
       setCapacityWarning(t('seating.ai.tableSizeTooSmallWarning'));
+    }
+    else if (hasInvalidCustomTableSizeTooBig) {
+      setCapacityWarning(t('seating.ai.tableSizeTooBigWarning'));
     }
     else if (totalPlannedTables === 0 && existingCapacity < guestsNeeded && !usingUserSelectedTables) {
       const missingSeats = guestsNeeded - existingCapacity;
