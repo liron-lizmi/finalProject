@@ -1787,7 +1787,7 @@ const AISeatingModal = ({
                             <input
                               type="number"
                               min="8"
-                              max="30"
+                              max="36"
                               value={setting.capacity}
                               onChange={(e) => updateCustomTableSetting(
                                 setting.id,

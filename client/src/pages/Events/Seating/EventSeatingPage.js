@@ -3008,7 +3008,7 @@ const clearAllSeating = useCallback(() => {
                       disabled={!canEdit}
                       className="capacity-select"
                     >
-                      {[8, 10, 12, 14, 16, 18, 20, 22, 24].map(capacity => (
+                      {[8, 10, 12, 14, 16, 18, 20, 22, 24, 36].map(capacity => (
                         <option key={capacity} value={capacity}>
                           {capacity} {t('seating.table.seats')}
                         </option>

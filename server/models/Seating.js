@@ -19,7 +19,7 @@ const TableSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 8,
-    max: 30
+    max: 36
   },
   position: {
     x: {

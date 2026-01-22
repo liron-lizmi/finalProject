@@ -215,7 +215,7 @@ const TableDetailsModal = ({
   const handleSave = () => {
   const capacity = parseInt(formData.capacity, 10);
 
-  if (isNaN(capacity) || capacity < 8 || capacity > 24) {
+  if (isNaN(capacity) || capacity < 8 || capacity > 36) {
     setShowInvalidCapacityModal(true);
     return;
   }
@@ -258,13 +258,13 @@ const cancelDelete = () => {
     const capacity = parseInt(newCapacity, 10);
 
     if (fromButton) {
-      if (!isNaN(capacity) && capacity >= minAllowedCapacity && capacity <= 24) {
+      if (!isNaN(capacity) && capacity >= minAllowedCapacity && capacity <= 36) {
         setFormData(prev => ({ ...prev, capacity }));
       }
       return;
     }
 
-    if (!isNaN(capacity) && capacity >= 1 && capacity <= 24) {
+    if (!isNaN(capacity) && capacity >= 1 && capacity <= 36) {
       setFormData(prev => ({ ...prev, capacity }));
     }
   };
@@ -415,7 +415,7 @@ const cancelDelete = () => {
                   <input
                     type="number"
                     min="8"
-                    max="24"
+                    max="36"
                     step="1"
                     value={formData.capacity}
                     onChange={(e) => handleCapacityChange(e.target.value, false)}
@@ -425,7 +425,7 @@ const cancelDelete = () => {
                   <button
                     type="button"
                     onClick={() => handleCapacityChange(formData.capacity + 1, true)}
-                    disabled={!canEdit || formData.capacity >= 24}
+                    disabled={!canEdit || formData.capacity >= 36}
                     className="capacity-btn"
                   >
                     +

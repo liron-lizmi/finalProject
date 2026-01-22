@@ -460,7 +460,7 @@ const SeatingTableView = ({
               className="capacity-select"
               disabled={!canEdit}
             >
-              {[10, 12, 14, 16, 18, 20, 22, 24].map(capacity => (
+              {[10, 12, 14, 16, 18, 20, 22, 24, 36].map(capacity => (
                 <option key={capacity} value={capacity}>
                   {capacity} {t('seating.table.seats')}
                 </option>
