@@ -243,37 +243,44 @@ const AISeatingModal = ({
           const totalFemaleGuests = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
           const totalMaleCapacity = maleTables.reduce((sum, table) => sum + table.capacity, 0);
           const totalFemaleCapacity = femaleTables.reduce((sum, table) => sum + table.capacity, 0);
-         
+
           if (hasExistingArrangement && (Object.keys(maleArrangement).length > 0 || Object.keys(femaleArrangement).length > 0)) {
             setShowExistingArrangementWarning(true);
             return;
           }
-         
-          if (totalMaleCapacity < totalMaleGuests || maleTables.length === 0) {
+
+          const hasMaleSeatedGuests = maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0);
+          const hasFemaleSeatedGuests = femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0);
+          const hasOnlyEmptyMaleTables = maleTables.length > 0 && !hasMaleSeatedGuests;
+          const hasOnlyEmptyFemaleTables = femaleTables.length > 0 && !hasFemaleSeatedGuests;
+
+          if (totalMaleCapacity < totalMaleGuests || maleTables.length === 0 || hasOnlyEmptyMaleTables) {
             setShowTableCreation(true);
-            if (maleTables.length === 0) {
+            if (maleTables.length === 0 || hasOnlyEmptyMaleTables) {
               await autoSuggestTables(totalMaleGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'male');
             }
           }
-         
-          if (totalFemaleCapacity < totalFemaleGuests || femaleTables.length === 0) {
+
+          if (totalFemaleCapacity < totalFemaleGuests || femaleTables.length === 0 || hasOnlyEmptyFemaleTables) {
             setShowTableCreation(true);
-            if (femaleTables.length === 0) {
+            if (femaleTables.length === 0 || hasOnlyEmptyFemaleTables) {
               await autoSuggestTables(totalFemaleGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'female');
             }
           }
         } else {
           const totalGuests = guests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
           const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-         
+
           if (hasExistingArrangement && Object.keys(seatingArrangement).length > 0) {
             setShowExistingArrangementWarning(true);
             return;
           }
-         
-          if (totalCapacity < totalGuests || tables.length === 0) {
+
+          const hasOnlyEmptyTables = tables.length > 0 && !hasExistingArrangement;
+
+          if (totalCapacity < totalGuests || tables.length === 0 || hasOnlyEmptyTables) {
             setShowTableCreation(true);
-            if (tables.length === 0) {
+            if (tables.length === 0 || hasOnlyEmptyTables) {
               await autoSuggestTables(totalGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
             }
           } else {
@@ -1177,7 +1184,11 @@ const AISeatingModal = ({
             }
           }
 
-          const shouldClearExisting = existingArrangementAction === 'clear';
+          const hasMaleSeatedGuests = maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0);
+          const hasFemaleSeatedGuests = femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0);
+          const hasOnlyEmptyMaleTablesOnCanvas = maleTables.length > 0 && !hasMaleSeatedGuests;
+          const hasOnlyEmptyFemaleTablesOnCanvas = femaleTables.length > 0 && !hasFemaleSeatedGuests;
+          const shouldClearExisting = existingArrangementAction === 'clear' || hasOnlyEmptyMaleTablesOnCanvas || hasOnlyEmptyFemaleTablesOnCanvas;
 
           if (maleTablesList.length > 0) {
             await onAddTables(maleTablesList, 'male', shouldClearExisting);
@@ -1307,7 +1318,11 @@ const AISeatingModal = ({
           setIsGenerating(false);
         }
       } else {
-        const clearExistingFlag = existingArrangementAction === 'clear';
+        const hasMaleSeatedGuests = maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0);
+        const hasFemaleSeatedGuests = femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0);
+        const hasOnlyEmptyMaleTablesOnCanvas = maleTables.length > 0 && !hasMaleSeatedGuests;
+        const hasOnlyEmptyFemaleTablesOnCanvas = femaleTables.length > 0 && !hasFemaleSeatedGuests;
+        const clearExistingFlag = existingArrangementAction === 'clear' || hasOnlyEmptyMaleTablesOnCanvas || hasOnlyEmptyFemaleTablesOnCanvas;
         const allMaleTablesForGeneration = clearExistingFlag ? [] : maleTables;
         const allFemaleTablesForGeneration = clearExistingFlag ? [] : femaleTables;
         const aiPreferencesWithExisting = {
@@ -1411,7 +1426,8 @@ const AISeatingModal = ({
             await onAddTables(repositionedExistingTables);
           }
 
-          const shouldClearExisting = existingArrangementAction === 'clear';
+          const hasOnlyEmptyTablesOnCanvas = tables.length > 0 && !hasExistingArrangement;
+          const shouldClearExisting = existingArrangementAction === 'clear' || hasOnlyEmptyTablesOnCanvas;
           await onAddTables(tablesToCreate, null, shouldClearExisting);
          
           await new Promise(resolve => setTimeout(resolve, 1500));
@@ -1481,19 +1497,21 @@ const AISeatingModal = ({
           setIsGenerating(false);
         }
       } else {
-        const allTablesForGeneration = existingArrangementAction === 'clear' ? [] : tables;
+        const hasOnlyEmptyTablesOnCanvas = tables.length > 0 && !hasExistingArrangement;
+        const shouldClearExisting = existingArrangementAction === 'clear' || hasOnlyEmptyTablesOnCanvas;
+        const allTablesForGeneration = shouldClearExisting ? [] : tables;
         const aiPreferencesWithExisting = {
           ...aiPreferences,
           preserveExisting: existingArrangementAction === 'continue',
-          clearExisting: existingArrangementAction === 'clear',
+          clearExisting: shouldClearExisting,
           allTables: allTablesForGeneration,
-          currentArrangement: existingArrangementAction === 'clear' ? {} : seatingArrangement,
+          currentArrangement: shouldClearExisting ? {} : seatingArrangement,
           seatingRules,
           groupMixingRules: aiPreferences.groupMixingRules,
           groupPolicies: aiPreferences.groupPolicies,
           isSeparatedSeating: false
         };
-       
+
         await handleGenerate(aiPreferencesWithExisting);
       }
     }
@@ -1921,22 +1939,22 @@ const AISeatingModal = ({
                   {isSeparatedSeating ? (
                     genderView === 'male' ? (
                       <>
-                        <span>{t('seating.ai.existingMaleTables')}: <strong>{maleTables.length}</strong> ({totalMaleCapacity} {t('seating.ai.seats')})</span>
+                        <span>{t('seating.ai.existingMaleTables')}: <strong>{(maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0)) ? maleTables.length : 0}</strong> ({(maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0)) ? totalMaleCapacity : 0} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.plannedNewMaleTables')}: <strong>{isGenerating ? 0 : maleTableSettings.reduce((sum, s) => sum + s.count, 0) + customMaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({isGenerating ? 0 : plannedMaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.totalMaleCapacity')}: <strong>{isGenerating ? totalMaleCapacity : totalMaleCapacity + plannedMaleCapacity}</strong> {t('seating.ai.seats')}</span>
+                        <span>{t('seating.ai.totalMaleCapacity')}: <strong>{isGenerating ? ((maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0)) ? totalMaleCapacity : 0) : ((maleArrangement && Object.values(maleArrangement).some(arr => arr.length > 0)) ? totalMaleCapacity : 0) + plannedMaleCapacity}</strong> {t('seating.ai.seats')}</span>
                       </>
                     ) : (
                       <>
-                        <span>{t('seating.ai.existingFemaleTables')}: <strong>{femaleTables.length}</strong> ({totalFemaleCapacity} {t('seating.ai.seats')})</span>
+                        <span>{t('seating.ai.existingFemaleTables')}: <strong>{(femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0)) ? femaleTables.length : 0}</strong> ({(femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0)) ? totalFemaleCapacity : 0} {t('seating.ai.seats')})</span>
                         <span>{t('seating.ai.plannedNewFemaleTables')}: <strong>{isGenerating ? 0 : femaleTableSettings.reduce((sum, s) => sum + s.count, 0) + customFemaleTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong> ({isGenerating ? 0 : plannedFemaleCapacity} {t('seating.ai.seats')})</span>
-                        <span>{t('seating.ai.totalFemaleCapacity')}: <strong>{isGenerating ? totalFemaleCapacity : totalFemaleCapacity + plannedFemaleCapacity}</strong> {t('seating.ai.seats')}</span>
+                        <span>{t('seating.ai.totalFemaleCapacity')}: <strong>{isGenerating ? ((femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0)) ? totalFemaleCapacity : 0) : ((femaleArrangement && Object.values(femaleArrangement).some(arr => arr.length > 0)) ? totalFemaleCapacity : 0) + plannedFemaleCapacity}</strong> {t('seating.ai.seats')}</span>
                       </>
                     )
                   ) : (
                     <>
-                      <span>{t('seating.ai.existingTables')}: <strong>{tables.length}</strong> ({totalCapacity} {t('seating.ai.seats')})</span>
+                      <span>{t('seating.ai.existingTables')}: <strong>{hasExistingArrangement ? tables.length : 0}</strong> ({hasExistingArrangement ? totalCapacity : 0} {t('seating.ai.seats')})</span>
                       <span>{t('seating.ai.plannedNewTables')}: <strong>{isGenerating ? 0 : tableSettings.reduce((sum, s) => sum + s.count, 0) + customTableSettings.reduce((sum, s) => sum + s.count, 0)}</strong></span>
-                      <span>{t('seating.ai.totalCapacity')}: <strong>{isGenerating ? totalCapacity : totalCapacity + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
+                      <span>{t('seating.ai.totalCapacity')}: <strong>{isGenerating ? (hasExistingArrangement ? totalCapacity : 0) : (hasExistingArrangement ? totalCapacity : 0) + plannedCapacity}</strong> {t('seating.ai.seats')}</span>
                     </>
                   )}
                 </div>
