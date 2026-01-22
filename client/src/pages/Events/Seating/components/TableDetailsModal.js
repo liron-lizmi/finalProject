@@ -254,9 +254,17 @@ const cancelDelete = () => {
   setShowDeleteConfirmModal(false);
 };
 
-  const handleCapacityChange = (newCapacity) => {
+  const handleCapacityChange = (newCapacity, fromButton = false) => {
     const capacity = parseInt(newCapacity, 10);
-    if (!isNaN(capacity) && capacity >= minAllowedCapacity && capacity <= 24) {
+
+    if (fromButton) {
+      if (!isNaN(capacity) && capacity >= minAllowedCapacity && capacity <= 24) {
+        setFormData(prev => ({ ...prev, capacity }));
+      }
+      return;
+    }
+
+    if (!isNaN(capacity) && capacity >= 1 && capacity <= 24) {
       setFormData(prev => ({ ...prev, capacity }));
     }
   };
@@ -397,7 +405,7 @@ const cancelDelete = () => {
                 <div className="capacity-input-group">
                   <button
                     type="button"
-                    onClick={() => handleCapacityChange(formData.capacity - 1)}
+                    onClick={() => handleCapacityChange(formData.capacity - 1, true)}
                     disabled={!canEdit || formData.capacity <= minAllowedCapacity}
                     className="capacity-btn"
                     title={formData.capacity <= minAllowedCapacity ? t('seating.table.cannotReduceCapacity') : ''}
@@ -406,17 +414,17 @@ const cancelDelete = () => {
                   </button>
                   <input
                     type="number"
-                    min={minAllowedCapacity}
+                    min="8"
                     max="24"
                     step="1"
                     value={formData.capacity}
-                    onChange={(e) => handleCapacityChange(e.target.value)}
+                    onChange={(e) => handleCapacityChange(e.target.value, false)}
                     className="form-input capacity-input"
                     disabled={!canEdit}
                   />
                   <button
                     type="button"
-                    onClick={() => handleCapacityChange(formData.capacity + 1)}
+                    onClick={() => handleCapacityChange(formData.capacity + 1, true)}
                     disabled={!canEdit || formData.capacity >= 24}
                     className="capacity-btn"
                   >
@@ -617,7 +625,6 @@ const cancelDelete = () => {
         </div>
       </div>
 
-      {/* Modal: Invalid Capacity */}
       {showInvalidCapacityModal && (
         <div className="modal-overlay" onClick={() => setShowInvalidCapacityModal(false)}>
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
@@ -642,7 +649,6 @@ const cancelDelete = () => {
         </div>
       )}
 
-      {/* Modal: Capacity Too Small */}
       {showCapacityTooSmallModal && (
         <div className="modal-overlay" onClick={() => setShowCapacityTooSmallModal(false)}>
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
@@ -670,7 +676,6 @@ const cancelDelete = () => {
         </div>
       )}
 
-      {/* Modal: Not Enough Space */}
       {showNotEnoughSpaceModal && (
         <div className="modal-overlay" onClick={() => setShowNotEnoughSpaceModal(false)}>
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>
@@ -695,7 +700,6 @@ const cancelDelete = () => {
         </div>
       )}
 
-      {/* Modal: Confirm Delete Table */}
       {showDeleteConfirmModal && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className={`modal-content ${isRTL ? 'rtl' : 'ltr'}`} onClick={e => e.stopPropagation()}>

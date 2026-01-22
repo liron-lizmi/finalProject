@@ -2173,17 +2173,17 @@
 }
 
 .table-details-modal .save-button {
-  background-color: #4caf50;
+  background-color: #d4b99e !important;
   color: white !important;
 }
 
 .table-details-modal .cancel-button {
-  background-color: #6c757d;
+  background-color: #d4b99e !important;
   color: white !important;
 }
 
 .table-details-modal .save-button:hover {
-  background-color: #45a049;
+  background-color: #c4a98e !important;
   color: white !important;
   transform: none !important;
   transition: none !important;
@@ -2191,7 +2191,7 @@
 }
 
 .table-details-modal .cancel-button:hover {
-  background-color: #5a6268;
+  background-color: #c4a98e !important;
   color: white !important;
   transform: none !important;
   transition: none !important;

@@ -3129,7 +3129,7 @@ const clearAllSeating = useCallback(() => {
               } else {
                 setTables(tables.filter(t => t.id !== editingTable.id));
               }
-            } else if (!editingTable?.isDraft) {
+            } else if (!editingTable?.isDraft && !wasSaved) {
               if (isSeparatedSeating) {
                 const updatedMaleTables = updateTableNamesWithGroups(maleTables, maleArrangement, 'male');
                 const updatedFemaleTables = updateTableNamesWithGroups(femaleTables, femaleArrangement, 'female');
