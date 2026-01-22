@@ -652,8 +652,8 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 
 .filter-apply-button {
   width: 100%;
-  padding: 12px; 
-  background-color: #a68b76; 
+  padding: 12px;
+  background-color: #d4b99e;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -664,7 +664,7 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 }
 
 .filter-apply-button:hover {
-  background-color: #d4b99e;
+  background-color: #a68b76;
 }
 
 .venue-results-container {
@@ -705,8 +705,8 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 
 .venues-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px; 
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
 }
 
 .venue-card {
@@ -1228,7 +1228,7 @@ html[dir="ltr"] .error-close-btn {
 }
 
 .load-more-button {
-  background: #a68b76;
+  background: #d4b99e;
   color: white;
   padding: 14px 30px;
   border: none;
@@ -1241,7 +1241,7 @@ html[dir="ltr"] .error-close-btn {
 }
 
 .load-more-button:hover {
-  background: #d4b99e;
+  background: #a68b76;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(166, 139, 118, 0.3);
 }
@@ -1516,8 +1516,8 @@ html[dir="ltr"] .vup-checkbox-group input[type="checkbox"] {
 
 .vup-filter-apply-button {
   width: 100%;
-  padding: 12px; 
-  background-color: #a68b76; 
+  padding: 12px;
+  background-color: #d4b99e;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -1528,7 +1528,7 @@ html[dir="ltr"] .vup-checkbox-group input[type="checkbox"] {
 }
 
 .vup-filter-apply-button:hover {
-  background-color: #d4b99e;
+  background-color: #a68b76;
 }
 
 .vup-venue-content {
@@ -1591,8 +1591,8 @@ html[dir="ltr"] .vup-checkbox-group input[type="checkbox"] {
 
 .vup-venues-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 30px; 
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
 }
 
 .vup-venue-card {
@@ -2114,7 +2114,7 @@ html[dir="ltr"] .vup-error-close-btn {
 }
 
 .vup-load-more-button {
-  background: #a68b76;
+  background: #d4b99e;
   color: white;
   padding: 14px 30px;
   border: none;
@@ -2127,7 +2127,7 @@ html[dir="ltr"] .vup-error-close-btn {
 }
 
 .vup-load-more-button:hover {
-  background: #d4b99e;
+  background: #a68b76;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(166, 139, 118, 0.3);
 }
@@ -2252,6 +2252,11 @@ button:disabled:hover,
 /* --- Responsive --- */
 
 @media (max-width: 480px) {
+  .venues-grid,
+  .vup-venues-grid {
+    grid-template-columns: 1fr;
+  }
+
   .vup-venue-content {
     flex-direction: column !important;
   }

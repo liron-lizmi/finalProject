@@ -1,8 +1,8 @@
 /* VendorsPage.css */
 .vendors-page {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 60px;
   font-family: 'Heebo', 'Arial', sans-serif;
   color: #333;
   direction: inherit;
@@ -87,38 +87,41 @@ html[dir="ltr"] .vendors-search-button {
 }
 
 .vendors-filters {
-  background-color: #f8f8f8;
-  padding: 20px;
-  border-radius: 4px;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
   border: 1px solid #eee;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .vendors-filters h3 {
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .filter-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   position: relative;
 }
 
 .filter-group label {
   display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444;
 }
 
 .filter-group select {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+  padding: 10px 12px;
+  font-size: 1rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #fff;
-  height: 38px;
+  height: 42px;
   box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
@@ -171,18 +174,19 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 
 .filter-apply-button {
   width: 100%;
-  padding: 10px;
-  background-color: #000;
+  padding: 12px;
+  background-color: #d4b99e;
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .filter-apply-button:hover {
-  background-color: #333;
+  background-color: #a68b76;
 }
 
 .vendors-results-container {
@@ -192,44 +196,46 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 }
 
 .vendors-map {
-  height: 300px;
-  border-radius: 4px;
+  height: 400px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid #ddd;
 }
 
 .vendors-list {
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid #eee;
-  padding: 20px;
+  padding: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .vendors-list h3 {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .loading-indicator,
 .no-results {
-  padding: 30px;
+  padding: 40px;
   text-align: center;
   color: #666;
 }
 
 .vendors-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
 .vendor-card {
   background-color: #fff;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   height: 100%;
@@ -238,27 +244,29 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 }
 
 .vendor-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-7px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .vendor-card.selected {
-  border: 2px solid #000;
+  border: 3px solid #a68b76;
 }
 
 .vendor-image {
-  height: 150px;
+  height: 220px;
   overflow: hidden;
+  position: relative;
 }
 
 .vendor-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.3s ease;
 }
 
 .vendor-info {
-  padding: 15px;
+  padding: 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -266,29 +274,31 @@ html[dir="ltr"] .checkbox-group input[type="checkbox"] {
 
 .vendor-info h4 {
   margin: 0 0 10px;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: #000;
 }
 
 .vendor-address {
   color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 
 .vendor-rating {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #f5f5f5;
 }
 
 html[dir="rtl"] .stars {
-  margin-left: 5px;
+  margin-left: 8px;
   margin-right: 0;
 }
 
 html[dir="ltr"] .stars {
-  margin-right: 5px;
+  margin-right: 8px;
   margin-left: 0;
 }
 
@@ -312,7 +322,7 @@ html[dir="ltr"] .rating-value {
 
 .review-count {
   color: #666;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .vendor-price {
@@ -1170,20 +1180,20 @@ html[dir="rtl"] .nested-checkbox-group {
 }
 
 .pagination-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #ccc;
-  color: #000;
+  border-color: #a68b76;
+  color: #a68b76;
+  background-color: #fcfcfc;
 }
 
 .pagination-btn.active {
-  background-color: #007bff;
-  border-color: #007bff;
+  background-color: #a68b76;
+  border-color: #a68b76;
   color: #fff;
 }
 
 .pagination-btn.active:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: #a68b76;
+  border-color: #a68b76;
 }
 
 .pagination-btn:disabled {
@@ -1254,9 +1264,9 @@ body {
 }
 
 .vp-vendors-page {
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 60px;
   font-family: 'Heebo', 'Arial', sans-serif;
   color: #333;
   direction: inherit;
@@ -1338,27 +1348,29 @@ html[dir="ltr"] .vp-vendors-search-button {
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .vp-filter-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .vp-filter-group label {
   display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444;
 }
 
 .vp-filter-group select {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+  padding: 10px 12px;
+  font-size: 1rem;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #fff;
-  height: 38px;
+  height: 42px;
   box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
@@ -1410,18 +1422,19 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
 
 .vp-filter-apply-button {
   width: 100%;
-  padding: 10px;
-  background-color: #000;
+  padding: 12px;
+  background-color: #d4b99e;
   color: #fff;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .vp-filter-apply-button:hover {
-  background-color: #333;
+  background-color: #a68b76;
 }
 
 .vp-vendors-content {
@@ -1432,12 +1445,13 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
 }
 
 .vp-vendors-filters {
-  flex: 0 0 300px !important; 
+  flex: 0 0 300px !important;
   max-width: 300px !important;
-  background-color: #f8f8f8;
-  padding: 20px;
-  border-radius: 4px;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
   border: 1px solid #eee;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   position: sticky !important;
   top: 20px;
 }
@@ -1451,44 +1465,46 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
 }
 
 .vp-vendors-map {
-  height: 300px;
-  border-radius: 4px;
+  height: 400px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid #ddd;
 }
 
 .vp-vendors-list {
   background-color: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid #eee;
-  padding: 20px;
+  padding: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .vp-vendors-list h3 {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
-  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .vp-loading-indicator,
 .vp-no-results {
-  padding: 30px;
+  padding: 40px;
   text-align: center;
   color: #666;
 }
 
 .vp-vendors-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
 .vp-vendor-card {
   background-color: #fff;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   height: 100%;
@@ -1497,27 +1513,29 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
 }
 
 .vp-vendor-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-7px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .vp-vendor-card.vp-selected {
-  border: 2px solid #000;
+  border: 3px solid #a68b76;
 }
 
 .vp-vendor-image {
-  height: 150px;
+  height: 220px;
   overflow: hidden;
+  position: relative;
 }
 
 .vp-vendor-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: opacity 0.3s ease;
 }
 
 .vp-vendor-info {
-  padding: 15px;
+  padding: 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1525,29 +1543,31 @@ html[dir="ltr"] .vp-checkbox-group input[type="checkbox"] {
 
 .vp-vendor-info h4 {
   margin: 0 0 10px;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: #000;
 }
 
 .vp-vendor-address {
   color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
+  font-size: 1rem;
+  margin-bottom: 15px;
 }
 
 .vp-vendor-rating {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #f5f5f5;
 }
 
 html[dir="rtl"] .vp-stars {
-  margin-left: 5px;
+  margin-left: 8px;
   margin-right: 0;
 }
 
 html[dir="ltr"] .vp-stars {
-  margin-right: 5px;
+  margin-right: 8px;
   margin-left: 0;
 }
 
@@ -1571,7 +1591,7 @@ html[dir="ltr"] .vp-rating-value {
 
 .vp-review-count {
   color: #666;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .vp-vendor-price {
@@ -2234,20 +2254,20 @@ html[dir="ltr"] .vp-change-vendor-button {
 }
 
 .vp-pagination-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #ccc;
-  color: #000;
+  border-color: #a68b76;
+  color: #a68b76;
+  background-color: #fcfcfc;
 }
 
 .vp-pagination-btn.vp-active {
-  background-color: #007bff;
-  border-color: #007bff;
+  background-color: #a68b76;
+  border-color: #a68b76;
   color: #fff;
 }
 
 .vp-pagination-btn.vp-active:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: #a68b76;
+  border-color: #a68b76;
 }
 
 .vp-pagination-btn:disabled {
@@ -2311,7 +2331,7 @@ html[dir="ltr"] .vp-change-vendor-button {
 }
 
 .vp-load-more-button {
-  background: #a68b76;
+  background: #d4b99e;
   color: white;
   padding: 14px 30px;
   border: none;
@@ -2324,7 +2344,7 @@ html[dir="ltr"] .vp-change-vendor-button {
 }
 
 .vp-load-more-button:hover {
-  background: #d4b99e;
+  background: #a68b76;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(166, 139, 118, 0.3);
 }
@@ -2338,6 +2358,11 @@ html[dir="ltr"] .vp-change-vendor-button {
 
 
 @media (max-width: 480px) {
+  .vendors-grid,
+  .vp-vendors-grid {
+    grid-template-columns: 1fr;
+  }
+
   .vp-vendors-content {
     flex-direction: column !important;
   }
