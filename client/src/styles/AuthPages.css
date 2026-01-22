@@ -510,10 +510,24 @@ body {
 
 .dashboard-wrapper {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%) !important; 
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%) !important;
   color: #333;
   font-family: 'Heebo', 'Arial', sans-serif;
-  font-size: 15px; 
+  font-size: 15px;
+}
+
+.dashboard-loading-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f9f7f4 0%, #f5f0ea 50%, #f9f7f4 100%);
+}
+
+.dashboard-loading-text {
+  font-size: 18px;
+  color: #666;
+  font-family: 'Heebo', 'Arial', sans-serif;
 }
 
 .dashboard-header {
@@ -1682,10 +1696,10 @@ body {
   
   .event-body {
     padding: 1.2rem;
-    text-align: right !important; /* מבטיח יישור לימין */
+    text-align: right !important;
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* שומר על האלמנטים בצד ימין ב-RTL */
+    align-items: flex-start;
   }
 
   .rtl .section-header {

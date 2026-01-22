@@ -107,7 +107,6 @@ const Dashboard = () => {
         console.log('=== Dashboard OAuth Check ===');
         console.log('Current URL:', window.location.href);
 
-        // Check if this is an OAuth callback
         const oauthFlow = localStorage.getItem('oauth_flow');
         const oauthTimestamp = localStorage.getItem('oauth_timestamp');
         const isRecentOAuth = oauthTimestamp && (Date.now() - parseInt(oauthTimestamp)) < 60000; // 60 seconds
@@ -117,14 +116,11 @@ const Dashboard = () => {
 
         if (oauthFlow === 'google' && isRecentOAuth) {
           console.log('Google OAuth callback detected!');
-          setLoading(true); // Keep loading while processing OAuth
-
+          setLoading(true); 
           try {
-            // Wait a moment for Appwrite to create the session
             console.log('Waiting for Appwrite session to initialize...');
             await new Promise(resolve => setTimeout(resolve, 1500));
 
-            // Try to get session with retry mechanism
             let session = null;
             let retries = 3;
 
@@ -134,14 +130,14 @@ const Dashboard = () => {
                 session = await account.getSession('current');
                 console.log('Session retrieved:', session);
                 console.log('Session providerUid:', session.providerUid);
-                break; // Success - exit loop
+                break; 
               } catch (sessionError) {
                 console.log(`Attempt ${i + 1} failed:`, sessionError.message);
                 if (i < retries - 1) {
                   console.log('Retrying in 1 second...');
                   await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
-                  throw sessionError; // Last attempt failed
+                  throw sessionError;
                 }
               }
             }
@@ -393,10 +389,8 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="auth-container">
-        <div className="auth-box loading-center">
-          <h2>{t('general.loading')}</h2>
-        </div>
+      <div className="dashboard-loading-container">
+        <span className="dashboard-loading-text">{t('general.loading')}</span>
       </div>
     );
   }
