@@ -2807,8 +2807,12 @@
   
   .seating-canvas-container {
     min-width: 100%;
-    height: 500px;
     order: 1;
+    overflow-y: auto;
+  }
+
+  .seating-canvas-wrapper {
+    overflow-y: auto;
   }
 
   .choice-buttons {
@@ -2863,7 +2867,11 @@
 
   .seating-canvas-container {
     min-width: 100%;
-    height: 500px;
+    overflow-y: auto;
+  }
+
+  .seating-canvas-wrapper {
+    overflow-y: auto;
   }
 
   .modal-content {
@@ -4446,6 +4454,22 @@
 }
 
 @media (max-width: 480px) {
+  .seating-canvas-container {
+    min-width: 100%;
+    height: 280px !important;
+    overflow-y: auto;
+  }
+
+  .seating-canvas-wrapper {
+    overflow-y: auto;
+    min-height: 280px !important;
+    max-height: 280px !important;
+  }
+
+  .seating-canvas {
+    min-height: 0 !important;
+  }
+
   .modal-content {
     width: 95% !important;
     max-width: 95vw !important;
@@ -4707,6 +4731,14 @@
 }
 
 @media (max-width: 1025px) {
+  .seating-canvas-container {
+    overflow-y: auto;
+  }
+
+  .seating-canvas-wrapper {
+    overflow-y: auto;
+  }
+
   .modal-footer {
     display: flex !important;
     flex-direction: row !important;

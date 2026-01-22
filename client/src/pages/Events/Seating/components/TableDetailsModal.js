@@ -610,17 +610,17 @@ const cancelDelete = () => {
 
         <div className="modal-footer">
           <button
+            className="cancel-button"
+            onClick={onClose}
+          >
+            {t('common.cancel')}
+          </button>
+          <button
             className="save-button"
             onClick={handleSave}
             disabled={!canEdit}
           >
             {t('common.save')}
-          </button>
-          <button
-            className="cancel-button"
-            onClick={onClose}
-          >
-            {t('common.cancel')}
           </button>
         </div>
       </div>

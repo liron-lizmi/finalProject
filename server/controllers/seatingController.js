@@ -6153,8 +6153,8 @@ function createAdditionalTables(neededCapacity, startingNumber, req, preferredSi
     const tableIndex = currentNumber - startingNumber - 1;
     const row = Math.floor(tableIndex / COLS);
     const col = tableIndex % COLS;
-   
-    const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+
+    const y = START_Y + row * SPACING_Y;
     const x = START_X + col * SPACING_X;
 
     const table = {
@@ -7104,27 +7104,26 @@ function calculateNextTablePosition(existingTables, gender = null) {
     }
   });
 
-  const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
-  const MAX_ROWS = Math.floor((MAX_Y - minY) / spacingY) + 1;
-  const maxPositions = COLS * MAX_ROWS;
- 
   let position = 0;
-  while (position < maxPositions) {
+  const MAX_SEARCH_POSITIONS = 1000; 
+
+  while (position < MAX_SEARCH_POSITIONS) {
     const row = Math.floor(position / COLS);
     const col = position % COLS;
     const x = minX + col * spacingX;
     const y = minY + row * spacingY;
     const posKey = `${x},${y}`;
-    
+
     if (!occupiedPositions.has(posKey)) {
       return { x, y };
     }
     position++;
   }
- 
+
+  // Fallback: add new row below all existing tables
   const maxExistingY = Math.max(...sortedY);
   const newY = maxExistingY + spacingY;
-  
+
   return { x: minX, y: newY };
 }
 
@@ -10310,7 +10309,7 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
       const row = Math.floor(index / COLS);
       const col = index % COLS;
 
-      const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+      const y = START_Y + row * SPACING_Y;
       const x = START_X + col * SPACING_X;
 
       table.position = { x, y };

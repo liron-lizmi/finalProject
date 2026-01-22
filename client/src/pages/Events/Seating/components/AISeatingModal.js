@@ -1039,7 +1039,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / maleCols);
           const col = currentTable % maleCols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+          const y = START_Y + row * SPACING_Y;
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1067,7 +1067,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentTable / maleCols);
           const col = currentTable % maleCols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+          const y = START_Y + row * SPACING_Y;
          
           const table = {
             id: `table_${Date.now()}_${currentTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1097,7 +1097,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentFemaleTable / femaleCols);
           const col = currentFemaleTable % femaleCols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+          const y = START_Y + row * SPACING_Y;
          
           const table = {
             id: `table_${Date.now()}_${currentFemaleTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1124,7 +1124,7 @@ const AISeatingModal = ({
         for (let i = 0; i < setting.count; i++) {
           const row = Math.floor(currentFemaleTable / femaleCols);
           const col = currentFemaleTable % femaleCols;
-          const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+          const y = START_Y + row * SPACING_Y;
          
           const table = {
             id: `table_${Date.now()}_${currentFemaleTable}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1156,7 +1156,7 @@ const AISeatingModal = ({
               const repositionedMaleTables = maleTables.map((table, index) => {
                 const row = Math.floor(index / maleCols);
                 const col = index % maleCols;
-                const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+                const y = START_Y + row * SPACING_Y;
                 return {
                   ...table,
                   position: {
@@ -1171,7 +1171,7 @@ const AISeatingModal = ({
               const repositionedFemaleTables = femaleTables.map((table, index) => {
                 const row = Math.floor(index / femaleCols);
                 const col = index % femaleCols;
-                const y = Math.min(START_Y + row * SPACING_Y, MAX_Y - 100);
+                const y = START_Y + row * SPACING_Y;
                 return {
                   ...table,
                   position: {
@@ -1281,7 +1281,7 @@ const AISeatingModal = ({
                     name: `${t('seating.tableName')} ${femaleTableCounter++}`,
                     position: {
                       x: FEMALE_START_X + col * SPACING_X,
-                      y: Math.min(START_Y + row * SPACING_Y, MAX_Y - 100)
+                      y: START_Y + row * SPACING_Y
                     }
                   };
                 });
@@ -1357,7 +1357,7 @@ const AISeatingModal = ({
         const col = tableIndex % COLS;
         return {
           x: START_X + col * SPACING_X,
-          y: Math.min(START_Y + row * SPACING_Y, MAX_Y - 100)
+          y: START_Y + row * SPACING_Y
         };
       };
 
