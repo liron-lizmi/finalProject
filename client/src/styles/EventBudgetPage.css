@@ -1751,7 +1751,11 @@ button:disabled {
 
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
-  
+
+  .budget-alerts-banner {
+    margin-top: 10px !important;
+  }
+
   .budget-container {
     padding: 8px;
   }
