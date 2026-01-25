@@ -215,6 +215,8 @@ body {
   font-size: 13px;
   margin-top: 7px;
   animation: fadeIn 0.3s ease;
+  background: transparent !important;
+  border: none !important;
 }
 
 .rtl .input-error {
@@ -284,7 +286,7 @@ body {
 
 .password-toggle {
   position: absolute;
-  top: 50%;
+  top: 26px;
   transform: translateY(-50%);
   cursor: pointer;
   color: #aaa;
@@ -1450,6 +1452,10 @@ body {
     margin-top: 6px;
   }
 
+  .password-toggle {
+    top: 23px;
+  }
+
   .google-auth-button {
     padding: 12px 16px;
     font-size: 15px;
@@ -1650,6 +1656,10 @@ body {
   .input-error {
     font-size: 11px;
     margin-top: 5px;
+  }
+
+  .password-toggle {
+    top: 20px;
   }
 
   .password-toggle svg {
