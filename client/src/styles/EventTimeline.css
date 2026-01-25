@@ -3480,6 +3480,14 @@
     font-size: 0.9rem;
   }
 
+  [dir="ltr"] .recurring-checkbox {
+    margin-right: 0;
+  }
+
+  [dir="ltr"] .form-row.recurring-reminder-row {
+    padding-left: 20px;
+  }
+
   .internal-calendar .calendar-header {
     flex-direction: column;
     gap: 12px;
