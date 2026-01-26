@@ -95,8 +95,6 @@ const Dashboard = () => {
         setNotifications(response.data);
         if (response.data.length > 0) {
           setShowNotifications(true);
-        } else {
-          console.log("No notifications found");
         }
       } catch (err) {
       }
@@ -104,21 +102,13 @@ const Dashboard = () => {
 
     const checkUserSession = async () => {
       try {
-        console.log('=== Dashboard OAuth Check ===');
-        console.log('Current URL:', window.location.href);
-
         const oauthFlow = localStorage.getItem('oauth_flow');
         const oauthTimestamp = localStorage.getItem('oauth_timestamp');
         const isRecentOAuth = oauthTimestamp && (Date.now() - parseInt(oauthTimestamp)) < 60000; // 60 seconds
 
-        console.log('OAuth Flow:', oauthFlow);
-        console.log('Is Recent OAuth:', isRecentOAuth);
-
         if (oauthFlow === 'google' && isRecentOAuth) {
-          console.log('Google OAuth callback detected!');
-          setLoading(true); 
+          setLoading(true);
           try {
-            console.log('Waiting for Appwrite session to initialize...');
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             let session = null;
@@ -126,15 +116,10 @@ const Dashboard = () => {
 
             for (let i = 0; i < retries; i++) {
               try {
-                console.log(`Attempt ${i + 1}/${retries}: Getting current Appwrite session...`);
                 session = await account.getSession('current');
-                console.log('Session retrieved:', session);
-                console.log('Session providerUid:', session.providerUid);
-                break; 
+                break;
               } catch (sessionError) {
-                console.log(`Attempt ${i + 1} failed:`, sessionError.message);
                 if (i < retries - 1) {
-                  console.log('Retrying in 1 second...');
                   await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
                   throw sessionError;
@@ -143,14 +128,10 @@ const Dashboard = () => {
             }
 
             const userData = await account.get();
-            console.log('User data:', userData);
-            console.log('User $id:', userData.$id);
 
             if (session && session.provider === 'google' && userData.email) {
               const actualUserEmail = userData.email.toLowerCase().trim();
               const googleUserId = session.providerUid || userData.$id;
-
-              console.log('Using Google User ID:', googleUserId);
 
               const checkResponse = await axios.post('/api/auth/check-user-exists', {
                 email: actualUserEmail
@@ -206,8 +187,6 @@ const Dashboard = () => {
               throw new Error("Invalid OAuth session");
             }
           } catch (oauthError) {
-            console.error('OAuth Error:', oauthError);
-
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('oauth_flow');
@@ -219,7 +198,7 @@ const Dashboard = () => {
                 await account.deleteSession('current');
               }
             } catch (deleteError) {
-              console.log("No session to delete");
+              // No session to delete
             }
 
             navigate('/login?error=session_expired', { replace: true });
@@ -266,14 +245,14 @@ const Dashboard = () => {
       try {
         await account.deleteSession('current');
       } catch (error) {
-        console.error('Appwrite logout error:', error);
+        // Appwrite logout error
       }
-      
+
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       navigate('/');
     } catch (error) {
-      console.error('Logout error:', error);
+      // Logout error
     }
   };
 
@@ -344,9 +323,9 @@ const Dashboard = () => {
         headers: { 'x-auth-token': token }
       });
       setEvents(eventsResponse.data);
-      
+
     } catch (err) {
-      console.error('Error accepting notifications:', err);
+      // Error accepting notifications
     }
   };
 

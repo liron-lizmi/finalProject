@@ -89,7 +89,6 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      console.error('Login error:', err);
       setServerError(err.response?.data?.message || t('auth.invalidCredentials'));
     } finally {
       setIsSubmitting(false);
@@ -98,8 +97,6 @@ const LoginPage = () => {
 
  const handleGoogleLogin = async () => {
   try {
-    console.log('=== Starting Google OAuth Flow ===');
-
     localStorage.removeItem('token');
     localStorage.removeItem('user');
 
@@ -113,12 +110,12 @@ const LoginPage = () => {
         try {
           await account.deleteSession(session.$id);
         } catch (deleteError) {
-          console.log('Failed to delete session:', deleteError);
+          // Failed to delete session
         }
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (sessionError) {
-      console.log('No sessions to delete');
+      // No sessions to delete
     }
 
     await createOAuth2Session(
@@ -127,7 +124,6 @@ const LoginPage = () => {
       `${window.location.origin}/login?auth=failed`
     );
   } catch (error) {
-    console.error('Google login error:', error);
     localStorage.removeItem('oauth_flow');
     localStorage.removeItem('oauth_timestamp');
     setServerError(t('auth.googleLoginError'));

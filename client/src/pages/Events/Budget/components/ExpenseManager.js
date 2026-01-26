@@ -44,7 +44,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
         setExpenses(expensesData);
       }
     } catch (err) {
-      console.error('Error fetching expenses:', err);
+      // Error fetching expenses
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
         onBudgetUpdated();
       }
     } catch (err) {
-      console.error('Error saving expense:', err);
+      // Error saving expense
     }
   };
 
@@ -138,7 +138,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
         onBudgetUpdated();
       }
     } catch (err) {
-      console.error('Error deleting expense:', err);
+      // Error deleting expense
     }
   };
 
@@ -175,7 +175,7 @@ const ExpenseManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) =>
         onBudgetUpdated();
       }
     } catch (err) {
-      console.error('Error updating payment status:', err);
+      // Error updating payment status
     }
   };
 

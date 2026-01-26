@@ -81,7 +81,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
     setLoading(false);
 
   } catch (error) {
-    console.error('Error searching venues:', error);
     setError(error.message || t('errors.generalError'));
     setLoading(false);
   }
@@ -106,7 +105,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
       }
 
     } catch (error) {
-      console.error('  Error loading venue details:', error);
       setError(error.message || t('errors.generalError'));
     }
   };
@@ -131,7 +129,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
       setHasMoreResults(result.hasMore);
 
     } catch (error) {
-      console.error('Error loading next page:', error);
       setError(error.message || t('errors.generalError'));
     } finally {
       setLoadingPage(false);
@@ -165,7 +162,6 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
         
         return marker;
       } catch (error) {
-        console.error("Error creating marker:", error);
         return null;
       }
     }).filter(Boolean);
@@ -183,7 +179,7 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
             marker.map = null;
           }
         } catch (error) {
-          console.error("Error clearing marker:", error);
+          // Error clearing marker
         }
       }
     });
@@ -282,7 +278,7 @@ const searchVenues = async (filterParams, searchQuery = '', shouldApplyFilters =
         navigate('/create-event', { state: { venue: venueData } });
       }
     } catch (error) {
-      console.error("Error selecting venue:", error);
+      // Error selecting venue
     }
   };
 

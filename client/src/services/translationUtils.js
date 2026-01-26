@@ -49,7 +49,7 @@ export const translateText = async (text, targetLang = 'en') => {
     }
      
   } catch (error) {
-    console.error('Translation failed:', error);
+    // Translation failed
   }
    
   return text;

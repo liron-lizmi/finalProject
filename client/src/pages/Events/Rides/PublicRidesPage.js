@@ -326,7 +326,7 @@ const handleRideInfoSubmit = async (e) => {
         }
       }
     } catch (err) {
-      console.error('Error recording contact:', err);
+      // Error recording contact
     }
   };
 
@@ -356,7 +356,7 @@ const handleRideInfoSubmit = async (e) => {
         
       }
     } catch (err) {
-      console.error('Error cancelling ride:', err);
+      // Error cancelling ride
     }
   };
 

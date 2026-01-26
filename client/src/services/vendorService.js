@@ -30,8 +30,6 @@ class VendorService {
       };
 
     } catch (error) {
-      console.error('Error searching vendors:', error);
-
       if (error.response) {
         throw new Error(error.response.data.message || 'Failed to search vendors');
       } else if (error.request) {
@@ -52,7 +50,6 @@ class VendorService {
 
       return response.data;
     } catch (error) {
-      console.error('Error fetching vendor details:', error);
       throw new Error('Failed to load vendor details');
     }
   }

@@ -38,9 +38,6 @@ const getAccessToken = async (code) => {
     
     return response.tokens;
   } catch (error) {
-    console.error('Error getting access token:', error);
-    console.error('Error details:', error.response?.data || error.message);
-    
     if (error.message.includes('invalid_grant') || 
         (error.response && error.response.data && error.response.data.error === 'invalid_grant')) {
       throw new Error('Authorization code expired or already used. Please try connecting again.');
@@ -73,7 +70,6 @@ const refreshTokenIfNeeded = async (tokens) => {
         const { credentials } = await oauth2Client.refreshAccessToken();
         return credentials;
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError);
         if (refreshError.message && refreshError.message.includes('invalid_grant')) {
           throw new Error('AUTH_EXPIRED');
         }
@@ -83,7 +79,6 @@ const refreshTokenIfNeeded = async (tokens) => {
     
     return tokens;
   } catch (error) {
-    console.error('Error refreshing token:', error);
     if (error.message === 'AUTH_EXPIRED') {
       throw error;
     }
@@ -165,7 +160,6 @@ const createCalendarEvent = async (taskData, eventData) => {
 
     return response.data;
   } catch (error) {
-    console.error('Error creating calendar event:', error);
     throw new Error(`Failed to create calendar event: ${error.message}`);
   }
 };
@@ -244,7 +238,6 @@ const updateCalendarEvent = async (googleEventId, taskData, eventData, oauth2Cli
 
     return response.data;
   } catch (error) {
-    console.error('Error updating calendar event:', error);
     throw new Error(`Failed to update calendar event: ${error.message}`);
   }
 };
@@ -260,8 +253,6 @@ const deleteCalendarEvent = async (googleEventId, oauth2Client) => {
 
     return { success: true };
   } catch (error) {
-    console.error('Error deleting calendar event:', error);
-    
     if (error.code === 404 || error.message.includes('not found')) {
       return { success: true, alreadyDeleted: true };
     }
@@ -387,7 +378,6 @@ const syncEventTasksWithCalendar = async (eventId, tasks, eventData, userTokens)
         });
 
       } catch (error) {
-        console.error(`Failed to sync task ${task._id}:`, error);
         results.failed.push({
           taskId: task._id,
           title: task.title,
@@ -401,7 +391,6 @@ const syncEventTasksWithCalendar = async (eventId, tasks, eventData, userTokens)
       updatedTokens: refreshedTokens !== userTokens ? refreshedTokens : null
     };
   } catch (error) {
-    console.error('Error syncing tasks with calendar:', error);
     if (error.message === 'GOOGLE_AUTH_EXPIRED') {
       throw new Error('GOOGLE_AUTH_EXPIRED');
     }

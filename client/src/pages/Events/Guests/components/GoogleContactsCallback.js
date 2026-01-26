@@ -26,7 +26,6 @@ const GoogleContactsCallback = () => {
         const error = searchParams.get('error');
 
         if (error) {
-          console.error('Google Contacts Auth Error:', error);
           setStatus('error');
           setTimeout(() => {
             const returnTo = sessionStorage.getItem('googleContactsReturnTo') || '/dashboard';
@@ -37,7 +36,6 @@ const GoogleContactsCallback = () => {
         }
 
         if (!code || state !== 'google_contacts_auth') {
-          console.error('Invalid callback parameters');
           setStatus('error');
           setTimeout(() => {
             const returnTo = sessionStorage.getItem('googleContactsReturnTo') || '/dashboard';
@@ -49,7 +47,6 @@ const GoogleContactsCallback = () => {
 
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No auth token found');
           setStatus('error');
           setTimeout(() => {
             navigate('/login', { replace: true });
@@ -62,7 +59,6 @@ const GoogleContactsCallback = () => {
         const eventId = eventIdMatch ? eventIdMatch[1] : null;
 
         if (!eventId) {
-            console.error('No event ID found in return path:', returnTo);
             setStatus('error');
             setTimeout(() => {
                 navigate('/dashboard', { replace: true });
@@ -103,7 +99,6 @@ const GoogleContactsCallback = () => {
             }
           }, 1500);
         } else {
-          console.error('❌ Callback failed:', responseData);
           setStatus('error');
           
           setTimeout(() => {
@@ -120,7 +115,6 @@ const GoogleContactsCallback = () => {
         }
 
       } catch (error) {
-        console.error('❌ Error processing Google Contacts callback:', error);
         setStatus('error');
         setTimeout(() => {
           const returnTo = sessionStorage.getItem('googleContactsReturnTo') || '/dashboard';

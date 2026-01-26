@@ -34,8 +34,6 @@ class VenueService {
       };
 
     } catch (error) {
-      console.error('  Error searching venues:', error);
-      
       if (error.response) {
         throw new Error(error.response.data.message || 'Failed to search venues');
       } else if (error.request) {
@@ -57,7 +55,6 @@ class VenueService {
       return response.data;
 
     } catch (error) {
-      console.error('  Error fetching venue details:', error);
       throw new Error('Failed to load venue details');
     }
   }
@@ -67,7 +64,6 @@ class VenueService {
       const response = await axios.get(`${API_BASE_URL}/cache/stats`);
       return response.data;
     } catch (error) {
-      console.error('  Error fetching cache stats:', error);
       return null;
     }
   }
@@ -77,7 +73,6 @@ class VenueService {
       await axios.delete(`${API_BASE_URL}/cache`);
       return true;
     } catch (error) {
-      console.error('  Error clearing cache:', error);
       return false;
     }
   }

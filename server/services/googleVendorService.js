@@ -5,9 +5,6 @@ class GoogleVendorService {
     this.apiKey = process.env.GOOGLE_MAPS_API_KEY;
     this.baseUrl = 'https://maps.googleapis.com/maps/api/place';
     
-    if (!this.apiKey) {
-      console.error('Missing Google Maps API key!');
-    }
   }
 
   // Builds a search query string based on vendor type, search term, and filters
@@ -125,7 +122,6 @@ class GoogleVendorService {
       });
 
       if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-        console.error(`Google API Error: ${response.data.status}`);
         return { results: [], nextPageToken: null, hasMore: false };
       }
 
@@ -139,7 +135,6 @@ class GoogleVendorService {
       };
 
     } catch (error) {
-      console.error('Error calling Google Places API:', error.message);
       return { results: [], nextPageToken: null, hasMore: false };
     }
   }
@@ -158,7 +153,6 @@ class GoogleVendorService {
       });
 
       if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-        console.error(`Google API Status: ${response.data.status}`);
         return { results: [], nextPageToken: null, hasMore: false };
       }
 
@@ -172,7 +166,6 @@ class GoogleVendorService {
       };
 
     } catch (error) {
-      console.error('Error fetching next page:', error.message);
       return { results: [], nextPageToken: null, hasMore: false };
     }
   }
@@ -196,7 +189,6 @@ class GoogleVendorService {
       return response.data.result;
 
     } catch (error) {
-      console.error('Error fetching place details:', error.message);
       throw error;
     }
   }
@@ -204,17 +196,15 @@ class GoogleVendorService {
   // Generates a Google Places photo URL from a photo reference with specified dimensions
   getPhotoUrl(photoReference, maxWidth = 400, maxHeight = 300) {
   if (!photoReference) {
-    console.warn('getPhotoUrl: No photo reference provided');
     return null;
   }
-  
+
   if (!this.apiKey) {
-    console.error('getPhotoUrl: Missing API key');
     return null;
   }
-  
+
   const url = `${this.baseUrl}/photo?maxwidth=${maxWidth}&maxheight=${maxHeight}&photoreference=${photoReference}&key=${this.apiKey}`;
-    
+
   return url;
 }
 

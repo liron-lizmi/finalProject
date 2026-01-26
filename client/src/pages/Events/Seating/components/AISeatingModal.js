@@ -674,7 +674,7 @@ const AISeatingModal = ({
         setSuggestedTableSettings(suggestedCopy);
       }
     } catch (error) {
-      console.error('Error fetching table suggestion:', error);
+      // Error fetching table suggestion
     } finally {
       isFetchingRef.current = false;
       setIsFetchingSuggestion(false);

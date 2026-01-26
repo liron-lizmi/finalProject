@@ -7,9 +7,6 @@ class GooglePlacesService {
     this.apiKey = process.env.GOOGLE_MAPS_API_KEY;
     this.baseUrl = 'https://maps.googleapis.com/maps/api/place';
     
-    if (!this.apiKey) {
-      console.error('Missing Google Maps API key!');
-    }
   }
 
   buildSearchQuery(venueType, area, searchTerm = '', language = 'en') {
@@ -74,7 +71,6 @@ class GooglePlacesService {
     });
 
     if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-      console.error(`Google API Error: ${response.data.status}`);
       throw new Error(`Google Places API error: ${response.data.status}`);
     }
 
@@ -88,7 +84,6 @@ class GooglePlacesService {
     };
 
   } catch (error) {
-    console.error('Error calling Google Places API:', error.message);
     throw error;
   }
 }
@@ -119,7 +114,6 @@ class GooglePlacesService {
       };
 
     } catch (error) {
-      console.error('  Error fetching next page:', error.message);
       throw error;
     }
   }
@@ -143,7 +137,6 @@ class GooglePlacesService {
       return response.data.result;
 
     } catch (error) {
-      console.error('  Error fetching place details:', error.message);
       throw error;
     }
   }

@@ -50,7 +50,7 @@ const EventSharePage = () => {
         setEventInfo(event);
       }
     } catch (error) {
-      console.error('Error loading event info:', error);
+      // Error loading event info
     }
   };
 
@@ -70,7 +70,6 @@ const EventSharePage = () => {
         setIsOwner(data.isOwner || false);
       }
     } catch (error) {
-      console.error('Error loading shared users:', error);
       setSharedUsers([]);
       setIsOwner(false);
     }
@@ -93,7 +92,6 @@ const EventSharePage = () => {
       setEventInfo(eventData);
     }
   } catch (error) {
-    console.error('Error checking edit permission:', error);
     setCanEdit(false);
   }
 };
@@ -144,7 +142,6 @@ const EventSharePage = () => {
         }
       }
     } catch (error) {
-      console.error('Error sharing event:', error);
       showErrorModal(t('errors.serverError'));
     } finally {
       setLoading(false);
@@ -177,7 +174,6 @@ const EventSharePage = () => {
         showErrorModal(data.message || t('errors.serverError'));
       }
     } catch (error) {
-      console.error('Error removing share:', error);
       showErrorModal(t('errors.serverError'));
     }
   };
@@ -203,7 +199,6 @@ const EventSharePage = () => {
         showErrorModal(data.message || t('errors.serverError'));
       }
     } catch (error) {
-      console.error('Error updating permission:', error);
       showErrorModal(t('errors.serverError'));
     }
   };

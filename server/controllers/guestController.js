@@ -752,7 +752,7 @@ const updateGuestGift = async (req, res) => {
         }
       }
     } catch (budgetError) {
-      console.error('Error syncing gift to budget:', budgetError);
+      // Error syncing gift to budget
     }
 
     res.json(updatedGuest);
@@ -803,7 +803,7 @@ const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
     );
 
   } catch (error) {
-    console.error('[triggerSeatingSync] Error:', error);
+    // Error triggering seating sync
   }
 };
 

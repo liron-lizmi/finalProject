@@ -126,19 +126,17 @@ const processVendorsWithPhotos = (vendors) => {
     if (vendor.photos && vendor.photos.length > 0) {
       vendor.photos = vendor.photos.map(photo => {
         if (!photo) {
-          console.warn('Empty photo object found');
           return null;
         }
-        
+
         if (typeof photo === 'string') {
           if (photo.startsWith('http')) {
             return { url: photo };
           } else {
-            console.warn('Invalid photo URL string:', photo);
             return null;
           }
         }
-        
+
         if (photo.photo_reference) {
           const url = googleVendorService.getPhotoUrl(photo.photo_reference, 400, 300);
           if (url && url.startsWith('http')) {
@@ -149,21 +147,18 @@ const processVendorsWithPhotos = (vendors) => {
               width: photo.width
             };
           } else {
-            console.warn('Failed to generate URL for photo_reference:', photo.photo_reference);
             return null;
           }
         }
-        
+
         if (photo.url) {
           if (typeof photo.url === 'string' && photo.url.startsWith('http')) {
             return photo;
           } else {
-            console.warn('Invalid URL in photo object:', photo.url);
             return null;
           }
         }
-        
-        console.warn('Photo without valid reference or URL:', photo);
+
         return null;
       }).filter(Boolean); 
     }
@@ -465,10 +460,9 @@ const searchVendors = async (req, res) => {
     return res.json(response);
 
   } catch (error) {
-    console.error('❌ Error in search route:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to search vendors',
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -488,7 +482,6 @@ const getEventVendors = async (req, res) => {
 
     res.json(event.vendors || []);
   } catch (err) {
-    console.error(err.message);
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ msg: i18next.t('events.notFound') });
     }
@@ -527,12 +520,11 @@ const addVendor = async (req, res) => {
     event.vendors.push(newVendor);
     await event.save();
 
-    res.json({ 
+    res.json({
       vendors: event.vendors,
       msg: i18next.t('events.vendors.addSuccess')
     });
   } catch (err) {
-    console.error(err.message);
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -567,12 +559,11 @@ const updateVendor = async (req, res) => {
 
     await event.save();
 
-    res.json({ 
+    res.json({
       vendors: event.vendors,
       msg: i18next.t('events.vendors.updateSuccess')
     });
   } catch (err) {
-    console.error(err.message);
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -603,12 +594,11 @@ const deleteVendor = async (req, res) => {
     event.vendors.splice(vendorIndex, 1);
     await event.save();
 
-    res.json({ 
+    res.json({
       vendors: event.vendors,
       msg: i18next.t('events.vendors.deleteSuccess')
     });
   } catch (err) {
-    console.error(err.message);
     res.status(500).send(i18next.t('errors.serverError'));
   }
 };
@@ -619,7 +609,6 @@ const getCacheStats = (req, res) => {
     const stats = vendorCacheManager.getStats();
     res.json(stats);
   } catch (error) {
-    console.error('Error getting cache stats:', error);
     res.status(500).json({ msg: 'Server error' });
   }
 };
@@ -651,10 +640,9 @@ const getVendorDetailsByPlaceId = async (req, res) => {
     res.json(processedVendor);
 
   } catch (error) {
-    console.error('❌ Error fetching vendor details:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch vendor details',
-      message: error.message 
+      message: error.message
     });
   }
 };

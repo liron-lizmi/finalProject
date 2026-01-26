@@ -571,7 +571,6 @@ const TaskModal = ({ task, onSave, onClose, eventDate, canEdit = true }) => {
     try {
       await onSave(formData);
     } catch (error) {
-      console.error('Error saving task:', error);
       showError(t('events.features.tasks.messages.saveError'));
     } finally {
       setLoading(false);

@@ -320,8 +320,6 @@ const registerOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('OAuth registration error:', err);
-
     // Handle duplicate key error (race condition)
     if (err.code === 11000) {
       try {
@@ -358,7 +356,7 @@ const registerOAuth = async (req, res) => {
           });
         }
       } catch (findError) {
-        console.error('Error finding existing user during duplicate handling:', findError);
+        // Error finding existing user during duplicate handling
       }
     }
 
@@ -415,7 +413,6 @@ const loginOAuth = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('OAuth login error:', err);
     res.status(500).json({
       message: req.t('errors.serverError') || 'Server error occurred during OAuth login'
     });
@@ -450,7 +447,6 @@ const getNotifications = async (req, res) => {
     
     res.json(unreadNotifications);
   } catch (err) {
-    console.error('Error in getNotifications:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

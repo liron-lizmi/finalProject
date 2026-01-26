@@ -45,7 +45,6 @@ const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 5000;
 
 if (!MONGO_URI) {
-    console.error('MONGO_URI is not defined in environment variables. Check your .env file.');
     process.exit(1);
 }
 
@@ -81,7 +80,6 @@ app.use('*', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
   res.status(500).json({ 
     message: req.t('errors.serverError'),
     error: process.env.NODE_ENV === 'development' ? err.message : req.t('errors.generalError')
@@ -91,11 +89,9 @@ app.use((err, req, res, next) => {
 mongoose.connect(MONGO_URI)
 .then(() => {
     app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
     });
 })
 .catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
 });
 
 module.exports = app;

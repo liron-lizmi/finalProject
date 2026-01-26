@@ -46,7 +46,6 @@ const EventDetailsPage = () => {
       setUserPermission(response.data.userPermission);
     }
   } catch (err) {
-    console.error('Error fetching event details:', err);
     setError(t('errors.eventLoadFailed'));
   }
 };

@@ -42,7 +42,6 @@ const FeaturePageTemplate = ({
 
         setEvent(response.data);
       } catch (err) {
-        console.error('Error fetching event details:', err);
         setEvent({
           title: t('events.eventNotFound'),
           date: new Date()

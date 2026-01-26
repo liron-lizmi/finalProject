@@ -27,7 +27,6 @@ const getBudget = async (req, res) => {
 
     res.json(budget);
   } catch (err) {
-    console.error('Error fetching budget:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -91,8 +90,6 @@ const createBudget = async (req, res) => {
     const savedBudget = await newBudget.save();
     res.status(201).json(savedBudget);
   } catch (err) {
-    console.error('Error creating budget:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -123,8 +120,6 @@ const updateBudget = async (req, res) => {
     const updatedBudget = await budget.save();
     res.json(updatedBudget);
   } catch (err) {
-    console.error('Error updating budget:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -159,8 +154,6 @@ const addExpense = async (req, res) => {
     const addedExpense = updatedBudget.items[updatedBudget.items.length - 1];
     res.status(201).json(addedExpense);
   } catch (err) {
-    console.error('Error adding expense:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -195,8 +188,6 @@ const updateExpense = async (req, res) => {
     const updatedBudget = await budget.save();
     res.json(expense);
   } catch (err) {
-    console.error('Error updating expense:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -225,7 +216,6 @@ const deleteExpense = async (req, res) => {
 
     res.json({ message: req.t('events.features.budget.expenseDeleteSuccess') });
   } catch (err) {
-    console.error('Error deleting expense:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -274,7 +264,6 @@ const getBudgetSummary = async (req, res) => {
 
     res.json(summary);
   } catch (err) {
-    console.error('Error getting budget summary:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -296,7 +285,6 @@ const getExpensesByCategory = async (req, res) => {
 
     res.json(expenses);
   } catch (err) {
-    console.error('Error getting expenses by category:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -316,7 +304,6 @@ const updateAlertThreshold = async (req, res) => {
 
     res.json({ alertThreshold: updatedBudget.alertThreshold });
   } catch (err) {
-    console.error('Error updating alert threshold:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -346,8 +333,6 @@ const addIncome = async (req, res) => {
     const addedIncome = updatedBudget.incomes[updatedBudget.incomes.length - 1];
     res.status(201).json(addedIncome);
   } catch (err) {
-    console.error('Error adding income:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -381,8 +366,6 @@ const updateIncome = async (req, res) => {
     const updatedBudget = await budget.save();
     res.json(income);
   } catch (err) {
-    console.error('Error updating income:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -411,7 +394,6 @@ const deleteIncome = async (req, res) => {
 
     res.json({ message: req.t('events.features.budget.incomeDeleteSuccess') });
   } catch (err) {
-    console.error('Error deleting income:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -451,7 +433,6 @@ const syncGiftToIncome = async (req, res) => {
     await budget.save();
     res.json({ message: req.t('events.features.budget.giftSyncSuccess') });
   } catch (err) {
-    console.error('Error syncing gift to income:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

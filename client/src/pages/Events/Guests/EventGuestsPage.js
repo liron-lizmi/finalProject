@@ -398,7 +398,7 @@ const EventGuestsPage = () => {
         setIsSeparatedSeating(eventData.isSeparatedSeating || false);
       }
     } catch (err) {
-      console.error('Error fetching event permissions:', err);
+      // Error fetching event permissions
     }
   }, [eventId, makeApiRequest]);
 
@@ -410,7 +410,8 @@ const EventGuestsPage = () => {
         setEventDate(new Date(event.date));
       }
     } catch (err) {
-      console.error('Error fetching event date:', err);}
+      // Error fetching event date
+    }
   }, [eventId, makeApiRequest]);
 
   const hasEventPassed = () => {

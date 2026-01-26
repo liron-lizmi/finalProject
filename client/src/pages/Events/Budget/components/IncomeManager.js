@@ -79,7 +79,7 @@ const IncomeManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => 
         onBudgetUpdated();
       }
     } catch (err) {
-      console.error('Error saving income:', err);
+      // Error saving income
     }
   };
 
@@ -116,7 +116,7 @@ const IncomeManager = ({ budget, eventId, onBudgetUpdated, canEdit = true }) => 
         onBudgetUpdated();
       }
     } catch (err) {
-      console.error('Error deleting income:', err);
+      // Error deleting income
     }
   };
 

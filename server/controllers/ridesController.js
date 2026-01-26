@@ -33,7 +33,6 @@ const calculateDistance = async (address1, address2) => {
     const apiKey = process.env.GOOGLE_DISTANCE_MATRIX_API_KEY;
 
     if (!apiKey) {
-      console.error('Google Maps API key is missing!');
       return null;
     }
 
@@ -63,12 +62,10 @@ const calculateDistance = async (address1, address2) => {
       return distanceInKm;
 
     } else {
-      console.warn('Google API returned no result for addresses:', address1, address2);
       return null;
     }
 
   } catch (error) {
-    console.error('Error calling Google Distance Matrix API:', error.message);
     return null;
   }
 };
@@ -89,7 +86,6 @@ const getEventRidesInfo = async (req, res) => {
       eventLocation: event.venues && event.venues[0] ? event.venues[0].address : null
     });
   } catch (err) {
-    console.error('Error fetching event rides info:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -111,7 +107,6 @@ const checkPhoneForRides = async (req, res) => {
 
     res.json({ guest });
   } catch (err) {
-    console.error('Error checking phone for rides:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -131,7 +126,6 @@ const getRidesGuests = async (req, res) => {
     
     res.json(guests);
   } catch (err) {
-    console.error('Error fetching rides guests:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -185,7 +179,6 @@ const getSuggestedRides = async (req, res) => {
 
     res.json({ suggestions });
   } catch (err) {
-    console.error('Error getting suggested rides:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -240,7 +233,6 @@ const updateGuestRideInfo = async (req, res) => {
       guest: guest 
     });
   } catch (err) {
-    console.error('Error updating guest ride info:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -321,7 +313,6 @@ const recordContact = async (req, res) => {
       contactHistory: guest.rideInfo.contactHistory
     });
   } catch (err) {
-    console.error('Error recording contact:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -363,7 +354,6 @@ const cancelRide = async (req, res) => {
       contactHistory: guest.rideInfo.contactHistory
     });
   } catch (err) {
-    console.error('Error cancelling ride:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };
@@ -412,7 +402,6 @@ const updateGuestRideInfoByOwner = async (req, res) => {
 
     res.json({ message: req.t('events.rides.updateSuccess'), guest });
   } catch (err) {
-    console.error('Error updating guest ride info by owner:', err);
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }
 };

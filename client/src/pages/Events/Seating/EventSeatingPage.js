@@ -135,7 +135,7 @@ const EventSeatingPage = () => {
         setIsSeparatedSeating(eventData.isSeparatedSeating || false);
       }
     } catch (err) {
-      console.error('Error fetching event permissions:', err);
+      // Error fetching event permissions
     }
   }, [eventId, makeApiRequest]);
 
@@ -379,7 +379,7 @@ const EventSeatingPage = () => {
         }
       }
     } catch (error) {
-      console.error('[checkAndHandlePendingSync] Error:', error);
+      // Error in checkAndHandlePendingSync
     }
   }, [makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, createGuestFingerprint, isSeparatedSeating]);
 
@@ -2798,7 +2798,7 @@ const clearAllSeating = useCallback(() => {
           }
         }
       } catch (error) {
-        console.error('Polling error:', error);
+        // Polling error
       }
     }, 3000);
 

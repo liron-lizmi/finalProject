@@ -17,7 +17,6 @@ const getEventTasks = async (req, res) => {
 
     res.json(tasks);
   } catch (err) {
-    console.error('Error fetching tasks:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -137,8 +136,6 @@ const createTask = async (req, res) => {
 
     res.status(201).json(savedTask);
   } catch (err) {
-    console.error('Error creating task:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -266,8 +263,6 @@ const updateTask = async (req, res) => {
 
     res.json(updatedTask);
   } catch (err) {
-    console.error('Error updating task:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ 
@@ -297,7 +292,6 @@ const deleteTask = async (req, res) => {
 
     res.json({ message: req.t('events.tasks.deleteSuccess') });
   } catch (err) {
-    console.error('Error deleting task:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -327,7 +321,6 @@ const updateTaskStatus = async (req, res) => {
 
     res.json(updatedTask);
   } catch (err) {
-    console.error('Error updating task status:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -392,7 +385,6 @@ const getTasksStatistics = async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    console.error('Error fetching task statistics:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -403,7 +395,6 @@ const getGoogleCalendarStatus = async (req, res) => {
     const connected = user && user.googleTokens && user.googleTokens.access_token ? true : false;
     res.json({ connected });
   } catch (error) {
-    console.error('Error checking connection status:', error);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -413,7 +404,6 @@ const getGoogleAuthUrl = async (req, res) => {
     const authUrl = googleCalendar.getAuthUrl();
     res.json({ authUrl });
   } catch (error) {
-    console.error('Error generating auth URL:', error);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -423,7 +413,6 @@ const handleGoogleCallback = async (req, res) => {
     const { code } = req.body;
 
     if (!code) {
-      console.error('Missing authorization code');
       return res.status(400).json({ 
         message: 'Missing authorization code',
         error: 'MISSING_CODE'
@@ -431,7 +420,6 @@ const handleGoogleCallback = async (req, res) => {
     }
 
     if (processedCodes.has(code)) {
-      console.error('Authorization code already used:', code.substring(0, 20) + '...');
       return res.status(400).json({
         message: 'Authorization code already used. Please try connecting again.',
         error: 'CODE_ALREADY_USED',
@@ -454,7 +442,6 @@ const handleGoogleCallback = async (req, res) => {
       );
 
       if (!updatedUser) {
-        console.error('User not found:', req.userId);
         return res.status(404).json({ 
           message: 'User not found',
           error: 'USER_NOT_FOUND'
@@ -467,8 +454,6 @@ const handleGoogleCallback = async (req, res) => {
       });
 
     } catch (tokenError) {
-      console.error('Token exchange error:', tokenError);
-
       if (tokenError.message.includes('invalid_grant') || 
           tokenError.message.includes('expired') ||
           tokenError.message.includes('already used')) {
@@ -491,8 +476,6 @@ const handleGoogleCallback = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error in Google Calendar callback:', error);
-
     res.status(500).json({ 
       message: 'Failed to connect Google Calendar',
       error: error.message,
@@ -510,7 +493,6 @@ const disconnectGoogleCalendar = async (req, res) => {
 
     res.json({ message: 'Google Calendar disconnected successfully' });
   } catch (error) {
-    console.error('Error disconnecting Google Calendar:', error);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -583,10 +565,9 @@ const syncWithGoogleCalendar = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error syncing with calendar:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to sync with calendar',
-      error: error.message 
+      error: error.message
     });
   }
 };

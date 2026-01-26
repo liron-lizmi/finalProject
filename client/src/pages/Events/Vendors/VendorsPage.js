@@ -275,7 +275,6 @@ const VendorsPage = ({ onSelectVendor }) => {
       const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
       if (!API_KEY) {
-        console.error("Missing Google Maps API key");
         setLoading(false);
         return;
       }
@@ -320,7 +319,7 @@ const VendorsPage = ({ onSelectVendor }) => {
               marker.setMap(null);
             }
           } catch (error) {
-            console.error("Error clearing marker:", error);
+            // Error clearing marker
           }
         }
       });
@@ -330,7 +329,6 @@ const VendorsPage = ({ onSelectVendor }) => {
   
   const initMap = () => {
     if (!mapRef.current || !window.google) {
-      console.error("Map ref or Google API not ready");
       return;
     }
     
@@ -366,7 +364,6 @@ const VendorsPage = ({ onSelectVendor }) => {
         searchVendors(false);
       }
     } catch (error) {
-      console.error("Error in initMap:", error);
       isMapInitialized.current = false;
       setLoading(false);
     }
@@ -419,7 +416,6 @@ const searchVendors = async (shouldAppend = false) => {
     }
     
   } catch (error) {
-    console.error('❌ Search error:', error);
     setDisplayedVendors([]);
   } finally {
     setLoading(false);
@@ -433,7 +429,6 @@ const searchVendors = async (shouldAppend = false) => {
     const currentMap = mapParamDirect || mapInstance.current || map;
     
     if (!currentMap || !window.google) {
-      console.error("Map not available for adding markers");
       return;
     }
         
@@ -467,7 +462,6 @@ const searchVendors = async (shouldAppend = false) => {
         
         return marker;
       } catch (error) {
-        console.error("Error creating marker:", error);
         return null;
       }
     }).filter(Boolean);
@@ -485,7 +479,7 @@ const searchVendors = async (shouldAppend = false) => {
             marker.map = null;
           }
         } catch (error) {
-          console.error("Error clearing marker:", error);
+          // Error clearing marker
         }
       }
     });
@@ -494,7 +488,6 @@ const searchVendors = async (shouldAppend = false) => {
   
   const getVendorDetails = async (placeId) => {
     if (!placeId) {
-      console.error("Missing placeId");
       return;
     }
 
@@ -505,7 +498,6 @@ const searchVendors = async (shouldAppend = false) => {
       );
 
       if (!vendorDetails) {
-        console.error("No vendor details received");
         return;
       }
 
@@ -556,7 +548,7 @@ const searchVendors = async (shouldAppend = false) => {
       setSelectedPhoto(0);
 
     } catch (error) {
-      console.error("Failed to get vendor details:", error);
+      // Failed to get vendor details
     }
   };
   
@@ -588,11 +580,9 @@ const searchVendors = async (shouldAppend = false) => {
     }
     
     if (!geocoder.current) {
-      console.error("Geocoder not initialized");
       if (window.google && window.google.maps && window.google.maps.Geocoder) {
         geocoder.current = new window.google.maps.Geocoder();
       } else {
-        console.error("Google Maps Geocoder API not available");
         return;
       }
     }
@@ -709,13 +699,12 @@ const searchVendors = async (shouldAppend = false) => {
         navigate('/create-event', { state: { vendor: vendorData } });
       }
     } catch (error) {
-      console.error("Error selecting vendor:", error);
+      // Error selecting vendor
     }
   };
 
   const getMainVendorImage = (vendor) => {
     if (!vendor.photos || vendor.photos.length === 0) {
-      console.warn('⚠️ No photos for:', vendor.name);
       return null;
     }
 
@@ -731,7 +720,6 @@ const searchVendors = async (shouldAppend = false) => {
       }
     }
 
-    console.warn('⚠️ No valid photos found for:', vendor.name);
     return null;
   };
 

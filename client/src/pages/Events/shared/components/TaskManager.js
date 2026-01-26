@@ -68,7 +68,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       const data = await response.json();
       setCanEdit(data.canEdit || false);
       setUserPermission(data.userPermission || 'view');
-    } catch (error) { console.error(error); }
+    } catch (error) { /* Error fetching event permissions */ }
   }, [actualEventId]);
 
   const fetchEventData = useCallback(async () => {
@@ -81,7 +81,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       if (!response.ok) throw new Error('Failed');
       const data = await response.json();
       setEventData(data);
-    } catch (error) { console.error(error); }
+    } catch (error) { /* Error fetching event data */ }
   }, [actualEventId]);
 
   const fetchTasks = useCallback(async (showErrorMsg = true) => {
@@ -99,7 +99,6 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       const data = await response.json();
       setTasks(data);
     } catch (error) {
-       console.error(error);
        setTasks([]);
     }
   }, [actualEventId, t]);
@@ -113,7 +112,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
       if (!response.ok) throw new Error('Failed');
       const data = await response.json();
       setStatistics(data);
-    } catch (error) { console.error(error); }
+    } catch (error) { /* Error fetching statistics */ }
   }, [actualEventId]);
 
   const handleSaveTask = async (taskData) => {
@@ -194,7 +193,7 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
   useEffect(() => {
     if (actualEventId) {
       setLoading(false);
-      Promise.all([fetchEventPermissions(), fetchEventData(), fetchTasks(false), fetchStatistics()]).catch(console.error);
+      Promise.all([fetchEventPermissions(), fetchEventData(), fetchTasks(false), fetchStatistics()]).catch(() => {});
     }
   }, [actualEventId, fetchEventPermissions, fetchEventData, fetchTasks, fetchStatistics]);
 

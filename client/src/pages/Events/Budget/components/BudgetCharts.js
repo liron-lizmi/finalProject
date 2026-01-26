@@ -29,7 +29,7 @@ const BudgetCharts = ({ budget, eventId, chartColors }) => {
         setSummary(summaryData);
       }
     } catch (err) {
-      console.error('Error fetching budget summary:', err);
+      // Error fetching budget summary
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ const BudgetCharts = ({ budget, eventId, chartColors }) => {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error('Error exporting CSV:', err);
+      // Error exporting CSV
     }
   };
 

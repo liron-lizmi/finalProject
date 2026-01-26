@@ -61,7 +61,6 @@ const EventVendorsPage = () => {
         setCanEdit(response.data.canEdit !== false);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching event details:', err);
         setError(t('errors.eventLoadFailed'));
         setLoading(false);
       }
@@ -128,12 +127,11 @@ const EventVendorsPage = () => {
         setVendorUpdateSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error updating vendor:', err);
       setError(t('errors.generalError'));
     }
   };
 
-   // Handles manual vendor form field changes 
+   // Handles manual vendor form field changes
   const handleManualVendorChange = (e) => {
     const { name, value } = e.target;
    
@@ -228,7 +226,6 @@ const EventVendorsPage = () => {
         setVendorUpdateSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error updating vendor:', err);
       setError(t('errors.generalError'));
     }
   };
@@ -276,7 +273,6 @@ const EventVendorsPage = () => {
         setVendorDeleteSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error deleting vendor:', err);
       setError(t('errors.generalError'));
     }
   };

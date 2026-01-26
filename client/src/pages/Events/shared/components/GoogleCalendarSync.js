@@ -47,7 +47,7 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
         setIsConnected(data.connected);
       }
     } catch (error) {
-      console.error('Error checking connection status:', error);
+      // Error checking connection status
     } finally {
       setInitializing(false);
     }
@@ -99,7 +99,6 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
         throw new Error('Failed to get auth URL');
       }
     } catch (error) {
-      console.error('Error connecting Google Calendar:', error);
       showError(t('events.features.tasks.calendar.sync.connectionError'));
     } finally {
       setLoading(false);
@@ -127,7 +126,6 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
         throw new Error('Failed to disconnect');
       }
     } catch (error) {
-      console.error('Error disconnecting Google Calendar:', error);
       showError(t('events.features.tasks.calendar.sync.disconnectError'));
     } finally {
       setLoading(false);
@@ -169,7 +167,6 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
         }
       }
     } catch (error) {
-      console.error('Error syncing with calendar:', error);
       showError(t('events.features.tasks.calendar.sync.syncError'));
     } finally {
       setSyncing(false);

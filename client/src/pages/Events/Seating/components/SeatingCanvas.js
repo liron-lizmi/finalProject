@@ -58,18 +58,11 @@ const SeatingCanvas = forwardRef(({
       ? [...(maleTables || []), ...(femaleTables || [])]
       : (tables || []);
 
-    // Debug: log tables with isEmergency
-    const emergencyTablesInList = allTables.filter(table => table.isEmergency);
-    if (emergencyTablesInList.length > 0) {
-      console.log('Emergency tables found:', emergencyTablesInList);
-    }
-
     const newEmergencyTables = allTables.filter(table =>
       table.isEmergency && !shownEmergencyTableIds.has(table.id)
     );
 
     if (newEmergencyTables.length > 0) {
-      console.log('New emergency tables to show:', newEmergencyTables);
       setEmergencyTables(newEmergencyTables);
       setIsEmergencyModalOpen(true);
 

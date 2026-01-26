@@ -59,7 +59,6 @@ const shareEvent = async (req, res) => {
 
     res.json({ message: req.t('events.share.shareSuccess') });
   } catch (err) {
-    console.error('Error sharing event:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -86,7 +85,6 @@ const acceptShare = async (req, res) => {
 
     res.json({ message: req.t('events.share.acceptSuccess') });
   } catch (err) {
-    console.error('Error accepting share:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -114,7 +112,6 @@ const getSharedUsers = async (req, res) => {
       isOwner: isOwner
     });
   } catch (err) {
-    console.error('Error getting shared users:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -142,7 +139,6 @@ const removeShare = async (req, res) => {
 
     res.json({ message: req.t('events.share.removeSuccess') });
   } catch (err) {
-    console.error('Error removing share:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -172,7 +168,6 @@ const updateSharePermission = async (req, res) => {
 
     res.json({ message: req.t('events.share.permissionUpdated') });
   } catch (err) {
-    console.error('Error updating permission:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

@@ -37,7 +37,7 @@ const EventBudgetPage = () => {
         setCanEdit(eventData.canEdit || false);
       }
     } catch (err) {
-      console.error('Error fetching event permissions:', err);
+      // Error fetching event permissions
     }
   }, [id]);
 
@@ -79,7 +79,6 @@ const EventBudgetPage = () => {
         throw new Error(t('events.features.budget.loadError'));
       }
     } catch (err) {
-      console.error('Error fetching budget:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -136,7 +135,7 @@ const EventBudgetPage = () => {
         setAlerts(newAlerts);
       }
     } catch (err) {
-      console.error('Error checking alerts:', err);
+      // Error checking alerts
     }
   };
 

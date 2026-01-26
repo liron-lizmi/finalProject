@@ -28,7 +28,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
         setSummary(summaryData);
       }
     } catch (err) {
-      console.error('Error fetching budget summary:', err);
+      // Error fetching budget summary
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
                     onAlertThresholdChange(newThreshold);
                   }
                 } catch (err) {
-                  console.error('Error updating alert threshold:', err);
+                  // Error updating alert threshold
                 }
               }}
               className="threshold-slider"

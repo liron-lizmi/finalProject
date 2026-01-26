@@ -73,7 +73,6 @@ const EventVenuePage = () => {
         setCanEdit(response.data.canEdit !== false);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching event details:', err);
         setError(t('errors.eventLoadFailed'));
         setLoading(false);
       }
@@ -129,7 +128,6 @@ const EventVenuePage = () => {
         setVenueUpdateSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error updating venue:', err);
       setError(t('errors.generalError'));
     }
   };
@@ -227,7 +225,6 @@ const EventVenuePage = () => {
         setVenueUpdateSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error updating venue:', err);
       setError(t('errors.generalError'));
     }
   };
@@ -271,7 +268,6 @@ const EventVenuePage = () => {
         setVenueDeleteSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error deleting venue:', err);
       setError(t('errors.generalError'));
     }
   };

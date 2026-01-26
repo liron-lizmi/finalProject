@@ -48,7 +48,6 @@ const checkEditPermission = async (req, res, next) => {
 
     return res.status(404).json({ message: req.t('events.notFound') });
   } catch (err) {
-    console.error('Error checking edit permissions:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -92,7 +91,6 @@ const checkViewPermission = async (req, res, next) => {
 
     return res.status(404).json({ message: req.t('events.notFound') });
   } catch (err) {
-    console.error('Error checking view permissions:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -118,7 +116,6 @@ const checkIsEventOwner = async (req, res, next) => {
     req.isEventOwner = true;
     return next();
   } catch (err) {
-    console.error('Error checking event ownership:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

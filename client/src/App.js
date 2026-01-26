@@ -34,15 +34,9 @@ const OAuthRedirectHandler = () => {
     const isGoogleAuth = params.get('auth') === 'google';
     const isDirect = params.get('direct') === 'true';
 
-    console.log('=== OAuthRedirectHandler ===');
-    console.log('Current pathname:', location.pathname);
-    console.log('OAuth Flow from localStorage:', oauthFlow);
-    console.log('isGoogleAuth from URL:', isGoogleAuth);
-
     // If we landed on /index.html during OAuth flow, redirect to /dashboard
     if ((location.pathname === '/index.html' || location.pathname === '/') &&
         (oauthFlow === 'google' || (isGoogleAuth && isDirect))) {
-      console.log('Redirecting OAuth from index.html to /dashboard');
       navigate('/dashboard', { replace: true });
     }
   }, [location, navigate]);

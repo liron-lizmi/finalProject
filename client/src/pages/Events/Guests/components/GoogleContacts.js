@@ -99,7 +99,7 @@ class GoogleContactsAPI {
       this.isSignedIn = false;
       this.accessToken = null;
     } catch (error) {
-        console.error('❌ Error signing out:', error);
+        // Error signing out
     }
   }
 

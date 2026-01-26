@@ -70,12 +70,10 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
         
         return result;
       } catch (utfError) {
-        console.warn('UTF-8 decoding failed, returning processed string:', utfError);
         return processed;
       }
       
     } catch (error) {
-      console.warn('Failed to decode quoted-printable:', str, error);
       return str;
     }
   };
@@ -146,7 +144,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       const isConnected = await googleContactsAPI.checkConnection();
       setGoogleConnected(isConnected);
     } catch (error) {
-      console.error('Error checking Google connection:', error);
       setGoogleConnected(false);
     } finally {
       setCheckingConnection(false);
@@ -162,7 +159,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setGoogleConnected(true);
       
     } catch (error) {
-      console.error('❌ Google connect error:', error);
       setError(error.message || t('guests.errors.googleConnectionError'));
     } finally {
       setLoading(false);
@@ -179,7 +175,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setShowContactSelection(true);
       
     } catch (error) {
-      console.error('Error loading Google contacts:', error);
       setError(error.message || t('guests.errors.googleContactsFailed'));
     } finally {
       setLoading(false);
@@ -197,7 +192,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setAllImportData([]);
       setError('');
     } catch (error) {
-      console.error('Google disconnect error:', error);
       setError(t('guests.errors.googleDisconnectFailed'));
     }
   };
@@ -664,7 +658,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       resetModal();
       onClose();
     } catch (err) {
-      console.error('Import error in modal:', err);
       setError(t('guests.errors.importFailed'));
     } finally {
       setLoading(false);

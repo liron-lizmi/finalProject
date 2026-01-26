@@ -59,15 +59,14 @@ const ForgotPassword = () => {
         );
         
       } catch (emailError) {
-        console.error('Email sending error:', emailError);
+        // Email sending error
       }
-      
+
       setMessage(t('auth.resetLinkSent'));
-      
+
       setEmail('');
-      
+
     } catch (err) {
-      console.error('Error details:', err);
       
       if (err.response?.status === 404) {
         setError(t('errors.emailNotFound'));

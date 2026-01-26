@@ -54,10 +54,9 @@ const RegisterPage = () => {
         login_url: `${window.location.origin}/login`
       };
 
-      const result = await emailjs.send(serviceId, templateId, templateParams, userId);
+      await emailjs.send(serviceId, templateId, templateParams, userId);
       return true;
     } catch (error) {
-      console.error('Error sending email:', error);
       return false;
     }
   };
@@ -159,7 +158,6 @@ const RegisterPage = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      console.error('Registration error:', err);
       setServerError(err.response?.data?.message || t('errors.generalError'));
     } finally {
       setIsSubmitting(false);

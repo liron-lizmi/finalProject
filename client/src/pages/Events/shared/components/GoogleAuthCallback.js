@@ -26,7 +26,6 @@ const GoogleAuthCallback = () => {
         const error = searchParams.get('error');
 
         if (error) {
-          console.error('Google Auth Error:', error);
           setStatus('error');
           setTimeout(() => {
             const returnTo = sessionStorage.getItem('googleAuthReturnTo') || '/dashboard';
@@ -37,7 +36,6 @@ const GoogleAuthCallback = () => {
         }
 
         if (!code || state !== 'google_calendar_auth') {
-          console.error('Invalid callback parameters');
           setStatus('error');
           setTimeout(() => {
             const returnTo = sessionStorage.getItem('googleAuthReturnTo') || '/dashboard';
@@ -49,7 +47,6 @@ const GoogleAuthCallback = () => {
 
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No auth token found');
           setStatus('error');
           setTimeout(() => {
             navigate('/login', { replace: true });
@@ -91,7 +88,6 @@ const GoogleAuthCallback = () => {
             }
           }, 1500);
         } else {
-          console.error('❌ Callback failed:', responseData);
           setStatus('error');
           
           // Set appropriate error message based on error type
@@ -117,7 +113,6 @@ const GoogleAuthCallback = () => {
         }
 
       } catch (error) {
-        console.error('❌ Error processing Google Auth callback:', error);
         setStatus('error');
         setTimeout(() => {
           const returnTo = sessionStorage.getItem('googleAuthReturnTo') || '/dashboard';

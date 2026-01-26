@@ -294,10 +294,9 @@ const searchVenues = async (req, res) => {
     return res.json(response);
 
   } catch (error) {
-    console.error('Error in search route:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to search venues',
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -332,10 +331,9 @@ const getVenueDetails = async (req, res) => {
     return res.json(details);
 
   } catch (error) {
-    console.error('Error in details route:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to get venue details',
-      message: error.message 
+      message: error.message
     });
   }
 };

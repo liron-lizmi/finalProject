@@ -51,7 +51,6 @@ const getUserEvents = async (req, res) => {
 
     res.json(allEvents);
   } catch (err) {
-    console.error('Error fetching events:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -78,8 +77,6 @@ const createEvent = async (req, res) => {
     const savedEvent = await newEvent.save();
     res.status(201).json(savedEvent);
   } catch (err) {
-    console.error('Error creating event:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -155,19 +152,17 @@ const updateEvent = async (req, res) => {
           const parsedVenues = JSON.parse(venues);
           event.venues = parsedVenues;
         } catch (parseError) {
-          console.error('Error parsing venues string:', parseError);
           return res.status(400).json({ message: req.t('errors.invalidFormat') });
         }
       }
     }
-    
+
     if (vendors !== undefined) {
       if (typeof vendors === 'string') {
         try {
           const parsedVendors = JSON.parse(vendors);
           event.vendors = parsedVendors;
         } catch (parseError) {
-          console.error('Error parsing vendors string:', parseError);
           return res.status(400).json({ message: req.t('errors.invalidFormat') });
         }
       } else if (Array.isArray(vendors)) {
@@ -186,8 +181,6 @@ const updateEvent = async (req, res) => {
     const updatedEvent = await event.save();
     res.json(updatedEvent);
   } catch (err) {
-    console.error('Error updating event:', err);
-    
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(error => error.message);
       return res.status(400).json({ errors });
@@ -211,7 +204,6 @@ const deleteEvent = async (req, res) => {
     await Event.findByIdAndDelete(id);
     res.json({ message: req.t('events.deleteSuccess') });
   } catch (err) {
-    console.error('Error deleting event:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -257,7 +249,6 @@ const getEventById = async (req, res) => {
 
     return res.status(404).json({ message: req.t('events.notFound') });
   } catch (err) {
-    console.error('Error fetching event:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -283,7 +274,6 @@ const checkEditPermission = async (req, res) => {
     
     return res.json({ canEdit: shareInfo?.permission === 'edit' });
   } catch (err) {
-    console.error('Error checking edit permission:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -302,7 +292,6 @@ const getNotifications = async (req, res) => {
     const unreadNotifications = user.notifications.filter(n => !n.read);
     res.json(unreadNotifications);
   } catch (err) {
-    console.error('Error fetching notifications:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -324,7 +313,6 @@ const markNotificationRead = async (req, res) => {
     
     res.json({ message: req.t('notifications.markedAsRead') });
   } catch (err) {
-    console.error('Error marking notification as read:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
@@ -371,7 +359,6 @@ const acceptNotificationAndShare = async (req, res) => {
     
     res.json({ message: req.t('events.share.acceptSuccess') });
   } catch (err) {
-    console.error('Error accepting notification and share:', err);
     res.status(500).json({ message: req.t('errors.serverError') });
   }
 };

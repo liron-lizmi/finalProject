@@ -112,7 +112,6 @@ const BudgetSetup = ({ eventId, existingBudget, onBudgetCreated, canEdit = true}
       setShowEditModal(false);
       
     } catch (err) {
-      console.error('Error saving budget:', err);
       setError(err.message);
     } finally {
       setLoading(false);
