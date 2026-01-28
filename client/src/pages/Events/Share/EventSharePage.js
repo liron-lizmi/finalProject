@@ -269,12 +269,6 @@ const EventSharePage = () => {
                       <span className="list-icon">✏️</span>
                       {t('events.features.share.editPermissionInfo')}
                     </li>
-                    {eventInfo && eventInfo.originalEvent && (
-                      <li>
-                        <span className="list-icon">⚠️</span>
-                        {t('events.features.share.sharedEventNote')}
-                      </li>
-                    )}
                   </ul>
                 </div>
               </div>
