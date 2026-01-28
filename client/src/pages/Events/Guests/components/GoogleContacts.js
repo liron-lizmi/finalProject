@@ -2,27 +2,29 @@
  * GoogleContacts.js - Google Contacts API Integration
  *
  * Service class for importing contacts from Google Contacts.
- * Uses Google Identity Services for OAuth.
+ * Uses Google Identity Services for OAuth on the client side,
+ * then fetches contacts through the server-side proxy.
  *
  * Methods:
  * - init(): Initialize Google Identity Services
  * - signIn(): Authenticate with Google
  * - signOut(): Disconnect from Google
- * - getContacts(): Fetch user's contacts
+ * - getContacts(eventId): Fetch user's contacts via server
  * - isConnected(): Check connection status
  *
  * Features:
  * - OAuth 2.0 authentication
- * - Fetch contacts with names and phones
- * - Handle multiple phone numbers per contact
+ * - Server-side People API calls for security
  * - Format phone numbers for display
  *
  * Environment:
- * - REACT_APP_GOOGLE_CONTACTS_CLIENT_ID: Google OAuth client ID
+ * - REACT_APP_GOOGLE_CONTACTS_ID: Google OAuth client ID
  *
  * Scopes:
  * - https://www.googleapis.com/auth/contacts.readonly
  */
+import axios from 'axios';
+
 class GoogleContactsAPI {
   constructor() {
     this.isSignedIn = false;
@@ -35,7 +37,7 @@ class GoogleContactsAPI {
     if (this.initialized) return true;
 
     try {
-      
+
       if (!window.google) {
         await this.loadGoogleIdentityServices();
       }
@@ -59,15 +61,15 @@ class GoogleContactsAPI {
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
-      
+
       script.onload = () => {
         setTimeout(resolve, 500);
       };
-      
+
       script.onerror = () => {
         reject(new Error('Failed to load Google Identity Services'));
       };
-      
+
       document.head.appendChild(script);
     });
   }
@@ -75,17 +77,17 @@ class GoogleContactsAPI {
   // Connecting to Google
   async signIn() {
     try {
-      
-      if (!process.env.REACT_APP_GOOGLE_CONTACTS_CLIENT_ID) {
+
+      if (!process.env.REACT_APP_GOOGLE_CONTACTS_ID) {
         throw new Error('Google Client ID לא מוגדר במשתני הסביבה');
       }
 
       await this.init();
-      
+
       // Using Google Identity Services OAuth
       const tokenResponse = await new Promise((resolve, reject) => {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: process.env.REACT_APP_GOOGLE_CONTACTS_CLIENT_ID,
+          client_id: process.env.REACT_APP_GOOGLE_CONTACTS_ID,
           scope: 'https://www.googleapis.com/auth/contacts.readonly',
           callback: (response) => {
             if (response.error) {
@@ -101,9 +103,9 @@ class GoogleContactsAPI {
 
       this.accessToken = tokenResponse.access_token;
       this.isSignedIn = true;
-      
+
       return tokenResponse;
-      
+
     } catch (error) {
         throw new Error('שגיאה בהתחברות לגוגל: ' + (error.message || 'Unknown error'));
     }
@@ -127,75 +129,28 @@ class GoogleContactsAPI {
     }
   }
 
-  // Receiving contacts
-  async getContacts() {
+  // Receiving contacts via server-side proxy
+  async getContacts(eventId) {
     try {
       if (!this.isSignedIn || !this.accessToken) {
         throw new Error('לא מחובר לגוגל');
       }
-      
-      // Using fetch directly to the People API
-      const response = await fetch(
-        'https://people.googleapis.com/v1/people/me/connections?personFields=names,phoneNumbers&pageSize=1000',
-        {
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
+
+      const response = await axios.post(
+        `/api/events/${eventId}/guests/google-contacts`,
+        { accessToken: this.accessToken }
       );
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.isSignedIn = false;
-          this.accessToken = null;
-          throw new Error('Token expired - please sign in again');
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const contacts = data.connections || [];
-      
-      return this.processContacts(contacts);
+      return response.data.contacts;
 
     } catch (error) {
-        throw new Error('שגיאה בקבלת אנשי קשר: ' + error.message);
+      if (error.response && error.response.status === 401) {
+        this.isSignedIn = false;
+        this.accessToken = null;
+        throw new Error('Token expired - please sign in again');
+      }
+      throw new Error('שגיאה בקבלת אנשי קשר: ' + (error.response?.data?.message || error.message));
     }
-  }
-
-  // Processing contacts
-  processContacts(contacts) {
-    return contacts
-      .filter(contact => contact.names && contact.phoneNumbers)
-      .map(contact => {
-        const name = contact.names[0];
-        const phone = contact.phoneNumbers[0];
-        
-        let cleanPhone = phone.value || '';
-        cleanPhone = cleanPhone.replace(/[^\d+\-]/g, '');
-        
-        if (cleanPhone.startsWith('+972')) {
-          cleanPhone = '0' + cleanPhone.substring(4);
-        }
-        if (cleanPhone.startsWith('972')) {
-          cleanPhone = '0' + cleanPhone.substring(3);
-        }
-        
-        if (cleanPhone.startsWith('05') && cleanPhone.length === 10) {
-          cleanPhone = cleanPhone.substring(0, 3) + '-' + cleanPhone.substring(3);
-        }
-
-        return {
-          id: contact.resourceName,
-          firstName: name.givenName || '',
-          lastName: name.familyName || '',
-          phone: cleanPhone,
-          group: 'other',
-          selected: false
-        };
-      })
-      .filter(contact => contact.phone && contact.phone.length > 5);
   }
 }
 

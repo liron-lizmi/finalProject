@@ -51,7 +51,8 @@ const {
   generateRSVPLink,
   updateGuestGift,
   getSeatingSync,
-  markSyncProcessed
+  markSyncProcessed,
+  getGoogleContacts
 } = require('../controllers/guestController');
 
 const auth = require('../middleware/auth');
@@ -82,6 +83,9 @@ router.get('/stats', checkViewPermission, getGuestStats);
 
 // Gift routes
 router.put('/:guestId/gift', checkEditPermission, updateGuestGift);
+
+// Google Contacts route
+router.post('/google-contacts', checkViewPermission, getGoogleContacts);
 
 // Sync routes - new routes
 router.get('/sync/status', getSeatingSync);

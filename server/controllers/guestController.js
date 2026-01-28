@@ -17,6 +17,7 @@
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
 const Seating = require('../models/Seating');
+const { fetchContacts } = require('../services/googleContactsService');
 
 /**
  * Retrieves all guests for a specific event, sorted by last name then first name.
@@ -1006,6 +1007,31 @@ const markSyncProcessed = async (req, res) => {
   }
 };
 
+/**
+ * Fetches Google contacts via server-side proxy.
+ * Client sends OAuth access token, server calls Google People API.
+ * @route POST /api/events/:eventId/guests/google-contacts
+ */
+const getGoogleContacts = async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: req.t('contacts.errors.tokenRequired') });
+    }
+
+    const contacts = await fetchContacts(accessToken);
+
+    res.json({ contacts });
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      return res.status(401).json({ message: req.t('contacts.errors.tokenExpired') });
+    }
+
+    res.status(500).json({ message: req.t('contacts.errors.fetchFailed') });
+  }
+};
+
 module.exports = {
   getEventGuests,
   addGuest,
@@ -1022,5 +1048,6 @@ module.exports = {
   updateGuestGift,
   getSeatingSync,
   markSyncProcessed,
-  triggerSeatingSync
+  triggerSeatingSync,
+  getGoogleContacts
 };

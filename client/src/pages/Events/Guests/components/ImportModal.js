@@ -203,7 +203,7 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       setLoading(true);
       setError('');
       
-      const contacts = await googleContactsAPI.getContacts();
+      const contacts = await googleContactsAPI.getContacts(eventId);
       setGoogleContacts(contacts);
       setShowContactSelection(true);
       
