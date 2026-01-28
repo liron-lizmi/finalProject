@@ -90,13 +90,15 @@ class GooglePlacesService {
       region: 'IL',
       key: this.apiKey
     };
-    
+
     const response = await axios.get(`${this.baseUrl}/textsearch/json`, {
-      params: params
+      params: params,
+      timeout: 15000
     });
 
     if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-      throw new Error(`Google Places API error: ${response.data.status}`);
+      // Return empty results instead of throwing error (consistent with vendorService)
+      return { results: [], nextPageToken: null, hasMore: false };
     }
 
     const results = response.data.results || [];
@@ -109,24 +111,26 @@ class GooglePlacesService {
     };
 
   } catch (error) {
-    throw error;
+    // Return empty results on error instead of throwing
+    return { results: [], nextPageToken: null, hasMore: false };
   }
 }
 
   async getNextPage(pageToken) {
     try {
-      
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const response = await axios.get(`${this.baseUrl}/textsearch/json`, {
         params: {
           pagetoken: pageToken,
           key: this.apiKey
-        }
+        },
+        timeout: 15000
       });
 
       if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Google Places API error: ${response.data.status}`);
+        // Return empty results instead of throwing error (consistent with vendorService)
+        return { results: [], nextPageToken: null, hasMore: false };
       }
 
       const results = response.data.results || [];
@@ -139,7 +143,8 @@ class GooglePlacesService {
       };
 
     } catch (error) {
-      throw error;
+      // Return empty results on error instead of throwing
+      return { results: [], nextPageToken: null, hasMore: false };
     }
   }
 

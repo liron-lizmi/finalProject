@@ -21,7 +21,7 @@
  * - Phone format validation (optional)
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import FeaturePageTemplate from '../shared/FeaturePageTemplate';
@@ -31,11 +31,13 @@ import '../../../styles/VendorsPage.css';
 const EventVendorsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showVendorsPage, setShowVendorsPage] = useState(false);
+  // Initialize showVendorsPage from URL query parameter
+  const [showVendorsPage, setShowVendorsPage] = useState(searchParams.get('view') === 'search');
   const [vendorUpdateSuccess, setVendorUpdateSuccess] = useState(false);
   const [vendorDeleteSuccess, setVendorDeleteSuccess] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
@@ -143,7 +145,9 @@ const EventVendorsPage = () => {
       setShowVendorsPage(false);
       setVendorToChangeIndex(null);
       setVendorActionType(null);
- 
+      // Remove the view parameter from URL
+      setSearchParams({});
+
       setTimeout(() => {
         setVendorUpdateSuccess(false);
       }, 3000);
@@ -309,6 +313,7 @@ const EventVendorsPage = () => {
   const handleSelectAPIVendors = () => {
     setShowVendorSelectionModal(false);
     setShowVendorsPage(true);
+    setSearchParams({ view: 'search' });
   };
 
   // Opens manual vendor form from modal
@@ -317,10 +322,11 @@ const EventVendorsPage = () => {
     setShowManualForm(true);
   };
 
-   // Direct navigation to API vendor search 
+   // Direct navigation to API vendor search
   const handleDirectAPIVendors = () => {
     setVendorActionType('add');
     setShowVendorsPage(true);
+    setSearchParams({ view: 'search' });
   };
 
   // Direct navigation to manual vendor form

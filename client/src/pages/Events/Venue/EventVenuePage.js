@@ -24,7 +24,7 @@
  * - Phone format validation (optional field)
  */
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import VenuePage from './VenuePage';
@@ -33,11 +33,13 @@ import '../../../styles/VenuePage.css';
 const EventVenuePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showVenuePage, setShowVenuePage] = useState(false);
+  // Initialize showVenuePage from URL query parameter
+  const [showVenuePage, setShowVenuePage] = useState(searchParams.get('view') === 'search');
   const [venueUpdateSuccess, setVenueUpdateSuccess] = useState(false);
   const [venueDeleteSuccess, setVenueDeleteSuccess] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
@@ -147,6 +149,8 @@ const EventVenuePage = () => {
       setVenueUpdateSuccess(true);
       setShowVenuePage(false);
       setVenueActionType(null);
+      // Remove the view parameter from URL
+      setSearchParams({});
 
       setTimeout(() => {
         setVenueUpdateSuccess(false);
@@ -304,8 +308,9 @@ const EventVenuePage = () => {
   const handleSelectAPIVenues = () => {
     setShowVenueSelectionModal(false);
     setShowVenuePage(true);
+    setSearchParams({ view: 'search' });
   };
- 
+
   const handleSelectManualVenue = () => {
     setShowVenueSelectionModal(false);
     setShowManualForm(true);
@@ -314,6 +319,7 @@ const EventVenuePage = () => {
   const handleDirectAPIVenues = () => {
     setVenueActionType('add');
     setShowVenuePage(true);
+    setSearchParams({ view: 'search' });
   };
 
   const handleDirectManualVenue = () => {
