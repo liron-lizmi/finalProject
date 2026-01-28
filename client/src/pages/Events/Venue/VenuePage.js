@@ -1,3 +1,29 @@
+/**
+ * VenuePage.js - Venue Search Page
+ *
+ * Searchable venue listing page with Google Maps integration.
+ * Can be used standalone or embedded in EventVenuePage.
+ *
+ * Route: Embedded component (used via EventVenuePage)
+ *
+ * Features:
+ * - Search venues via Google Places API
+ * - Filter by area, venue type, style, amenities, distance
+ * - Google Maps with venue markers
+ * - Photo gallery for selected venue
+ * - Pagination (20 venues per page)
+ * - Hebrew/English translation support
+ * - Cache for search results
+ *
+ * Props:
+ * - onSelectVenue: Callback when user selects a venue
+ *
+ * State:
+ * - venues: Current page of venue results
+ * - allVenues: All fetched venues
+ * - filters: Active filter settings (area, type, style, amenities, distance)
+ * - selectedVenue: Currently selected venue for details view
+ */
 import React,  { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

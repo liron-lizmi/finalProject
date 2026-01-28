@@ -1,3 +1,26 @@
+/**
+ * ForgotPassword.js - Password Reset Request Page
+ *
+ * Allows users to request a password reset link via email.
+ *
+ * Flow:
+ * 1. User enters email address
+ * 2. Validates email format
+ * 3. Requests reset token from backend (/api/auth/forgot-password)
+ * 4. Sends reset link via EmailJS to user's email
+ * 5. Displays success/error message
+ *
+ * Features:
+ * - Email validation
+ * - EmailJS integration for sending reset emails
+ * - RTL support for Hebrew
+ * - Link back to login page
+ *
+ * EmailJS Configuration:
+ * - Service ID: service_0b55fva
+ * - Template ID: template_6ijwdwq
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

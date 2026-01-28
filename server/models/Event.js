@@ -1,3 +1,22 @@
+/**
+ * Event.js - Event Model
+ *
+ * Stores event information including details, venues, vendors, and sharing.
+ *
+ * Fields:
+ * - title, date, time: Basic event info (time validated as HH:MM)
+ * - type: Event category (wedding, birthday, corporate, etc.)
+ * - isSeparatedSeating: Whether to use gender-separated seating
+ * - guestCount, notes: Additional info
+ * - user: Owner reference
+ * - venues: Array of venue objects (name, address, phone, website)
+ * - vendors: Array of vendor objects (name, category, phone, notes)
+ * - sharedWith: Array of share entries (email, userId, permission, accepted)
+ *
+ * Hooks:
+ * - pre('save'): Updates updatedAt timestamp
+ */
+
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 

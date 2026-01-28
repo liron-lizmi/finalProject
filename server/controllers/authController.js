@@ -1,9 +1,27 @@
-// server/controllers/authController.js
+/**
+ * authController.js
+ *
+ * Controller for user authentication and account management.
+ * Handles registration, login, password reset, OAuth authentication,
+ * and user notifications.
+ *
+ * Main features:
+ * - User registration (email/password and OAuth)
+ * - Login (email/password and OAuth)
+ * - Password reset flow with secure tokens
+ * - JWT token generation and validation
+ * - User notifications management
+ */
+
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const JWT_SECRET = process.env.JWT_SECRET;
 
+/**
+ * Checks if a user exists by email address.
+ * @route POST /api/auth/check-user
+ */
 const checkUserExists = async (req, res) => {
   try {
     const { email } = req.body;
@@ -19,6 +37,11 @@ const checkUserExists = async (req, res) => {
   }
 };
 
+/**
+ * Registers a new user with email and password.
+ * Creates user, generates JWT token (1 day expiry), and returns email data for welcome email.
+ * @route POST /api/auth/register
+ */
 const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -78,6 +101,11 @@ const register = async (req, res) => {
   }
 };
 
+/**
+ * Authenticates user with email and password.
+ * Returns JWT token (1 day expiry) and user info on success.
+ * @route POST /api/auth/login
+ */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -112,6 +140,10 @@ const login = async (req, res) => {
   }
 };
 
+/**
+ * Returns current authenticated user's profile (without password).
+ * @route GET /api/auth/me
+ */
 const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');
@@ -124,9 +156,15 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
+/**
+ * Initiates password reset flow.
+ * Generates a secure reset token (SHA256 hashed), stores it with 10-minute expiry.
+ * Returns token and email data for sending reset email.
+ * @route POST /api/auth/forgot-password
+ */
 const forgotPassword = async (req, res) => {
   let user = null;
-  
+
   try {
     const { email } = req.body;
 
@@ -174,6 +212,12 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+/**
+ * Completes password reset using the token from email link.
+ * Validates token hasn't expired, ensures new password differs from old.
+ * Clears reset token and returns new JWT for auto-login.
+ * @route POST /api/auth/reset-password/:token
+ */
 const resetPassword = async (req, res) => {
   try {
     const { token: resetTokenParam } = req.params;
@@ -230,6 +274,12 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * Registers or links a user via OAuth provider (e.g., Google).
+ * If user exists by email, updates OAuth info. Otherwise creates new user.
+ * Handles race conditions with duplicate key errors.
+ * @route POST /api/auth/oauth/register
+ */
 const registerOAuth = async (req, res) => {
   try {
     const { email, firstName, lastName, provider, providerId } = req.body;
@@ -366,6 +416,11 @@ const registerOAuth = async (req, res) => {
   }
 };
 
+/**
+ * Authenticates user via OAuth provider.
+ * Finds user by email, updates OAuth info if changed (providerId can change).
+ * @route POST /api/auth/oauth/login
+ */
 const loginOAuth = async (req, res) => {
   try {
     const { email, provider, providerId } = req.body;
@@ -419,6 +474,11 @@ const loginOAuth = async (req, res) => {
   }
 };
 
+/**
+ * Returns all unread notifications for the current user.
+ * Populates sharer name and event title from references.
+ * @route GET /api/auth/notifications
+ */
 const getNotifications = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -451,10 +511,14 @@ const getNotifications = async (req, res) => {
   }
 };
 
+/**
+ * Marks a specific notification as read.
+ * @route PUT /api/auth/notifications/:notificationId/read
+ */
 const markNotificationAsRead = async (req, res) => {
   try {
     const { notificationId } = req.params;
-    
+
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: req.t('errors.userNotFound') });

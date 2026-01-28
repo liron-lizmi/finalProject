@@ -1,3 +1,38 @@
+/**
+ * TableDetailsModal.js - Table Configuration Modal
+ *
+ * Modal for viewing and editing table details and guest assignments.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - table: Table object to edit
+ * - guests: All guests data
+ * - seatingArrangement: Current assignments
+ * - onClose: Close callback
+ * - onUpdateTable: Save table changes
+ * - onDeleteTable: Delete table callback
+ * - onSeatGuest: Assign guest to table
+ * - onUnseatGuest: Remove guest from table
+ * - isSeparatedSeating: Gender-separated mode
+ * - genderFilter: Current gender filter
+ * - maleTables/femaleTables: Gender assignments
+ * - maleArrangement/femaleArrangement: Gender-specific mappings
+ * - canEdit: Whether editing allowed
+ *
+ * Table Properties:
+ * - name: Table display name
+ * - capacity: Maximum guests
+ * - type: round or rectangular
+ * - notes: Optional notes
+ *
+ * Features:
+ * - Edit table properties
+ * - View seated guests
+ * - Add/remove guests from table
+ * - Capacity validation
+ * - Delete confirmation
+ * - Gender filtering for separated seating
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 

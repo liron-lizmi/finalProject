@@ -1,4 +1,26 @@
-// client/src/hooks/useModal.js
+/**
+ * useModal.js - Reusable Modal Hook
+ *
+ * Custom React hook for displaying success, error, and confirmation modals.
+ * Provides both modal state management and pre-built modal UI component.
+ *
+ * Returns:
+ * - showSuccessModal(message): Display success modal with green checkmark
+ * - showErrorModal(message): Display error modal with red X
+ * - showConfirmModal(message, onConfirm): Display confirmation with Cancel/Confirm
+ * - closeModal(): Close any open modal
+ * - Modal: JSX component to render in your component
+ *
+ * Usage:
+ * const { showSuccessModal, showErrorModal, showConfirmModal, Modal } = useModal();
+ * // Then render {Modal} in your JSX
+ *
+ * Features:
+ * - Click outside to close
+ * - i18n translations for button text
+ * - Confirm modal executes callback on confirm
+ */
+
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

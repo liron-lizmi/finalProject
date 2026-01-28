@@ -1,3 +1,22 @@
+/**
+ * AuthFailed.js - OAuth Authentication Failed Page
+ *
+ * Displays error message when OAuth (Google) login fails.
+ *
+ * Route: /auth-failed?reason={reason}
+ *
+ * Reasons:
+ * - user_not_exists: User tried to login with OAuth but account doesn't exist
+ *   Shows: Register button + Back to Login button
+ * - default: General OAuth failure
+ *   Shows: Back to Login button only
+ *
+ * Features:
+ * - RTL support for Hebrew
+ * - Contextual error messages based on failure reason
+ * - Navigation to register or login pages
+ */
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

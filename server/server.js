@@ -1,4 +1,40 @@
-// server/sever.js
+/**
+ * server.js - Main Express Server Entry Point
+ *
+ * Initializes and configures the Express server for the PlanIt event planning application.
+ *
+ * Features:
+ * - Express.js REST API server
+ * - MongoDB connection via Mongoose
+ * - i18next internationalization (Hebrew/English)
+ * - CORS enabled for cross-origin requests
+ * - JSON body parsing
+ *
+ * API Routes:
+ * - /api/auth: Authentication (login, register, password reset)
+ * - /api/events: Event management (CRUD, sharing, notifications)
+ * - /api/tasks: Task management with Google Calendar sync
+ * - /api/rsvp: Public RSVP responses
+ * - /api/events/:eventId/budget: Budget management
+ * - /api/events/:eventId/seating: Seating arrangements
+ * - /api/events/:eventId/vendors: Event vendors
+ * - /api/rides: Ride sharing coordination
+ * - /api/venues: Venue search via Google Places
+ * - /api/vendors: Vendor search via Google Places
+ *
+ * Utility Routes:
+ * - GET /api/health: Server health check (MongoDB status)
+ * - GET /: Basic API running confirmation
+ *
+ * Error Handling:
+ * - 404 handler for undefined routes
+ * - Global error handler with i18n messages
+ *
+ * Environment Variables Required:
+ * - MONGO_URI: MongoDB connection string
+ * - PORT: Server port (default 5000)
+ */
+
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 

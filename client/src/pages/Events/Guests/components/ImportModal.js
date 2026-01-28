@@ -1,3 +1,36 @@
+/**
+ * ImportModal.js - Guest Import Modal
+ *
+ * Modal for bulk importing guests from various sources.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - onClose: Close callback
+ * - onImport: Import callback with guest data
+ * - eventId: Current event ID
+ *
+ * Import Sources:
+ * - CSV: Comma-separated values text
+ * - Excel: .xlsx/.xls files
+ * - Google Contacts: OAuth integration
+ * - VCF: vCard files (.vcf)
+ *
+ * Features:
+ * - File upload with drag-drop
+ * - Preview imported data
+ * - Column mapping
+ * - Bulk group assignment
+ * - Custom group creation
+ * - Quoted-printable decoding (for VCF)
+ * - UTF-8 handling
+ *
+ * Import Flow:
+ * 1. Select import source
+ * 2. Upload/paste data
+ * 3. Preview contacts
+ * 4. Assign groups (optional)
+ * 5. Confirm import
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import googleContactsAPI from './GoogleContacts';

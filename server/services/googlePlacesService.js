@@ -1,4 +1,29 @@
-// server/services/googlePlacesService.js
+/**
+ * googlePlacesService.js - Google Places API Service for Venues
+ *
+ * Wrapper service for Google Places API to search and retrieve venue information.
+ * Used by venueController for event venue discovery.
+ *
+ * Search Features:
+ * - buildSearchQuery(venueType, area, searchTerm, language): Builds search query
+ *   Supports types: restaurant, event_venue, banquet_hall, hotel, park, museum
+ *   Supports Hebrew and English queries
+ * - getLocationForArea(area): Returns lat/lng/radius for Israeli areas
+ *   Areas: jerusalem, center, south, north (or 'all' for country-wide)
+ *
+ * API Methods:
+ * - textSearch(query, location, radius, language, venueType): Main search endpoint
+ *   Returns results array, nextPageToken, and hasMore flag
+ * - getNextPage(pageToken): Fetches next page (2s delay for Google API requirement)
+ * - getPlaceDetails(placeId, language): Full venue details (address, phone, reviews, etc.)
+ * - getPhotoUrl(photoReference, maxWidth, maxHeight): Generates photo URL from reference
+ *
+ * Configuration:
+ * - Uses GOOGLE_MAPS_API_KEY from environment
+ * - Region locked to Israel (IL)
+ * - Singleton instance exported
+ */
+
 const axios = require('axios');
 const i18next = require('i18next');
 

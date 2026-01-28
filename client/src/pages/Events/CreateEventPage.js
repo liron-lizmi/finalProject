@@ -1,4 +1,26 @@
-// client/src/pages/Events/CreateEventPage.js
+/**
+ * CreateEventPage.js - Event Creation Page
+ *
+ * Form for creating a new event with date/time pickers.
+ *
+ * Form Fields:
+ * - Event Name: Text input (required)
+ * - Event Date: Custom calendar picker (min: today)
+ * - Event Time: Custom time picker (HH:MM format, 24h)
+ * - Separated Seating: Checkbox for gender-separated seating
+ *
+ * Features:
+ * - Custom calendar dropdown with month navigation
+ * - Custom time picker with hour/minute columns
+ * - Date display in localized format (DD/MM/YYYY for Hebrew, MM/DD/YYYY for English)
+ * - Click outside to close pickers
+ * - "Today" and "Now" quick-select buttons
+ * - Input validation with error messages
+ * - RTL support for Hebrew
+ *
+ * On success, navigates to dashboard with refresh flag.
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';

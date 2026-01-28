@@ -1,4 +1,27 @@
-// client/src/services/venueService.js
+/**
+ * venueService.js - Venue Search API Service
+ *
+ * Client-side service for searching event venues via Google Places API.
+ * Communicates with backend /api/venues endpoints.
+ *
+ * Methods:
+ * - searchVenues(filters, searchQuery, page, language): Search venues
+ *   Filters: area, venueType, venueStyle, amenities (parking, accessibility, etc.)
+ *   Returns: { venues, hasMore, currentPage, totalResults }
+ *
+ * - getVenueDetails(placeId, language): Get detailed venue info
+ *   Returns full venue data from Google Places
+ *
+ * - getCacheStats(): Get cache statistics from server
+ * - clearCache(): Clear server-side venue cache
+ * - getPhotoUrl(photo): Generate Google Places photo URL from reference
+ *
+ * Configuration:
+ * - Uses REACT_APP_API_URL or defaults to localhost:5000
+ * - Default language: English (en)
+ * - Timeout: 30s for search, 15s for details
+ */
+
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL

@@ -1,4 +1,31 @@
-// client/src/pages/Events/Features/EventRidesPage.js
+/**
+ * EventRidesPage.js - Event Ride Coordination Page
+ *
+ * Manages ride sharing between event guests.
+ *
+ * Route: /event/:id/rides
+ *
+ * Features:
+ * - Overview statistics (offering, seeking, arranged, not set)
+ * - Share public ride coordination link
+ * - View guests by ride status
+ * - Match riders with drivers
+ * - Track contact status between guests
+ *
+ * Ride Statuses:
+ * - offering: Guest can give rides
+ * - seeking: Guest needs a ride
+ * - arranged_separately: Guest has own transportation
+ * - not_set: Status not specified
+ *
+ * Contact Statuses:
+ * - taken: Ride arranged
+ * - not_relevant: No longer needs matching
+ *
+ * Tabs:
+ * - Overview: Statistics and quick actions
+ * - Guest list views by status
+ */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

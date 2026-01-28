@@ -1,3 +1,38 @@
+/**
+ * SeatingCanvas.js - Visual Seating Chart Canvas
+ *
+ * Interactive canvas for drag-and-drop seating arrangement.
+ * Displays tables as visual elements with guest assignments.
+ *
+ * Props:
+ * - tables: Array of table objects
+ * - seatingArrangement: Guest-to-table mapping
+ * - maleArrangement/femaleArrangement: Gender-separated mappings
+ * - guests: All guests data
+ * - scale: Zoom level
+ * - offset: Pan offset {x, y}
+ * - isAddingTable: Whether in table creation mode
+ * - tableType: Type of table being added
+ * - selectedTable: Currently selected table
+ * - draggedGuest: Guest being dragged
+ * - onCanvasClick: Click handler for canvas
+ * - onTableClick: Click handler for tables
+ * - onTableDrop: Drop handler for guests
+ * - onTableUpdate: Table position update
+ * - onOffsetChange: Pan change handler
+ * - isSeparatedSeating: Gender-separated mode
+ * - genderFilter: Current gender filter
+ * - maleTables/femaleTables: Gender-assigned tables
+ * - canEdit: Whether editing allowed
+ *
+ * Features:
+ * - Drag tables to reposition
+ * - Drop guests onto tables
+ * - Right-click context menu
+ * - Pan and zoom controls
+ * - Emergency table detection
+ * - Visual gender indicators
+ */
 import React, { useRef, useEffect, forwardRef, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

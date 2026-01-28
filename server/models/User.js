@@ -1,4 +1,24 @@
-// server/models/User.js
+/**
+ * User.js - User Model
+ *
+ * Stores user account information including authentication credentials,
+ * OAuth data, Google Calendar tokens, and notifications.
+ *
+ * Fields:
+ * - firstName, lastName, email: Basic profile info
+ * - password: Bcrypt hashed password
+ * - resetPasswordToken/Expires: For password reset flow
+ * - oauth: Provider info for OAuth login (Google)
+ * - googleTokens: Stored tokens for Google Calendar integration
+ * - notifications: Embedded array for event sharing notifications
+ *
+ * Hooks:
+ * - pre('save'): Auto-hashes password if modified
+ *
+ * Methods:
+ * - comparePassword: Compares candidate password with hash
+ */
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const i18next = require('i18next');

@@ -1,7 +1,28 @@
-// server/controllers/eventController.js
+/**
+ * eventController.js
+ *
+ * Controller for managing events. Handles event CRUD operations,
+ * permission checking, and event sharing acceptance.
+ *
+ * Main features:
+ * - Event CRUD operations (create, read, update, delete)
+ * - Support for owned events and shared events
+ * - Permission-based access (owner, edit, view)
+ * - Event sharing acceptance workflow
+ * - User notifications for shared events
+ * - Venues and vendors management within events
+ * - Separated seating support for events
+ */
+
 const Event = require('../models/Event');
 const User = require('../models/User');
 
+/**
+ * Returns all events accessible by the user (owned + shared).
+ * Adds metadata: isOwner, permission, canEdit, accepted status.
+ * Sorted by date ascending.
+ * @route GET /api/events
+ */
 const getUserEvents = async (req, res) => {
   try {
     const currentUser = await User.findById(req.userId);
@@ -55,6 +76,11 @@ const getUserEvents = async (req, res) => {
   }
 };
 
+/**
+ * Creates a new event for the authenticated user.
+ * Validates time format (HH:MM), defaults to 18:00 if invalid.
+ * @route POST /api/events
+ */
 const createEvent = async (req, res) => {
   try {
     const { title, date, time, type, guestCount, notes, venues, vendors, isSeparatedSeating } = req.body;
@@ -86,7 +112,11 @@ const createEvent = async (req, res) => {
   }
 };
 
-// Update an event
+/**
+ * Updates an existing event.
+ * Requires owner or edit permission. Handles venues/vendors as arrays or JSON strings.
+ * @route PUT /api/events/:id
+ */
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -190,7 +220,10 @@ const updateEvent = async (req, res) => {
   }
 };
 
-// Delete an event
+/**
+ * Deletes an event. Only the owner can delete.
+ * @route DELETE /api/events/:id
+ */
 const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -208,7 +241,11 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-// Get event by ID with permission check
+/**
+ * Returns a single event by ID with permission metadata.
+ * Checks if user is owner or has shared access.
+ * @route GET /api/events/:id
+ */
 const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -253,7 +290,11 @@ const getEventById = async (req, res) => {
   }
 };
 
-// Check if user has edit permission for an event
+/**
+ * Checks if current user has edit permission for an event.
+ * Returns { canEdit: boolean }.
+ * @route GET /api/events/:id/can-edit
+ */
 const checkEditPermission = async (req, res) => {
   try {
     const { id } = req.params;
@@ -278,7 +319,10 @@ const checkEditPermission = async (req, res) => {
   }
 };
 
-// Get notifications
+/**
+ * Returns unread notifications for the current user.
+ * @route GET /api/events/notifications
+ */
 const getNotifications = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -296,7 +340,10 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// Mark notification as read
+/**
+ * Marks a notification as read.
+ * @route PUT /api/events/notifications/:notificationId/read
+ */
 const markNotificationRead = async (req, res) => {
   try {
     const { notificationId } = req.params;
@@ -317,7 +364,11 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
-// Accept notification and share
+/**
+ * Accepts an event share invitation from notification.
+ * Updates sharedWith.accepted=true and links userId.
+ * @route POST /api/events/notifications/:notificationId/accept
+ */
 const acceptNotificationAndShare = async (req, res) => {
   try {
     const { notificationId } = req.params;

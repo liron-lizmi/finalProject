@@ -1,3 +1,40 @@
+/**
+ * App.js - Main React Application Component
+ *
+ * Root component that defines all application routes using React Router.
+ * Includes OAuth redirect handling for Google authentication flow.
+ *
+ * Route Structure:
+ * Public Routes:
+ * - /: HomePage (landing page)
+ * - /login, /register: Authentication pages
+ * - /forgot-password, /reset-password/:token: Password recovery
+ * - /auth-failed: OAuth failure page
+ * - /venues: Public venue search
+ * - /rsvp/:eventId: Public RSVP page for guests
+ * - /rides/:eventId: Public ride coordination page
+ *
+ * Protected Routes (require authentication):
+ * - /dashboard: User's event dashboard
+ * - /create-event: New event creation
+ * - /event/:id: Event details page
+ * - /event/:id/venue: Event venue management
+ * - /event/:id/vendors: Event vendors
+ * - /event/:id/guests: Guest management
+ * - /event/:id/seating: Seating arrangement
+ * - /event/:id/timeline: Task management
+ * - /event/:id/rides: Ride coordination
+ * - /event/:id/budget: Budget management
+ * - /event/:id/share: Event sharing
+ *
+ * OAuth Callbacks:
+ * - /auth/google/callback: Google Calendar OAuth
+ * - /auth/google/contacts/callback: Google Contacts OAuth
+ *
+ * Components:
+ * - OAuthRedirectHandler: Fixes redirect issues during OAuth flow
+ */
+
 import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/HomePage';

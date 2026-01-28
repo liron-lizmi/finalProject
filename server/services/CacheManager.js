@@ -1,4 +1,24 @@
-// server/services/CacheManager.js
+/**
+ * CacheManager.js - In-Memory Cache Service for Venues
+ *
+ * Provides in-memory caching for Google Places API venue search results.
+ * Uses a Map-based cache with TTL (Time To Live) and automatic cleanup.
+ *
+ * Configuration:
+ * - TTL: 24 hours - cached results expire after this time
+ * - Cleanup interval: 1 hour - periodic removal of expired entries
+ *
+ * Methods:
+ * - generateKey(query, filters, page): Creates unique cache key from search params
+ * - set(key, data): Stores data with timestamp and expiration
+ * - get(key): Retrieves data if valid, returns null if expired/missing
+ * - delete(key): Removes single entry
+ * - clear(): Removes all entries
+ * - getStats(): Returns cache statistics (total, valid, expired entries)
+ *
+ * Usage: Singleton instance exported for venue search caching
+ */
+
 class CacheManager {
   constructor() {
     this.cache = new Map();

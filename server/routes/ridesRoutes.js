@@ -1,3 +1,22 @@
+/**
+ * ridesRoutes.js - Ride Sharing Routes
+ *
+ * Handles all ride-sharing related endpoints for coordinating
+ * transportation between event guests.
+ *
+ * Public Routes (no auth required - for guest self-service):
+ * - GET /:eventId/info: Get event info for rides page
+ * - POST /:eventId/check-phone: Verify guest by phone for rides
+ * - GET /:eventId/guests: Get guests offering/seeking rides
+ * - PUT /:eventId/update: Update own ride info (offer/seek)
+ * - POST /:eventId/contact: Record contact between guests
+ * - POST /:eventId/suggestions: Get suggested ride matches
+ * - POST /:eventId/cancel: Cancel ride offer/request
+ *
+ * Protected Routes (requires auth + edit permission):
+ * - PUT /:eventId/guests/:guestId/ride-info: Event owner updates guest ride info
+ */
+
 const express = require('express');
 const router = express.Router();
 const {

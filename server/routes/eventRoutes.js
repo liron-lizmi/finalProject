@@ -1,3 +1,36 @@
+/**
+ * eventRoutes.js - Event Management Routes (Main Router)
+ *
+ * Central router for all event-related operations including CRUD,
+ * sharing, notifications, and nested resource routes.
+ *
+ * All routes require authentication (auth middleware applied globally).
+ *
+ * Notification Routes:
+ * - GET /notifications: Get user's notifications
+ * - PUT /notifications/:notificationId/read: Mark notification as read
+ * - PUT /notifications/:notificationId/accept: Accept share invitation
+ *
+ * Event CRUD:
+ * - GET /: Get all events for current user (owned + shared)
+ * - POST /: Create new event
+ * - GET /:id: Get single event (view permission)
+ * - PUT /:id: Update event (edit permission)
+ * - DELETE /:id: Delete event (owner only)
+ * - GET /:id/edit-permission: Check if user can edit
+ *
+ * Sharing Routes (owner only):
+ * - POST /:eventId/share: Share event with user
+ * - GET /:eventId/shared-users: Get list of shared users
+ * - DELETE /:eventId/share/:shareId: Remove share
+ * - PUT /:eventId/share/:shareId: Update share permission
+ *
+ * Nested Routes:
+ * - /events/:eventId/guests → guestRoutes
+ * - /events/:eventId/seating → seatingRoutes
+ * - /events/:eventId/budget → budgetRoutes
+ */
+
 const express = require('express');
 const router = express.Router();
 const {

@@ -1,3 +1,41 @@
+/**
+ * EventSeatingPage.js - Event Seating Arrangement Page
+ *
+ * Visual seating chart builder with drag-and-drop functionality.
+ *
+ * Route: /event/:id/seating
+ *
+ * Features:
+ * - Visual canvas with tables
+ * - Drag and drop guests to tables
+ * - Round and rectangular table types
+ * - AI-assisted seating suggestions
+ * - Gender-separated seating mode
+ * - Real-time sync with polling
+ * - Table management (add, edit, delete)
+ * - View modes: visual canvas, table list
+ *
+ * Table Types:
+ * - Round: circular seating
+ * - Rectangular: linear seating
+ *
+ * Seating Preferences:
+ * - Must sit together rules
+ * - Cannot sit together rules
+ * - Group mixing policies
+ * - Preferred table size
+ *
+ * Components:
+ * - SeatingCanvas: Visual drag-drop canvas
+ * - SeatingTableView: List view of tables
+ * - TableDetailsModal: Edit table details
+ * - AISeatingModal: AI seating configuration
+ * - SyncOptionsModal: Handle sync conflicts
+ *
+ * Gender-Separated Mode:
+ * - Separate male/female tables
+ * - Gender filter for guest list
+ */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

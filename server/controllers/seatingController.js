@@ -1,3 +1,42 @@
+/**
+ * seatingController.js
+ *
+ * Controller for managing event seating arrangements. This is a complex controller
+ * handling table management, guest placement, AI-powered optimization, and sync.
+ *
+ * Main features:
+ * - Seating arrangement CRUD (get, save, delete, clone)
+ * - Separated seating support (male/female tables)
+ * - Auto-sync with guest changes (RSVP, attending count)
+ * - AI-powered seating generation with group optimization
+ * - Manual and automatic table management
+ * - Sync conflict resolution with multiple strategy options
+ * - Seating statistics and validation
+ * - Export functionality
+ *
+ * Key concepts:
+ * - tables/maleTables/femaleTables: Array of table definitions
+ * - arrangement/maleArrangement/femaleArrangement: Map of tableId -> guestIds
+ * - syncTriggers: Queue of pending changes to process
+ * - preferences: Seating rules (mustSitTogether, cannotSitTogether, groupPolicies)
+ *
+ * Main endpoints:
+ * - getSeatingArrangement: GET /api/events/:eventId/seating
+ * - saveSeatingArrangement: POST /api/events/:eventId/seating
+ * - generateAISeating: POST /api/events/:eventId/seating/generate
+ * - processSeatingSync: POST /api/events/:eventId/seating/sync
+ * - proposeSyncOptions: GET /api/events/:eventId/seating/sync/options
+ * - applySyncOption: POST /api/events/:eventId/seating/sync/apply
+ * - updateSyncSettings: PUT /api/events/:eventId/seating/sync/settings
+ * - getSyncStatus: GET /api/events/:eventId/seating/sync/status
+ * - exportSeatingChart: GET /api/events/:eventId/seating/export
+ * - getSeatingStatistics: GET /api/events/:eventId/seating/statistics
+ * - deleteSeatingArrangement: DELETE /api/events/:eventId/seating
+ * - validateSeatingArrangement: POST /api/events/:eventId/seating/validate
+ * - cloneSeatingArrangement: POST /api/events/:eventId/seating/clone
+ * - suggestTables: POST /api/events/:eventId/seating/suggest-tables
+ */
+
 const Seating = require('../models/Seating');
 const Event = require('../models/Event');
 const Guest = require('../models/Guest');

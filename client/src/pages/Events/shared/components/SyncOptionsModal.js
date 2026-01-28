@@ -1,3 +1,29 @@
+/**
+ * SyncOptionsModal.js - Seating Sync Conflict Resolution Modal
+ *
+ * Modal for handling conflicts when guest data changes affect seating.
+ * Provides options to resolve seating conflicts gracefully.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - onClose: Close callback
+ * - options: Available resolution strategies
+ * - affectedGuests: Guests affected by changes
+ * - pendingTriggers: Pending sync actions
+ * - onApplyOption: Apply selected strategy
+ * - onMoveToUnassigned: Move guests to unassigned pool
+ * - canEdit: Whether editing allowed
+ * - isSeparatedSeating: Gender-separated mode
+ *
+ * Resolution Strategies:
+ * - conservative: Minimal changes, preserve existing assignments
+ * - unassigned: Move affected guests to unassigned pool
+ *
+ * Use Cases:
+ * - Guest count changed (RSVP update)
+ * - Guest deleted
+ * - Guest gender changed (separated seating)
+ */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/SyncOptionsModal.css';

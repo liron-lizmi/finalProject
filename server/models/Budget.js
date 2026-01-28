@@ -1,3 +1,27 @@
+/**
+ * Budget.js - Budget Model
+ *
+ * Stores event budget information including total budget, category allocations,
+ * expense items, and income entries (including gifts).
+ *
+ * Schemas:
+ * - BudgetItemSchema: Individual expense items (category, amount, isPaid, etc.)
+ * - BudgetCategorySchema: Category allocations (category name, allocated amount)
+ * - BudgetSchema: Main budget with totals, items, and incomes
+ *
+ * Categories: venue, catering, photography, music, decoration, makeup,
+ *             clothing, transportation, gifts, other
+ *
+ * Income sources: gift (from guests), manual, other
+ *
+ * Fields:
+ * - totalBudget: Overall budget amount
+ * - alertThreshold: Percentage (50-100) to trigger budget warnings
+ * - categories: Array of category allocations
+ * - items: Array of expense items (called 'items' but contains expenses)
+ * - incomes: Array of income entries (gifts sync from Guest model)
+ */
+
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 

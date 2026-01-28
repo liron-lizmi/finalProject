@@ -1,3 +1,30 @@
+/**
+ * RSVPManualModal.js - Manual RSVP Entry Modal
+ *
+ * Modal for manually entering or editing guest RSVP status.
+ * Used by event organizers to update RSVP on behalf of guests.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - onClose: Close callback
+ * - guest: Guest object to update
+ * - onUpdateRSVP: Save RSVP callback
+ * - getGroupDisplayName: Function to get group label
+ * - isSeparatedSeating: Whether gender-separated seating
+ *
+ * RSVP Data:
+ * - rsvpStatus: pending, confirmed, declined
+ * - attendingCount: Number of people attending
+ * - maleCount/femaleCount: For separated seating
+ * - guestNotes: Additional notes
+ *
+ * Features:
+ * - Status radio buttons
+ * - Attending count with +/- controls
+ * - Separate male/female count for separated seating
+ * - Notes text field
+ * - Validation (min 1, max 20 attendees)
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/RSVPManualModal.css';

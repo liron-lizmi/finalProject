@@ -1,4 +1,19 @@
-// server/middleware/checkPermissions.js
+/**
+ * checkPermissions.js - Permission Checking Middleware
+ *
+ * Middleware functions to verify user access to events.
+ * Sets req.canEdit, req.userPermission, req.isEventOwner for downstream use.
+ *
+ * Functions:
+ * - checkEditPermission: Allows owner and users with 'edit' permission.
+ *   Blocks non-GET requests for view-only users.
+ * - checkViewPermission: Allows owner and any shared user (view or edit).
+ * - checkIsEventOwner: Only allows the event owner (for sharing operations).
+ *
+ * All functions return 404 (not 403) for non-accessible events to avoid
+ * revealing event existence to unauthorized users.
+ */
+
 const Event = require('../models/Event');
 const User = require('../models/User');
 const mongoose = require('mongoose');

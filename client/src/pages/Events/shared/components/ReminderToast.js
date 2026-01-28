@@ -1,3 +1,29 @@
+/**
+ * ReminderToast.js - Task Reminder Notification Component
+ *
+ * Displays toast notifications for task reminders and overdue tasks.
+ *
+ * Props:
+ * - tasks: Array of tasks to check for reminders
+ * - onTaskClick: Callback when reminder is clicked
+ * - canEdit: Whether editing is allowed
+ *
+ * Reminder Types:
+ * - overdue: Task past its due date
+ * - reminder: Scheduled reminder time reached
+ * - recurring: Repeating reminders (daily/weekly/biweekly)
+ *
+ * Features:
+ * - Check reminders on task list changes
+ * - Track dismissed reminders in localStorage
+ * - Track shown-today reminders (per day)
+ * - Recurring reminder support
+ * - RTL/LTR support
+ *
+ * Storage Keys:
+ * - dismissed_reminders: Permanently dismissed
+ * - reminders_shown_{date}: Shown today (resets daily)
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/EventTimeline.css';

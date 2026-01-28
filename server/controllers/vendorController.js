@@ -1,9 +1,29 @@
+/**
+ * vendorController.js
+ *
+ * Controller for searching and managing event vendors using Google Places API.
+ * Handles vendor search with complex filtering, caching, and pagination.
+ *
+ * Main features:
+ * - Google Places API integration for vendor discovery
+ * - Server-side filtering (area, kashrut, vendor type, specific filters)
+ * - Photo URL processing from Google Places
+ * - Result caching with pagination token management
+ * - Event vendor CRUD (add/update/delete vendors to events)
+ *
+ * Vendor types: catering, photographer, florist, musician, DJ, decorator, makeup, transport
+ * Areas: Jerusalem, Center, South, North (with geocoordinates)
+ */
+
 const Event = require('../models/Event');
 const i18next = require('i18next');
 const vendorCacheManager = require('../services/vendorCacheManager');
 const googleVendorService = require('../services/googleVendorService');
 
-// Filters vendors by excluding venues, applying geographic area restrictions, and specific filters
+/**
+ * Filters vendors server-side after Google API results.
+ * Excludes venues, applies area (haversine distance), kashrut, and specific filters.
+ */
 const applyServerFilters = (vendors, filters) => {
   return vendors.filter(vendor => {
     const vendorText = (
@@ -120,7 +140,10 @@ const applyServerFilters = (vendors, filters) => {
   });
 };
 
-// Converts photo references to full URLs using Google Places Photo API and filters out invalid photos
+/**
+ * Converts photo_reference to full Google Places Photo URLs.
+ * Filters out invalid/null photos.
+ */
 const processVendorsWithPhotos = (vendors) => {
   return vendors.map(vendor => {
     if (vendor.photos && vendor.photos.length > 0) {
@@ -254,7 +277,12 @@ const searchWithAlternativeQuery = async (
   );
 };
 
-// Searches vendors using Google Places API with caching and server-side filtering
+/**
+ * Main vendor search endpoint with caching, filtering, and pagination.
+ * Handles 3 cases: no filters (browse all), first page with filters, subsequent pages.
+ * Uses up to 5 API calls per request, targets 20 results.
+ * @route GET /api/vendors/search
+ */
 const searchVendors = async (req, res) => {
   try {
     const { 
@@ -467,7 +495,10 @@ const searchVendors = async (req, res) => {
   }
 };
 
-// Retrieves all vendors associated with a specific event
+/**
+ * Returns all vendors saved to an event.
+ * @route GET /api/events/:eventId/vendors
+ */
 const getEventVendors = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
@@ -489,7 +520,10 @@ const getEventVendors = async (req, res) => {
   }
 };
 
-// Adds a new vendor to an event with validation for duplicate names
+/**
+ * Adds a vendor to an event. Validates no duplicate names.
+ * @route POST /api/events/:eventId/vendors
+ */
 const addVendor = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
@@ -533,7 +567,10 @@ const addVendor = async (req, res) => {
   }
 };
 
-// Updates an existing vendor's details by vendorId
+/**
+ * Updates a vendor's details.
+ * @route PUT /api/events/:eventId/vendors/:vendorId
+ */
 const updateVendor = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
@@ -572,7 +609,10 @@ const updateVendor = async (req, res) => {
   }
 };
 
-// Deletes a vendor from an event by vendorId
+/**
+ * Removes a vendor from an event.
+ * @route DELETE /api/events/:eventId/vendors/:vendorId
+ */
 const deleteVendor = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId);
@@ -603,7 +643,10 @@ const deleteVendor = async (req, res) => {
   }
 };
 
-// Returns cache statistics from vendorCacheManager
+/**
+ * Returns vendor cache statistics (debug endpoint).
+ * @route GET /api/vendors/cache-stats
+ */
 const getCacheStats = (req, res) => {
   try {
     const stats = vendorCacheManager.getStats();
@@ -613,7 +656,10 @@ const getCacheStats = (req, res) => {
   }
 };
 
-// Fetches detailed vendor information from Google Places API by placeId and processes photos
+/**
+ * Returns detailed vendor info from Google Places API.
+ * @route GET /api/vendors/:placeId
+ */
 const getVendorDetailsByPlaceId = async (req, res) => {
   try {
     const { placeId } = req.params;

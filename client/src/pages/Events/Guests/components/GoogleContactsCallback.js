@@ -1,4 +1,29 @@
-// src/pages/components/GoogleContactsCallback.js
+/**
+ * GoogleContactsCallback.js - Google Contacts OAuth Callback
+ *
+ * Handles OAuth callback from Google Contacts authorization.
+ *
+ * Route: /auth/google-contacts/callback
+ *
+ * Flow:
+ * 1. Receive OAuth code and state from Google
+ * 2. Exchange code for tokens via backend
+ * 3. Fetch contacts from Google
+ * 4. Redirect back to guest page with contacts
+ *
+ * Query Parameters:
+ * - code: OAuth authorization code
+ * - state: Should be 'google_contacts_auth'
+ * - error: Present if user denied access
+ *
+ * States:
+ * - processing: Exchanging tokens
+ * - success: Contacts fetched
+ * - error: Something went wrong
+ *
+ * Storage:
+ * - googleContactsReturnTo: Original page to return to
+ */
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';

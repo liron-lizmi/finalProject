@@ -1,3 +1,18 @@
+/**
+ * LanguageSwitcher.js - Language Toggle Component
+ *
+ * Simple toggle between Hebrew and English languages.
+ * Dispatches 'languageChanged' event for components to react.
+ *
+ * Languages:
+ * - he: Hebrew (עברית) - RTL
+ * - en: English - LTR
+ *
+ * Features:
+ * - Visual active state for current language
+ * - Persists selection via i18n
+ * - Triggers global language change event
+ */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../../../i18n';

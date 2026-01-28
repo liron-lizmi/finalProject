@@ -1,5 +1,33 @@
-
-// client/src/pages/Events/Features/EventGuestsPage.js
+/**
+ * EventGuestsPage.js - Event Guest Management Page
+ *
+ * Comprehensive guest list management for events.
+ *
+ * Route: /event/:id/guests
+ *
+ * Features:
+ * - Add/edit/delete guests
+ * - Import guests (Excel, CSV, Google Contacts)
+ * - RSVP tracking and management
+ * - Duplicate detection (by phone number)
+ * - Guest grouping (bride side, groom side, family, friends, etc.)
+ * - Selection mode for bulk operations
+ * - Search and filter by group/RSVP status
+ * - Gift tracking per guest
+ * - Gender-separated seating support
+ * - Share RSVP link
+ *
+ * Guest Data:
+ * - firstName, lastName, phone
+ * - group (bride_side, groom_side, family, friends, work, other)
+ * - RSVP status (pending, confirmed, declined)
+ * - attending count, male/female count (for separated seating)
+ *
+ * Modals:
+ * - ImportModal: Bulk import from files/contacts
+ * - GiftsModal: Track gifts received
+ * - RSVPManualModal: Manual RSVP entry
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

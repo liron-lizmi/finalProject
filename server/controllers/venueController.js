@@ -1,7 +1,27 @@
-// server/controllers/venueController.js
+/**
+ * venueController.js
+ *
+ * Controller for searching event venues using Google Places API.
+ * Handles venue search with filtering by type, style, area, and amenities.
+ *
+ * Main features:
+ * - Google Places API integration for venue discovery
+ * - Style detection (modern, classic, luxury, urban) from venue text
+ * - Server-side filtering (area, type, style, parking, accessibility, outdoor, catering)
+ * - Photo URL processing
+ * - Result caching with pagination
+ *
+ * Venue types: restaurant, hotel, event_venue, banquet_hall, park, museum
+ * Areas: Jerusalem, Center, South, North
+ */
+
 const googlePlacesService = require('../services/googlePlacesService');
 const CacheManager = require('../services/CacheManager');
 
+/**
+ * Detects venue style(s) from name, address, and type keywords.
+ * Returns array of styles: modern, classic, luxury, urban.
+ */
 const getVenueStyle = (venue, language = 'en') => {
   const venueText = (
     venue.name + ' ' + 
@@ -62,6 +82,9 @@ const getVenueStyle = (venue, language = 'en') => {
   return styles.length > 0 ? styles : ['modern'];
 };
 
+/**
+ * Filters venues by area (haversine distance), type, style, and amenities.
+ */
 const applyServerFilters = (venues, filters, language = 'en') => {
   return venues.filter(venue => {
     const venueText = (
@@ -167,6 +190,9 @@ const applyServerFilters = (venues, filters, language = 'en') => {
   });
 };
 
+/**
+ * Processes venue photos - converts photo_reference to full URLs.
+ */
 const processVenuesWithPhotos = (venues) => {
   return venues.map(venue => {
     if (venue.photos && venue.photos.length > 0) {
@@ -199,6 +225,11 @@ const processVenuesWithPhotos = (venues) => {
   });
 };
 
+/**
+ * Main venue search endpoint with filtering, caching, and pagination.
+ * Fetches from Google Places, applies filters, returns up to 20 results.
+ * @route GET /api/venues/search
+ */
 const searchVenues = async (req, res) => {
   try {
     const {
@@ -301,6 +332,11 @@ const searchVenues = async (req, res) => {
   }
 };
 
+/**
+ * Returns detailed venue info from Google Places API.
+ * Caches results by placeId and language.
+ * @route GET /api/venues/:placeId
+ */
 const getVenueDetails = async (req, res) => {
   try {
     const { placeId } = req.params;

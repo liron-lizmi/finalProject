@@ -1,3 +1,27 @@
+/**
+ * taskRoutes.js - Task Management Routes
+ *
+ * Handles all task-related endpoints for event planning task management
+ * with Google Calendar integration.
+ *
+ * All routes require authentication (auth middleware applied globally).
+ *
+ * Task CRUD:
+ * - GET /event/:eventId: Get all tasks for event (view permission)
+ * - GET /event/:eventId/statistics: Get task statistics (view permission)
+ * - POST /event/:eventId: Create new task (edit permission)
+ * - PUT /event/:eventId/:taskId: Update task (edit permission)
+ * - PATCH /event/:eventId/:taskId/status: Update task status only (edit permission)
+ * - DELETE /event/:eventId/:taskId: Delete task (edit permission)
+ *
+ * Google Calendar Integration:
+ * - GET /google-calendar/status: Check if Google Calendar is connected
+ * - GET /google-calendar/auth-url: Get OAuth authorization URL
+ * - POST /google-calendar/callback: Handle OAuth callback with auth code
+ * - DELETE /google-calendar/disconnect: Disconnect Google Calendar
+ * - POST /event/:eventId/sync-calendar: Sync event tasks to Google Calendar
+ */
+
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');

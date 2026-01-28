@@ -1,4 +1,13 @@
-//sevrver/middleware/auth.js
+/**
+ * auth.js - Authentication Middleware
+ *
+ * Verifies JWT token from request headers and extracts userId.
+ * Supports both 'x-auth-token' header and 'Authorization: Bearer <token>' format.
+ *
+ * On success: Sets req.userId and calls next()
+ * On failure: Returns 401 with error message
+ */
+
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {

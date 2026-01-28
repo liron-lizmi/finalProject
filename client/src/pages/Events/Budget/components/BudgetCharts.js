@@ -1,4 +1,27 @@
-// client/src/pages/Events/Features/components/budget/BudgetCharts.js
+/**
+ * BudgetCharts.js - Budget Visualization Component
+ *
+ * Displays budget data in visual chart formats.
+ *
+ * Props:
+ * - budget: Budget object
+ * - eventId: Current event ID
+ * - chartColors: Custom color palette (optional)
+ *
+ * Chart Types:
+ * - Pie chart: Category spending breakdown
+ * - Bar chart: Budget vs actual per category
+ *
+ * Features:
+ * - Toggle between chart types
+ * - Custom SVG-based charts
+ * - Color-coded categories
+ * - Export to PDF (print window)
+ * - Budget summary data table
+ *
+ * Default Colors:
+ * 10-color palette for category differentiation
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../../../utils/api';

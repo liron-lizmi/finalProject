@@ -1,3 +1,28 @@
+/**
+ * IncomeManager.js - Income Tracking Component
+ *
+ * CRUD management for budget income sources.
+ *
+ * Props:
+ * - budget: Budget object
+ * - eventId: Current event ID
+ * - onBudgetUpdated: Budget change callback
+ * - canEdit: Whether editing allowed
+ *
+ * Income Data:
+ * - source: Income source type (manual, gift, contribution)
+ * - description: Description of income
+ * - amount: Income amount
+ * - date: Received date
+ * - notes: Additional notes
+ *
+ * Features:
+ * - Add/edit/delete income entries
+ * - Sort by date, amount
+ * - Track gifts from guests
+ * - Total income calculation
+ * - Form validation
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../../hooks/useModal';

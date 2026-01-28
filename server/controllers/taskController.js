@@ -1,11 +1,34 @@
+/**
+ * taskController.js
+ *
+ * Controller for managing event tasks with Google Calendar integration.
+ * Handles task CRUD, status updates, statistics, and calendar sync.
+ *
+ * Main features:
+ * - Task CRUD with date/time validation
+ * - Task reminders with recurrence options
+ * - Status tracking (pending, in_progress, completed, cancelled)
+ * - Statistics with overdue detection
+ * - Google Calendar OAuth flow and sync
+ *
+ * Validations:
+ * - Due date cannot be after event date
+ * - Reminder must be before due date/time
+ */
+
 const Task = require('../models/Task');
 const Event = require('../models/Event');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 const googleCalendar = require('../services/googleCalendar');
 
+// Prevents OAuth code reuse (codes expire after 10 min)
 const processedCodes = new Set();
 
+/**
+ * Returns all tasks for an event, sorted by due date, priority, and creation.
+ * @route GET /api/events/:eventId/tasks
+ */
 const getEventTasks = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -21,10 +44,15 @@ const getEventTasks = async (req, res) => {
   }
 };
 
+/**
+ * Creates a new task with due date/time and optional reminder.
+ * Validates due date is before event date, reminder before due date.
+ * @route POST /api/events/:eventId/tasks
+ */
 const createTask = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -148,6 +176,10 @@ const createTask = async (req, res) => {
   }
 };
 
+/**
+ * Updates task fields with same validations as create.
+ * @route PUT /api/events/:eventId/tasks/:taskId
+ */
 const updateTask = async (req, res) => {
   try {
     const { eventId, taskId } = req.params;
@@ -275,6 +307,10 @@ const updateTask = async (req, res) => {
   }
 };
 
+/**
+ * Deletes a task.
+ * @route DELETE /api/events/:eventId/tasks/:taskId
+ */
 const deleteTask = async (req, res) => {
   try {
     const { eventId, taskId } = req.params;
@@ -296,6 +332,10 @@ const deleteTask = async (req, res) => {
   }
 };
 
+/**
+ * Updates only task status (pending/in_progress/completed/cancelled).
+ * @route PATCH /api/events/:eventId/tasks/:taskId/status
+ */
 const updateTaskStatus = async (req, res) => {
   try {
     const { eventId, taskId } = req.params;
@@ -325,6 +365,11 @@ const updateTaskStatus = async (req, res) => {
   }
 };
 
+/**
+ * Returns task statistics: total, completed, pending, inProgress, overdue.
+ * Uses MongoDB aggregation for efficiency.
+ * @route GET /api/events/:eventId/tasks/stats
+ */
 const getTasksStatistics = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -389,6 +434,10 @@ const getTasksStatistics = async (req, res) => {
   }
 };
 
+/**
+ * Returns whether Google Calendar is connected for current user.
+ * @route GET /api/tasks/google-calendar/status
+ */
 const getGoogleCalendarStatus = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -399,6 +448,10 @@ const getGoogleCalendarStatus = async (req, res) => {
   }
 };
 
+/**
+ * Returns Google OAuth URL for calendar authorization.
+ * @route GET /api/tasks/google-calendar/auth-url
+ */
 const getGoogleAuthUrl = async (req, res) => {
   try {
     const authUrl = googleCalendar.getAuthUrl();
@@ -408,6 +461,11 @@ const getGoogleAuthUrl = async (req, res) => {
   }
 };
 
+/**
+ * Handles Google OAuth callback - exchanges code for tokens.
+ * Stores tokens in user document. Prevents code reuse.
+ * @route POST /api/tasks/google-calendar/callback
+ */
 const handleGoogleCallback = async (req, res) => {
   try {
     const { code } = req.body;
@@ -485,6 +543,10 @@ const handleGoogleCallback = async (req, res) => {
   }
 };
 
+/**
+ * Disconnects Google Calendar by removing stored tokens.
+ * @route DELETE /api/tasks/google-calendar/disconnect
+ */
 const disconnectGoogleCalendar = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.userId, {
@@ -497,6 +559,11 @@ const disconnectGoogleCalendar = async (req, res) => {
   }
 };
 
+/**
+ * Syncs all event tasks with Google Calendar.
+ * Creates/updates calendar events, refreshes tokens if needed.
+ * @route POST /api/events/:eventId/tasks/sync-calendar
+ */
 const syncWithGoogleCalendar = async (req, res) => {
   try {
     const { eventId } = req.params;

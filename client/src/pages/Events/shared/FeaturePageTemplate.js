@@ -1,4 +1,29 @@
-// pages/Events/Features/FeaturePageTemplate.js
+/**
+ * FeaturePageTemplate.js - Reusable Feature Page Layout
+ *
+ * Template component providing consistent layout for all event feature pages.
+ * Includes header with navigation and event context.
+ *
+ * Usage: Wrap feature page content with this template
+ *
+ * Props:
+ * - title: Page title text
+ * - icon: Emoji or icon for the feature
+ * - description: Optional feature description
+ * - children: Page content to render
+ *
+ * Features:
+ * - Consistent header with back button
+ * - Logo with home navigation
+ * - Auto-fetch event details
+ * - RTL/LTR support based on language
+ * - Responsive layout
+ *
+ * Layout:
+ * - Main header (back button + logo)
+ * - Feature header (icon + title)
+ * - Children content area
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';

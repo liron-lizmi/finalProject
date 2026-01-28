@@ -1,3 +1,21 @@
+/**
+ * index.js - React Application Entry Point
+ *
+ * Bootstraps the React application and configures global settings.
+ *
+ * Configuration:
+ * - Sets axios base URL from REACT_APP_API_URL (default: localhost:5000)
+ * - Configures axios request interceptor for:
+ *   - JWT token injection from localStorage (Authorization header)
+ *   - Language header injection (Accept-Language)
+ * - Initializes i18n (imported for side effects)
+ * - Renders App with React StrictMode and Suspense
+ *
+ * Global Axios Interceptor:
+ * - Automatically attaches 'Bearer {token}' to all requests if token exists
+ * - Attaches current language preference to all requests
+ */
+
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';

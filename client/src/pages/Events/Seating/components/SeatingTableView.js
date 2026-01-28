@@ -1,3 +1,32 @@
+/**
+ * SeatingTableView.js - Table List View Component
+ *
+ * List-based view of tables and their guest assignments.
+ * Alternative to the visual canvas view.
+ *
+ * Props:
+ * - tables: Array of table objects
+ * - guests: All guests data
+ * - seatingArrangement: Guest-to-table mapping
+ * - onSeatGuest: Assign guest callback
+ * - onUnseatGuest: Remove guest callback
+ * - onEditTable: Edit table callback
+ * - onAddTable: Add table callback
+ * - onDeleteTable: Delete table callback
+ * - canEdit: Whether editing allowed
+ * - isSeparatedSeating: Gender-separated mode
+ * - genderFilter: Current gender filter
+ * - maleTables/femaleTables: Gender assignments
+ * - maleArrangement/femaleArrangement: Gender mappings
+ *
+ * Features:
+ * - Search tables by name
+ * - Sort by name, capacity, occupancy
+ * - Filter empty/full tables
+ * - Quick guest assignment
+ * - Table delete confirmation
+ * - Capacity display
+ */
 import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 

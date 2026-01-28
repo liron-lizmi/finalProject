@@ -1,3 +1,19 @@
+/**
+ * db.js - MongoDB Database Connection
+ *
+ * Establishes connection to MongoDB using Mongoose.
+ * Connection string is read from MONGO_URI environment variable.
+ *
+ * Usage:
+ * - connectDB(): Async function that connects to MongoDB
+ * - Returns mongoose connection on success
+ * - Exits process with code 1 on connection failure
+ *
+ * Configuration:
+ * - useNewUrlParser: true - uses new MongoDB connection string parser
+ * - useUnifiedTopology: true - uses new server discovery and monitoring engine
+ */
+
 const mongoose = require('mongoose');
 require('dotenv').config();
 

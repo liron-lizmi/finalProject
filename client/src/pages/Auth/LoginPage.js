@@ -1,4 +1,26 @@
-// client/src/pages/Auth/LoginPage.js
+/**
+ * LoginPage.js - User Login Page
+ *
+ * Handles user authentication via email/password or Google OAuth.
+ *
+ * Features:
+ * - Email/password login with client-side validation
+ * - Google OAuth login via Appwrite
+ * - Password visibility toggle
+ * - Error handling for failed login, expired sessions
+ * - RTL support for Hebrew
+ * - Navigation to register, forgot password pages
+ *
+ * State:
+ * - formData: email and password inputs
+ * - errors: field-level validation errors
+ * - serverError: API error messages
+ * - isSubmitting: loading state during login
+ * - showPassword: password visibility toggle
+ *
+ * On successful login, stores token and user in localStorage, navigates to dashboard.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';

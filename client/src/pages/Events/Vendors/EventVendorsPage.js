@@ -1,4 +1,25 @@
-// client/src/pages/Events/Features/EventVenuePage.js
+/**
+ * EventVendorsPage.js - Event Vendors Management Page
+ *
+ * Manages vendors (catering, photography, DJ, etc.) for a specific event.
+ * Wraps VendorsPage for search and adds event-specific functionality.
+ *
+ * Route: /event/:id/vendors
+ *
+ * Features:
+ * - Display list of event vendors
+ * - Search and add vendors from Google Places
+ * - Manual vendor entry with category selection
+ * - Update/replace vendors
+ * - Delete vendors from event
+ * - Permission-based editing (view-only mode support)
+ *
+ * Vendor Categories:
+ * - Catering, Photography, DJ, Flowers, Makeup, etc.
+ *
+ * Validation:
+ * - Phone format validation (optional)
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

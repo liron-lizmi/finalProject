@@ -1,3 +1,28 @@
+/**
+ * Task.js - Task Model
+ *
+ * Stores event tasks with due dates, reminders, and Google Calendar integration.
+ *
+ * Fields:
+ * - title, description: Task info
+ * - dueDate, dueTime: When task is due (dueDate required, dueTime defaults to 09:00)
+ * - priority: low/medium/high/urgent
+ * - status: pending/in_progress/completed/cancelled
+ * - category: venue, catering, decoration, entertainment, etc.
+ * - reminderDate, reminderTime, reminderRecurrence: Reminder settings
+ * - googleCalendarEventId: For Google Calendar sync
+ * - completedAt: Auto-set when status becomes 'completed'
+ *
+ * Virtuals:
+ * - daysUntilDue: Days remaining (negative if overdue)
+ * - isOverdue: Boolean, true if past due and not completed
+ *
+ * Hooks:
+ * - pre('save'): Validates reminder is before due date, sets completedAt
+ *
+ * Indexes: event+user, dueDate, status, priority, compound indexes
+ */
+
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 

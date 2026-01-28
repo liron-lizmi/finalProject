@@ -1,4 +1,29 @@
-// src/pages/Events/Features/components/GoogleAuthCallback.js
+/**
+ * GoogleAuthCallback.js - Google OAuth Callback Handler
+ *
+ * Handles the OAuth 2.0 callback from Google Calendar authorization.
+ *
+ * Route: /auth/google/callback
+ *
+ * Flow:
+ * 1. Receive OAuth code and state from Google
+ * 2. Exchange code for tokens via backend
+ * 3. Store connection status
+ * 4. Redirect back to original page
+ *
+ * Query Parameters:
+ * - code: OAuth authorization code from Google
+ * - state: Should be 'google_calendar_auth' for validation
+ * - error: Present if user denied access
+ *
+ * States:
+ * - processing: Exchanging code for tokens
+ * - success: Connection established
+ * - error: Something went wrong
+ *
+ * Storage:
+ * - googleAuthReturnTo: Original page to return to (sessionStorage)
+ */
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';

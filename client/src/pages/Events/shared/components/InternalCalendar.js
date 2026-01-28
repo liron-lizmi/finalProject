@@ -1,4 +1,29 @@
-// client/src/pages/Events/Features/components/InternalCalendar.js
+/**
+ * InternalCalendar.js - Task Calendar View Component
+ *
+ * Visual calendar displaying tasks by their due dates.
+ *
+ * Props:
+ * - tasks: Array of tasks to display
+ * - eventDate: Main event date (highlighted differently)
+ * - onTaskClick: Callback when task is clicked
+ * - canEdit: Whether editing is allowed
+ * - onClose: Callback to close calendar view
+ *
+ * Features:
+ * - Month/week view modes
+ * - Navigate between months
+ * - Highlight today's date
+ * - Highlight event date
+ * - Show tasks on their due dates
+ * - Click date to see tasks modal
+ * - RTL/LTR support
+ *
+ * Visual Indicators:
+ * - Today: Special highlighting
+ * - Event date: Distinct styling
+ * - Task dots: Show tasks exist on date
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,3 +1,45 @@
+/**
+ * AISeatingModal.js - AI-Assisted Seating Configuration Modal
+ *
+ * Modal for configuring AI-powered automatic seating arrangement.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - guests: All guests data
+ * - tables: Current tables
+ * - preferences: Current seating preferences
+ * - seatingArrangement: Current assignments
+ * - onClose: Close callback
+ * - onGenerate: Generate AI seating callback
+ * - onAddTables: Add new tables callback
+ * - getNextTableNumber: Get next table number
+ * - isSeparatedSeating: Gender-separated mode
+ * - maleTables/femaleTables: Gender-assigned tables
+ * - maleArrangement/femaleArrangement: Gender-specific mappings
+ * - canEdit: Whether editing allowed
+ * - onFetchTableSuggestion: Get AI table recommendations
+ * - eventId: Current event ID
+ * - onPreferencesChange: Update preferences callback
+ *
+ * AI Preferences:
+ * - prioritizeGroups: Keep groups together
+ * - balanceTableSizes: Even distribution
+ * - considerSpecialNeeds: Accessibility
+ * - mixGroups: Allow mixing guest groups
+ * - separateAgeGroups: Age-based separation
+ * - prioritizeVIPs: VIP seating priority
+ * - customInstructions: Free-text AI guidance
+ *
+ * Table Settings:
+ * - Round tables (10, 12 capacity)
+ * - Rectangular tables (24 capacity)
+ * - Custom table configurations
+ *
+ * Seating Rules:
+ * - Must sit together
+ * - Cannot sit together
+ * - Group mixing policies
+ */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 

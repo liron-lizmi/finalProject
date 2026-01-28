@@ -1,4 +1,26 @@
-// client/src/pages/HomePage.js
+/**
+ * HomePage.js - Landing Page
+ *
+ * Public landing page showcasing PlanIt features and encouraging sign-up.
+ *
+ * Sections:
+ * - Header: Logo, language switcher (HE/EN), signup/login buttons
+ * - Hero: App name, tagline, CTA button
+ * - Event Types: Wedding, Business, Birthday, Private events
+ * - Features: Venue, Vendors, Guests, Seating, Timeline, Budget
+ * - Planning Steps: 5-step process overview
+ * - Testimonials: Auto-rotating customer quotes (4 testimonials, 10s interval)
+ * - CTA: Final call-to-action for registration
+ * - Footer: Logo, description, copyright
+ *
+ * Features:
+ * - Scroll animations for features and steps (fade-in on viewport)
+ * - Sticky header that changes style on scroll
+ * - Smooth scroll to sections
+ * - Language switching (Hebrew/English)
+ * - RTL/LTR support based on language
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HomePage.css';

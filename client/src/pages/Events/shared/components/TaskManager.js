@@ -1,3 +1,37 @@
+/**
+ * TaskManager.js - Event Task/Timeline Management Component
+ *
+ * Main component for managing event tasks and timeline.
+ *
+ * Route: /event/:id/timeline
+ *
+ * Features:
+ * - Task list with CRUD operations
+ * - Filter by status, priority, category
+ * - Statistics dashboard (total, completed, in progress, overdue)
+ * - Google Calendar sync integration
+ * - Internal calendar view
+ * - Reminder notifications (toast)
+ * - Permission-based editing
+ *
+ * Task Properties:
+ * - title, description, dueDate, dueTime
+ * - priority (low, medium, high)
+ * - category (venue, vendors, guests, etc.)
+ * - status (pending, in_progress, completed)
+ * - reminder settings with recurrence
+ *
+ * Tabs:
+ * - List: Task cards view
+ * - Calendar: Visual calendar view
+ *
+ * Components Used:
+ * - TaskCard: Individual task display
+ * - TaskModal: Create/edit task form
+ * - GoogleCalendarSync: Calendar integration
+ * - InternalCalendar: Built-in calendar view
+ * - ReminderToast: Reminder notifications
+ */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';

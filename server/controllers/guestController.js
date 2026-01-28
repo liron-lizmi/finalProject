@@ -1,8 +1,27 @@
-// server/controllers/guestController.js
+/**
+ * guestController.js
+ *
+ * Controller for managing event guests. Handles all guest-related operations including
+ * CRUD, bulk import, RSVP management (private and public), gift tracking, and
+ * seating synchronization.
+ *
+ * Main features:
+ * - Guest CRUD operations
+ * - Bulk import with validation
+ * - RSVP management with gender-separated seating support
+ * - Custom group management
+ * - Gift tracking with budget sync
+ * - Automatic seating sync on guest changes
+ */
+
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
 const Seating = require('../models/Seating');
 
+/**
+ * Retrieves all guests for a specific event, sorted by last name then first name.
+ * @route GET /api/events/:eventId/guests
+ */
 const getEventGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -16,6 +35,13 @@ const getEventGuests = async (req, res) => {
   }
 };
 
+/**
+ * Adds a new guest to an event.
+ * Handles custom group logic: if group is 'custom' or not a predefined value,
+ * uses customGroup field. Supports gender field for separated seating events.
+ * Triggers seating sync if guest is confirmed.
+ * @route POST /api/events/:eventId/guests
+ */
 const addGuest = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -26,6 +52,10 @@ const addGuest = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
+    // Group assignment logic:
+    // - Predefined groups: 'family', 'friends', 'work', 'other'
+    // - If 'custom' is selected, use customGroup value
+    // - If group is not predefined, treat it as a custom group name
     let finalGroup = group || 'other';
     let finalCustomGroup = undefined;
 
@@ -89,6 +119,13 @@ const addGuest = async (req, res) => {
   }
 };
 
+/**
+ * Imports multiple guests at once from an array (e.g., from Excel/CSV).
+ * Validates each guest (firstName, lastName required, phone format).
+ * Uses insertMany with ordered:false for partial success on duplicates.
+ * Falls back to individual inserts if bulk insert fails completely.
+ * @route POST /api/events/:eventId/guests/import
+ */
 const bulkImportGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -161,8 +198,10 @@ const bulkImportGuests = async (req, res) => {
 
     if (guestsToInsert.length > 0) {
       try {
-        const insertResult = await Guest.insertMany(guestsToInsert, { 
-          ordered: false 
+        // Bulk insert with ordered:false allows partial success
+        // (continues inserting even if some fail due to duplicates)
+        const insertResult = await Guest.insertMany(guestsToInsert, {
+          ordered: false
         });
 
         results.imported = insertResult.length;
@@ -175,10 +214,13 @@ const bulkImportGuests = async (req, res) => {
         }
 
       } catch (insertError) {
+        // Partial success: some documents may have been inserted
         if (insertError.insertedDocs) {
           results.imported = insertError.insertedDocs.length;
         }
 
+        // Fallback: if bulk insert completely failed, try individual inserts
+        // This provides better error messages per guest
         if (results.imported === 0) {
           for (const guestData of guestsToInsert) {
             try {
@@ -216,6 +258,11 @@ const bulkImportGuests = async (req, res) => {
   }
 };
 
+/**
+ * Deletes a guest from an event.
+ * Triggers seating sync if the guest was confirmed (to remove from seating).
+ * @route DELETE /api/events/:eventId/guests/:guestId
+ */
 const deleteGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
@@ -245,6 +292,12 @@ const deleteGuest = async (req, res) => {
   }
 };
 
+/**
+ * Updates guest details (name, phone, group, gender).
+ * Handles custom group logic similar to addGuest.
+ * Triggers seating sync if guest was confirmed.
+ * @route PUT /api/events/:eventId/guests/:guestId
+ */
 const updateGuest = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
@@ -314,6 +367,15 @@ const updateGuest = async (req, res) => {
   }
 };
 
+/**
+ * Updates guest RSVP status (confirmed/declined/pending).
+ * For confirmed status: sets attendingCount, or maleCount/femaleCount for separated seating.
+ * For non-confirmed: resets counts to 0 and clears ride info.
+ * Triggers seating sync when:
+ *   - Status changes to confirmed (new guests to place)
+ *   - Attending count increases (more people to place)
+ * @route PUT /api/events/:eventId/guests/:guestId/rsvp
+ */
 const updateGuestRSVP = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
@@ -373,14 +435,17 @@ const updateGuestRSVP = async (req, res) => {
     const newAttendingCount = updatedGuest.attendingCount || 0;
     const newMaleCount = updatedGuest.maleCount || 0;
     const newFemaleCount = updatedGuest.femaleCount || 0;
-    
+
+    // Seating sync triggers:
+    // 1. New confirmation: guest needs to be placed in seating
+    // 2. Increased count: additional people need seats (but not for decreases)
     const attendingCountIncreased = willBeConfirmed && wasConfirmed && (
       (event.isSeparatedSeating && (newMaleCount > oldMaleCount || newFemaleCount > oldFemaleCount)) ||
       (!event.isSeparatedSeating && newAttendingCount > oldAttendingCount)
     );
 
-
     if (!wasConfirmed && willBeConfirmed) {
+      // Guest just confirmed - trigger sync to add them to seating
       await triggerSeatingSync(eventId, req.userId, 'rsvp_updated', {
         guestId: updatedGuest._id.toString(),
         guest: updatedGuest,
@@ -423,6 +488,11 @@ const updateGuestRSVP = async (req, res) => {
   }
 };
 
+/**
+ * Returns all unique group names used by guests in an event.
+ * Includes both predefined groups (family, friends, work, other) and custom groups.
+ * @route GET /api/events/:eventId/groups
+ */
 const getEventGroups = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -447,6 +517,12 @@ const getEventGroups = async (req, res) => {
   }
 };
 
+/**
+ * Returns aggregated statistics for event guests.
+ * Stats include: totalGuests, confirmed/declined/pending counts,
+ * totalAttending, totalMale, totalFemale.
+ * @route GET /api/events/:eventId/guests/stats
+ */
 const getGuestStats = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -482,6 +558,12 @@ const getGuestStats = async (req, res) => {
   }
 };
 
+/**
+ * Public endpoint for guests to update their own RSVP via phone number.
+ * No authentication required - guest identifies themselves by phone.
+ * Same RSVP logic as updateGuestRSVP but uses event.user for sync.
+ * @route PUT /api/public/events/:eventId/rsvp
+ */
 const updateGuestRSVPPublic = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -591,6 +673,11 @@ const updateGuestRSVPPublic = async (req, res) => {
   }
 };
 
+/**
+ * Public endpoint to get basic event info for RSVP page.
+ * Returns only public-safe fields: title, date, time, isSeparatedSeating.
+ * @route GET /api/public/events/:eventId/rsvp-info
+ */
 const getEventForRSVP = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -612,6 +699,12 @@ const getEventForRSVP = async (req, res) => {
   }
 };
 
+/**
+ * Public endpoint to verify a guest exists by phone number.
+ * Returns guest name and current RSVP status if found.
+ * Used in public RSVP flow to identify the guest before updating.
+ * @route POST /api/public/events/:eventId/check-guest
+ */
 const checkGuestByPhone = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -655,10 +748,16 @@ const checkGuestByPhone = async (req, res) => {
   }
 };
 
+/**
+ * Generates a shareable RSVP link for an event.
+ * Only accessible by event owner or users with shared access.
+ * Returns the public RSVP URL for distribution to guests.
+ * @route GET /api/events/:eventId/rsvp-link
+ */
 const generateRSVPLink = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
@@ -684,11 +783,18 @@ const generateRSVPLink = async (req, res) => {
   }
 };
 
+/**
+ * Updates gift information for a guest (post-event feature).
+ * Only available after event date has passed.
+ * Syncs gift value to Budget model as income entry.
+ * Requires edit permission (owner or shared with edit access).
+ * @route PUT /api/events/:eventId/guests/:guestId/gift
+ */
 const updateGuestGift = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;
     const { hasGift, giftDescription, giftValue } = req.body;
-    
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -727,15 +833,19 @@ const updateGuestGift = async (req, res) => {
 
     const updatedGuest = await guest.save();
 
+    // Sync gift to budget as income entry
+    // First remove any existing income from this guest, then add new if applicable
     try {
       const Budget = require('../models/Budget');
       const budget = await Budget.findOne({ event: eventId });
-      
+
       if (budget) {
-        budget.incomes = budget.incomes.filter(income => 
+        // Remove previous gift income from this guest (if any)
+        budget.incomes = budget.incomes.filter(income =>
           !income.guestId || income.guestId.toString() !== guestId
         );
 
+        // Add new gift as income if value > 0
         if (hasGift && giftValue > 0) {
           const newIncome = {
             source: 'gift',
@@ -752,7 +862,7 @@ const updateGuestGift = async (req, res) => {
         }
       }
     } catch (budgetError) {
-      // Error syncing gift to budget
+      // Non-critical: gift saved but budget sync failed
     }
 
     res.json(updatedGuest);
@@ -761,17 +871,31 @@ const updateGuestGift = async (req, res) => {
   }
 };
 
+/**
+ * Internal function to notify seating system of guest changes.
+ * Creates a sync trigger in the Seating document for the client to poll.
+ * Deduplicates triggers within 30 seconds to prevent spam.
+ * Keeps only last 10 triggers using $slice.
+ *
+ * Change types: guest_added, guest_deleted, guest_updated, rsvp_updated, bulk_guests_added
+ *
+ * @param {string} eventId - Event ID
+ * @param {string} userId - User ID who made the change
+ * @param {string} changeType - Type of change that occurred
+ * @param {object} changeData - Additional data about the change
+ */
 const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
   try {
-    
     const seating = await Seating.findOne({ event: eventId });
     
     if (!seating) {
       return;
     }
 
-    const recentTriggers = (seating.syncTriggers || []).filter(trigger => 
-      !trigger.processed && 
+    // Deduplication: skip if identical trigger exists within last 30 seconds
+    // Prevents duplicate syncs from rapid repeated actions
+    const recentTriggers = (seating.syncTriggers || []).filter(trigger =>
+      !trigger.processed &&
       (new Date() - new Date(trigger.timestamp)) < 30000 &&
       trigger.changeType === changeType &&
       JSON.stringify(trigger.changeData) === JSON.stringify(changeData)
@@ -807,10 +931,15 @@ const triggerSeatingSync = async (eventId, userId, changeType, changeData) => {
   }
 };
 
+/**
+ * Returns pending seating sync triggers for an event.
+ * Used by client to poll for changes that require seating updates.
+ * @route GET /api/events/:eventId/seating/sync
+ */
 const getSeatingSync = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -842,11 +971,16 @@ const getSeatingSync = async (req, res) => {
   }
 };
 
+/**
+ * Marks seating sync triggers as processed after client handles them.
+ * Prevents the same triggers from being returned in subsequent polls.
+ * @route POST /api/events/:eventId/seating/sync/processed
+ */
 const markSyncProcessed = async (req, res) => {
   try {
     const { eventId } = req.params;
     const { triggerTimestamps } = req.body;
-    
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });

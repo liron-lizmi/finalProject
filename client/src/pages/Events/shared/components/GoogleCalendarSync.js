@@ -1,4 +1,32 @@
-// client/src/pages/Events/Features/components/GoogleCalendarSync.js
+/**
+ * GoogleCalendarSync.js - Google Calendar Integration Component
+ *
+ * Handles OAuth connection to Google Calendar for task sync.
+ *
+ * Props:
+ * - eventId: Event ID for syncing tasks
+ * - canEdit: Whether user can modify sync settings
+ * - isExpanded: Whether component is expanded
+ * - onClose: Callback to close the sync panel
+ *
+ * Features:
+ * - OAuth 2.0 authentication flow
+ * - Check connection status
+ * - Connect/disconnect Google account
+ * - Sync tasks to Google Calendar
+ * - Handle auth callback from Google
+ *
+ * States:
+ * - isConnected: Whether Google account is linked
+ * - syncing: Sync operation in progress
+ * - initializing: Checking initial status
+ *
+ * API Endpoints:
+ * - GET /api/tasks/google-calendar/status: Check connection
+ * - GET /api/tasks/google-calendar/auth-url: Get OAuth URL
+ * - POST /api/tasks/google-calendar/disconnect: Remove connection
+ * - POST /api/tasks/google-calendar/sync: Sync tasks
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';

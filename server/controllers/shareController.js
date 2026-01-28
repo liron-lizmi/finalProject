@@ -1,8 +1,26 @@
-// server/controllers/shareController.js
+/**
+ * shareController.js
+ *
+ * Controller for managing event sharing between users.
+ * Handles sharing events with other users, accepting invitations,
+ * and managing share permissions.
+ *
+ * Main features:
+ * - Share event with user by email (view or edit permission)
+ * - Accept/decline share invitations
+ * - View shared users list
+ * - Update share permissions
+ * - Remove share access
+ */
+
 const Event = require('../models/Event');
 const User = require('../models/User');
 
-// Share an event with another user via email
+/**
+ * Shares an event with another user by email.
+ * Creates notification for target user. Only owner can share.
+ * @route POST /api/events/:eventId/share
+ */
 const shareEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -63,7 +81,10 @@ const shareEvent = async (req, res) => {
   }
 };
 
-// Accept a shared event invitation
+/**
+ * Accepts a share invitation. Links userId to share entry.
+ * @route POST /api/events/:eventId/share/accept
+ */
 const acceptShare = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -89,7 +110,11 @@ const acceptShare = async (req, res) => {
   }
 };
 
-// Get list of users an event is shared with
+/**
+ * Returns list of users the event is shared with.
+ * Accessible by owner and shared users.
+ * @route GET /api/events/:eventId/share
+ */
 const getSharedUsers = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -116,7 +141,10 @@ const getSharedUsers = async (req, res) => {
   }
 };
 
-// Remove sharing access for a user
+/**
+ * Removes share access for a user. Only owner can remove.
+ * @route DELETE /api/events/:eventId/share/:shareId
+ */
 const removeShare = async (req, res) => {
   try {
     const { eventId, shareId } = req.params;
@@ -143,7 +171,10 @@ const removeShare = async (req, res) => {
   }
 };
 
-// Update permission level for a shared user
+/**
+ * Updates share permission (view/edit) for a user. Only owner can update.
+ * @route PUT /api/events/:eventId/share/:shareId
+ */
 const updateSharePermission = async (req, res) => {
   try {
     const { eventId, shareId } = req.params;

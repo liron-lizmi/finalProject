@@ -1,3 +1,32 @@
+/**
+ * RSVPPage.js - Public RSVP Page
+ *
+ * Public page for guests to submit their RSVP response.
+ * Guests are identified by phone number.
+ *
+ * Route: /rsvp/:eventId (public, no auth required)
+ *
+ * Flow:
+ * 1. Guest enters phone number
+ * 2. System finds guest in event's guest list
+ * 3. Guest selects RSVP status (attending/not attending)
+ * 4. If attending: specify number of guests
+ * 5. For separated seating: specify male/female count
+ * 6. Optional: add notes
+ * 7. Confirmation screen
+ *
+ * Features:
+ * - Phone number validation (Israeli format: 05X-XXXXXXX)
+ * - Event info display (title, date)
+ * - Separated seating support (male/female count)
+ * - Guest notes
+ * - RTL/LTR support
+ *
+ * States:
+ * - step 1: Phone entry
+ * - step 2: RSVP form
+ * - step 3: Confirmation
+ */
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

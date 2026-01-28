@@ -1,3 +1,16 @@
+/**
+ * validation.js - Request Validation Middleware
+ *
+ * Validates request body for registration and login.
+ *
+ * Functions:
+ * - validateRegistration: Validates name (at least one required), email format,
+ *   password length (6-30) and complexity (uppercase, lowercase, digit).
+ * - validateLogin: Validates email and password presence.
+ *
+ * Returns 400 with comma-separated error messages on failure.
+ */
+
 const validateRegistration = (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
   const errors = [];

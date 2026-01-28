@@ -1,4 +1,27 @@
-// src/server/services/vendorCacheManager.js
+/**
+ * vendorCacheManager.js - In-Memory Cache Service for Vendors
+ *
+ * Provides in-memory caching for Google Places API vendor search results.
+ * Similar to CacheManager but specialized for vendor searches with additional filters.
+ *
+ * Configuration:
+ * - TTL: 24 hours - cached results expire after this time
+ * - Cleanup interval: 30 minutes - periodic removal of expired entries
+ * - Max entries: 100 - removes oldest when exceeded (FIFO)
+ *
+ * Methods:
+ * - generateKey(query, filters, page): Creates unique cache key from search params
+ *   Includes: area, vendorType, specificFilters (sorted), kashrutLevel
+ * - set(key, data): Stores data with timestamp and expiration, enforces 100 entry limit
+ * - get(key): Retrieves data if valid, returns null if expired/missing
+ * - delete(key): Removes single entry
+ * - clear(): Removes all entries
+ * - clearFilters(query, filters): Removes all pages matching a specific search
+ * - getStats(): Returns cache statistics (total, valid, expired entries, oldest age)
+ *
+ * Usage: Singleton instance exported for vendor search caching
+ */
+
 class VendorCacheManager {
   constructor() {
     this.cache = new Map();

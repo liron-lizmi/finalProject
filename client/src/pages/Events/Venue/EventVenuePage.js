@@ -1,4 +1,28 @@
-// client/src/pages/Events/Features/EventVenuePage.js
+/**
+ * EventVenuePage.js - Event Venue Management Page
+ *
+ * Manages venue selection for a specific event.
+ * Wraps VenuePage for search and adds event-specific functionality.
+ *
+ * Route: /event/:id/venue
+ *
+ * Features:
+ * - Display current event venue (if set)
+ * - Search and select venue from Google Places
+ * - Manual venue entry form
+ * - Update/change event venue
+ * - Delete venue from event
+ * - Permission-based editing (view-only mode support)
+ *
+ * Venue Selection Options:
+ * - Search via VenuePage component
+ * - Manual entry with validation (name, address required)
+ *
+ * Validation:
+ * - Venue name required
+ * - Address required
+ * - Phone format validation (optional field)
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

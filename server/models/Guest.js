@@ -1,3 +1,29 @@
+/**
+ * Guest.js - Guest Model
+ *
+ * Stores guest information for events including RSVP status, attendance,
+ * gift tracking, and ride coordination.
+ *
+ * Fields:
+ * - firstName, lastName, phone: Basic info (phone format: 05X-XXXXXXX)
+ * - group, customGroup: Guest grouping (family, friends, work, other, custom)
+ * - gender: For separated seating events
+ * - rsvpStatus: pending/confirmed/declined/no_response
+ * - attendingCount, maleCount, femaleCount: Attendance numbers
+ * - guestNotes: Notes from guest during RSVP
+ * - gift: Post-event gift tracking (hasGift, description, value)
+ * - rideInfo: Ride coordination (status, address, seats, contactHistory)
+ * - event, user: References
+ *
+ * Hooks:
+ * - pre('save'): Syncs attendingCount with maleCount+femaleCount,
+ *   resets counts on decline, cleans up rideInfo fields
+ *
+ * Indexes:
+ * - (event, user): For efficient guest queries
+ * - (phone, event): For RSVP lookup by phone
+ */
+
 const mongoose = require('mongoose');
 const i18next = require('i18next');
 

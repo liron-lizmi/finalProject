@@ -1,3 +1,33 @@
+/**
+ * googleCalendar.js - Google Calendar Integration Service
+ *
+ * Handles OAuth2 authentication and calendar operations with Google Calendar API.
+ * Used by taskController for syncing tasks as calendar events.
+ *
+ * OAuth Flow:
+ * - getAuthUrl(): Generates OAuth consent URL with calendar scopes
+ * - getAccessToken(code): Exchanges auth code for access/refresh tokens
+ * - setCredentials(tokens): Sets up authenticated OAuth client
+ * - refreshTokenIfNeeded(tokens): Auto-refreshes tokens when near expiry (5 min)
+ *
+ * Calendar Operations:
+ * - createCalendarEvent(taskData, eventData): Creates new calendar event from task
+ * - updateCalendarEvent(googleEventId, taskData, eventData, oauth2Client): Updates existing event
+ * - deleteCalendarEvent(googleEventId, oauth2Client): Removes event from calendar
+ * - syncEventTasksWithCalendar(eventId, tasks, eventData, userTokens): Batch sync multiple tasks
+ *
+ * Event Format:
+ * - Title: Task title
+ * - Description: Task details + category + priority + linked event
+ * - Duration: 1 hour default
+ * - Timezone: Asia/Jerusalem
+ * - Reminders: Custom based on task reminder settings, default 24h email
+ *
+ * Helper Functions:
+ * - getCategoryText(category): Hebrew translation for categories
+ * - getPriorityText(priority): Hebrew translation for priorities
+ */
+
 const { google } = require('googleapis');
 
 const createOAuth2Client = () => {

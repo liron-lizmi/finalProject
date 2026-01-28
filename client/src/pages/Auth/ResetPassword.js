@@ -1,3 +1,24 @@
+/**
+ * ResetPassword.js - Password Reset Page
+ *
+ * Allows users to set a new password using a reset token from email.
+ *
+ * Route: /reset-password/:token
+ *
+ * Features:
+ * - Password and confirm password fields
+ * - Password strength validation (same as registration)
+ * - Password visibility toggle
+ * - Token-based authentication
+ * - Auto-redirect to login after successful reset (3 seconds)
+ * - RTL support for Hebrew
+ *
+ * Validation:
+ * - Password: 6+ chars, uppercase, lowercase, number
+ * - Passwords must match
+ * - Cannot use same password as before
+ */
+
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

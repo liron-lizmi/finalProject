@@ -1,3 +1,33 @@
+/**
+ * budgetRoutes.js - Budget Management Routes
+ *
+ * Handles all budget-related endpoints for event financial management.
+ * Mounted as nested router under /events/:eventId/budget
+ *
+ * All routes require authentication (auth middleware applied globally).
+ *
+ * Budget CRUD:
+ * - GET /: Get event budget (view permission)
+ * - POST /: Create new budget (edit permission)
+ * - PUT /: Update budget settings (edit permission)
+ *
+ * Expense Management:
+ * - GET /expenses: Get expenses grouped by category (view permission)
+ * - POST /expenses: Add new expense (edit permission)
+ * - PUT /expenses/:expenseId: Update expense (edit permission)
+ * - DELETE /expenses/:expenseId: Delete expense (edit permission)
+ *
+ * Income Management:
+ * - POST /incomes: Add new income (edit permission)
+ * - PUT /incomes/:incomeId: Update income (edit permission)
+ * - DELETE /incomes/:incomeId: Delete income (edit permission)
+ * - POST /sync-gift/:guestId: Sync guest gift to income (edit permission)
+ *
+ * Summary & Settings:
+ * - GET /summary: Get budget summary with totals (view permission)
+ * - PUT /alert-threshold: Update alert threshold (edit permission)
+ */
+
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const {

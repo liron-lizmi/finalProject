@@ -1,5 +1,33 @@
+/**
+ * TaskCard.js - Task Display Component
+ *
+ * Displays a single task in the task list with interactive controls.
+ *
+ * Props:
+ * - task: Task object to display
+ * - onEdit: Callback when task is clicked for editing
+ * - onDelete: Callback to delete the task
+ * - onStatusChange: Callback when status is toggled
+ * - canEdit: Whether editing is allowed (default true)
+ *
+ * Display Fields:
+ * - Title and description
+ * - Category badge
+ * - Priority indicator (color coded)
+ * - Due date (red if overdue)
+ * - Status (clickable to cycle through states)
+ * - Action buttons (edit/delete)
+ *
+ * Status Cycle:
+ * pending → in_progress → completed → pending
+ *
+ * Visual Indicators:
+ * - Overdue styling for past-due tasks
+ * - Completed text strikethrough
+ * - Priority color dots (low/medium/high)
+ */
 import { useTranslation } from 'react-i18next';
-import '../../../../styles/EventTimeline.css'; // Ensure CSS is imported
+import '../../../../styles/EventTimeline.css';
 
 const TaskCard = ({ task, onEdit, onDelete, onStatusChange, canEdit = true }) => {
   const { t } = useTranslation();

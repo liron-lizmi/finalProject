@@ -1,6 +1,26 @@
+/**
+ * vendorRoutes.js - Vendor Management Routes
+ *
+ * Handles vendor search via Google Places API and event vendor management.
+ * Can be used standalone (/api/vendors) or nested (/events/:eventId/vendors).
+ *
+ * Public Routes (no auth required):
+ * - GET /search: Search vendors via Google Places API with filters
+ * - GET /details/:placeId: Get detailed vendor info by Google Place ID
+ *
+ * Protected Routes (requires auth):
+ * - GET /cache/stats: Get vendor cache statistics
+ *
+ * Event Vendor CRUD (requires auth + permissions):
+ * - GET /: Get vendors saved to event (view permission)
+ * - POST /: Add vendor to event (edit permission)
+ * - PUT /:vendorId: Update event vendor (edit permission)
+ * - DELETE /:vendorId: Remove vendor from event (edit permission)
+ */
+
 const express = require('express');
-const router = express.Router({ mergeParams: true }); 
-const { 
+const router = express.Router({ mergeParams: true });
+const {
   getEventVendors,
   addVendor,
   updateVendor,

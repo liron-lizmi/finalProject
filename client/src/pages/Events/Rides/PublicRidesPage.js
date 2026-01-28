@@ -1,4 +1,38 @@
-// client/src/pages/Events/Features/PublicRidesPage.js
+/**
+ * PublicRidesPage.js - Public Ride Coordination Page
+ *
+ * Public page for guests to coordinate rides to the event.
+ * Guests are identified by phone number.
+ *
+ * Route: /rides/:eventId (public, no auth required)
+ *
+ * Flow:
+ * 1. Guest enters phone number
+ * 2. System finds guest in event's guest list
+ * 3. Guest sets ride status (offering/seeking/arranged)
+ * 4. View other guests' ride information
+ * 5. Coordinate rides via contact info
+ *
+ * Features:
+ * - Phone number validation (Israeli format)
+ * - Ride status management
+ * - View drivers (offering rides)
+ * - View riders (seeking rides)
+ * - Suggested ride matches based on address
+ * - Contact history tracking
+ *
+ * Tabs:
+ * - My Info: Update own ride status
+ * - Offering: View guests offering rides
+ * - Seeking: View guests seeking rides
+ *
+ * Ride Info:
+ * - status: not_set, offering, seeking, arranged_separately
+ * - address: Pickup/dropoff location
+ * - availableSeats: For drivers
+ * - requiredSeats: For riders
+ * - departureTime: Planned departure
+ */
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

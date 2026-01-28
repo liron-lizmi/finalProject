@@ -1,4 +1,23 @@
-// client/translationUtils.js
+/**
+ * translationUtils.js - Hebrew to English Translation Utilities
+ *
+ * Provides translation functionality for Hebrew text to other languages.
+ * Used primarily for translating venue and vendor names/addresses from Google Places.
+ *
+ * Translation Methods (in priority order):
+ * 1. Browser's built-in Translator API (if available)
+ * 2. Google Translate API fallback
+ *
+ * Functions:
+ * - containsHebrew(text): Checks if text contains Hebrew characters (Unicode range)
+ * - translateText(text, targetLang): Translates Hebrew text to target language
+ * - translateItem(item, targetLang): Translates venue/vendor object fields
+ *   (name, formatted_address, vicinity) - preserves originals as originalX
+ * - translateItems(items, targetLang): Batch translates array of items
+ *
+ * Usage: Import individual functions or default object with all utilities
+ */
+
 import { apiFetch } from '../utils/api';
 
 

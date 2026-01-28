@@ -1,4 +1,28 @@
-// src/pages/components/GoogleContacts.js
+/**
+ * GoogleContacts.js - Google Contacts API Integration
+ *
+ * Service class for importing contacts from Google Contacts.
+ * Uses Google Identity Services for OAuth.
+ *
+ * Methods:
+ * - init(): Initialize Google Identity Services
+ * - signIn(): Authenticate with Google
+ * - signOut(): Disconnect from Google
+ * - getContacts(): Fetch user's contacts
+ * - isConnected(): Check connection status
+ *
+ * Features:
+ * - OAuth 2.0 authentication
+ * - Fetch contacts with names and phones
+ * - Handle multiple phone numbers per contact
+ * - Format phone numbers for display
+ *
+ * Environment:
+ * - REACT_APP_GOOGLE_CONTACTS_CLIENT_ID: Google OAuth client ID
+ *
+ * Scopes:
+ * - https://www.googleapis.com/auth/contacts.readonly
+ */
 class GoogleContactsAPI {
   constructor() {
     this.isSignedIn = false;

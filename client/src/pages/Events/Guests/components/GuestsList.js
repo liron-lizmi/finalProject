@@ -1,3 +1,33 @@
+/**
+ * GuestsList.js - Draggable Guest List for Seating
+ *
+ * Displays guest list for drag-and-drop seating assignment.
+ * Shows sync notifications and guest statuses.
+ *
+ * Props:
+ * - guests: All guests data
+ * - tables: Current tables
+ * - seatingArrangement: Guest-to-table mapping
+ * - onDragStart: Drag start callback
+ * - onDragEnd: Drag end callback
+ * - onUnseatGuest: Remove from table callback
+ * - syncNotification: Sync status notification
+ * - onSyncStatusChange: Sync status change handler
+ * - isSeparatedSeating: Gender-separated mode
+ * - genderFilter: Current gender filter (all/male/female)
+ * - onGenderFilterChange: Gender filter change handler
+ * - maleArrangement/femaleArrangement: Gender mappings
+ * - canEdit: Whether editing allowed
+ *
+ * Features:
+ * - Search guests by name
+ * - Filter by group
+ * - Filter seated/unseated
+ * - Drag guests to tables
+ * - Highlight sync changes
+ * - Gender filter toggle
+ * - Group color coding
+ */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '../../../../styles/EventSeatingPage.css';

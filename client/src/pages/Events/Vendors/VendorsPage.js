@@ -1,3 +1,30 @@
+/**
+ * VendorsPage.js - Vendor Search Page
+ *
+ * Searchable vendor listing page with Google Maps integration.
+ * Used as embedded component in EventVendorsPage.
+ *
+ * Route: Embedded component (used via EventVendorsPage)
+ *
+ * Features:
+ * - Search vendors via Google Places API
+ * - Filter by area, vendor type, specific filters, kashrut level
+ * - Google Maps with vendor markers
+ * - Photo gallery for selected vendor
+ * - Infinite scroll pagination
+ * - Hebrew/English translation support
+ *
+ * Vendor Types:
+ * - Catering, Photography, DJ, Flowers, Makeup, Hair, Dress, Suit, Rings, Invitations
+ *
+ * Specific Filters per Type:
+ * - Catering: dairy, meat, pareve, vegan, vegetarian
+ * - Photography: studio, outdoor, video, drone
+ * - DJ: live music, karaoke, lighting
+ *
+ * Props:
+ * - onSelectVendor: Callback when user selects a vendor
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

@@ -1,3 +1,30 @@
+/**
+ * EventDetailsPage.js - Event Overview / Feature Navigation Page
+ *
+ * Main page for viewing event details and accessing event features.
+ *
+ * Route: /event/:id
+ *
+ * Displays:
+ * - Event title, date, time
+ * - Days remaining countdown (urgent styling if ≤30 days)
+ * - Navigation cards to all event features
+ *
+ * Feature Cards:
+ * - Venue (🏢): Navigate to venue management
+ * - Vendors (👨‍🍳): Navigate to vendor management
+ * - Guests (📋): Navigate to guest list (shows guest count)
+ * - Seating (🪑): Navigate to seating arrangement
+ * - Tasks (📅): Navigate to task/timeline manager
+ * - Rides (🚎): Navigate to ride coordination
+ * - Budget (💰): Navigate to budget management
+ * - Share (🔗): Navigate to event sharing
+ *
+ * Permissions:
+ * - Fetches user permission level (view/edit)
+ * - Stores canEdit flag for child components
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';

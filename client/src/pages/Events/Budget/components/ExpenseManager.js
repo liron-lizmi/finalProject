@@ -1,3 +1,30 @@
+/**
+ * ExpenseManager.js - Expense Tracking Component
+ *
+ * CRUD management for budget expenses.
+ *
+ * Props:
+ * - budget: Budget object
+ * - eventId: Current event ID
+ * - onBudgetUpdated: Budget change callback
+ * - canEdit: Whether editing allowed
+ *
+ * Expense Data:
+ * - category: Budget category
+ * - description: What the expense is for
+ * - amount: Expense amount
+ * - date: Transaction date
+ * - isPaid: Payment status
+ * - notes: Additional notes
+ *
+ * Features:
+ * - Add/edit/delete expenses
+ * - Filter by category
+ * - Sort by date, amount, category
+ * - Mark as paid/unpaid
+ * - Confirmation before delete
+ * - Form validation
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useModal } from '../../../../hooks/useModal';

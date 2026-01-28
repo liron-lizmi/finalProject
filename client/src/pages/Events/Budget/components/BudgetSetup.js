@@ -1,3 +1,33 @@
+/**
+ * BudgetSetup.js - Budget Configuration Component
+ *
+ * Initial budget setup and category allocation management.
+ *
+ * Props:
+ * - eventId: Current event ID
+ * - existingBudget: Existing budget for editing
+ * - onBudgetCreated: Callback when budget is created/updated
+ * - canEdit: Whether editing allowed
+ *
+ * Default Allocations:
+ * - venue: 30%
+ * - catering: 25%
+ * - photography: 10%
+ * - music: 8%
+ * - decoration: 7%
+ * - clothing: 5%
+ * - transportation: 4%
+ * - gifts: 3%
+ * - makeup: 3%
+ * - other: 5%
+ *
+ * Features:
+ * - Set total budget amount
+ * - Auto-calculate category allocations
+ * - Manual category adjustment
+ * - Edit existing budget
+ * - Validation for total matching categories
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../../../utils/api';

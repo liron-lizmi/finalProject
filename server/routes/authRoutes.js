@@ -1,4 +1,27 @@
-// routes/auth.js
+/**
+ * authRoutes.js - Authentication Routes
+ *
+ * Handles all authentication-related endpoints for user registration,
+ * login, password management, and OAuth authentication.
+ *
+ * Public Routes:
+ * - POST /register: User registration with validation
+ * - POST /login: User login with validation
+ * - POST /forgot-password: Request password reset email
+ * - POST /reset-password/:token: Reset password with token
+ * - POST /check-user-exists: Check if email is registered
+ * - POST /register-oauth: Register via OAuth (Google)
+ * - POST /login-oauth: Login via OAuth (Google)
+ *
+ * Protected Routes (requires auth middleware):
+ * - GET /userID: Get current authenticated user's data
+ *
+ * Middleware:
+ * - validateRegistration: Validates registration input
+ * - validateLogin: Validates login input
+ * - auth: JWT authentication for protected routes
+ */
+
 const express = require('express');
 const router = express.Router();
 const { 

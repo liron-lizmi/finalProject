@@ -1,12 +1,31 @@
+/**
+ * ridesController.js
+ *
+ * Controller for managing ride sharing between event guests.
+ * Handles ride offerings, seeking, matching based on location proximity,
+ * and contact tracking between guests.
+ *
+ * Main features:
+ * - Public endpoints for guests to manage their ride status
+ * - Distance calculation using Google Distance Matrix API (with 24h cache)
+ * - Suggested rides based on proximity (within 25km)
+ * - Contact history tracking between guests
+ * - Owner endpoints for managing guest rides
+ */
+
 const Guest = require('../models/Guest');
 const Event = require('../models/Event');
 const axios = require('axios');
 
-// Cache for distance calculations 
+// Cache for distance calculations (24 hours TTL)
 const distanceCache = new Map();
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
-// Calculate distance using Google Distance Matrix API
+/**
+ * Calculates distance between two addresses using Google Distance Matrix API.
+ * Results are cached for 24 hours. Returns distance in km or null on failure.
+ * Handles identical/similar addresses without API call.
+ */
 const calculateDistance = async (address1, address2) => {
   // Create cache key
   const cacheKey = `${address1.toLowerCase().trim()}|${address2.toLowerCase().trim()}`;
@@ -70,7 +89,10 @@ const calculateDistance = async (address1, address2) => {
   }
 };
 
-//  Retrieves basic event information for rides page
+/**
+ * Returns basic event info for rides page (name, date, location).
+ * @route GET /api/public/events/:eventId/rides/info
+ */
 const getEventRidesInfo = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -90,7 +112,10 @@ const getEventRidesInfo = async (req, res) => {
   }
 };
 
-//  Checks if phone number exists for the event and returns guest data
+/**
+ * Verifies guest exists by phone and returns their data.
+ * @route POST /api/public/events/:eventId/rides/check-phone
+ */
 const checkPhoneForRides = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -111,7 +136,10 @@ const checkPhoneForRides = async (req, res) => {
   }
 };
 
-// Returns fresh data from database including both offering and seeking guests
+/**
+ * Returns all confirmed guests with ride info (offering or seeking).
+ * @route GET /api/public/events/:eventId/rides/guests
+ */
 const getRidesGuests = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -130,7 +158,11 @@ const getRidesGuests = async (req, res) => {
   }
 };
 
-//  Gets suggested rides based on location proximity
+/**
+ * Returns up to 3 ride suggestions within 25km sorted by distance.
+ * Uses Google Distance Matrix API for accurate distance calculation.
+ * @route POST /api/public/events/:eventId/rides/suggestions
+ */
 const getSuggestedRides = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -184,7 +216,11 @@ const getSuggestedRides = async (req, res) => {
 };
 
 
-// Updates guest ride information from interface
+/**
+ * Updates guest's ride info (status, address, seats, departure time).
+ * Public endpoint - guest identifies by phone.
+ * @route PUT /api/public/events/:eventId/rides/update
+ */
 const updateGuestRideInfo = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -237,7 +273,11 @@ const updateGuestRideInfo = async (req, res) => {
   }
 };
 
-//  Records contact action and updates both guests' statuses
+/**
+ * Records contact between guests and updates statuses.
+ * Actions: 'arranged_ride' (taken), 'not_relevant', 'no_response' (in_process).
+ * @route POST /api/public/events/:eventId/rides/contact
+ */
 const recordContact = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -317,7 +357,10 @@ const recordContact = async (req, res) => {
   }
 };
 
-//  Cancels an arranged ride
+/**
+ * Cancels an arranged ride - removes contact history and resets contacted guest status.
+ * @route POST /api/public/events/:eventId/rides/cancel
+ */
 const cancelRide = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -358,7 +401,10 @@ const cancelRide = async (req, res) => {
   }
 };
 
-//  Updates guest ride information by event owner 
+/**
+ * Updates guest ride info by event owner (authenticated endpoint).
+ * @route PUT /api/events/:eventId/rides/guests/:guestId
+ */
 const updateGuestRideInfoByOwner = async (req, res) => {
   try {
     const { eventId, guestId } = req.params;

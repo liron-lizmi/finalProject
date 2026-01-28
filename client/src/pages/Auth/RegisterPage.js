@@ -1,3 +1,24 @@
+/**
+ * RegisterPage.js - User Registration Page
+ *
+ * Handles new user registration with form validation and welcome email.
+ *
+ * Features:
+ * - Form fields: firstName, lastName, email, password, confirmPassword
+ * - Client-side validation with detailed error messages
+ * - Password strength requirements display (uppercase, lowercase, number, 6+ chars)
+ * - Password visibility toggle
+ * - Welcome email sent via EmailJS on successful registration
+ * - Auto-login after registration (stores token, navigates to dashboard)
+ * - RTL support for Hebrew
+ *
+ * Validation:
+ * - Names: 2-50 characters
+ * - Email: valid format
+ * - Password: 6-30 chars, uppercase, lowercase, number
+ * - Passwords must match
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

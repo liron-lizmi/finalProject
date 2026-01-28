@@ -1,4 +1,34 @@
-// client/src/pages/Events/Features/components/TaskModal.js
+/**
+ * TaskModal.js - Task Create/Edit Modal
+ *
+ * Modal form for creating and editing event tasks.
+ *
+ * Props:
+ * - task: Existing task for editing (null for new)
+ * - onSave: Callback with task data on save
+ * - onClose: Callback to close modal
+ * - eventDate: Event date for validation
+ * - canEdit: Whether user can edit (default true)
+ *
+ * Form Fields:
+ * - title: Task name (required)
+ * - description: Detailed description
+ * - dueDate: When task should be done
+ * - dueTime: Time of day for due date
+ * - priority: low, medium, high
+ * - category: venue, vendors, guests, seating, catering, etc.
+ * - reminderDate: When to send reminder
+ * - reminderTime: Time for reminder
+ * - reminderRecurrence: none, daily, weekly, biweekly
+ * - notes: Additional notes
+ *
+ * Features:
+ * - Custom date picker calendar
+ * - Custom time picker
+ * - Recurring reminder configuration
+ * - RTL/LTR support
+ * - Form validation
+ */
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 

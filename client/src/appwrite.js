@@ -1,4 +1,26 @@
-// client/src/appwrite.js
+/**
+ * appwrite.js - Appwrite OAuth Integration
+ *
+ * Configures Appwrite client for Google OAuth authentication.
+ * Appwrite acts as OAuth provider proxy for social login.
+ *
+ * Configuration:
+ * - Endpoint: Frankfurt Appwrite Cloud (fra.cloud.appwrite.io)
+ * - Project ID: 67e96550002c983cae42
+ *
+ * Functions:
+ * - createOAuth2Session(provider, successUrl, failureUrl):
+ *   Initiates OAuth flow, clears existing sessions first
+ *   Falls back to direct URL redirect if SDK method fails
+ *
+ * - getCurrentSession(): Gets current active session or null
+ * - getCurrentUser(): Gets current authenticated user or null
+ * - clearAllSessions(): Deletes all user sessions (for logout)
+ *
+ * Exports: client, account, createOAuth2Session, getCurrentSession,
+ *          getCurrentUser, clearAllSessions
+ */
+
 import { Client, Account } from 'appwrite';
 
 const client = new Client();

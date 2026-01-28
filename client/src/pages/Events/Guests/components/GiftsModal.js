@@ -1,3 +1,25 @@
+/**
+ * GiftsModal.js - Guest Gift Tracking Modal
+ *
+ * Modal for recording and editing gift information for a guest.
+ *
+ * Props:
+ * - isOpen: Whether modal is visible
+ * - onClose: Close callback
+ * - guest: Guest object to track gift for
+ * - onUpdateGift: Save gift callback
+ *
+ * Gift Data:
+ * - hasGift: Whether guest gave a gift
+ * - giftDescription: Description of the gift
+ * - giftValue: Monetary value (optional)
+ *
+ * Features:
+ * - Toggle gift received status
+ * - Text description field
+ * - Numeric value input
+ * - Pre-populated from guest data
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 

@@ -1,4 +1,34 @@
-// client/src/pages/Auth/dashboard.js
+/**
+ * dashboard.js - User Dashboard / Events List Page
+ *
+ * Main authenticated page showing user's events and shared events.
+ *
+ * Features:
+ * - Displays owned events and events shared with user
+ * - Event creation button
+ * - Event deletion (owned events only)
+ * - Notification banner for new event shares
+ * - Accept/dismiss share notifications
+ * - Google OAuth session handling and token refresh
+ * - Logout functionality (clears Appwrite and local sessions)
+ *
+ * State:
+ * - user: Current logged-in user
+ * - events: List of user's events (owned + shared)
+ * - notifications: Pending share notifications
+ * - showDeleteModal: Delete confirmation modal
+ *
+ * OAuth Handling:
+ * - Detects OAuth flow from localStorage flags
+ * - Creates/logs in user via backend OAuth endpoints
+ * - Retries session retrieval with exponential backoff
+ *
+ * Shared Events:
+ * - Marked with "shared" badge
+ * - Shows owner name
+ * - Cannot be deleted by non-owners
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

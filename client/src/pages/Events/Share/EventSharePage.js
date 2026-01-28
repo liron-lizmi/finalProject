@@ -1,4 +1,31 @@
-// client/src/pages/Events/Features/PublicRidesPage.js
+/**
+ * EventSharePage.js - Event Sharing Management Page
+ *
+ * Share event access with other users via email invitation.
+ *
+ * Route: /event/:id/share
+ *
+ * Features:
+ * - Share event with other users by email
+ * - Set permission level (view/edit)
+ * - View list of shared users
+ * - Remove shared access
+ * - Owner-only actions (only owner can share)
+ *
+ * Permissions:
+ * - view: Can only view event data
+ * - edit: Can modify event data
+ *
+ * Shared User Data:
+ * - Email address
+ * - Permission level
+ * - Share date
+ *
+ * Validation:
+ * - Valid email format required
+ * - Cannot share with self
+ * - Cannot share with existing shared user
+ */
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

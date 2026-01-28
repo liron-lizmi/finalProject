@@ -1,3 +1,36 @@
+/**
+ * EventBudgetPage.js - Event Budget Management Page
+ *
+ * Comprehensive budget tracking with expenses, income, and visual charts.
+ *
+ * Route: /event/:id/budget
+ *
+ * Features:
+ * - Total budget setup with category allocations
+ * - Expense tracking by category
+ * - Income tracking (gifts, contributions)
+ * - Visual charts (spending breakdown, budget vs actual)
+ * - Alert threshold for over-budget warnings
+ * - Category-level budget limits
+ *
+ * Tabs:
+ * - Overview: Summary dashboard
+ * - Setup: Configure total budget and categories
+ * - Expenses: Track spending
+ * - Income: Track income sources
+ * - Charts: Visual reports
+ *
+ * Components:
+ * - BudgetOverview: Summary stats
+ * - BudgetSetup: Budget configuration
+ * - ExpenseManager: Expense CRUD
+ * - IncomeManager: Income CRUD
+ * - BudgetCharts: Pie/bar charts
+ *
+ * Alerts:
+ * - Category exceeds threshold percentage
+ * - Total spending over budget
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams} from 'react-router-dom';
 import { useTranslation } from 'react-i18next';

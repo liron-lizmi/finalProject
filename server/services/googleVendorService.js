@@ -1,3 +1,34 @@
+/**
+ * googleVendorService.js - Google Places API Service for Vendors
+ *
+ * Wrapper service for Google Places API to search and retrieve vendor/service provider information.
+ * Used by vendorController for finding event service providers.
+ *
+ * Vendor Types Supported:
+ * - catering: Kosher food services with kashrut level filtering
+ * - photographer: Wedding and event photography
+ * - florist: Flowers and arrangements
+ * - musician: Live music and bands
+ * - dj: DJ and sound systems
+ * - decorator: Event design and decoration
+ * - makeup: Bridal makeup artists
+ * - transport: Car rental and transportation
+ *
+ * Search Features:
+ * - buildSearchQuery(vendorType, searchTerm, filters): Builds query with specific filters
+ *   Supports kashrut levels, food types, style filters per vendor category
+ * - buildAlternativeSearchQuery(): Generates diverse queries for pagination variety
+ * - getLocationForArea(area): Hebrew area names (ירושלים, מרכז, דרום, צפון)
+ *
+ * API Methods:
+ * - textSearch(query, location, radius, language): Main search (15s timeout)
+ * - getNextPage(pageToken): Fetches next page with 2s delay
+ * - getPlaceDetails(placeId, language): Full vendor details
+ * - getPhotoUrl(photoReference, maxWidth, maxHeight): Photo URL generator
+ *
+ * Configuration: Uses GOOGLE_MAPS_API_KEY, defaults to Hebrew language
+ */
+
 const axios = require('axios');
 
 class GoogleVendorService {

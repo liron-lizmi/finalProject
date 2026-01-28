@@ -1,3 +1,34 @@
+/**
+ * BudgetOverview.js - Budget Summary Dashboard
+ *
+ * Displays budget summary with spending progress and alerts.
+ *
+ * Props:
+ * - budget: Budget object
+ * - eventId: Current event ID
+ * - onBudgetUpdated: Budget change callback
+ * - alertThreshold: Percentage threshold for warnings
+ * - onAlertThresholdChange: Alert threshold change callback
+ * - canEdit: Whether editing allowed
+ *
+ * Summary Data:
+ * - Total budget
+ * - Total spent
+ * - Remaining amount
+ * - Spending percentage
+ * - Category breakdowns
+ *
+ * Features:
+ * - Progress bars per category
+ * - Color-coded status (safe/warning/danger)
+ * - Adjustable alert threshold slider
+ * - Real-time updates
+ *
+ * Status Colors:
+ * - safe: <= 50% spent
+ * - warning: <= alertThreshold% spent
+ * - danger: > alertThreshold% spent
+ */
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../../../utils/api';

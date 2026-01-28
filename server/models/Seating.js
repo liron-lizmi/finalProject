@@ -1,3 +1,34 @@
+/**
+ * Seating.js - Seating Model
+ *
+ * Stores event seating arrangements including tables, guest assignments,
+ * preferences, sync settings, and AI generation settings.
+ *
+ * Schemas:
+ * - TableSchema: Table definition (id, name, type, capacity, position, size, rotation)
+ * - PreferenceSchema: Seating rules (mustSitTogether, groupMixingRules, groupPolicies)
+ * - SyncTriggerSchema: Queue of guest changes to sync (from guestController)
+ * - SeatingSchema: Main seating document
+ *
+ * Key concepts:
+ * - tables/arrangement: For regular seating (tableId -> guestIds map)
+ * - maleTables/maleArrangement, femaleTables/femaleArrangement: For separated seating
+ * - syncTriggers: Queue of pending changes to process automatically
+ * - syncSettings: Auto-sync configuration (enabled, create tables, optimize)
+ *
+ * Methods:
+ * - validateArrangement: Check for overcapacity and duplicates
+ * - getStatistics: Get occupancy stats per table and overall
+ * - addSyncTrigger/processSyncTrigger: Manage sync queue
+ * - findAvailableTable: Find table with space for N guests
+ * - createTable: Auto-create table with position calculation
+ * - optimizeArrangement: Remove duplicates, merge under-utilized tables
+ * - exportData: Export seating for display/download
+ * - getSyncSummary: Get sync status for UI
+ *
+ * Virtuals: totalCapacity, currentOccupancy, pendingSyncTriggers, hasPendingSync
+ */
+
 const mongoose = require('mongoose');
 
 const TableSchema = new mongoose.Schema({

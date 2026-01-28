@@ -1,3 +1,25 @@
+/**
+ * vendorService.js - Vendor Search API Service
+ *
+ * Client-side service for searching vendors via Google Places API.
+ * Communicates with backend /api/vendors endpoints.
+ *
+ * Methods:
+ * - searchVendors(filters, searchQuery, page, language): Search vendors
+ *   Filters: area, vendorType, specificFilters, kashrutLevel
+ *   Returns: { vendors, hasMore, currentPage, totalResults }
+ *
+ * - getVendorDetails(placeId, language): Get detailed vendor info
+ *   Returns full vendor data from Google Places
+ *
+ * - clearFiltersCache(): Placeholder for cache clearing
+ *
+ * Configuration:
+ * - Uses REACT_APP_API_URL or defaults to localhost:5000
+ * - Default language: Hebrew (he)
+ * - Timeout: 30s for search, 15s for details
+ */
+
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL
