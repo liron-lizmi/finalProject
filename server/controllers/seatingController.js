@@ -608,6 +608,16 @@ const saveSeatingArrangement = async (req, res) => {
       });
     }
 
+    console.log('[RENDER-DEBUG] saveSeatingArrangement - updateData before save:', {
+      isSeparatedSeating: updateData.isSeparatedSeating,
+      maleTablesCount: updateData.maleTables?.length || 0,
+      femaleTablesCount: updateData.femaleTables?.length || 0,
+      maleArrangementKeys: Object.keys(updateData.maleArrangement || {}).length,
+      femaleArrangementKeys: Object.keys(updateData.femaleArrangement || {}).length,
+      maleArrangement: JSON.stringify(updateData.maleArrangement),
+      femaleArrangement: JSON.stringify(updateData.femaleArrangement)
+    });
+
     const seating = await Seating.findOneAndUpdate(
       { event: eventId },
       {
@@ -621,6 +631,16 @@ const saveSeatingArrangement = async (req, res) => {
         setDefaultsOnInsert: true
       }
     );
+
+    console.log('[RENDER-DEBUG] saveSeatingArrangement - seating after save:', {
+      isSeparatedSeating: seating.isSeparatedSeating,
+      maleTablesCount: seating.maleTables?.length || 0,
+      femaleTablesCount: seating.femaleTables?.length || 0,
+      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
+      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
+      maleArrangement: JSON.stringify(seating.maleArrangement),
+      femaleArrangement: JSON.stringify(seating.femaleArrangement)
+    });
 
     const responseData = {
       message: req.t('seating.saveSuccess'),
@@ -4776,7 +4796,18 @@ const applySyncOption = async (req, res) => {
     let saveSuccess = false;
     let retryCount = 0;
     const maxRetries = 3;
-   
+
+    // Mark Mixed fields as modified for Mongoose to detect changes
+    if (isSeparated) {
+      seating.markModified('maleTables');
+      seating.markModified('femaleTables');
+      seating.markModified('maleArrangement');
+      seating.markModified('femaleArrangement');
+    } else {
+      seating.markModified('tables');
+      seating.markModified('arrangement');
+    }
+
     while (!saveSuccess && retryCount < maxRetries) {
       try {
         await seating.save();
@@ -4791,14 +4822,20 @@ const applySyncOption = async (req, res) => {
             seating.femaleTables = appliedData.femaleTables;
             seating.maleArrangement = appliedData.maleArrangement;
             seating.femaleArrangement = appliedData.femaleArrangement;
+            seating.markModified('maleTables');
+            seating.markModified('femaleTables');
+            seating.markModified('maleArrangement');
+            seating.markModified('femaleArrangement');
           } else {
             seating.tables = appliedData.tables;
             seating.arrangement = appliedData.arrangement;
+            seating.markModified('tables');
+            seating.markModified('arrangement');
           }
-         
+
           seating.version += 1;
           seating.updatedAt = new Date();
-         
+
           await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
         } else {
           throw saveError;
@@ -5152,6 +5189,18 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
 
     seating.version += 1;
     seating.updatedAt = new Date();
+
+    // Mark Mixed fields as modified for Mongoose to detect changes
+    if (isSeparated) {
+      seating.markModified('maleTables');
+      seating.markModified('femaleTables');
+      seating.markModified('maleArrangement');
+      seating.markModified('femaleArrangement');
+    } else {
+      seating.markModified('tables');
+      seating.markModified('arrangement');
+    }
+
     await seating.save();
 
     const stats = isSeparated
@@ -5686,6 +5735,12 @@ const generateAISeating = async (req, res) => {
        
         seating.syncTriggers = [];
         seating.lastSyncProcessed = new Date();
+
+        // Mark Mixed fields as modified for Mongoose to detect changes
+        seating.markModified('maleTables');
+        seating.markModified('femaleTables');
+        seating.markModified('maleArrangement');
+        seating.markModified('femaleArrangement');
       } else {
         seating = new Seating({
           event: eventId,
@@ -5979,9 +6034,13 @@ const generateAISeating = async (req, res) => {
         seating.generatedBy = 'ai';
         seating.version += 1;
         seating.updatedAt = new Date();
-       
+
         seating.syncTriggers = [];
         seating.lastSyncProcessed = new Date();
+
+        // Mark Mixed fields as modified for Mongoose to detect changes
+        seating.markModified('tables');
+        seating.markModified('arrangement');
       } else {
         seating = new Seating({
           event: eventId,
