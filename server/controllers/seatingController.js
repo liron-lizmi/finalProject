@@ -4576,15 +4576,38 @@ const applySyncOption = async (req, res) => {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
 
-    await seating.populate();
-    seating = await Seating.findById(seating._id);
-
-    console.log('[RENDER-DEBUG] Current seating state:', {
+    console.log('[RENDER-DEBUG] Seating BEFORE populate:', {
       isSeparatedSeating: seating.isSeparatedSeating,
       maleTablesCount: seating.maleTables?.length || 0,
       femaleTablesCount: seating.femaleTables?.length || 0,
       maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length
+      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
+      maleArrangement: JSON.stringify(seating.maleArrangement),
+      femaleArrangement: JSON.stringify(seating.femaleArrangement)
+    });
+
+    await seating.populate();
+
+    console.log('[RENDER-DEBUG] Seating AFTER populate (before re-fetch):', {
+      isSeparatedSeating: seating.isSeparatedSeating,
+      maleTablesCount: seating.maleTables?.length || 0,
+      femaleTablesCount: seating.femaleTables?.length || 0,
+      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
+      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
+      maleArrangement: JSON.stringify(seating.maleArrangement),
+      femaleArrangement: JSON.stringify(seating.femaleArrangement)
+    });
+
+    seating = await Seating.findById(seating._id);
+
+    console.log('[RENDER-DEBUG] Seating AFTER re-fetch:', {
+      isSeparatedSeating: seating.isSeparatedSeating,
+      maleTablesCount: seating.maleTables?.length || 0,
+      femaleTablesCount: seating.femaleTables?.length || 0,
+      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
+      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
+      maleArrangement: JSON.stringify(seating.maleArrangement),
+      femaleArrangement: JSON.stringify(seating.femaleArrangement)
     });
 
     const guests = await Guest.find({
