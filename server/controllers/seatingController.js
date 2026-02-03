@@ -393,7 +393,6 @@ const saveSeatingArrangement = async (req, res) => {
     };
 
     if (isSeparatedSeating) {
-      // Safeguard: if frontend sends empty arrangement, preserve existing DB arrangement
       const frontendMaleArrKeys = Object.keys(maleArrangement || {}).length;
       const frontendFemaleArrKeys = Object.keys(femaleArrangement || {}).length;
 
@@ -405,7 +404,6 @@ const saveSeatingArrangement = async (req, res) => {
 
           if (dbMaleArrKeys > 0 || dbFemaleArrKeys > 0) {
 
-            // Return current DB state without overwriting
             return res.json({
               message: req.t('seating.saveSuccess'),
               seating: {
@@ -5016,7 +5014,6 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
       }
     });
 
-    // Use findOneAndUpdate with $set to bypass Mongoose Mixed type issues
     const moveUpdateData = {
       updatedAt: new Date(),
       syncTriggers: seating.syncTriggers,
@@ -7257,7 +7254,6 @@ function calculateNextTablePosition(existingTables, gender = null) {
     position++;
   }
 
-  // Fallback: add new row below all existing tables
   const maxExistingY = Math.max(...sortedY);
   const newY = maxExistingY + spacingY;
 
