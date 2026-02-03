@@ -328,17 +328,6 @@ const saveSeatingArrangement = async (req, res) => {
       syncSettings
     } = req.body;
 
-    console.log('[RENDER-DEBUG] saveSeatingArrangement CALLED for event:', eventId, {
-      isSeparatedSeating,
-      maleTablesFromBody: maleTables?.length || 0,
-      femaleTablesFromBody: femaleTables?.length || 0,
-      maleArrangementFromBody: Object.keys(maleArrangement || {}).length,
-      femaleArrangementFromBody: Object.keys(femaleArrangement || {}).length,
-      tablesFromBody: tables?.length || 0,
-      arrangementFromBody: Object.keys(arrangement || {}).length,
-      callerStack: new Error().stack?.split('\n').slice(0, 3).join(' | ')
-    });
-
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -415,12 +404,6 @@ const saveSeatingArrangement = async (req, res) => {
           const dbFemaleArrKeys = Object.keys(existingSeating.femaleArrangement || {}).length;
 
           if (dbMaleArrKeys > 0 || dbFemaleArrKeys > 0) {
-            console.log('[RENDER-DEBUG] saveSeatingArrangement - BLOCKED: frontend sent empty arrangement but DB has data!', {
-              dbMaleArrKeys,
-              dbFemaleArrKeys,
-              dbMaleTablesCount: (existingSeating.maleTables || []).length,
-              dbFemaleTablesCount: (existingSeating.femaleTables || []).length
-            });
 
             // Return current DB state without overwriting
             return res.json({
@@ -664,16 +647,6 @@ const saveSeatingArrangement = async (req, res) => {
       });
     }
 
-    console.log('[RENDER-DEBUG] saveSeatingArrangement - updateData before save:', {
-      isSeparatedSeating: updateData.isSeparatedSeating,
-      maleTablesCount: updateData.maleTables?.length || 0,
-      femaleTablesCount: updateData.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(updateData.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(updateData.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(updateData.maleArrangement),
-      femaleArrangement: JSON.stringify(updateData.femaleArrangement)
-    });
-
     const seating = await Seating.findOneAndUpdate(
       { event: eventId },
       {
@@ -687,16 +660,6 @@ const saveSeatingArrangement = async (req, res) => {
         setDefaultsOnInsert: true
       }
     );
-
-    console.log('[RENDER-DEBUG] saveSeatingArrangement - seating after save:', {
-      isSeparatedSeating: seating.isSeparatedSeating,
-      maleTablesCount: seating.maleTables?.length || 0,
-      femaleTablesCount: seating.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(seating.maleArrangement),
-      femaleArrangement: JSON.stringify(seating.femaleArrangement)
-    });
 
     const responseData = {
       message: req.t('seating.saveSuccess'),
@@ -1165,7 +1128,6 @@ const saveSeatingWithRetryAndValidation = async (seating, guests, maxRetries = 5
 
         if ((maleArrKeysOriginal > 0 && maleArrKeysVerified === 0) ||
             (femaleArrKeysOriginal > 0 && femaleArrKeysVerified === 0)) {
-          console.log('[RENDER-DEBUG] saveSeatingWithRetryAndValidation - Mixed fields verification FAILED, retrying');
           retryCount++;
           continue;
         }
@@ -2221,16 +2183,6 @@ const proposeSyncOptions = async (req, res) => {
 
 const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
 
-  console.log('[RENDER-DEBUG] generateSyncOption started with strategy:', strategy);
-  console.log('[RENDER-DEBUG] Triggers count:', triggers.length);
-  console.log('[RENDER-DEBUG] Input seating state:', {
-    isSeparatedSeating: seating.isSeparatedSeating,
-    maleTablesCount: seating.maleTables?.length || 0,
-    femaleTablesCount: seating.femaleTables?.length || 0,
-    maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-    femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length
-  });
-
   const isSeparated = seating.isSeparatedSeating || false;
 
   let optionSeating;
@@ -2246,14 +2198,6 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
       preferences: normalizeGroupPolicies(seating.preferences) || {}
     };
 
-    console.log('[RENDER-DEBUG] Created optionSeating for separated:', {
-      maleTablesCount: optionSeating.maleTables.length,
-      femaleTablesCount: optionSeating.femaleTables.length,
-      maleArrangementKeys: Object.keys(optionSeating.maleArrangement).length,
-      femaleArrangementKeys: Object.keys(optionSeating.femaleArrangement).length,
-      maleArrangement: JSON.stringify(optionSeating.maleArrangement),
-      femaleArrangement: JSON.stringify(optionSeating.femaleArrangement)
-    });
   } else {
     optionSeating = {
       tables: JSON.parse(JSON.stringify(seating.tables)),
@@ -2268,30 +2212,12 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
 
   try {
     if (strategy === 'conservative') {
-      console.log('[RENDER-DEBUG] Processing conservative strategy with', triggers.length, 'triggers');
 
       for (const trigger of triggers) {
-        console.log('[RENDER-DEBUG] Processing trigger:', JSON.stringify(trigger, null, 2));
 
         const result = await simulateSyncTrigger(optionSeating, trigger, guests, req, strategy);
-
-        console.log('[RENDER-DEBUG] simulateSyncTrigger result:', {
-          success: result.success,
-          actionsCount: result.actions.length,
-          actions: JSON.stringify(result.actions, null, 2)
-        });
-
         actions.push(...result.actions);
       }
-
-      console.log('[RENDER-DEBUG] After all triggers, optionSeating state:', {
-        maleTablesCount: optionSeating.maleTables?.length || 0,
-        femaleTablesCount: optionSeating.femaleTables?.length || 0,
-        maleArrangementKeys: Object.keys(optionSeating.maleArrangement || {}).length,
-        femaleArrangementKeys: Object.keys(optionSeating.femaleArrangement || {}).length,
-        maleArrangement: JSON.stringify(optionSeating.maleArrangement),
-        femaleArrangement: JSON.stringify(optionSeating.femaleArrangement)
-      });
 
     } else {
       const currentlySeatedGuests = new Set();
@@ -3134,18 +3060,6 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
       result.isSeparatedSeating = false;
     }
 
-    console.log('[RENDER-DEBUG] generateSyncOption final result:', {
-      strategy: result.strategy,
-      actionsCount: result.actions.length,
-      isSeparatedSeating: result.isSeparatedSeating,
-      maleTablesCount: result.maleTables?.length || 0,
-      femaleTablesCount: result.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(result.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(result.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(result.maleArrangement),
-      femaleArrangement: JSON.stringify(result.femaleArrangement)
-    });
-
     return result;
 
   } catch (error) {
@@ -3270,46 +3184,31 @@ const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy
   const actions = [];
   let success = true;
 
-  console.log('[RENDER-DEBUG] simulateSyncTrigger - changeType:', changeType, 'changeData.type:', changeData.type);
-
   try {
     switch (changeType) {
       case 'guest_added':
       case 'rsvp_updated':
         if (changeData.type === 'status_became_confirmed') {
-          console.log('[RENDER-DEBUG] Processing status_became_confirmed for guest:', changeData.guest?._id);
           const result = await simulateSeatNewGuest(optionSeating, changeData.guest, guests, req, strategy);
           actions.push(...result.actions);
         } else if (changeData.type === 'status_no_longer_confirmed') {
-          console.log('[RENDER-DEBUG] Processing status_no_longer_confirmed for guest:', changeData.guestId);
           const result = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
           actions.push(...result.actions);
         } else if (changeData.type === 'attending_count_increased') {
-          console.log('[RENDER-DEBUG] Processing attending_count_increased for guest:', changeData.guestId);
-          console.log('[RENDER-DEBUG] Change data:', {
-            oldMaleCount: changeData.oldMaleCount,
-            newMaleCount: changeData.newMaleCount,
-            oldFemaleCount: changeData.oldFemaleCount,
-            newFemaleCount: changeData.newFemaleCount
-          });
-
           const result = await simulateAttendingCountChange(optionSeating, changeData, guests, req, strategy);
           actions.push(...result.actions);
         }
         break;
 
       case 'guest_deleted':
-        console.log('[RENDER-DEBUG] Processing guest_deleted for guest:', changeData.guestId);
         const deleteResult = await simulateUnseatGuest(optionSeating, changeData.guestId, guests, req);
         actions.push(...deleteResult.actions);
         break;
 
       default:
-        console.log('[RENDER-DEBUG] Unknown changeType:', changeType);
         success = false;
     }
   } catch (error) {
-    console.error('[RENDER-DEBUG] Error in simulateSyncTrigger:', error.message);
     success = false;
     return {
       success: false,
@@ -3601,15 +3500,6 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
   const actions = [];
   const isSeparated = optionSeating.isSeparatedSeating || false;
 
-  console.log('[RENDER-DEBUG] simulateAttendingCountChange - isSeparated:', isSeparated);
-  console.log('[RENDER-DEBUG] Guest:', guestId, guest?.firstName, guest?.lastName);
-  console.log('[RENDER-DEBUG] Count changes:', {
-    oldMaleCount,
-    newMaleCount,
-    oldFemaleCount,
-    newFemaleCount
-  });
-
   if (!isSeparated) {
     let guestTableId = null;
     Object.keys(optionSeating.arrangement || {}).forEach(tableId => {
@@ -3704,17 +3594,10 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
     gendersToProcess.push('female');
   }
 
-  console.log('[RENDER-DEBUG] Genders to process:', gendersToProcess);
-
   for (const genderToProcess of gendersToProcess) {
-    console.log('[RENDER-DEBUG] Processing gender:', genderToProcess);
 
     const currentTables = genderToProcess === 'male' ? optionSeating.maleTables : optionSeating.femaleTables;
     const currentArrangement = genderToProcess === 'male' ? optionSeating.maleArrangement : optionSeating.femaleArrangement;
-
-    console.log('[RENDER-DEBUG] Current tables count:', currentTables.length);
-    console.log('[RENDER-DEBUG] Current arrangement keys:', Object.keys(currentArrangement || {}).length);
-    console.log('[RENDER-DEBUG] Current arrangement:', JSON.stringify(currentArrangement));
 
     const genderGuests = allGuests.filter(g => {
       if (genderToProcess === 'male') {
@@ -3724,8 +3607,6 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       }
     });
 
-    console.log('[RENDER-DEBUG] Gender guests count:', genderGuests.length);
-
     let guestTableId = null;
     Object.keys(currentArrangement || {}).forEach(tableId => {
       if ((currentArrangement[tableId] || []).includes(guestId)) {
@@ -3733,18 +3614,12 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       }
     });
 
-    console.log('[RENDER-DEBUG] Guest current table ID:', guestTableId);
-
     const oldCount = genderToProcess === 'male' ? oldMaleCount : oldFemaleCount;
     const newCount = genderToProcess === 'male' ? newMaleCount : newFemaleCount;
 
-    console.log('[RENDER-DEBUG] Count change for', genderToProcess, ':', oldCount, '->', newCount);
-
     if (!guestTableId) {
-      console.log('[RENDER-DEBUG] Guest not found in current arrangement');
 
       if (newCount > 0) {
-        console.log('[RENDER-DEBUG] Seating new guest with count:', newCount);
 
         const guestForSeating = {
           ...guest,
@@ -3760,8 +3635,6 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
         );
         actions.push(...result.actions);
 
-        console.log('[RENDER-DEBUG] simulateSeatNewGuest result actions:', result.actions.length);
-
         if (genderToProcess === 'male') {
           optionSeating.maleArrangement = result.maleArrangement || optionSeating.maleArrangement;
         } else {
@@ -3773,11 +3646,8 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
 
     const currentTable = currentTables.find(t => t.id === guestTableId);
     if (!currentTable) {
-      console.log('[RENDER-DEBUG] Current table not found for ID:', guestTableId);
       continue;
     }
-
-    console.log('[RENDER-DEBUG] Current table:', currentTable.name, 'capacity:', currentTable.capacity);
 
     const tableGuests = currentArrangement[guestTableId] || [];
     const otherGuestsSize = tableGuests
@@ -3790,16 +3660,7 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
 
     const newTotalSize = otherGuestsSize + newCount;
 
-    console.log('[RENDER-DEBUG] Table capacity check:', {
-      otherGuestsSize,
-      newCount,
-      newTotalSize,
-      tableCapacity: currentTable.capacity,
-      willStay: newTotalSize <= currentTable.capacity && newCount > 0
-    });
-
     if (newTotalSize <= currentTable.capacity && newCount > 0) {
-      console.log('[RENDER-DEBUG] Guest stays at current table');
 
       actions.push({
         action: 'guest_updated',
@@ -3815,22 +3676,15 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       continue;
     }
 
-    console.log('[RENDER-DEBUG] Guest needs to be moved or removed');
-
     const guestIndex = currentArrangement[guestTableId].indexOf(guestId);
     if (guestIndex !== -1) {
-      console.log('[RENDER-DEBUG] Removing guest from table:', currentTable.name);
-
       currentArrangement[guestTableId].splice(guestIndex, 1);
       if (currentArrangement[guestTableId].length === 0) {
         delete currentArrangement[guestTableId];
-        console.log('[RENDER-DEBUG] Table is now empty, removed from arrangement');
       }
     }
 
     if (newCount === 0) {
-      console.log('[RENDER-DEBUG] New count is 0, removing guest');
-
       actions.push({
         action: 'guest_removed',
         details: {
@@ -3842,8 +3696,6 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       });
       continue;
     }
-
-    console.log('[RENDER-DEBUG] Looking for available table for guest with count:', newCount);
 
     let newTable = findAvailableTableSimulation(
     {
@@ -3861,13 +3713,9 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
     { ...guest, gender: genderToProcess }
   );
 
-    console.log('[RENDER-DEBUG] findAvailableTableSimulation result:', newTable?.name || 'null');
 
     if (!newTable) {
-      console.log('[RENDER-DEBUG] No available table found, creating new table');
-
       const optimalCapacity = determineOptimalTableSize(currentTables, newCount, strategy);
-      console.log('[RENDER-DEBUG] Optimal capacity:', optimalCapacity);
 
       const allTables = [...(optionSeating.maleTables || []), ...(optionSeating.femaleTables || [])];
       const highestTableNumber = allTables.reduce((max, table) => {
@@ -3880,17 +3728,13 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       }, 0);
 
       const tableNumber = highestTableNumber + 1;
-      console.log('[RENDER-DEBUG] New table number:', tableNumber);
 
       newTable = createTableSimulation(optionSeating, optimalCapacity, tableNumber, req, genderToProcess);
-      console.log('[RENDER-DEBUG] Created new table:', newTable.name, 'with capacity:', newTable.capacity);
 
       if (genderToProcess === 'male') {
         optionSeating.maleTables.push(newTable);
-        console.log('[RENDER-DEBUG] Added to maleTables, new count:', optionSeating.maleTables.length);
       } else {
         optionSeating.femaleTables.push(newTable);
-        console.log('[RENDER-DEBUG] Added to femaleTables, new count:', optionSeating.femaleTables.length);
       }
 
       actions.push({
@@ -3904,15 +3748,12 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       });
     }
 
-    console.log('[RENDER-DEBUG] Seating guest at table:', newTable.name);
-
     if (!currentArrangement[newTable.id]) {
       currentArrangement[newTable.id] = [];
     }
 
     if (!currentArrangement[newTable.id].includes(guestId)) {
       currentArrangement[newTable.id].push(guestId);
-      console.log('[RENDER-DEBUG] Added guest to table, table now has', currentArrangement[newTable.id].length, 'guests');
 
       actions.push({
         action: 'guest_moved',
@@ -3928,14 +3769,6 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
       });
     }
   }
-
-  console.log('[RENDER-DEBUG] Finished processing all genders');
-  console.log('[RENDER-DEBUG] Final arrangement state:', {
-    maleArrangementKeys: Object.keys(optionSeating.maleArrangement || {}).length,
-    femaleArrangementKeys: Object.keys(optionSeating.femaleArrangement || {}).length,
-    maleArrangement: JSON.stringify(optionSeating.maleArrangement),
-    femaleArrangement: JSON.stringify(optionSeating.femaleArrangement)
-  });
 
   if (gendersToProcess.includes('male')) {
     optionSeating.maleArrangement = optionSeating.maleArrangement;
@@ -4639,8 +4472,6 @@ const applySyncOption = async (req, res) => {
     const { eventId } = req.params;
     const { optionId, customArrangement } = req.body;
 
-    console.log('[RENDER-DEBUG] applySyncOption started for event:', eventId);
-
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
@@ -4663,78 +4494,33 @@ const applySyncOption = async (req, res) => {
       return res.status(404).json({ message: req.t('seating.notFound') });
     }
 
-    console.log('[RENDER-DEBUG] Seating BEFORE populate:', {
-      isSeparatedSeating: seating.isSeparatedSeating,
-      maleTablesCount: seating.maleTables?.length || 0,
-      femaleTablesCount: seating.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(seating.maleArrangement),
-      femaleArrangement: JSON.stringify(seating.femaleArrangement)
-    });
-
     await seating.populate();
 
-    console.log('[RENDER-DEBUG] Seating AFTER populate (before re-fetch):', {
-      isSeparatedSeating: seating.isSeparatedSeating,
-      maleTablesCount: seating.maleTables?.length || 0,
-      femaleTablesCount: seating.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(seating.maleArrangement),
-      femaleArrangement: JSON.stringify(seating.femaleArrangement)
-    });
-
     seating = await Seating.findById(seating._id);
-
-    console.log('[RENDER-DEBUG] Seating AFTER re-fetch:', {
-      isSeparatedSeating: seating.isSeparatedSeating,
-      maleTablesCount: seating.maleTables?.length || 0,
-      femaleTablesCount: seating.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(seating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(seating.femaleArrangement || {}).length,
-      maleArrangement: JSON.stringify(seating.maleArrangement),
-      femaleArrangement: JSON.stringify(seating.femaleArrangement)
-    });
 
     const guests = await Guest.find({
       event: eventId,
       rsvpStatus: 'confirmed'
     });
 
-    console.log('[RENDER-DEBUG] Confirmed guests count:', guests.length);
-
     const isSeparated = seating.isSeparatedSeating || false;
     let appliedData;
     let actions = [];
 
     if (customArrangement) {
-      console.log('[RENDER-DEBUG] Using custom arrangement');
       appliedData = customArrangement;
       actions = customArrangement.actions || [];
     } else {
       const pendingTriggers = seating.pendingSyncTriggers;
-      console.log('[RENDER-DEBUG] Pending triggers:', JSON.stringify(pendingTriggers, null, 2));
 
       if (pendingTriggers.length === 0) {
         return res.status(400).json({ message: req.t('seating.sync.noChangesToProcess') });
       }
 
       const strategy = 'conservative';
-      console.log('[RENDER-DEBUG] Calling generateSyncOption with strategy:', strategy);
 
       const option = await generateSyncOption(seating, pendingTriggers, guests, req, strategy);
-
-      console.log('[RENDER-DEBUG] generateSyncOption returned:', {
-        hasMaleTables: !!option.maleTables,
-        hasFemaleTables: !!option.femaleTables,
-        maleTablesCount: option.maleTables?.length || 0,
-        femaleTablesCount: option.femaleTables?.length || 0,
-        maleArrangementKeys: Object.keys(option.maleArrangement || {}).length,
-        femaleArrangementKeys: Object.keys(option.femaleArrangement || {}).length,
-        actionsCount: option.actions?.length || 0
-      });
-
+      
       appliedData = option;
       actions = option.actions;
     }
@@ -4879,16 +4665,6 @@ const applySyncOption = async (req, res) => {
       syncUpdateData.isSeparatedSeating = false;
     }
 
-    console.log('[RENDER-DEBUG] applySyncOption - about to save with findOneAndUpdate:', {
-      isSeparated,
-      maleTablesCount: syncUpdateData.maleTables?.length || 0,
-      femaleTablesCount: syncUpdateData.femaleTables?.length || 0,
-      maleArrangementKeys: Object.keys(syncUpdateData.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(syncUpdateData.femaleArrangement || {}).length,
-      tablesCount: syncUpdateData.tables?.length || 0,
-      arrangementKeys: Object.keys(syncUpdateData.arrangement || {}).length
-    });
-
     seating = await Seating.findOneAndUpdate(
       { _id: seating._id },
       {
@@ -4899,14 +4675,6 @@ const applySyncOption = async (req, res) => {
     );
 
     const verifySeating = await Seating.findById(seating._id).lean();
-    console.log('[RENDER-DEBUG] applySyncOption - verification after save:', {
-      maleArrangementKeys: Object.keys(verifySeating.maleArrangement || {}).length,
-      femaleArrangementKeys: Object.keys(verifySeating.femaleArrangement || {}).length,
-      maleTablesCount: (verifySeating.maleTables || []).length,
-      femaleTablesCount: (verifySeating.femaleTables || []).length,
-      arrangementKeys: Object.keys(verifySeating.arrangement || {}).length,
-      tablesCount: (verifySeating.tables || []).length
-    });
 
     const finalStats = isSeparated
       ? calculateArrangementStatsSeparated(seating, guests)
@@ -5807,15 +5575,6 @@ const generateAISeating = async (req, res) => {
         updatedAt: new Date()
       };
 
-      console.log('[RENDER-DEBUG] generateAISeating - about to save separated seating:', {
-        hasExistingSeating: !!seating,
-        maleTablesCount: maleTablesList.length,
-        femaleTablesCount: femaleTablesList.length,
-        maleArrangementKeys: Object.keys(aiMaleArrangement || {}).length,
-        femaleArrangementKeys: Object.keys(aiFemaleArrangement || {}).length,
-        maleArrangementSample: JSON.stringify(aiMaleArrangement).substring(0, 200)
-      });
-
       if (seating) {
         seating = await Seating.findOneAndUpdate(
           { _id: seating._id },
@@ -5842,12 +5601,6 @@ const generateAISeating = async (req, res) => {
       }
 
       const verification = await Seating.findById(seating._id).lean();
-      console.log('[RENDER-DEBUG] generateAISeating - verification after save:', {
-        maleArrangementKeys: Object.keys(verification.maleArrangement || {}).length,
-        femaleArrangementKeys: Object.keys(verification.femaleArrangement || {}).length,
-        maleTablesCount: (verification.maleTables || []).length,
-        femaleTablesCount: (verification.femaleTables || []).length
-      });
 
       res.json({
         message: req.t('seating.ai.generationSuccess'),
