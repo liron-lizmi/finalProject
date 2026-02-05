@@ -72,6 +72,9 @@ const TableDetailsModal = ({
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [capacityErrorData, setCapacityErrorData] = useState({ current: 0, requested: 0 });
 
+  const [pendingAddedGuests, setPendingAddedGuests] = useState([]);
+  const [pendingRemovedGuests, setPendingRemovedGuests] = useState([]);
+
   const tableInfo = useMemo(() => {
     if (!table || !isSeparatedSeating) {
       return { isNeutral: !isSeparatedSeating, gender: null };
@@ -88,21 +91,25 @@ const TableDetailsModal = ({
 
   const availableGuests = useMemo(() => {
     if (!guests) return [];
-    
+
+    const pendingAddedIds = pendingAddedGuests.map(g => g.guestId.toString());
+
     if (isSeparatedSeating) {
       const guestsWithGender = [];
-      
+
       guests.forEach(guest => {
         const hasMales = (guest.maleCount || 0) > 0;
         const hasFemales = (guest.femaleCount || 0) > 0;
-        
+
         if (hasMales) {
+          const maleGuestId = `${guest._id}_male`;
           const maleAssigned = Object.values(maleArrangement || {}).flat().includes(guest._id.toString());
-          if (!maleAssigned) {
+          const isPendingAdded = pendingAddedIds.includes(maleGuestId);
+          if (!maleAssigned && !isPendingAdded) {
             if (!table || tableInfo.isNeutral || tableInfo.gender === 'male') {
               guestsWithGender.push({
                 ...guest,
-                _id: `${guest._id}_male`,
+                _id: maleGuestId,
                 originalId: guest._id,
                 displayGender: 'male',
                 attendingCount: guest.maleCount
@@ -110,14 +117,16 @@ const TableDetailsModal = ({
             }
           }
         }
-        
+
         if (hasFemales) {
+          const femaleGuestId = `${guest._id}_female`;
           const femaleAssigned = Object.values(femaleArrangement || {}).flat().includes(guest._id.toString());
-          if (!femaleAssigned) {
+          const isPendingAdded = pendingAddedIds.includes(femaleGuestId);
+          if (!femaleAssigned && !isPendingAdded) {
             if (!table || tableInfo.isNeutral || tableInfo.gender === 'female') {
               guestsWithGender.push({
                 ...guest,
-                _id: `${guest._id}_female`,
+                _id: femaleGuestId,
                 originalId: guest._id,
                 displayGender: 'female',
                 attendingCount: guest.femaleCount
@@ -126,34 +135,48 @@ const TableDetailsModal = ({
           }
         }
       });
-      
+
       return guestsWithGender;
     }
-    
+
     let assignedGuestIds = [];
     if (seatingArrangement) {
       assignedGuestIds = Object.values(seatingArrangement).flat();
     }
-    
-    return guests.filter(guest => 
-      !assignedGuestIds.includes(guest._id.toString())
-    );
-  }, [guests, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating, table, tableInfo]);
+
+    return guests.filter(guest => {
+      const isAssigned = assignedGuestIds.includes(guest._id.toString());
+      const isPendingAdded = pendingAddedIds.includes(guest._id.toString());
+      return !isAssigned && !isPendingAdded;
+    });
+  }, [guests, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating, table, tableInfo, pendingAddedGuests]);
 
   const seatedGuestIds = useMemo(() => {
     if (!table) return [];
-    
+
+    let baseGuestIds = [];
     if (isSeparatedSeating && !tableInfo.isNeutral) {
       if (tableInfo.gender === 'male' && maleArrangement) {
-        return maleArrangement[table.id] || [];
+        baseGuestIds = maleArrangement[table.id] || [];
       } else if (tableInfo.gender === 'female' && femaleArrangement) {
-        return femaleArrangement[table.id] || [];
+        baseGuestIds = femaleArrangement[table.id] || [];
       }
+    } else {
+      baseGuestIds = seatingArrangement ? (seatingArrangement[table.id] || []) : [];
     }
-    
-    if (!seatingArrangement) return [];
-    return seatingArrangement[table.id] || [];
-  }, [table, seatingArrangement, isSeparatedSeating, tableInfo, maleArrangement, femaleArrangement]);
+
+    const pendingAddedIds = pendingAddedGuests.map(g => g.guestId);
+    const pendingRemovedIds = pendingRemovedGuests.map(g => g.guestId);
+
+    const filteredIds = baseGuestIds.filter(id => {
+      const normalizedId = id.toString().replace(/_male$|_female$/, '');
+      return !pendingRemovedIds.some(removedId =>
+        removedId.toString().replace(/_male$|_female$/, '') === normalizedId
+      );
+    });
+
+    return [...filteredIds, ...pendingAddedIds];
+  }, [table, seatingArrangement, isSeparatedSeating, tableInfo, maleArrangement, femaleArrangement, pendingAddedGuests, pendingRemovedGuests]);
 
   const seatedGuests = useMemo(() => {
     if (!guests || !seatedGuestIds) return [];
@@ -164,8 +187,16 @@ const TableDetailsModal = ({
 
   const currentOccupancy = useMemo(() => {
     if (!seatedGuests || seatedGuests.length === 0) return 0;
-    
+
+    const pendingAddedIds = pendingAddedGuests.map(g => g.guestId.toString());
+
     return seatedGuests.reduce((sum, guest) => {
+      const guestIdStr = guest._id.toString();
+
+      const pendingEntry = pendingAddedGuests.find(g =>
+        g.guestId.toString().replace(/_male$|_female$/, '') === guestIdStr
+      );
+
       if (isSeparatedSeating && table && !tableInfo.isNeutral) {
         if (tableInfo.gender === 'male') {
           return sum + (guest.maleCount || 0);
@@ -173,13 +204,15 @@ const TableDetailsModal = ({
           return sum + (guest.femaleCount || 0);
         }
       }
-      
+
       if (isSeparatedSeating && table && tableInfo.isNeutral) {
-        const isMaleInThisTable = maleArrangement && maleArrangement[table.id] && 
-                                  maleArrangement[table.id].includes(guest._id.toString());
-        const isFemaleInThisTable = femaleArrangement && femaleArrangement[table.id] && 
-                                    femaleArrangement[table.id].includes(guest._id.toString());
-        
+        const isMaleInThisTable = (maleArrangement && maleArrangement[table.id] &&
+                                  maleArrangement[table.id].includes(guestIdStr)) ||
+                                  (pendingEntry && pendingEntry.guestId.toString().includes('_male'));
+        const isFemaleInThisTable = (femaleArrangement && femaleArrangement[table.id] &&
+                                    femaleArrangement[table.id].includes(guestIdStr)) ||
+                                    (pendingEntry && pendingEntry.guestId.toString().includes('_female'));
+
         let guestCount = 0;
         if (isMaleInThisTable) {
           guestCount += (guest.maleCount || 0);
@@ -187,17 +220,17 @@ const TableDetailsModal = ({
         if (isFemaleInThisTable) {
           guestCount += (guest.femaleCount || 0);
         }
-        
+
         if (!isMaleInThisTable && !isFemaleInThisTable) {
           guestCount = guest.attendingCount || 1;
         }
-        
+
         return sum + guestCount;
       }
-      
+
       return sum + (guest.attendingCount || 1);
     }, 0);
-  }, [seatedGuests, isSeparatedSeating, table, tableInfo, maleArrangement, femaleArrangement]);
+  }, [seatedGuests, isSeparatedSeating, table, tableInfo, maleArrangement, femaleArrangement, pendingAddedGuests]);
 
   const minAllowedCapacity = useMemo(() => {
     return Math.max(8, currentOccupancy);
@@ -225,6 +258,8 @@ const TableDetailsModal = ({
         type: table.type || 'round',
         notes: table.notes || ''
       });
+      setPendingAddedGuests([]);
+      setPendingRemovedGuests([]);
     }
   }, [table]);
 
@@ -248,32 +283,43 @@ const TableDetailsModal = ({
   };
 
   const handleSave = () => {
-  const capacity = parseInt(formData.capacity, 10);
+    const capacity = parseInt(formData.capacity, 10);
 
-  if (isNaN(capacity) || capacity < 8 || capacity > 36) {
-    setShowInvalidCapacityModal(true);
-    return;
-  }
+    if (isNaN(capacity) || capacity < 8 || capacity > 36) {
+      setShowInvalidCapacityModal(true);
+      return;
+    }
 
-  if (capacity < currentOccupancy) {
-    setCapacityErrorData({ current: currentOccupancy, requested: capacity });
-    setShowCapacityTooSmallModal(true);
-    return;
-  }
+    if (capacity < currentOccupancy) {
+      setCapacityErrorData({ current: currentOccupancy, requested: capacity });
+      setShowCapacityTooSmallModal(true);
+      return;
+    }
 
-  const newSize = calculateTableSize(formData.type, capacity);
+    const newSize = calculateTableSize(formData.type, capacity);
 
-  onUpdateTable(table.id, {
-    name: formData.name,
-    capacity: capacity,
-    type: formData.type,
-    notes: formData.notes,
-    isDraft: false,
-    size: newSize
-  });
+    pendingRemovedGuests.forEach(({ guestId }) => {
+      onUnseatGuest(guestId);
+    });
 
-  onClose(true);
-};
+    pendingAddedGuests.forEach(({ guestId, tableId }) => {
+      onSeatGuest(guestId, tableId);
+    });
+
+    onUpdateTable(table.id, {
+      name: formData.name,
+      capacity: capacity,
+      type: formData.type,
+      notes: formData.notes,
+      isDraft: false,
+      size: newSize
+    });
+
+    setPendingAddedGuests([]);
+    setPendingRemovedGuests([]);
+
+    onClose(true);
+  };
 
   const handleDelete = () => {
   setShowDeleteConfirmModal(true);
@@ -333,40 +379,37 @@ const cancelDelete = () => {
       return;
     }
 
-    onSeatGuest(guestIdParam, table.id);
+    setPendingAddedGuests(prev => [...prev, { guestId: guestIdParam, tableId: table.id }]);
     setSearchGuestTerm('');
   };
 
   const handleRemoveGuest = (guestIdParam) => {
     const isGenderSpecific = guestIdParam.toString().includes('_male') || guestIdParam.toString().includes('_female');
     const guestId = isGenderSpecific ? guestIdParam.toString().replace(/_male$|_female$/, '') : guestIdParam.toString();
-    
-    const willBeEmpty = seatedGuestIds.length === 1;
-    
-    if (willBeEmpty && table.name && table.name.includes(' - ')) {
-      const tableNumberMatch = table.name.match(/\d+/);
-      if (tableNumberMatch) {
-        const tableNumber = tableNumberMatch[0];
-        const baseName = `${t('seating.tableName')} ${tableNumber}`;
-        
-        onUpdateTable(table.id, {
-          name: baseName,
-          capacity: table.capacity,
-          type: table.type,
-          notes: table.notes || '',
-          size: table.size
-        });
-      }
-    }
-    
+
+    let fullGuestId;
     if (isSeparatedSeating && !tableInfo.isNeutral) {
       if (tableInfo.gender === 'male') {
-        onUnseatGuest(`${guestId}_male`);
+        fullGuestId = `${guestId}_male`;
       } else if (tableInfo.gender === 'female') {
-        onUnseatGuest(`${guestId}_female`);
+        fullGuestId = `${guestId}_female`;
+      } else {
+        fullGuestId = guestId;
       }
     } else {
-      onUnseatGuest(guestId);
+      fullGuestId = guestId;
+    }
+
+    const wasPendingAdded = pendingAddedGuests.some(g =>
+      g.guestId.toString().replace(/_male$|_female$/, '') === guestId
+    );
+
+    if (wasPendingAdded) {
+      setPendingAddedGuests(prev => prev.filter(g =>
+        g.guestId.toString().replace(/_male$|_female$/, '') !== guestId
+      ));
+    } else {
+      setPendingRemovedGuests(prev => [...prev, { guestId: fullGuestId }]);
     }
   };
 
@@ -390,12 +433,11 @@ const cancelDelete = () => {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={() => onClose(false)}>
       <div className="modal-content table-details-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          {/* 🔧 הסרת התגיות */}
           <h3>{t('seating.table.details')}</h3>
-          <button className="modal-close" onClick={onClose}>×</button>
+          <button className="modal-close" onClick={() => onClose(false)}>×</button>
         </div>
 
         <div className="modal-body">
@@ -646,7 +688,7 @@ const cancelDelete = () => {
         <div className="modal-footer">
           <button
             className="cancel-button"
-            onClick={onClose}
+            onClick={() => onClose(false)}
           >
             {t('common.cancel')}
           </button>
