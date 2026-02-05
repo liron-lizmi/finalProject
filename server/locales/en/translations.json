@@ -101,6 +101,7 @@
       "removeSuccess": "Access was removed successfully",
       "permissionUpdated": "Permissions were updated successfully",
       "alreadyShared": "The event is already shared with this user",
+      "cannotShareWithSelf": "You cannot share an event with yourself",
       "notSharedWithUser": "You do not have access to this event",
       "shareNotFound": "Share not found"
     },

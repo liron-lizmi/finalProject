@@ -51,6 +51,10 @@ const shareEvent = async (req, res) => {
       return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
 
+    if (currentUser.email.toLowerCase() === email.toLowerCase()) {
+      return res.status(400).json({ message: req.t('events.share.cannotShareWithSelf') });
+    }
+
     if (!targetUser) {
       return res.status(404).json({ message: req.t('errors.userNotInSystem') });
     }

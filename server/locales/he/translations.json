@@ -101,6 +101,7 @@
       "removeSuccess": "הגישה הוסרה בהצלחה",
       "permissionUpdated": "ההרשאות עודכנו בהצלחה",
       "alreadyShared": "האירוע כבר משותף עם משתמש זה",
+      "cannotShareWithSelf": "לא ניתן לשתף אירוע עם עצמך",
       "notSharedWithUser": "אין לך גישה לאירוע זה",
       "shareNotFound": "השיתוף לא נמצא"
     },
