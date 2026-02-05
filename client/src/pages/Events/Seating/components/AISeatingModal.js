@@ -1287,49 +1287,6 @@ const AISeatingModal = ({
             const maleCols = 5;
             const femaleCols = 5;
             
-            
-            if (useFemaleCustomTablesOnly) {
-              const totalFemaleGuestsToSeat = femaleGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
-              const seatedFemaleGuestsInArrangement = Object.values(result.femaleArrangement).reduce((sum, tableGuests) => {
-                return sum + tableGuests.reduce((guestSum, guestId) => {
-                  const guest = femaleGuests.find(g => g._id === guestId);
-                  return guestSum + (guest ? (guest.attendingCount || 1) : 0);
-                }, 0);
-              }, 0);
-              const allFemaleGuestsSeated = seatedFemaleGuestsInArrangement >= totalFemaleGuestsToSeat;
-              
-              if (allFemaleGuestsSeated) {
-                femaleTablesToUpdate = (result.femaleTables || []).filter(table => {
-                  const tableGuests = result.femaleArrangement[table.id] || [];
-                  return tableGuests.length > 0;
-                });
-                
-                femaleArrangementToUse = {};
-                femaleTablesToUpdate.forEach(table => {
-                  if (result.femaleArrangement[table.id]) {
-                    femaleArrangementToUse[table.id] = result.femaleArrangement[table.id];
-                  }
-                });
-
-                let femaleTableCounter = (useMaleCustomTablesOnly ? maleTablesToUpdate.length : (result.maleTables?.length || 0)) + 1;
-                if (getNextTableNumber) {
-                  femaleTableCounter = getNextTableNumber() + (useMaleCustomTablesOnly ? maleTablesToUpdate.length : (result.maleTables?.length || 0));
-                }
-                femaleTablesToUpdate = femaleTablesToUpdate.map((table, index) => {
-                  const row = Math.floor(index / femaleCols);
-                  const col = index % femaleCols;
-                  return {
-                    ...table,
-                    name: `${t('seating.tableName')} ${femaleTableCounter++}`,
-                    position: {
-                      x: FEMALE_START_X + col * SPACING_X,
-                      y: START_Y + row * SPACING_Y
-                    }
-                  };
-                });
-              }
-            }
-            
             const updatedMaleTables = maleTablesToUpdate.map(table => {
               const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
               return {
