@@ -4490,9 +4490,12 @@
     box-sizing: border-box !important;
   }
 
-  .modal-footer button, 
-  .generate-button, 
-  .cancel-button {
+  
+  .ai-seating-modal .modal-footer button,
+  .ai-seating-modal .generate-button,
+  .ai-seating-modal .cancel-button,
+  .table-details-modal .cancel-button {
+
     flex: 1 !important;
     height: auto !important;
     min-height: 48px !important;
@@ -4587,9 +4590,11 @@
     box-sizing: border-box !important;
   }
 
-  .modal-footer button, 
-  .generate-button, 
-  .cancel-button {
+  
+  .ai-seating-modal .modal-footer button,
+  .ai-seating-modal .generate-button,
+  .ai-seating-modal .cancel-button,
+  .table-details-modal .cancel-button {
     width: 50% !important; 
     max-width: 50% !important;
     flex: 1 1 0 !important; 
@@ -4747,9 +4752,10 @@
     padding: 20px !important;
   }
 
-  .modal-footer button,
-  .generate-button,
-  .cancel-button {
+  .ai-seating-modal .modal-footer button,
+  .ai-seating-modal .generate-button,
+  .ai-seating-modal .cancel-button,
+  .table-details-modal .cancel-button {
     flex: 0 1 180px !important;
     height: 45px !important;
     margin: 0 !important;
