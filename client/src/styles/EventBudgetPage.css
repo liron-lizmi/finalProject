@@ -827,7 +827,7 @@
 }
 
 .cancel-button:hover {
-  background-color: #5a6268;
+  background-color: #a68b76 !important;
   transform: none;
 }
 
