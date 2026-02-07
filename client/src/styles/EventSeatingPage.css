@@ -4470,6 +4470,38 @@
     min-height: 0 !important;
   }
 
+  .guests-list-filters {
+    gap: 0px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .guests-list-filters .search-filter {
+    flex: 0 0 85px !important;
+    width: 85px !important;
+    min-width: 85px !important;
+    max-width: 85px !important;
+  }
+
+  .guests-list-filters .search-filter .search-input {
+    width: 100% !important;
+    font-size: 10px !important;
+    padding: 0 5px !important;
+  }
+
+  .guests-list-filters .group-filter {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  .guests-list-filters .group-filter .group-select {
+    width: 100% !important;
+    font-size: 10px !important;
+    padding: 0 3px !important;
+    padding-left: 16px !important;
+    background-position: left 3px top 50% !important;
+    background-size: 8px auto !important;
+  }
+
   .modal-content {
     width: 95% !important;
     max-width: 95vw !important;
