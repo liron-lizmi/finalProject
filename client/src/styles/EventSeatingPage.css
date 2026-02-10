@@ -4615,6 +4615,34 @@
     justify-content: center !important;
     border-radius: 8px !important;
   }
+
+  .search-filter {
+    flex: 0.8 !important;
+    min-width: 0 !important;
+    max-width: 120px !important;
+  }
+
+  .group-filter {
+    flex: 1 !important;
+    min-width: 70px !important;
+  }
+
+  .search-filter .search-input {
+    font-size: 13px !important;
+    padding: 0 8px !important;
+    text-align: right !important;
+    direction: rtl !important;
+  }
+
+  .search-filter .search-input::placeholder {
+    text-align: right !important;
+  }
+
+  .group-filter .group-select {
+    font-size: 12px !important;
+    padding: 0 6px !important;
+    background-position: left 6px top 50% !important;
+  }
 }
 
 @media (max-width: 768px) {
