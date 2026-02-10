@@ -4617,9 +4617,10 @@
   }
 
   .search-filter {
-    flex: 0.8 !important;
-    min-width: 0 !important;
-    max-width: 120px !important;
+    flex: 0 0 90px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+    overflow: hidden !important;
   }
 
   .group-filter {
@@ -4630,12 +4631,20 @@
   .search-filter .search-input {
     font-size: 13px !important;
     padding: 0 8px !important;
+    width: 90px !important;
+    min-width: 0 !important;
+    max-width: 90px !important;
+    box-sizing: border-box !important;
     text-align: right !important;
     direction: rtl !important;
+    text-overflow: clip !important;
+    overflow: hidden !important;
   }
 
   .search-filter .search-input::placeholder {
     text-align: right !important;
+    direction: rtl !important;
+    text-overflow: clip !important;
   }
 
   .group-filter .group-select {
