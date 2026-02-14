@@ -5506,7 +5506,7 @@ const generateAISeating = async (req, res) => {
       }
      
       const MALE_START_X = 300;
-      const FEMALE_START_X = 1400;
+      const FEMALE_START_X = 1300;
       const START_Y = 250;
       const SPACING_X = 200;
       const SPACING_Y = 180;
@@ -7181,7 +7181,7 @@ function calculateNextTablePosition(existingTables, gender = null) {
   const BOUNDARY_PADDING = 150;
  
   const MALE_START_X = 300;
-  const FEMALE_START_X = 1400;
+  const FEMALE_START_X = 1300;
   const DEFAULT_START_Y = 280;
   const DEFAULT_SPACING_X = 200;
   const DEFAULT_SPACING_Y = 180;
@@ -10411,7 +10411,7 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
   });
 
   if (gender === 'male' || gender === 'female') {
-    const START_X = gender === 'male' ? 300 : 1400;
+    const START_X = gender === 'male' ? 300 : 1300;
     const START_Y = 280;
     const SPACING_X = 200;
     const SPACING_Y = 180;
