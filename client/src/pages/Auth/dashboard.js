@@ -64,16 +64,6 @@ const Dashboard = () => {
     return isShared && isNotOwner;
   };
 
-  const getSharedPermission = (event) => {
-    if (!event || !user || !event.sharedWith) return null;
-    
-    const share = event.sharedWith.find(
-      share => share.userId && (share.userId === user.id || share.userId._id === user.id)
-    );
-    
-    return share ? share.permission : null;
-  };
-
   const params = new URLSearchParams(location.search);
   const shouldRedirect = params.get('source') === 'google';
 

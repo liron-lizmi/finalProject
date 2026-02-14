@@ -24,7 +24,8 @@
     "missingParameters": "חסרים פרמטרים נדרשים",
     "databaseError": "שגיאת מסד נתונים",
     "invalidEventId": "מזהה אירוע לא תקין",
-    "userNotInSystem": "משתמש לא קיים במערכת"
+    "userNotInSystem": "משתמש לא קיים במערכת",
+    "incompleteOAuthData": "חסרים נתונים נדרשים לרישום OAuth"
   },
   "success": {
     "passwordReset": "הסיסמה עודכנה בהצלחה",

@@ -15,10 +15,6 @@
  *
  * - getCurrentSession(): Gets current active session or null
  * - getCurrentUser(): Gets current authenticated user or null
- * - clearAllSessions(): Deletes all user sessions (for logout)
- *
- * Exports: client, account, createOAuth2Session, getCurrentSession,
- *          getCurrentUser, clearAllSessions
  */
 
 import { Client, Account } from 'appwrite';
@@ -92,19 +88,4 @@ const getCurrentUser = async () => {
     }
 };
 
-const clearAllSessions = async () => {
-    try {
-        const sessions = await account.listSessions();
-        
-        const deletePromises = sessions.sessions.map(session =>
-            account.deleteSession(session.$id).catch(() => {})
-        );
-        
-        await Promise.all(deletePromises);
-        return true;
-    } catch (error) {
-        return false;
-    }
-};
-
-export { client, account, createOAuth2Session, getCurrentSession, getCurrentUser, clearAllSessions };
+export { client, account, createOAuth2Session, getCurrentSession, getCurrentUser };

@@ -15,12 +15,10 @@ const validateRegistration = (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
   const errors = [];
 
-  // *** עדכון: לפחות שם פרטי או משפחה נדרש, לא חובה שניהם ***
   if (!firstName && !lastName) {
-    errors.push(req.t('validation.nameRequired') || 'Either first name or last name is required');
+    errors.push(req.t('validation.nameRequired'));
   }
 
-  // בדיקת אורך שמות (אם קיימים)
   if (firstName && firstName.length < 2) {
     errors.push(req.t('validation.firstNameMin'));
   } else if (firstName && firstName.length > 50) {

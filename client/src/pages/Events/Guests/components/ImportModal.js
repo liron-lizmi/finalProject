@@ -608,7 +608,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
       return;
     }
 
-    // שמירת כל הנתונים וגם תצוגה מקדימה
     setAllImportData(data);
     setPreviewData(data.slice(0, 10));
   };

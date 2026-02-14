@@ -24,7 +24,8 @@
     "unknownError": "Unknown error",
     "googleNotConnected": "Not connected to Google",
     "invalidEventId": "Invalid event ID",
-    "userNotInSystem": "User does not exist in the system"
+    "userNotInSystem": "User does not exist in the system",
+    "incompleteOAuthData": "Missing required data for OAuth registration"
   },
   "success": {
     "passwordReset": "Password updated successfully",

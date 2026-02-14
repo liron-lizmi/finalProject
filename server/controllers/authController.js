@@ -286,7 +286,7 @@ const registerOAuth = async (req, res) => {
 
     if (!email || !firstName) {
       return res.status(400).json({
-        message: req.t('errors.incompleteOAuthData') || 'Missing required data for OAuth registration'
+        message: req.t('errors.incompleteOAuthData')
       });
     }
 
@@ -411,7 +411,7 @@ const registerOAuth = async (req, res) => {
     }
 
     res.status(500).json({
-      message: req.t('errors.serverError') || 'Server error occurred during OAuth registration'
+      message: req.t('errors.serverError')
     });
   }
 };
@@ -427,7 +427,7 @@ const loginOAuth = async (req, res) => {
 
     if (!email) {
       return res.status(400).json({
-        message: req.t('errors.missingOAuthData') || 'Email is required'
+        message: req.t('errors.missingOAuthData')
       });
     }
 
@@ -438,7 +438,7 @@ const loginOAuth = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: req.t('errors.userNotFound') || 'User not found'
+        message: req.t('errors.userNotFound')
       });
     }
 
@@ -469,7 +469,7 @@ const loginOAuth = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({
-      message: req.t('errors.serverError') || 'Server error occurred during OAuth login'
+      message: req.t('errors.serverError')
     });
   }
 };
