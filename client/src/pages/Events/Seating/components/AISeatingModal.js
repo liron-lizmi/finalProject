@@ -1033,7 +1033,7 @@ const AISeatingModal = ({
     const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
     const START_X = 300;
     const START_Y = 250;
-    const FEMALE_START_X = 1400;
+    const FEMALE_START_X = 1250;
 
     if (isSeparatedSeating) {
       const maleTablesList = [];
