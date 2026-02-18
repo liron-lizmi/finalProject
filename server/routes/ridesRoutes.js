@@ -13,8 +13,6 @@
  * - POST /:eventId/suggestions: Get suggested ride matches
  * - POST /:eventId/cancel: Cancel ride offer/request
  *
- * Protected Routes (requires auth + edit permission):
- * - PUT /:eventId/guests/:guestId/ride-info: Event owner updates guest ride info
  */
 
 const express = require('express');
@@ -27,10 +25,8 @@ const {
   updateGuestRideInfo,
   recordContact,
   cancelRide,
-  updateGuestRideInfoByOwner
 } = require('../controllers/ridesController');
 const auth = require('../middleware/auth');
-const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 
 router.get('/:eventId/info', getEventRidesInfo);
 router.post('/:eventId/check-phone', checkPhoneForRides);
@@ -39,7 +35,5 @@ router.put('/:eventId/update', updateGuestRideInfo);
 router.post('/:eventId/contact', recordContact);
 router.post('/:eventId/suggestions', getSuggestedRides);
 router.post('/:eventId/cancel', cancelRide);
-
-router.put('/:eventId/guests/:guestId/ride-info', auth, checkEditPermission, updateGuestRideInfoByOwner);
 
 module.exports = router;

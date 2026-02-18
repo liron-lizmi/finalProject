@@ -401,57 +401,6 @@ const cancelRide = async (req, res) => {
   }
 };
 
-/**
- * Updates guest ride info by event owner (authenticated endpoint).
- * @route PUT /api/events/:eventId/rides/guests/:guestId
- */
-const updateGuestRideInfoByOwner = async (req, res) => {
-  try {
-    const { eventId, guestId } = req.params;
-    const { rideInfo } = req.body;
-
-    const event = await Event.findOne({ _id: eventId, user: req.userId });
-    if (!event) {
-      return res.status(404).json({ message: req.t('events.rides.notFound') });
-    }
-
-    const guest = await Guest.findOne({ _id: guestId, event: eventId, user: req.userId });
-    if (!guest) {
-      return res.status(404).json({ message: req.t('events.rides.guestNotFound') });
-    }
-
-    const updatedRideInfo = {
-      status: rideInfo.status,
-      address: rideInfo.address || '',
-      departureTime: rideInfo.departureTime || '',
-      lastUpdated: new Date()
-    };
-
-    if (rideInfo.status === 'offering') {
-      updatedRideInfo.availableSeats = rideInfo.availableSeats || 1;
-    }
-
-    if (rideInfo.status === 'seeking') {
-      updatedRideInfo.requiredSeats = rideInfo.requiredSeats || 1;
-    }
-
-    if (guest.rideInfo && guest.rideInfo.contactHistory) {
-      updatedRideInfo.contactHistory = guest.rideInfo.contactHistory;
-    }
-
-    if (guest.rideInfo && guest.rideInfo.contactStatus) {
-      updatedRideInfo.contactStatus = guest.rideInfo.contactStatus;
-    }
-
-    guest.rideInfo = updatedRideInfo;
-    await guest.save();
-
-    res.json({ message: req.t('events.rides.updateSuccess'), guest });
-  } catch (err) {
-    res.status(500).json({ message: req.t('events.rides.errors.serverError') });
-  }
-};
-
 module.exports = {
   getEventRidesInfo,
   checkPhoneForRides,
@@ -459,6 +408,5 @@ module.exports = {
   getSuggestedRides,
   updateGuestRideInfo,
   recordContact,
-  cancelRide,
-  updateGuestRideInfoByOwner
+  cancelRide
 };
