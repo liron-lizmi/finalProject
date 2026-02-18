@@ -39,13 +39,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import FeaturePageTemplate from '../shared/FeaturePageTemplate';
+import FeaturePageTemplate from '../../FeaturePageTemplate';
 import SeatingCanvas from './components/SeatingCanvas';
 import GuestsList from './components/GuestsList';
 import TableDetailsModal from './components/TableDetailsModal';
 import AISeatingModal from './components/AISeatingModal';
 import SeatingTableView from './components/SeatingTableView';
-import SyncOptionsModal from '../shared/components/SyncOptionsModal';
+import SyncOptionsModal from './components/SyncOptionsModal';
 import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventSeatingPage.css';
 

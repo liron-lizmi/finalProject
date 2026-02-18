@@ -34,7 +34,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams} from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import FeaturePageTemplate from '../shared/FeaturePageTemplate';
+import FeaturePageTemplate from '../../FeaturePageTemplate';
 import BudgetOverview from './components/BudgetOverview';
 import BudgetSetup from './components/BudgetSetup';
 import ExpenseManager from './components/ExpenseManager';

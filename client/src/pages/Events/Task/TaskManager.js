@@ -35,13 +35,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import TaskCard from './TaskCard';
-import TaskModal from './TaskModal';
-import GoogleCalendarSync from './GoogleCalendarSync';
-import InternalCalendar from './InternalCalendar';
-import ReminderToast from './ReminderToast';
-import FeaturePageTemplate from '../FeaturePageTemplate';
-import { apiFetch } from '../../../../utils/api';
+import TaskCard from './components/TaskCard';
+import TaskModal from './components/TaskModal';
+import GoogleCalendarSync from './components/GoogleCalendarSync';
+import InternalCalendar from './components/InternalCalendar';
+import ReminderToast from './components/ReminderToast';
+import FeaturePageTemplate from '../../FeaturePageTemplate';
+import { apiFetch } from '../../../utils/api';
 import '../../../../styles/EventTimeline.css';
 
 const TaskManager = ({ eventId, permissionLoading = false }) => {
