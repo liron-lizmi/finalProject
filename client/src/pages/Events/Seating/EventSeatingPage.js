@@ -41,7 +41,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import FeaturePageTemplate from '../shared/FeaturePageTemplate';
 import SeatingCanvas from './components/SeatingCanvas';
-import GuestsList from '../Guests/components/GuestsList';
+import GuestsList from './components/GuestsList';
 import TableDetailsModal from './components/TableDetailsModal';
 import AISeatingModal from './components/AISeatingModal';
 import SeatingTableView from './components/SeatingTableView';

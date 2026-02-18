@@ -214,7 +214,8 @@
     "expenseDeleteSuccess": "ההוצאה נמחקה בהצלחה",
     "incomeNotFound": "הכנסה לא נמצאה",
     "incomeDeleteSuccess": "ההכנסה נמחקה בהצלחה",
-    "giftSyncSuccess": "המתנה סונכרנה לתקציב בהצלחה"
+    "giftSyncSuccess": "המתנה סונכרנה לתקציב בהצלחה",
+    "giftFrom": "מתנה מ{{name}}"
   },
   "seating": {
     "tableName": "שולחן",

@@ -118,12 +118,6 @@ const EventBudgetPage = () => {
     }
   };
 
-  const loadSettings = () => {
-    if (budget && budget.alertThreshold !== undefined) {
-      setAlertThreshold(budget.alertThreshold);
-    }
-  };
-
   const handleAlertThresholdChange = (newThreshold) => {
     setAlertThreshold(newThreshold);
   };

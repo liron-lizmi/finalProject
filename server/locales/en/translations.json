@@ -214,7 +214,8 @@
     "expenseDeleteSuccess": "Expense deleted successfully",
     "incomeNotFound": "Income not found",
     "incomeDeleteSuccess": "Income deleted successfully",
-    "giftSyncSuccess": "Gift synced to budget successfully"
+    "giftSyncSuccess": "Gift synced to budget successfully",
+    "giftFrom": "Gift from {{name}}"
   },
   "seating": {
     "tableName": "Table",

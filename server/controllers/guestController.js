@@ -154,19 +154,19 @@ const bulkImportGuests = async (req, res) => {
       const guest = guests[i];
       
       if (!guest.firstName || !guest.firstName.trim()) {
-        errors.push(`שם פרטי נדרש - שורה ${i + 1}`);
+        errors.push(`First name required - row${i + 1}`);
         continue;
       }
 
       if (!guest.lastName || !guest.lastName.trim()) {
-        errors.push(`שם משפחה נדרש - שורה ${i + 1}`);
+        errors.push(`Last name required - row ${i + 1}`);
         continue;
       }
 
       if (guest.phone && guest.phone.trim()) {
         const phoneToCheck = guest.phone.trim();
         if (!/^05\d-\d{7}$/.test(phoneToCheck)) {
-          errors.push(`פורמט טלפון לא תקין - ${guest.firstName} ${guest.lastName}`);
+          errors.push(`Invalid phone format  - ${guest.firstName} ${guest.lastName}`);
           continue;
         }
       }
@@ -244,8 +244,8 @@ const bulkImportGuests = async (req, res) => {
     
     res.status(statusCode).json({
       message: results.imported > 0 
-        ? `יובאו בהצלחה ${results.imported} מוזמנים`
-        : 'הייבוא נכשל',
+        ? `Successfully imported ${results.imported} guests`
+        : 'Import failed',
       ...results
     });
 
@@ -571,14 +571,14 @@ const updateGuestRSVPPublic = async (req, res) => {
     const { phone, rsvpStatus, attendingCount, maleCount, femaleCount, guestNotes } = req.body;
 
     if (!phone) {
-      return res.status(400).json({ message: req.t('guests.errors.phoneRequired') || 'מספר טלפון נדרש' });
+      return res.status(400).json({ message: req.t('guests.errors.phoneRequired')});
     }
 
     const cleanPhone = phone.replace(/\s/g, '');
 
     const event = await Event.findById(eventId);
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound')});
     }
 
     const guest = await Guest.findOne({ 
@@ -587,7 +587,7 @@ const updateGuestRSVPPublic = async (req, res) => {
     });
 
     if (!guest) {
-      return res.status(404).json({ message: req.t('guests.errors.phoneNotFound') || 'מספר טלפון לא נמצא' });
+      return res.status(404).json({ message: req.t('guests.errors.phoneNotFound')});
     }
 
     const wasConfirmed = guest.rsvpStatus === 'confirmed';
@@ -666,11 +666,11 @@ const updateGuestRSVPPublic = async (req, res) => {
     }
 
     res.json({
-      message: req.t('guests.rsvp.updateSuccess') || 'אישור השתתפות עודכן בהצלחה',
+      message: req.t('guests.rsvp.updateSuccess'),
       guest: updatedGuest
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
 
@@ -685,7 +685,7 @@ const getEventForRSVP = async (req, res) => {
 
     const event = await Event.findById(eventId);
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound')});
     }
 
     res.json({
@@ -696,7 +696,7 @@ const getEventForRSVP = async (req, res) => {
       isSeparatedSeating: event.isSeparatedSeating || false
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
 
@@ -712,14 +712,14 @@ const checkGuestByPhone = async (req, res) => {
     const { phone } = req.body;
 
     if (!phone) {
-      return res.status(400).json({ message: req.t('guests.errors.phoneRequired') || 'מספר טלפון נדרש' });
+      return res.status(400).json({ message: req.t('guests.errors.phoneRequired')});
     }
 
     const cleanPhone = phone.replace(/\s/g, '');
 
     const event = await Event.findById(eventId);
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound')});
     }
 
     const guest = await Guest.findOne({ 
@@ -745,7 +745,7 @@ const checkGuestByPhone = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError') });
   }
 };
 
@@ -761,7 +761,7 @@ const generateRSVPLink = async (req, res) => {
 
     const event = await Event.findById(eventId);
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') || 'אירוע לא נמצא' });
+      return res.status(404).json({ message: req.t('events.notFound')});
     }
 
     const hasAccess = event.user.toString() === req.userId || 
@@ -780,7 +780,7 @@ const generateRSVPLink = async (req, res) => {
       eventName: event.title 
     });
   } catch (err) {
-    res.status(500).json({ message: req.t('errors.serverError') || 'שגיאת שרת' });
+    res.status(500).json({ message: req.t('errors.serverError')});
   }
 };
 

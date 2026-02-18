@@ -610,7 +610,7 @@
           "alertThreshold": "סף התראה",
           "alertThresholdDescription": "קבלת התראה כאשר ההוצאה בקטגוריה מגיעה לאחוז זה מהתקציב המוקצב"
         },
-        "totalSpent": "סך הוצא",
+        "totalSpent": "סך הוצאות",
         "expenses": "הוצאות",
         "paid": "שולם",
         "overallProgress": "התקדמות כללית",

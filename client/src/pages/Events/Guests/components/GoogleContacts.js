@@ -45,7 +45,7 @@ class GoogleContactsAPI {
       this.initialized = true;
       return true;
     } catch (error) {
-        throw new Error('שגיאה באתחול Google: ' + error.message);
+        throw new Error('Error initializing Google:' + error.message);
     }
   }
 
@@ -79,7 +79,7 @@ class GoogleContactsAPI {
     try {
 
       if (!process.env.REACT_APP_GOOGLE_CONTACTS_ID) {
-        throw new Error('Google Client ID לא מוגדר במשתני הסביבה');
+        throw new Error('Google Client ID is not set in environment variables');
       }
 
       await this.init();
@@ -107,7 +107,7 @@ class GoogleContactsAPI {
       return tokenResponse;
 
     } catch (error) {
-        throw new Error('שגיאה בהתחברות לגוגל: ' + (error.message || 'Unknown error'));
+        throw new Error('Error connecting to Google' + (error.message));
     }
   }
 
@@ -133,7 +133,7 @@ class GoogleContactsAPI {
   async getContacts(eventId) {
     try {
       if (!this.isSignedIn || !this.accessToken) {
-        throw new Error('לא מחובר לגוגל');
+        throw new Error('Not logged in to Google');
       }
 
       const response = await axios.post(
@@ -149,7 +149,7 @@ class GoogleContactsAPI {
         this.accessToken = null;
         throw new Error('Token expired - please sign in again');
       }
-      throw new Error('שגיאה בקבלת אנשי קשר: ' + (error.response?.data?.message || error.message));
+      throw new Error('Error receiving contacts: ' + (error.response?.data?.message || error.message));
     }
   }
 }

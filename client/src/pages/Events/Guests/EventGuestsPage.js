@@ -73,7 +73,7 @@ const EventGuestsPage = () => {
   });
 
   const [canEdit, setCanEdit] = useState(true);
-  const { showSuccessModal, showErrorModal, showConfirmModal, Modal } = useModal();
+  const {showConfirmModal, Modal } = useModal();
 
   const formatPhoneNumber = (value) => {
     const cleanedValue = value.replace(/\D/g, '');
@@ -759,25 +759,24 @@ const EventGuestsPage = () => {
   };
 
     const executeDeleteGuest = async (guestId) => {
+      try {
+        const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
+          method: 'DELETE'
+        });
 
-    try {
-      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
-        method: 'DELETE'
-      });
+        if (!response) return;
 
-      if (!response) return;
-
-      if (response.ok) {
-        setGuests(guests.filter(guest => guest._id !== guestId));
-        setError('');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || t('errors.deleteGuest'));
+        if (response.ok) {
+          setGuests(guests.filter(guest => guest._id !== guestId));
+          setError('');
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.message || t('errors.deleteGuest'));
+        }
+      } catch (err) {
+        setError(t('errors.networkError'));
       }
-    } catch (err) {
-      setError(t('errors.networkError'));
-    }
-  };
+    };
 
   const filteredGuests = guests.filter(guest => {
     const guestGroupName = guest.customGroup || guest.group;

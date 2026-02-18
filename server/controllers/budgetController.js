@@ -501,7 +501,7 @@ const syncGiftToIncome = async (req, res) => {
       const newIncome = {
         source: 'gift',
         guestId: guestId,
-        description: giftDescription || `מתנה מ${guest.firstName} ${guest.lastName}`,
+        description: giftDescription || req.t('budget.giftFrom', { name: `${guest.firstName} ${guest.lastName}` }),
         amount: giftValue,
         date: new Date(),
         notes: giftDescription || ''
