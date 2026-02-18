@@ -41,7 +41,10 @@ const shareEvent = async (req, res) => {
 
     const existingShare = event.sharedWith.find(share => share.email === email);
     if (existingShare) {
-      return res.status(400).json({ message: req.t('events.share.alreadyShared') });
+      return res.status(400).json({
+        message: req.t('events.share.alreadyShared'),
+        errorCode: 'ALREADY_SHARED'
+      });
     }
 
     const targetUser = await User.findOne({ email });

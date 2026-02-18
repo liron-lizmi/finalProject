@@ -156,13 +156,7 @@ const EventSharePage = () => {
         setSharePermission('view');
         loadSharedUsers();
       } else {
-        const messageText = data.message || '';
-        const isAlreadyShared = messageText.includes('כבר שותף') || 
-                                messageText.includes('already shared') || 
-                                messageText.includes('כבר קיבל גישה') ||
-                                data.alreadyShared === true;
-        
-        if (isAlreadyShared) {
+        if (data.errorCode === 'ALREADY_SHARED') {
           showErrorModal(t('events.features.share.alreadyShared') || data.message);
         } else {
           showErrorModal(data.message || t('errors.serverError'));
