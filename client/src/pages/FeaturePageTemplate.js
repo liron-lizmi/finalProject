@@ -28,7 +28,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import '../../../styles/FeaturePage.css';
+import '../styles/FeaturePage.css';
 
 const FeaturePageTemplate = ({
   title,
