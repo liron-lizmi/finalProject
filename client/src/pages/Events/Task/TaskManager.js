@@ -42,7 +42,7 @@ import InternalCalendar from './components/InternalCalendar';
 import ReminderToast from './components/ReminderToast';
 import FeaturePageTemplate from '../../FeaturePageTemplate';
 import { apiFetch } from '../../../utils/api';
-import '../../../../styles/EventTimeline.css';
+import '../../../styles/EventTimeline.css';
 
 const TaskManager = ({ eventId, permissionLoading = false }) => {
   const { id } = useParams();
