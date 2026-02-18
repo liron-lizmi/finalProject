@@ -86,18 +86,12 @@ const GoogleCalendarSync = ({ eventId, canEdit = true, isExpanded = true, onClos
       setIsConnected(true);
       setInitializing(false);
     }
-    checkConnectionStatus();
-  }, [location.state]);
 
-  useEffect(() => {
-    if (location.state?.googleAuthSuccess) {
-      setIsConnected(true);
-      checkConnectionStatus();
-    }
-    
     if (location.state?.googleAuthError) {
       showError(location.state.message || t('events.features.tasks.calendar.sync.connectionError'));
     }
+
+    checkConnectionStatus();
   }, [location.state]);
 
   const connectGoogleCalendar = async () => {

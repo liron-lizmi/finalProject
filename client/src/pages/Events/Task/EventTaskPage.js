@@ -1,5 +1,5 @@
 /**
- * TaskManager.js - Event Task/Timeline Management Component
+ * EventTaskPage.js - Event Task/Timeline Management Component
  *
  * Main component for managing event tasks and timeline.
  *
@@ -44,7 +44,7 @@ import FeaturePageTemplate from '../../FeaturePageTemplate';
 import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventTimeline.css';
 
-const TaskManager = ({ eventId, permissionLoading = false }) => {
+const EventTaskPage = ({ eventId, permissionLoading = false }) => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -447,4 +447,4 @@ const TaskManager = ({ eventId, permissionLoading = false }) => {
   );
 };
 
-export default TaskManager;
+export default EventTaskPage;

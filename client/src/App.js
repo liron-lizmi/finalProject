@@ -53,7 +53,7 @@ import EventSeatingPage from './pages/Events/Seating/EventSeatingPage';
 import EventRidesPage from './pages/Events/Rides/EventRidesPage';
 import EventBudgetPage from './pages/Events/Budget/EventBudgetPage';
 import EventSharePage from './pages/Events/Share/EventSharePage';
-import TaskManager from './pages/Events/Task/TaskManager';
+import EventTaskPage from './pages/Events/Task/EventTaskPage';
 import GoogleAuthCallback from './pages/Events/Task/components/GoogleAuthCallback';
 import GoogleContactsCallback from './pages/Events/Guests/components/GoogleContactsCallback';
 import RSVPPage from './pages/Events/Guests/RSVPPage';
@@ -101,7 +101,7 @@ const App = () => {
         <Route path="/event/:id/vendors" element={<EventVendorsPage />} />
         <Route path="/event/:id/guests" element={<EventGuestsPage />} />
         <Route path="/event/:id/seating" element={<EventSeatingPage />} />
-        <Route path="/event/:id/timeline" element={<TaskManager />} />
+        <Route path="/event/:id/timeline" element={<EventTaskPage />} />
         <Route path="/event/:id/rides" element={<EventRidesPage />} />
         <Route path="/event/:id/budget" element={<EventBudgetPage />} />
         <Route path="/event/:id/share" element={<EventSharePage />} />
