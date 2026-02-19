@@ -507,10 +507,7 @@ const getEventVendors = async (req, res) => {
       return res.status(404).json({ msg: i18next.t('events.notFound') });
     }
 
-    if (event.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: i18next.t('auth.invalidToken') });
-    }
-
+    // Permission already checked by checkViewPermission middleware
     res.json(event.vendors || []);
   } catch (err) {
     if (err.kind === 'ObjectId') {
@@ -532,10 +529,7 @@ const addVendor = async (req, res) => {
       return res.status(404).json({ msg: i18next.t('events.notFound') });
     }
 
-    if (event.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: i18next.t('auth.invalidToken') });
-    }
-
+    // Permission already checked by checkEditPermission middleware
     const newVendor = {
       name: req.body.name,
       category: req.body.category,
@@ -579,10 +573,7 @@ const updateVendor = async (req, res) => {
       return res.status(404).json({ msg: i18next.t('events.notFound') });
     }
 
-    if (event.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: i18next.t('auth.invalidToken') });
-    }
-
+    // Permission already checked by checkEditPermission middleware
     const vendorIndex = event.vendors.findIndex(v => v._id.toString() === req.params.vendorId);
     
     if (vendorIndex === -1) {
@@ -621,10 +612,7 @@ const deleteVendor = async (req, res) => {
       return res.status(404).json({ msg: i18next.t('events.notFound') });
     }
 
-    if (event.user.toString() !== req.user.id) {
-      return res.status(401).json({ msg: i18next.t('auth.invalidToken') });
-    }
-
+    // Permission already checked by checkEditPermission middleware
     const vendorIndex = event.vendors.findIndex(v => v._id.toString() === req.params.vendorId);
     
     if (vendorIndex === -1) {
