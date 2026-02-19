@@ -63,37 +63,6 @@ const VendorsPage = ({ onSelectVendor }) => {
     kashrutLevel: 'all'
   });
 
-  const getMapStyles = () => {
-    const root = document.documentElement;
-    const styles = getComputedStyle(root);
-    
-    return [
-      { 
-        elementType: "geometry", 
-        stylers: [{ color: styles.getPropertyValue('--map-geometry-color').trim() || "#f5f5f5" }] 
-      },
-      { 
-        elementType: "labels.text.fill", 
-        stylers: [{ color: styles.getPropertyValue('--map-text-color').trim() || "#333333" }] 
-      },
-      { 
-        featureType: "road", 
-        elementType: "geometry", 
-        stylers: [{ color: styles.getPropertyValue('--map-road-color').trim() || "#ffffff" }] 
-      },
-      { 
-        featureType: "road", 
-        elementType: "geometry.stroke", 
-        stylers: [{ color: styles.getPropertyValue('--map-road-stroke-color').trim() || "#dddddd" }] 
-      },
-      { 
-        featureType: "water", 
-        elementType: "geometry", 
-        stylers: [{ color: styles.getPropertyValue('--map-water-color').trim() || "#e0e0e0" }] 
-      }
-    ];
-  };
-
   const getSpecificFilters = (vendorType) => {
     switch (vendorType) {
       case 'catering':
@@ -672,9 +641,7 @@ const searchVendors = async (shouldAppend = false) => {
   };
   
   const applyFilters = () => {
-    
-    vendorService.clearFiltersCache(filters, search);
-    
+        
     setCurrentPage(1);
     setDisplayedVendors([]);
     setHasMore(false);

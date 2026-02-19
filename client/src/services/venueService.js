@@ -12,7 +12,6 @@
  * - getVenueDetails(placeId, language): Get detailed venue info
  *   Returns full venue data from Google Places
  *
- * - getCacheStats(): Get cache statistics from server
  * - clearCache(): Clear server-side venue cache
  * - getPhotoUrl(photo): Generate Google Places photo URL from reference
  *
@@ -79,15 +78,6 @@ class VenueService {
 
     } catch (error) {
       throw new Error('Failed to load venue details');
-    }
-  }
-
-  async getCacheStats() {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/cache/stats`);
-      return response.data;
-    } catch (error) {
-      return null;
     }
   }
 

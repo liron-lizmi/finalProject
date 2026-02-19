@@ -9,7 +9,6 @@
  * - GET /details/:placeId: Get detailed vendor info by Google Place ID
  *
  * Protected Routes (requires auth):
- * - GET /cache/stats: Get vendor cache statistics
  *
  * Event Vendor CRUD (requires auth + permissions):
  * - GET /: Get vendors saved to event (view permission)
@@ -26,7 +25,6 @@ const {
   updateVendor,
   deleteVendor,
   searchVendors,
-  getCacheStats,
   getVendorDetailsByPlaceId
 } = require('../controllers/vendorController');
 const auth = require('../middleware/auth');
@@ -34,7 +32,6 @@ const { checkEditPermission, checkViewPermission } = require('../middleware/chec
 
 router.get('/search', searchVendors);
 router.get('/details/:placeId', getVendorDetailsByPlaceId);
-router.get('/cache/stats', auth, getCacheStats);
 
 router.get('/', auth, checkViewPermission, getEventVendors);
 router.post('/', auth, checkEditPermission, addVendor);

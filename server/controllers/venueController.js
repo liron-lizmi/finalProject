@@ -15,7 +15,7 @@
  * Areas: Jerusalem, Center, South, North
  */
 
-const googlePlacesService = require('../services/googlePlacesService');
+const googleVenuesService = require('../services/googleVenuesService');
 const CacheManager = require('../services/CacheManager');
 
 /**
@@ -203,7 +203,7 @@ const processVenuesWithPhotos = (venues) => {
           }
           
           if (photo.photo_reference) {
-            const url = googlePlacesService.getPhotoUrl(photo.photo_reference, 400, 300);
+            const url = googleVenuesService.getPhotoUrl(photo.photo_reference, 400, 300);
             if (url) {
               return {
                 photo_reference: photo.photo_reference,
@@ -280,12 +280,12 @@ const searchVenues = async (req, res) => {
       let result;
       
       if (googlePage === 1) {
-        const searchQuery = googlePlacesService.buildSearchQuery(
+        const searchQuery = googleVenuesService.buildSearchQuery(
           venueType, area, query, language
         );
-        const location = googlePlacesService.getLocationForArea(area);
+        const location = googleVenuesService.getLocationForArea(area);
         
-        result = await googlePlacesService.textSearch(
+        result = await googleVenuesService.textSearch(
           searchQuery, location, location.radius, language, venueType
         );
       } else {
@@ -294,7 +294,7 @@ const searchVenues = async (req, res) => {
         
         if (!pageToken) break;
         
-        result = await googlePlacesService.getNextPage(pageToken);
+        result = await googleVenuesService.getNextPage(pageToken);
       }
 
       let newVenues = processVenuesWithPhotos(result.results);
@@ -349,7 +349,7 @@ const getVenueDetails = async (req, res) => {
       return res.json(cachedData);
     }
 
-    const details = await googlePlacesService.getPlaceDetails(placeId, language);
+    const details = await googleVenuesService.getPlaceDetails(placeId, language);
 
     if (details.photos && details.photos.length > 0) {
       details.photos = details.photos.map(photo => {
@@ -358,7 +358,7 @@ const getVenueDetails = async (req, res) => {
         }
         return {
           photo_reference: photo.photo_reference,
-          url: googlePlacesService.getPhotoUrl(photo.photo_reference, 600, 400)
+          url: googleVenuesService.getPhotoUrl(photo.photo_reference, 600, 400)
         };
       });
     }

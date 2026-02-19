@@ -12,8 +12,6 @@
  * - getVendorDetails(placeId, language): Get detailed vendor info
  *   Returns full vendor data from Google Places
  *
- * - clearFiltersCache(): Placeholder for cache clearing
- *
  * Configuration:
  * - Uses REACT_APP_API_URL or defaults to localhost:5000
  * - Default language: Hebrew (he)
@@ -76,10 +74,6 @@ class VendorService {
     }
   }
 
-  // Placeholder method for clearing filters cache
-  clearFiltersCache(filters, searchQuery) {
-    return Promise.resolve();
-  }
 }
 
 const vendorService = new VendorService();

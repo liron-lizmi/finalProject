@@ -644,19 +644,6 @@ const deleteVendor = async (req, res) => {
 };
 
 /**
- * Returns vendor cache statistics (debug endpoint).
- * @route GET /api/vendors/cache-stats
- */
-const getCacheStats = (req, res) => {
-  try {
-    const stats = vendorCacheManager.getStats();
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ msg: 'Server error' });
-  }
-};
-
-/**
  * Returns detailed vendor info from Google Places API.
  * @route GET /api/vendors/:placeId
  */
@@ -699,6 +686,5 @@ module.exports = {
   updateVendor,
   deleteVendor,
   searchVendors,
-  getCacheStats,
   getVendorDetailsByPlaceId  
 };
