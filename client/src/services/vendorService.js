@@ -1,21 +1,18 @@
 /**
- * vendorService.js - Vendor Search API Service
+ * vendorService.js - Vendor API Service
  *
- * Client-side service for searching vendors via Google Places API.
- * Communicates with backend /api/vendors endpoints.
+ * Client-side service for searching vendors via Google Places API
+ * and managing event vendors.
  *
- * Methods:
+ * Search Methods:
  * - searchVendors(filters, searchQuery, page, language): Search vendors
- *   Filters: area, vendorType, specificFilters, kashrutLevel
- *   Returns: { vendors, hasMore, currentPage, totalResults }
- *
  * - getVendorDetails(placeId, language): Get detailed vendor info
- *   Returns full vendor data from Google Places
  *
- * Configuration:
- * - Uses REACT_APP_API_URL or defaults to localhost:5000
- * - Default language: Hebrew (he)
- * - Timeout: 30s for search, 15s for details
+ * Event Vendor CRUD:
+ * - getEventVendors(eventId): Get all vendors for an event
+ * - addVendorToEvent(eventId, vendorData): Add vendor to event
+ * - updateEventVendor(eventId, vendorId, vendorData): Update vendor
+ * - deleteEventVendor(eventId, vendorId): Remove vendor from event
  */
 
 import axios from 'axios';
@@ -23,6 +20,10 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/vendors`
   : 'http://localhost:5000/api/vendors';
+
+const EVENTS_API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/events`
+  : 'http://localhost:5000/api/events';
 
 class VendorService {
 
@@ -72,6 +73,52 @@ class VendorService {
     } catch (error) {
       throw new Error('Failed to load vendor details');
     }
+  }
+
+  // Gets all vendors saved to an event
+  async getEventVendors(eventId) {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${EVENTS_API_URL}/${eventId}/vendors`, {
+      headers: { 'x-auth-token': token },
+      timeout: 15000
+    });
+    return response.data;
+  }
+
+  // Adds a vendor to an event
+  async addVendorToEvent(eventId, vendorData) {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(`${EVENTS_API_URL}/${eventId}/vendors`, vendorData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': token
+      },
+      timeout: 15000
+    });
+    return response.data;
+  }
+
+  // Updates a vendor in an event
+  async updateEventVendor(eventId, vendorId, vendorData) {
+    const token = localStorage.getItem('token');
+    const response = await axios.put(`${EVENTS_API_URL}/${eventId}/vendors/${vendorId}`, vendorData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': token
+      },
+      timeout: 15000
+    });
+    return response.data;
+  }
+
+  // Removes a vendor from an event
+  async deleteEventVendor(eventId, vendorId) {
+    const token = localStorage.getItem('token');
+    const response = await axios.delete(`${EVENTS_API_URL}/${eventId}/vendors/${vendorId}`, {
+      headers: { 'x-auth-token': token },
+      timeout: 15000
+    });
+    return response.data;
   }
 
 }

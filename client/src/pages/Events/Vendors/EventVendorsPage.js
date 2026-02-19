@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import FeaturePageTemplate from '../../FeaturePageTemplate';
 import VendorsPage from './VendorsPage';
+import vendorService from '../../../services/vendorService';
 import '../../../styles/VendorsPage.css';
 
 const EventVendorsPage = () => {
@@ -50,7 +51,7 @@ const EventVendorsPage = () => {
   const [phoneError, setPhoneError] = useState('');
   const [showVendorSelectionModal, setShowVendorSelectionModal] = useState(false);
   const [vendorActionType, setVendorActionType] = useState(null);
-  const [vendorToChangeIndex, setVendorToChangeIndex] = useState(null);
+  const [vendorToChangeId, setVendorToChangeId] = useState(null);
   const [canEdit, setCanEdit] = useState(true);
 
   const isRTL = i18n.language === 'he' || i18n.language === 'he-IL';
@@ -95,57 +96,39 @@ const EventVendorsPage = () => {
   // Handles vendor selection from API search
   const handleVendorSelect = async (vendor) => {
     try {
-
       if (!canEdit) {
         setError(t('general.viewOnlyMode'));
         return;
       }
-    
+
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
         navigate('/login');
         return;
       }
- 
+
       setVendorDeleteSuccess(false);
- 
+
       const vendorData = {
         name: vendor.name,
         category: vendor.category || 'other',
         phone: vendor.phone || vendor.formatted_phone_number || '',
         notes: vendor.notes || ''
       };
- 
-      const eventVendors = event.vendors || [];
-      let updatedEvent = { ...event };
-     
-      if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
-        updatedEvent.vendors = [...eventVendors];
-        updatedEvent.vendors[vendorToChangeIndex] = vendorData;
+
+      let result;
+      if (vendorActionType === 'change' && vendorToChangeId !== null) {
+        result = await vendorService.updateEventVendor(id, vendorToChangeId, vendorData);
       } else {
-        updatedEvent.vendors = [...eventVendors, vendorData];
+        result = await vendorService.addVendorToEvent(id, vendorData);
       }
-     
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
- 
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
- 
-      setEvent(response.data);
+
+      setEvent(prev => ({ ...prev, vendors: result.vendors }));
       setVendorUpdateSuccess(true);
       setShowVendorsPage(false);
-      setVendorToChangeIndex(null);
+      setVendorToChangeId(null);
       setVendorActionType(null);
-      // Remove the view parameter from URL
       setSearchParams({});
 
       setTimeout(() => {
@@ -182,17 +165,17 @@ const EventVendorsPage = () => {
       setError(t('general.viewOnlyMode'));
       return;
     }
-     
+
     if (!manualVendor.phone || manualVendor.phone.trim() === '') {
       setPhoneError(t('errors.invalidPhoneFormat'));
       return;
     }
-   
+
     if (!validatePhone(manualVendor.phone)) {
       setPhoneError(t('errors.invalidPhoneFormat'));
       return;
     }
-   
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -200,44 +183,27 @@ const EventVendorsPage = () => {
         navigate('/login');
         return;
       }
- 
+
       setVendorDeleteSuccess(false);
- 
-      const eventVendors = event.vendors || [];
-     
-      const vendorToSubmit = {
+
+      const vendorData = {
         name: manualVendor.name,
         category: manualVendor.category || 'other',
         phone: manualVendor.phone.trim(),
         notes: manualVendor.notes || ''
       };
-         
-      let updatedEvent = { ...event };
-     
-      if (vendorActionType === 'change' && vendorToChangeIndex !== null) {
-        updatedEvent.vendors = [...eventVendors];
-        updatedEvent.vendors[vendorToChangeIndex] = vendorToSubmit;
+
+      let result;
+      if (vendorActionType === 'change' && vendorToChangeId !== null) {
+        result = await vendorService.updateEventVendor(id, vendorToChangeId, vendorData);
       } else {
-        updatedEvent.vendors = [...eventVendors, vendorToSubmit];
+        result = await vendorService.addVendorToEvent(id, vendorData);
       }
-     
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
- 
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
- 
-      setEvent(response.data);
+
+      setEvent(prev => ({ ...prev, vendors: result.vendors }));
       setVendorUpdateSuccess(true);
       setShowManualForm(false);
-      setVendorToChangeIndex(null);
+      setVendorToChangeId(null);
       setVendorActionType(null);
       setManualVendor({
         name: '',
@@ -246,7 +212,7 @@ const EventVendorsPage = () => {
         notes: ''
       });
       setPhoneError('');
- 
+
       setTimeout(() => {
         setVendorUpdateSuccess(false);
       }, 3000);
@@ -255,10 +221,9 @@ const EventVendorsPage = () => {
     }
   };
 
-  // Deletes a vendor from the event by index
-  const handleDeleteVendor = async (index) => {
+  // Deletes a vendor from the event by vendorId
+  const handleDeleteVendor = async (vendorId) => {
     try {
-
       if (!canEdit) {
         setError(t('general.viewOnlyMode'));
         return;
@@ -270,30 +235,14 @@ const EventVendorsPage = () => {
         navigate('/login');
         return;
       }
- 
+
       setVendorUpdateSuccess(false);
- 
-      let updatedEvent = { ...event };
-      const updatedVendors = [...(event.vendors || [])];
-      updatedVendors.splice(index, 1);
-      updatedEvent.vendors = updatedVendors;
- 
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
- 
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
- 
-      setEvent(response.data);
+
+      const result = await vendorService.deleteEventVendor(id, vendorId);
+
+      setEvent(prev => ({ ...prev, vendors: result.vendors }));
       setVendorDeleteSuccess(true);
- 
+
       setTimeout(() => {
         setVendorDeleteSuccess(false);
       }, 3000);
@@ -303,9 +252,9 @@ const EventVendorsPage = () => {
   };
 
   // Opens modal to choose between API search or manual entry for adding/changing vendor
-  const handleShowVendorOptions = (actionType, vendorIndex = null) => {
+  const handleShowVendorOptions = (actionType, vendorId = null) => {
     setVendorActionType(actionType);
-    setVendorToChangeIndex(vendorIndex);
+    setVendorToChangeId(vendorId);
     setShowVendorSelectionModal(true);
   };
 
@@ -435,7 +384,7 @@ const EventVendorsPage = () => {
             onClick={() => {
               setShowVendorSelectionModal(false);
               setVendorActionType(null);
-              setVendorToChangeIndex(null);
+              setVendorToChangeId(null);
             }}
           >
             {t('general.cancel')}
@@ -542,8 +491,8 @@ const EventVendorsPage = () => {
       ) : event.vendors && event.vendors.length > 0 ? (
         <div className="selected-vendors">
           <h3>{t('events.features.vendors.selectedVendors')}</h3>
-          {event.vendors.map((vendor, index) => (
-            <div key={index} className="vendor-details-card">
+          {event.vendors.map((vendor) => (
+            <div key={vendor._id} className="vendor-details-card">
               <div className="vendor-card-header">
                 <div className="vendor-icon-name">
                   <span className="vendor-icon">{getCategoryIcon(vendor.category)}</span>
@@ -563,16 +512,16 @@ const EventVendorsPage = () => {
               <div className="vendor-actions">
                 <button
                   className="change-vendor-button"
-                  onClick={() => handleShowVendorOptions('change', index)}
+                  onClick={() => handleShowVendorOptions('change', vendor._id)}
                   disabled={!canEdit}
                 >
                   {t('events.features.vendors.changeVendor')}
                 </button>
                 <button
-                 className="delete-vendor-button"
-                 onClick={() => handleDeleteVendor(index)}
-                 disabled={!canEdit}
-                 >
+                  className="delete-vendor-button"
+                  onClick={() => handleDeleteVendor(vendor._id)}
+                  disabled={!canEdit}
+                >
                   {t('events.features.vendors.deleteVendor')}
                 </button>
               </div>
