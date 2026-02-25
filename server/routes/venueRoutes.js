@@ -1,22 +1,36 @@
 /**
- * venueRoutes.js - Venue Search Routes
+ * venueRoutes.js - Venue Routes
  *
- * Handles venue search and discovery via Google Places API.
- * All routes are public (no authentication required).
+ * Handles venue search via Google Places API and event venue management.
+ * Can be used standalone (/api/venues) or nested (/events/:eventId/venue).
  *
- * Routes:
- * - GET /search: Search venues with filters (type, area, style, amenities)
- *   Query params: query, area, venueType, venueStyle, parking, accessibility,
- *                 outdoorSpace, catering, page, language
+ * Public Routes (no auth required):
+ * - GET /search: Search venues via Google Places API with filters
  * - GET /details/:placeId: Get detailed venue info by Google Place ID
- *   Returns: name, address, phone, website, photos, rating, reviews, hours
+ *
+ * Protected Routes (requires auth):
+ * Event Venue CRUD (requires auth + permissions):
+ * - GET /: Get venue saved to event (view permission)
+ * - POST /: Set venue for event (edit permission)
+ * - DELETE /: Remove venue from event (edit permission)
  */
 
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
+const {
+  getEventVenue,
+  setEventVenue,
+  deleteEventVenue
+} = require('../controllers/venueController');
 const venueController = require('../controllers/venueController');
+const auth = require('../middleware/auth');
+const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 
 router.get('/search', venueController.searchVenues);
 router.get('/details/:placeId', venueController.getVenueDetails);
+
+router.get('/', auth, checkViewPermission, getEventVenue);
+router.post('/', auth, checkEditPermission, setEventVenue);
+router.delete('/', auth, checkEditPermission, deleteEventVenue);
 
 module.exports = router;

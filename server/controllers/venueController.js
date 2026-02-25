@@ -17,6 +17,8 @@
 
 const googleVenuesService = require('../services/googleVenuesService');
 const CacheManager = require('../services/CacheManager');
+const Event = require('../models/Event');
+const i18next = require('i18next');
 
 /**
  * Detects venue style(s) from name, address, and type keywords.
@@ -374,7 +376,93 @@ const getVenueDetails = async (req, res) => {
   }
 };
 
+/**
+ * Returns the venue saved to an event.
+ * @route GET /api/events/:eventId/venue
+ */
+const getEventVenue = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId);
+
+    if (!event) {
+      return res.status(404).json({ msg: i18next.t('events.notFound') });
+    }
+
+    // Permission already checked by checkViewPermission middleware
+    res.json(event.venues || []);
+  } catch (err) {
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ msg: i18next.t('events.notFound') });
+    }
+    res.status(500).send(i18next.t('errors.serverError'));
+  }
+};
+
+/**
+ * Sets or updates the venue for an event.
+ * @route POST /api/events/:eventId/venue
+ */
+const setEventVenue = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId);
+
+    if (!event) {
+      return res.status(404).json({ msg: i18next.t('events.notFound') });
+    }
+
+    // Permission already checked by checkEditPermission middleware
+    const venueData = {
+      name: req.body.name,
+      address: req.body.address,
+      phone: req.body.phone || '',
+      website: req.body.website || ''
+    };
+
+    event.venues = [venueData];
+    await event.save();
+
+    res.json({
+      venues: event.venues,
+      msg: i18next.t('events.venues.setSuccess')
+    });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      const errors = Object.values(err.errors).map(error => error.message);
+      return res.status(400).json({ errors });
+    }
+    res.status(500).send(i18next.t('errors.serverError'));
+  }
+};
+
+/**
+ * Removes the venue from an event.
+ * @route DELETE /api/events/:eventId/venue
+ */
+const deleteEventVenue = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId);
+
+    if (!event) {
+      return res.status(404).json({ msg: i18next.t('events.notFound') });
+    }
+
+    // Permission already checked by checkEditPermission middleware
+    event.venues = [];
+    await event.save();
+
+    res.json({
+      venues: event.venues,
+      msg: i18next.t('events.venues.deleteSuccess')
+    });
+  } catch (err) {
+    res.status(500).send(i18next.t('errors.serverError'));
+  }
+};
+
 module.exports = {
   searchVenues,
-  getVenueDetails
+  getVenueDetails,
+  getEventVenue,
+  setEventVenue,
+  deleteEventVenue
 };

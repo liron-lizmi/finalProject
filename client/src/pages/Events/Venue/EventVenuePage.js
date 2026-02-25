@@ -28,6 +28,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import VenuePage from './VenuePage';
+import venueService from '../../../services/venueService';
 import '../../../styles/VenuePage.css';
 
 const EventVenuePage = () => {
@@ -113,6 +114,7 @@ const EventVenuePage = () => {
         setError(t('general.viewOnlyMode'));
         return;
       }
+
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -129,27 +131,12 @@ const EventVenuePage = () => {
         website: venue.website || venue.url || venue.formatted_website || ''
       };
 
-      let updatedEvent = { ...event };
-      updatedEvent.venues = [venueData];
+      const result = await venueService.setEventVenue(id, venueData);
 
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
-
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
-
-      setEvent(response.data);
+      setEvent(prev => ({ ...prev, venues: result.venues }));
       setVenueUpdateSuccess(true);
       setShowVenuePage(false);
       setVenueActionType(null);
-      // Remove the view parameter from URL
       setSearchParams({});
 
       setTimeout(() => {
@@ -213,31 +200,17 @@ const EventVenuePage = () => {
       }
 
       setVenueDeleteSuccess(false);
-     
-      const venueToSubmit = {
+
+      const venueData = {
         name: manualVenue.name.trim(),
         address: manualVenue.address.trim(),
         phone: manualVenue.phone.trim(),
         website: manualVenue.website.trim()
       };
-     
-      let updatedEvent = { ...event };
-      updatedEvent.venues = [venueToSubmit];
 
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
+      const result = await venueService.setEventVenue(id, venueData);
 
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
-
-      setEvent(response.data);
+      setEvent(prev => ({ ...prev, venues: result.venues }));
       setVenueUpdateSuccess(true);
       setShowManualForm(false);
       setVenueActionType(null);
@@ -259,11 +232,11 @@ const EventVenuePage = () => {
 
   const handleDeleteVenue = async () => {
     try {
-
       if (!canEdit) {
         setError(t('general.viewOnlyMode'));
         return;
       }
+
       const token = localStorage.getItem('token');
       if (!token) {
         setError(t('errors.notLoggedIn'));
@@ -273,23 +246,9 @@ const EventVenuePage = () => {
 
       setVenueUpdateSuccess(false);
 
-      let updatedEvent = { ...event };
-      updatedEvent.venues = [];
+      const result = await venueService.deleteEventVenue(id);
 
-      await axios.put(`/api/events/${id}`, updatedEvent, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        }
-      });
-
-      const response = await axios.get(`/api/events/${id}`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
-
-      setEvent(response.data);
+      setEvent(prev => ({ ...prev, venues: result.venues }));
       setVenueDeleteSuccess(true);
 
       setTimeout(() => {

@@ -95,6 +95,7 @@ app.use('/api/rsvp', rsvpRoutes);
 app.use('/api/events/:eventId/budget', budgetRoutes);
 app.use('/api/rides', ridesRoutes);
 app.use('/api/venues', venueRoutes);
+app.use('/api/events/:eventId/venue', venueRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/events/:eventId/vendors', vendorRoutes);
 app.use('/api/events/:eventId/seating', seatingRouter);
