@@ -852,35 +852,83 @@ SeatingSchema.methods.processSyncTrigger = function(trigger, result) {
   }
 };
 
-SeatingSchema.methods.findAvailableTable = function(guestSize, guests, excludeTableIds = [], gender = null) {
+function checkMixingAllowed(guestGroup, tableGuests, allGuests, preferences) {
+  if (!guestGroup) return true;
+  if (tableGuests.length === 0) return true;
+
+  return tableGuests.every(guestId => {
+    const g = allGuests.find(g => g._id && g._id.toString() === guestId);
+    if (!g) return true;
+    const tableGuestGroup = g.customGroup || g.group;
+
+    if (tableGuestGroup === guestGroup) return true;
+
+    if (preferences.groupMixingRules && preferences.groupMixingRules.length > 0) {
+      const hasAllowingRule = preferences.groupMixingRules.some(rule =>
+        (rule.group1 === guestGroup && rule.group2 === tableGuestGroup && rule.allowMixing !== false) ||
+        (rule.group2 === guestGroup && rule.group1 === tableGuestGroup && rule.allowMixing !== false)
+      );
+      if (hasAllowingRule) return true;
+    }
+
+    const guestPolicy = preferences.groupPolicies?.[guestGroup];
+    const tableGuestPolicy = preferences.groupPolicies?.[tableGuestGroup];
+
+    if (guestPolicy === 'S' || tableGuestPolicy === 'S') {
+      return false;
+    }
+
+    if (guestPolicy === 'M' && tableGuestPolicy === 'M') {
+      return true;
+    }
+
+    if (preferences.groupMixingRules && preferences.groupMixingRules.length > 0) {
+      return false;
+    }
+
+    if (preferences.allowGroupMixing === false) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+SeatingSchema.methods.findAvailableTable = function(guestSize, guests, excludeTableIds = [], gender = null, guestToAdd = null) {
   const isSeparated = this.isSeparatedSeating || false;
-  
+  const preferences = this.preferences || {};
+  const guestGroup = guestToAdd ? (guestToAdd.customGroup || guestToAdd.group) : null;
+
   if (isSeparated && gender) {
     const currentTables = gender === 'male' ? this.maleTables : this.femaleTables;
     const currentArrangement = gender === 'male' ? this.maleArrangement : this.femaleArrangement;
-    
+
     return currentTables.find(table => {
       if (excludeTableIds.includes(table.id)) return false;
-      
+
       const tableGuests = currentArrangement[table.id] || [];
       const currentOccupancy = tableGuests.reduce((sum, guestId) => {
         const guest = guests.find(g => g._id.toString() === guestId);
         return sum + (guest?.attendingCount || 1);
       }, 0);
-      
-      return (table.capacity - currentOccupancy) >= guestSize;
+
+      if ((table.capacity - currentOccupancy) < guestSize) return false;
+
+      return checkMixingAllowed(guestGroup, tableGuests, guests, preferences);
     });
   } else {
     return this.tables.find(table => {
       if (excludeTableIds.includes(table.id)) return false;
-      
+
       const tableGuests = this.arrangement[table.id] || [];
       const currentOccupancy = tableGuests.reduce((sum, guestId) => {
         const guest = guests.find(g => g._id.toString() === guestId);
         return sum + (guest?.attendingCount || 1);
       }, 0);
-      
-      return (table.capacity - currentOccupancy) >= guestSize;
+
+      if ((table.capacity - currentOccupancy) < guestSize) return false;
+
+      return checkMixingAllowed(guestGroup, tableGuests, guests, preferences);
     });
   }
 };
@@ -1260,4 +1308,7 @@ SeatingSchema.methods.getSyncSummary = function() {
   };
 };
 
-module.exports = mongoose.model('Seating', SeatingSchema);
+const Seating = mongoose.model('Seating', SeatingSchema);
+
+module.exports = Seating;
+module.exports.checkMixingAllowed = checkMixingAllowed;

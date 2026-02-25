@@ -894,12 +894,19 @@ const AISeatingModal = ({
       const newRules = [...aiPreferences.groupMixingRules, {
         id: Date.now().toString(),
         group1: newGroupMixRule.group1,
-        group2: newGroupMixRule.group2
+        group2: newGroupMixRule.group2,
+        allowMixing: true
       }];
-     
+
+      // Remove groups from groupPolicies when they appear in mixing rules
+      const updatedPolicies = { ...aiPreferences.groupPolicies };
+      delete updatedPolicies[newGroupMixRule.group1];
+      delete updatedPolicies[newGroupMixRule.group2];
+
       setAiPreferences(prev => ({
         ...prev,
-        groupMixingRules: newRules
+        groupMixingRules: newRules,
+        groupPolicies: updatedPolicies
       }));
       setNewGroupMixRule({ group1: '', group2: '' });
      
