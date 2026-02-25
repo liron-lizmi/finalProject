@@ -279,7 +279,11 @@ const AISeatingModal = ({
             cannotSitTogether: preferences.seatingRules.cannotSitTogether || []
           });
         }
-       
+
+        const currentAllowMixing = preferences?.allowGroupMixing || false;
+        const currentGroupPolicies = preferences?.groupPolicies || {};
+        const currentMixingRules = preferences?.groupMixingRules || [];
+
         if (isSeparatedSeating) {
           const totalMaleGuests = guests.reduce((sum, guest) => sum + (guest.maleCount || 0), 0);
           const totalFemaleGuests = guests.reduce((sum, guest) => sum + (guest.femaleCount || 0), 0);
@@ -299,14 +303,14 @@ const AISeatingModal = ({
           if (totalMaleCapacity < totalMaleGuests || maleTables.length === 0 || hasOnlyEmptyMaleTables) {
             setShowTableCreation(true);
             if (maleTables.length === 0 || hasOnlyEmptyMaleTables) {
-              await autoSuggestTables(totalMaleGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'male');
+              await autoSuggestTables(totalMaleGuests, currentAllowMixing, currentGroupPolicies, 'male', currentMixingRules);
             }
           }
 
           if (totalFemaleCapacity < totalFemaleGuests || femaleTables.length === 0 || hasOnlyEmptyFemaleTables) {
             setShowTableCreation(true);
             if (femaleTables.length === 0 || hasOnlyEmptyFemaleTables) {
-              await autoSuggestTables(totalFemaleGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies, 'female');
+              await autoSuggestTables(totalFemaleGuests, currentAllowMixing, currentGroupPolicies, 'female', currentMixingRules);
             }
           }
         } else {
@@ -323,7 +327,7 @@ const AISeatingModal = ({
           if (totalCapacity < totalGuests || tables.length === 0 || hasOnlyEmptyTables) {
             setShowTableCreation(true);
             if (tables.length === 0 || hasOnlyEmptyTables) {
-              await autoSuggestTables(totalGuests, aiPreferences.allowGroupMixing, aiPreferences.groupPolicies);
+              await autoSuggestTables(totalGuests, currentAllowMixing, currentGroupPolicies, null, currentMixingRules);
             }
           } else {
             setShowTableCreation(false);
@@ -898,7 +902,6 @@ const AISeatingModal = ({
         allowMixing: true
       }];
 
-      // Remove groups from groupPolicies when they appear in mixing rules
       const updatedPolicies = { ...aiPreferences.groupPolicies };
       delete updatedPolicies[newGroupMixRule.group1];
       delete updatedPolicies[newGroupMixRule.group2];
