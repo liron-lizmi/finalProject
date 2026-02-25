@@ -18,6 +18,8 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const {
+  searchVenues,
+  getVenueDetails,
   getEventVenue,
   setEventVenue,
   deleteEventVenue
@@ -26,8 +28,8 @@ const venueController = require('../controllers/venueController');
 const auth = require('../middleware/auth');
 const { checkEditPermission, checkViewPermission } = require('../middleware/checkPermissions');
 
-router.get('/search', venueController.searchVenues);
-router.get('/details/:placeId', venueController.getVenueDetails);
+router.get('/search', searchVenues);
+router.get('/details/:placeId', getVenueDetails);
 
 router.get('/', auth, checkViewPermission, getEventVenue);
 router.post('/', auth, checkEditPermission, setEventVenue);
