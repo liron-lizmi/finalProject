@@ -5580,17 +5580,20 @@ const generateAISeating = async (req, res) => {
         };
       });
 
-      femaleTablesList.forEach(table => {
-        if (!table.isLocked && table.capacity === 12) {
-          const guestIds = aiFemaleArrangement[table.id] || [];
-          const tableGuests = guestIds.map(gId => femaleGuests.find(g => g._id.toString() === gId)).filter(Boolean);
-          const totalPeople = tableGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-
-          if (totalPeople > 0 && totalPeople < 11) {
-            table.capacity = 10;
-          }
-        }
+      
+      // Female table numbering continues after male tables (e.g. if 10 male tables, females start at "שולחן 11")
+      const maleTablesCount = maleTablesList.length;
+      femaleTablesList.forEach((table, index) => {
+        table.name = `שולחן ${maleTablesCount + index + 1}`;
+        table.order = maleTablesCount + index;
+        const row = Math.floor(index / COLS);
+        const col = index % COLS;
+        table.position = {
+          x: FEMALE_START_X + col * SPACING_X,
+          y: START_Y + row * SPACING_Y
+        };
       });
+
 
       // =====================================================================
       // SAVE TO DATABASE - Separated seating
