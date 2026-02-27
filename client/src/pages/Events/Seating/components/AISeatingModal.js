@@ -983,19 +983,6 @@ const AISeatingModal = ({
     setNewMustSitRule({ guest1Id: '', guest2Id: '' });
   };
 
-  const removeMustSitRule = (ruleId) => {
-    setSeatingRules(prev => ({
-      ...prev,
-      mustSitTogether: prev.mustSitTogether.filter(rule => rule.id !== ruleId)
-    }));
-  };
-
-
-  const getGuestName = (guestId) => {
-    const guest = guests.find(g => g._id === guestId);
-    return guest ? `${guest.firstName} ${guest.lastName}` : t('seating.ai.unknownGuest');
-  };
-
   const getGroupDisplayName = (groupName) => {
     if (['family', 'friends', 'work', 'other'].includes(groupName)) {
       return t(`guests.groups.${groupName}`);
@@ -1040,7 +1027,6 @@ const AISeatingModal = ({
     const SPACING_X = 200;
     const SPACING_Y = 180;
     const COLS = isSeparatedSeating ? 5 : 10;
-    const MAX_Y = CANVAS_HEIGHT - BOUNDARY_PADDING;
     const START_X = 300;
     const START_Y = 250;
     const FEMALE_START_X = 1300;
@@ -1524,13 +1510,6 @@ const AISeatingModal = ({
         await handleGenerate(aiPreferencesWithExisting);
       }
     }
-  };
-
-  const handlePreferenceChange = (key, value) => {
-    setAiPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
   };
 
   const handleAllowGroupMixingChange = async (value) => {

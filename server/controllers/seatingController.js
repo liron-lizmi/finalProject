@@ -305,6 +305,7 @@ const getSeatingArrangement = async (req, res) => {
     responseData.canEdit = canEdit;
 
     res.json(responseData);
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.errors.fetchFailed'),
@@ -2055,6 +2056,7 @@ const updateSyncSettings = async (req, res) => {
       syncSettings: seating.syncSettings,
       syncSummary: seating.getSyncSummary()
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.errors.updateSyncSettingsFailed'),
@@ -2111,6 +2113,7 @@ const getSyncStatus = async (req, res) => {
       syncStats: syncSummary.syncStats,
       recentTriggers: syncSummary.recentTriggers
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -2172,6 +2175,7 @@ const proposeSyncOptions = async (req, res) => {
       }))
     });
 
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.sync.optionGenerationFailed'),
@@ -2972,7 +2976,6 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
       }
      
       const rulesApplied = [];
-      let hasExplicitRules = false;
      
       if (userPreferences.seatingRules?.mustSitTogether?.length > 0) {
         hasExplicitRules = true;
@@ -4441,7 +4444,7 @@ const applySyncOption = async (req, res) => {
       const strategy = 'conservative';
 
       const option = await generateSyncOption(seating, pendingTriggers, guests, req, strategy);
-      
+     
       appliedData = option;
       actions = option.actions;
     }
@@ -4639,6 +4642,7 @@ const applySyncOption = async (req, res) => {
 
     res.json(responseData);
 
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.sync.applyOptionFailed'),
@@ -4991,6 +4995,7 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
 
     res.json(responseData);
 
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.sync.moveGuestsFailed'),
@@ -4999,59 +5004,76 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
   }
 };
 
+/**
+ * generateAISeating - Main function for AI-powered seating arrangement generation.
+ *
+ * This function handles two main flows:
+ * 1. Separated seating (isSeparatedSeating=true) - Male and female guests are seated in separate table groups
+ * 2. Non-separated seating (isSeparatedSeating=false) - All guests are seated together
+ *
+ * Within each flow, there are sub-cases:
+ * - preserveExisting=true: Keep current guest assignments, only seat unassigned guests in new tables
+ * - preserveExisting=false + user modified tables: Use user's custom/modified tables, create new guest assignments
+ * - preserveExisting=false + no modifications: Let AI decide everything (tables + assignments) from scratch
+ */
 const generateAISeating = async (req, res) => {
   try {
     const { eventId } = req.params;
     const {
+    // Basic table arrays sent from frontend (3)
       tables,
       maleTables,
       femaleTables,
       preferences,
-      guests: requestGuests,
+      // Existing guest-to-table assignments (only sent when preserveExisting=true)
       currentArrangement,
       currentMaleArrangement,
       currentFemaleArrangement,
-      clearExisting,
+      // true = keep current seated guests and only add unassigned ones; false = start fresh
       preserveExisting,
+      // Complete table arrays built in the AI modal (includes preset + custom tables the user configured)
       allTables,
       allMaleTables,
       allFemaleTables,
-      seatingRules,
-      groupMixingRules,
-      allowGroupMixing,
+      // User's preferred default table capacity (e.g. 10, 12)
       preferredTableSize,
+      // true = separate male/female tables; false = mixed seating
       isSeparatedSeating,
+      // true when user zeroed out all preset tables and only added custom table sizes
       useCustomTablesOnly,
       useMaleCustomTablesOnly,
       useFemaleCustomTablesOnly,
+      // true when user changed the quantities of the AI-suggested preset tables
       useModifiedPresetTables,
       useMaleModifiedPresetTables,
       useFemaleModifiedPresetTables,
-      useUserSelectedTables: useUserSelectedTablesFromBody,
-      useMaleUserSelectedTables,
-      useFemaleUserSelectedTables
+      useUserSelectedTables: useUserSelectedTablesFromBody
     } = req.body;
 
+    // --- Authorization: Verify event exists and user has edit permissions ---
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
+    // Check if user is the event owner
     const isOwner = event.user.toString() === req.userId;
     let canEdit = isOwner;
 
+    // If not owner, check if event is shared with this user and they have edit permission
     if (!isOwner) {
       const shareInfo = event.sharedWith.find(
         share => share.userId && share.userId.toString() === req.userId
       );
-     
+
       if (!shareInfo || shareInfo.permission !== 'edit') {
         return res.status(403).json({ message: req.t('events.accessDenied') });
       }
-     
+
       canEdit = true;
     }
 
+    // Final permission guard
     if (!canEdit) {
       return res.status(403).json({ message: req.t('events.accessDenied') });
     }
@@ -5059,32 +5081,47 @@ const generateAISeating = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
+    // --- Fetch confirmed guests only (guests who RSVP'd "confirmed") ---
     const guests = await Guest.find({
       event: eventId,
       rsvpStatus: 'confirmed'
     });
 
+    // Cannot generate seating without any confirmed guests
     if (guests.length === 0) {
       return res.status(400).json({ message: req.t('seating.errors.noConfirmedGuests') });
     }
 
+    // --- Build enhanced preferences object with defaults ---
+    // Merges request-level params with preferences object, providing fallback defaults for each field
     const enhancedPreferences = {
       ...preferences,
-      seatingRules: seatingRules || preferences?.seatingRules || { mustSitTogether: [], cannotSitTogether: [] },
-      groupMixingRules: groupMixingRules || preferences?.groupMixingRules || [],
-      allowGroupMixing: allowGroupMixing !== undefined ? allowGroupMixing : (preferences?.allowGroupMixing !== undefined ? preferences.allowGroupMixing : false),
+      seatingRules: preferences?.seatingRules || { mustSitTogether: [], cannotSitTogether: [] },
+      groupMixingRules: preferences?.groupMixingRules || [],
+      allowGroupMixing: preferences?.allowGroupMixing !== undefined ? preferences.allowGroupMixing : false,
       preferredTableSize: preferredTableSize || preferences?.preferredTableSize || 12,
       groupPolicies: preferences?.groupPolicies || {}
     };
 
+    // --- Check if a seating document already exists for this event ---
     let seating = await Seating.findOne({ event: eventId });
 
+    // ==========================================
+    // FLOW A: SEPARATED SEATING (male/female)
+    // ==========================================
     if (isSeparatedSeating) {
+
+      // --- Split guests into male and female groups ---
+      // hasSplitCounts: true when guests have explicit maleCount/femaleCount fields
+      //   (e.g. a guest invitation for "The Cohen Family" with maleCount=3, femaleCount=4)
+      // If false, we fall back to the simple gender field on each guest
       const hasSplitCounts = guests.some(g => g.maleCount !== undefined || g.femaleCount !== undefined);
-     
+
       let maleGuests, femaleGuests;
-     
+
       if (hasSplitCounts) {
+        // Split by maleCount/femaleCount - same guest can appear in BOTH lists
+        // (e.g. "Cohen Family" appears in male list with attendingCount=3 and female list with attendingCount=4)
         maleGuests = guests
           .filter(g => g.maleCount && g.maleCount > 0)
           .map((g, idx) => {
@@ -5096,7 +5133,7 @@ const generateAISeating = async (req, res) => {
               gender: 'male'
             };
           });
-         
+
         femaleGuests = guests
           .filter(g => g.femaleCount && g.femaleCount > 0)
           .map((g, idx) => {
@@ -5109,13 +5146,14 @@ const generateAISeating = async (req, res) => {
             };
           });
       } else {
+        // Simple split by gender field - each guest appears in only one list
         maleGuests = guests
           .filter(g => g.gender === 'male')
           .map(g => ({
             ...g,
             attendingCount: g.attendingCount || 1
           }));
-         
+
         femaleGuests = guests
           .filter(g => g.gender === 'female')
           .map(g => ({
@@ -5124,12 +5162,13 @@ const generateAISeating = async (req, res) => {
           }));
       }
 
+      // --- Determine which tables to use for each gender ---
+      // maleTablesList: The tables that will be used for male seating.
+      // Priority: allMaleTables (built in AI modal) > maleTables (existing on canvas)
       let maleTablesList = allMaleTables && allMaleTables.length > 0 ? allMaleTables : maleTables;
       let femaleTablesList = allFemaleTables && allFemaleTables.length > 0 ? allFemaleTables : femaleTables;
 
-      const frontendSentMaleTables = allMaleTables && allMaleTables.length > 0;
-      const frontendSentFemaleTables = allFemaleTables && allFemaleTables.length > 0;
-     
+      // If no tables exist at all, auto-create tables based on total people count
       if (!maleTablesList || maleTablesList.length === 0) {
         const totalMalePeople = maleGuests.reduce((sum, guest) => sum + guest.attendingCount, 0);
         maleTablesList = createAdditionalTables(totalMalePeople, 0, req, enhancedPreferences.preferredTableSize);
@@ -5140,16 +5179,35 @@ const generateAISeating = async (req, res) => {
         femaleTablesList = createAdditionalTables(totalFemalePeople, 0, req, enhancedPreferences.preferredTableSize);
       }
 
+      // --- Run dry-run seating for both genders ---
+      // runDryGenerateOptimalSeating: A wrapper around generateOptimalSeating that:
+      //   1. Runs the seating algorithm
+      //   2. Adjusts table capacities (e.g. downsizes 12->10 if underfilled)
+      //   3. Retries up to 3 times if emergency tables were created
+      //   4. Returns { tables, arrangement } if successful, or { tableSettings, totalTables } without tables/arrangement if no guests
+      // These results are used later as pre-computed arrangements (used in case 2 below)
       const maleDryRunResult = runDryGenerateOptimalSeating(maleGuests, maleTablesList, enhancedPreferences, 'male');
-     
+
       const femaleDryRunResult = runDryGenerateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences, 'female');
 
+      // aiMaleArrangement / aiFemaleArrangement: The final guest-to-table mapping objects
+      // Format: { tableId: [guestId1, guestId2, ...], ... }
       let aiMaleArrangement, aiFemaleArrangement;
 
+      // =====================================================================
+      // MALE ARRANGEMENT - 3 main cases based on user's choice
+      // =====================================================================
+
+      // --- CASE A: "Continue existing arrangement" (preserveExisting=true) ---
+      // User chose to keep the current seated guests. We only need to seat UNASSIGNED guests in new tables.
       if (preserveExisting && currentMaleArrangement && Object.keys(currentMaleArrangement).length > 0) {
+
+        // seatedMaleGuestIds: Set of all guest IDs that are already assigned to a table in the current arrangement
         const seatedMaleGuestIds = new Set(Object.values(currentMaleArrangement).flat());
+        // unassignedMaleGuests: Guests that exist but are NOT in any table yet (e.g. newly added guests)
         const unassignedMaleGuests = maleGuests.filter(guest => !seatedMaleGuestIds.has(guest._id.toString()));
-       
+
+        // Lock tables that already have guests - these won't be touched
         const lockedMaleTableIds = new Set();
         maleTablesList.forEach(table => {
           const tableGuests = currentMaleArrangement[table.id] || [];
@@ -5158,29 +5216,47 @@ const generateAISeating = async (req, res) => {
             table.isLocked = true;
           }
         });
-       
+
+        // unassignedMalePeopleCount: Total number of PEOPLE (not guests) that need seating
+        // (a guest with attendingCount=5 counts as 5 people)
         const unassignedMalePeopleCount = unassignedMaleGuests.reduce((sum, guest) => sum + guest.attendingCount, 0);
-       
+
+        // If there are unassigned people, generate new tables for them
         if (unassignedMalePeopleCount > 0) {
+          // Run dry-run with empty tables array (let AI create new tables from scratch for unassigned guests only)
           const dryRunResult = runDryGenerateOptimalSeating(unassignedMaleGuests, [], enhancedPreferences, 'male');
-         
+
           if (dryRunResult && dryRunResult.tables && dryRunResult.arrangement) {
+            // Merge: keep locked tables + add new tables from dry run
             const lockedMaleTables = maleTablesList.filter(t => t.isLocked);
             maleTablesList = [...lockedMaleTables, ...dryRunResult.tables];
+            // Merge: keep existing arrangement + add new assignments from dry run
             aiMaleArrangement = { ...currentMaleArrangement, ...dryRunResult.arrangement };
           } else {
+            // Dry run failed - keep existing arrangement as-is (no new guests seated)
             aiMaleArrangement = currentMaleArrangement;
           }
         } else {
+          // No unassigned guests - nothing to do, keep existing arrangement
           aiMaleArrangement = currentMaleArrangement;
         }
-       
+
+      // --- CASE B & C: "Start from scratch" (preserveExisting=false) ---
+      // Create new guest assignments. Depending on flags, either respect user's custom tables or let AI decide.
       } else {
+
+        // useMaleCustom: true when user zeroed out all preset tables and ONLY added custom table sizes in the modal
         const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
+        // useMaleModifiedPreset: true when user changed the QUANTITIES of AI-suggested preset tables
         const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
+        // useMaleUserSelected: true if user modified ANYTHING about the tables (custom only OR modified preset counts)
         const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
 
+        // --- CASE B: User modified/chose specific tables ---
+        // The user customized the table configuration, so we must respect their table choices
+        // (capacity, type) while letting AI assign guests to those tables.
         if (useMaleUserSelected && allMaleTables && allMaleTables.length > 0) {
+          // Tables of the proposal and also personally selected
           const originalMaleTables = maleTablesList.map(t => ({
             id: t.id,
             capacity: t.capacity,
@@ -5190,9 +5266,14 @@ const generateAISeating = async (req, res) => {
             rotation: t.rotation
           }));
           const originalMaleTableIds = new Set(originalMaleTables.map(t => t.id));
-         
+
+          // Run AI seating on the user's tables, Sends male guests, tables of the proposal and preferences
           const maleResult = generateOptimalSeating(maleGuests, maleTablesList, enhancedPreferences, 'male');
 
+          // Restore original table properties (capacity, type) that AI may have changed.
+          // For each original table:
+          //   - If AI used it (found in result): take AI's guest assignments but restore original capacity/type
+          //   - If AI didn't use it (not in result): return it empty with original properties
           maleTablesList = originalMaleTables.map(originalTable => {
             const resultTable = maleResult.tables.find(t => t.id === originalTable.id);
             if (resultTable) {
@@ -5214,11 +5295,16 @@ const generateAISeating = async (req, res) => {
             };
           });
 
+          // Build the arrangement, enforcing original capacity limits.
+          // AI might have assigned more guests than the original capacity allows
+          // (because AI changed the capacity internally), so we filter guests that actually fit.
           aiMaleArrangement = {};
           Object.entries(maleResult.arrangement).forEach(([tableId, guestIds]) => {
+            // Only include assignments to user's original tables (ignore any AI-created overflow tables)
             if (originalMaleTableIds.has(tableId)) {
               const originalTable = originalMaleTables.find(t => t.id === tableId);
               if (originalTable) {
+                // Add guests one by one until we hit the original capacity limit
                 let currentCapacity = 0;
                 const filteredGuestIds = [];
                 for (const guestId of guestIds) {
@@ -5228,24 +5314,30 @@ const generateAISeating = async (req, res) => {
                     filteredGuestIds.push(guestId);
                     currentCapacity += guestSize;
                   }
+                  // If guest doesn't fit, they become "unassigned" and will be handled below
                 }
                 aiMaleArrangement[tableId] = filteredGuestIds;
               }
             }
           });
 
+          // Check if any guests were left unassigned (due to capacity filtering above, or tables AI didn't use)
           const assignedMaleGuestIds = new Set(Object.values(aiMaleArrangement).flat());
           const unassignedMaleGuestsAfterCustom = maleGuests.filter(g => !assignedMaleGuestIds.has(g._id.toString()));
 
+          // If there are unassigned guests, create emergency overflow tables for them
           if (unassignedMaleGuestsAfterCustom.length > 0) {
             const unassignedMalePeopleCount = unassignedMaleGuestsAfterCustom.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
 
             const existing24MaleTables = maleTablesList.filter(t => t.capacity === 24).length;
 
+            // Create new tables with enough capacity for unassigned guests
             const emergencyMaleTables = createAdditionalTables(unassignedMalePeopleCount, maleTablesList.length, req, enhancedPreferences.preferredTableSize || 12, existing24MaleTables);
 
+            // Run seating algorithm on unassigned guests with the new emergency tables
             const emergencyMaleResult = generateOptimalSeating(unassignedMaleGuestsAfterCustom, emergencyMaleTables, enhancedPreferences, 'male');
 
+            // Add emergency tables to the table list and merge their arrangements
             emergencyMaleTables.forEach((emergencyTable) => {
               emergencyTable.isEmergency = true;
               maleTablesList.push(emergencyTable);
@@ -5257,10 +5349,17 @@ const generateAISeating = async (req, res) => {
               }
             });
           }
+
+        // --- CASE C1: User accepted AI suggestion as-is, dry run succeeded ---
+        // No custom tables - use the pre-computed dry run result directly (already includes
+        // capacity adjustments, retries, and cleanup done by runDryGenerateOptimalSeating)
         } else if (maleDryRunResult.tables && maleDryRunResult.tables.length > 0) {
+          // Dry run already produced a polished result - use it directly
           maleTablesList = maleDryRunResult.tables;
           aiMaleArrangement = maleDryRunResult.arrangement;
-         
+
+        // --- CASE C2: Fallback - dry run returned no tables (e.g. 0 male guests) ---
+        // Call generateOptimalSeating directly without the dry run wrapper
         } else {
           const maleResult = generateOptimalSeating(maleGuests, maleTablesList, enhancedPreferences, 'male');
           aiMaleArrangement = maleResult.arrangement;
@@ -5268,10 +5367,16 @@ const generateAISeating = async (req, res) => {
         }
       }
 
+      // =====================================================================
+      // FEMALE ARRANGEMENT - Same 3 cases as male (mirror logic)
+      // =====================================================================
+
+      // --- CASE A: "Continue existing arrangement" for females ---
       if (preserveExisting && currentFemaleArrangement && Object.keys(currentFemaleArrangement).length > 0) {
         const seatedFemaleGuestIds = new Set(Object.values(currentFemaleArrangement).flat());
         const unassignedFemaleGuests = femaleGuests.filter(guest => !seatedFemaleGuestIds.has(guest._id.toString()));
-       
+
+        // Lock tables that already have guests
         const lockedFemaleTableIds = new Set();
         femaleTablesList.forEach(table => {
           const tableGuests = currentFemaleArrangement[table.id] || [];
@@ -5280,12 +5385,13 @@ const generateAISeating = async (req, res) => {
             table.isLocked = true;
           }
         });
-       
+
         const unassignedFemalePeopleCount = unassignedFemaleGuests.reduce((sum, guest) => sum + guest.attendingCount, 0);
-       
+
         if (unassignedFemalePeopleCount > 0) {
+          // Generate new tables for unassigned female guests only
           const dryRunResult = runDryGenerateOptimalSeating(unassignedFemaleGuests, [], enhancedPreferences, 'female');
-         
+
           if (dryRunResult && dryRunResult.tables && dryRunResult.arrangement) {
             const lockedFemaleTables = femaleTablesList.filter(t => t.isLocked);
             femaleTablesList = [...lockedFemaleTables, ...dryRunResult.tables];
@@ -5294,15 +5400,23 @@ const generateAISeating = async (req, res) => {
             aiFemaleArrangement = currentFemaleArrangement;
           }
         } else {
+          // All female guests are already seated
           aiFemaleArrangement = currentFemaleArrangement;
         }
-       
+
+      // --- CASE B & C: "Start from scratch" for females ---
       } else {
+        // useFemaleCustom: true when user used only custom table sizes (no presets)
         const useFemaleCustom = useFemaleCustomTablesOnly || (preferences && preferences.useFemaleCustomTablesOnly);
+        // useFemaleModifiedPreset: true when user changed the AI-suggested preset table quantities
         const useFemaleModifiedPreset = useFemaleModifiedPresetTables || (preferences && preferences.useFemaleModifiedPresetTables);
+        // useFemaleUserSelected: true if user modified anything about the female tables
         const useFemaleUserSelected = useFemaleCustom || useFemaleModifiedPreset;
 
+        // --- CASE B: User modified/chose specific female tables ---
+        // Same flow as male: run AI → restore original capacities → filter overflows → create emergency tables if needed
         if (useFemaleUserSelected && allFemaleTables && allFemaleTables.length > 0) {
+          // Save original table properties before AI modifies them
           const originalFemaleTables = femaleTablesList.map(t => ({
             id: t.id,
             capacity: t.capacity,
@@ -5312,9 +5426,10 @@ const generateAISeating = async (req, res) => {
             rotation: t.rotation
           }));
           const originalFemaleTableIds = new Set(originalFemaleTables.map(t => t.id));
-         
+
           const femaleResult = generateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences, 'female');
 
+          // Restore original capacities/types that AI may have changed
           femaleTablesList = originalFemaleTables.map(originalTable => {
             const resultTable = femaleResult.tables.find(t => t.id === originalTable.id);
             if (resultTable) {
@@ -5336,6 +5451,7 @@ const generateAISeating = async (req, res) => {
             };
           });
 
+          // Filter guests that exceed original table capacity
           aiFemaleArrangement = {};
           Object.entries(femaleResult.arrangement).forEach(([tableId, guestIds]) => {
             if (originalFemaleTableIds.has(tableId)) {
@@ -5356,6 +5472,7 @@ const generateAISeating = async (req, res) => {
             }
           });
 
+          // Create emergency tables for any unassigned female guests
           const assignedFemaleGuestIds = new Set(Object.values(aiFemaleArrangement).flat());
           const unassignedFemaleGuestsAfterCustom = femaleGuests.filter(g => !assignedFemaleGuestIds.has(g._id.toString()));
 
@@ -5379,10 +5496,13 @@ const generateAISeating = async (req, res) => {
               }
             });
           }
+
+        // --- CASE C1: User accepted AI suggestion as-is, dry run succeeded ---
         } else if (femaleDryRunResult.tables && femaleDryRunResult.tables.length > 0) {
           femaleTablesList = femaleDryRunResult.tables;
           aiFemaleArrangement = femaleDryRunResult.arrangement;
-         
+
+        // --- CASE C2: Fallback - dry run returned no tables ---
         } else {
           const femaleResult = generateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences, 'female');
           aiFemaleArrangement = femaleResult.arrangement;
@@ -5390,6 +5510,13 @@ const generateAISeating = async (req, res) => {
         }
       }
 
+      // =====================================================================
+      // POST-PROCESSING: Cleanup empty tables, sort, position, and resize
+      // =====================================================================
+
+      // --- Remove empty tables (only when AI decided the tables, not user) ---
+      // If user chose custom tables, keep ALL tables (even empty ones) to respect user's layout.
+      // If AI decided, remove tables with no guests to avoid cluttering the canvas.
       const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
       const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
       const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
@@ -5412,6 +5539,9 @@ const generateAISeating = async (req, res) => {
         });
       }
 
+      // --- Sort tables ---
+      // User-selected tables: sort by capacity (smallest first) for a clean layout
+      // AI-generated tables: put locked (preserved) tables first, then new ones
       if (useMaleUserSelected) {
         maleTablesList.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
       } else {
@@ -5427,14 +5557,18 @@ const generateAISeating = async (req, res) => {
         const newFemaleTables = femaleTablesList.filter(t => !t.isLocked);
         femaleTablesList = [...lockedFemaleTables, ...newFemaleTables];
       }
-     
+
+      // --- Assign grid positions on the canvas ---
+      // Male tables start at x=300 (left side), female tables at x=1300 (right side)
+      // Tables are laid out in a grid with 5 columns
       const MALE_START_X = 300;
       const FEMALE_START_X = 1300;
       const START_Y = 250;
       const SPACING_X = 200;
       const SPACING_Y = 180;
       const COLS = 5;
-     
+
+      // Name and position male tables: "שולחן 1", "שולחן 2", etc.
       maleTablesList.forEach((table, index) => {
         table.name = `שולחן ${index + 1}`;
         table.order = index;
@@ -5445,43 +5579,22 @@ const generateAISeating = async (req, res) => {
           y: START_Y + row * SPACING_Y
         };
       });
-     
-      const maleTablesCount = maleTablesList.length;
-      femaleTablesList.forEach((table, index) => {
-        table.name = `שולחן ${maleTablesCount + index + 1}`;
-        table.order = maleTablesCount + index;
-        const row = Math.floor(index / COLS);
-        const col = index % COLS;
-        table.position = {
-          x: FEMALE_START_X + col * SPACING_X,
-          y: START_Y + row * SPACING_Y
-        };
-      });
-     
-      maleTablesList.forEach(table => {
-        if (!table.isLocked && table.capacity === 12) {
-          const guestIds = aiMaleArrangement[table.id] || [];
-          const tableGuests = guestIds.map(gId => maleGuests.find(g => g._id.toString() === gId)).filter(Boolean);
-          const totalPeople = tableGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-         
-          if (totalPeople > 0 && totalPeople < 11) {
-            table.capacity = 10;
-          }
-        }
-      });
-     
+
       femaleTablesList.forEach(table => {
         if (!table.isLocked && table.capacity === 12) {
           const guestIds = aiFemaleArrangement[table.id] || [];
           const tableGuests = guestIds.map(gId => femaleGuests.find(g => g._id.toString() === gId)).filter(Boolean);
           const totalPeople = tableGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-         
+
           if (totalPeople > 0 && totalPeople < 11) {
             table.capacity = 10;
           }
         }
       });
-           
+
+      // =====================================================================
+      // SAVE TO DATABASE - Separated seating
+      // =====================================================================
       const updateData = {
         maleTables: maleTablesList,
         femaleTables: femaleTablesList,
@@ -5496,6 +5609,7 @@ const generateAISeating = async (req, res) => {
       };
 
       if (seating) {
+        // Update existing seating document and increment version
         seating = await Seating.findOneAndUpdate(
           { _id: seating._id },
           {
@@ -5505,6 +5619,8 @@ const generateAISeating = async (req, res) => {
           { new: true }
         );
       } else {
+        // Create new seating document, then do an extra update to ensure
+        // nested arrangement objects are properly persisted in MongoDB
         seating = new Seating({
           event: eventId,
           ...updateData
@@ -5520,8 +5636,10 @@ const generateAISeating = async (req, res) => {
         seating = await Seating.findById(seating._id);
       }
 
+      // Verification read - fetch fresh from DB to ensure data was saved correctly
       const verification = await Seating.findById(seating._id).lean();
 
+      // Return the final result to the client
       res.json({
         message: req.t('seating.ai.generationSuccess'),
         maleArrangement: verification.maleArrangement || seating.maleArrangement,
@@ -5532,11 +5650,17 @@ const generateAISeating = async (req, res) => {
         syncSummary: seating.getSyncSummary()
       });
 
+    // ==========================================
+    // FLOW B: NON-SEPARATED SEATING
+    // ==========================================
     } else {
+      // tablesToUse: The tables to work with. Priority: allTables (from AI modal) > tables (existing on canvas)
       let tablesToUse = allTables && allTables.length > 0 ? allTables : tables;
 
+      // aiArrangement: The final guest-to-table mapping { tableId: [guestId1, ...], ... }
       let aiArrangement;
 
+      // --- CASE A: "Continue existing arrangement" - Keep current seated guests, only seat unassigned guests ---
       if (preserveExisting && currentArrangement && Object.keys(currentArrangement).length > 0) {
         const seatedGuestIds = new Set(Object.values(currentArrangement).flat());
         const unassignedGuests = guests.filter(guest => !seatedGuestIds.has(guest._id.toString()));
@@ -5550,7 +5674,6 @@ const generateAISeating = async (req, res) => {
           }
         });
        
-        const newTablesForUnassigned = [];
         const unassignedPeopleCount = unassignedGuests.reduce((sum, guest) => sum + (guest.attendingCount || 1), 0);
        
         if (unassignedPeopleCount > 0) {
@@ -5594,13 +5717,19 @@ const generateAISeating = async (req, res) => {
           };
         });
 
+      // --- CASE B & C: "Start from scratch" (preserveExisting=false) ---
       } else {
 
+        // useCustom: true when user used only custom table sizes (zeroed out presets)
         const useCustom = useCustomTablesOnly || (preferences && preferences.useCustomTablesOnly);
+        // useModifiedPreset: true when user changed AI-suggested preset table quantities
         const useModifiedPreset = useModifiedPresetTables || (preferences && preferences.useModifiedPresetTables);
+        // useUserSelectedFromBody: true when frontend explicitly flagged user-selected tables
         const useUserSelectedFromBody = useUserSelectedTablesFromBody || (preferences && preferences.useUserSelectedTables);
+        // useUserSelectedTables: true if user modified anything about the tables
         const useUserSelectedTables = useCustom || useModifiedPreset || useUserSelectedFromBody;
 
+        // --- CASE B: User modified/chose specific tables - respect user's choices, let AI assign guests ---
         if (useUserSelectedTables && allTables && allTables.length > 0) {
           const originalTables = tablesToUse.map(t => ({
             id: t.id,
@@ -5635,6 +5764,7 @@ const generateAISeating = async (req, res) => {
             };
           });
 
+          // Filter arrangement to enforce original capacity limits
           aiArrangement = {};
           Object.entries(result.arrangement).forEach(([tableId, guestIds]) => {
             if (originalTableIds.has(tableId)) {
@@ -5657,14 +5787,6 @@ const generateAISeating = async (req, res) => {
             }
           });
 
-          const totalAssignedAfterFilter = Object.values(aiArrangement).flat().length;
-          const totalPeopleAssigned = Object.values(aiArrangement).flat().reduce((sum, guestId) => {
-            const guest = guests.find(g => g._id.toString() === guestId);
-            return sum + (guest ? (guest.attendingCount || 1) : 1);
-          }, 0);
-          const totalGuests = guests.length;
-          const totalPeople = guests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-         
           const assignedGuestIds = new Set(Object.values(aiArrangement).flat());
           const unassignedGuests = guests.filter(g => !assignedGuestIds.has(g._id.toString()));
 
@@ -5679,6 +5801,8 @@ const generateAISeating = async (req, res) => {
               tableCapacities[table.id] = table.capacity - usedCapacity;
             });
            
+            // Try to fit unassigned guests into existing tables
+            // Priority: same group > empty > any (with mixing allowed)
             unassignedGuests.sort((a, b) => (b.attendingCount || 1) - (a.attendingCount || 1));
            
             for (const guest of unassignedGuests) {
@@ -5737,6 +5861,7 @@ const generateAISeating = async (req, res) => {
             }
           }
 
+          // If guests STILL unassigned after trying all tables, create emergency overflow tables
           const finalAssignedGuestIds = new Set(Object.values(aiArrangement).flat());
           const stillUnassignedGuests = guests.filter(g => !finalAssignedGuestIds.has(g._id.toString()));
 
@@ -5763,6 +5888,7 @@ const generateAISeating = async (req, res) => {
           }
           tablesToUse.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
 
+        // --- CASE C: User accepted AI suggestion as-is - use dry run or direct generation ---
         } else {
           const dryRunResult = runDryGenerateOptimalSeating(guests, tablesToUse, enhancedPreferences, null);
           if (!dryRunResult || !dryRunResult.arrangement || !dryRunResult.tables) {
@@ -5792,6 +5918,9 @@ const generateAISeating = async (req, res) => {
           y: START_Y + row * SPACING_Y
         };
       });
+      // =====================================================================
+      // SAVE TO DATABASE - Non-separated seating
+      // =====================================================================
       const nonsepUpdateData = {
         tables: tablesToUse,
         arrangement: aiArrangement,
@@ -5825,6 +5954,7 @@ const generateAISeating = async (req, res) => {
         seating = await Seating.findById(seating._id);
       }
 
+      // Return the final result to the client
       res.json({
         message: req.t('seating.ai.generationSuccess'),
         arrangement: seating.arrangement,
@@ -5833,6 +5963,7 @@ const generateAISeating = async (req, res) => {
         syncSummary: seating.getSyncSummary()
       });
     }
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('seating.errors.aiGenerationFailed'),
@@ -7476,8 +7607,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
     });
    
     for (let i = 0; i < mPolicyGroups.length; i++) {
-      for (let j =
-i + 1; j < mPolicyGroups.length; j++) {
+      for (let j = i + 1; j < mPolicyGroups.length; j++) {
         mixableGroupPairs.add(`${mPolicyGroups[i]}|${mPolicyGroups[j]}`);
         mixableGroupPairs.add(`${mPolicyGroups[j]}|${mPolicyGroups[i]}`);
       }
@@ -7769,9 +7899,7 @@ i + 1; j < mPolicyGroups.length; j++) {
               const existingGroup = existingGuest.customGroup || existingGuest.group;
               if (existingGroup === guestGroup) return true;
 
-              return mixableGroupPairs.has(`${guestGroup}|$
-{existingGroup}`)
-;
+              return mixableGroupPairs.has(`${guestGroup}|${existingGroup}`);
             });
 
             if (canMixWithTable) {
@@ -8020,7 +8148,6 @@ i + 1; j < mPolicyGroups.length; j++) {
       const largeTableGuests = largeTableGuestIds.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
       let largeTablePeople = largeTableGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
       const largeTableGroups = [...new Set(largeTableGuests.map(g => g.customGroup || g.group))];
-      let largeTableUtilization = largeTablePeople / largeTable.capacity;
 
       const candidateSmallTables = availableTables.filter(t => {
         if (t.id === largeTable.id) return false;
@@ -8091,8 +8218,7 @@ i + 1; j < mPolicyGroups.length; j++) {
         smallTable.assignedGuests = [];
              
         largeTablePeople = combinedPeople;
-        largeTable
-Utilization = combinedUtilization;
+        largeTableUtilization = combinedUtilization;
        
         largeTableGuestIds.length = 0;
         largeTableGuestIds.push(...arrangement[largeTable.id]);
@@ -8195,8 +8321,7 @@ Utilization = combinedUtilization;
           );
          
           if (assignResult) {
-            remainingToAssignAfterUpgrade = remainingToAssignAfterUpgrade.fi
-lter(i =>
+            remainingToAssignAfterUpgrade = remainingToAssignAfterUpgrade.filter(i =>
               i.guest._id.toString() !== item.guest._id.toString()
             );
           }
@@ -9002,10 +9127,8 @@ lter(i =>
     }
   }
  
-  const finalUnassigned = guests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
  
   const emptyTables = tables.filter(t => !arrangement[t.id] || arrangement[t.id].length === 0);
-  const fullTables = tables.filter(t => arrangement[t.id] && arrangement[t.id].length > 0);
  
   emptyTables.forEach(t => {
   });
@@ -9679,6 +9802,7 @@ const exportSeatingChart = async (req, res) => {
       res.json(exportData);
     }
    
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('seating.errors.exportFailed') });
   }
@@ -9721,6 +9845,7 @@ const getSeatingStatistics = async (req, res) => {
       ...statistics,
       syncSummary: seating.getSyncSummary()
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -9757,6 +9882,7 @@ const deleteSeatingArrangement = async (req, res) => {
     }
 
     res.json({ message: req.t('seating.deleteSuccess') });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -9802,6 +9928,7 @@ const validateSeatingArrangement = async (req, res) => {
       errors: validationErrors,
       statistics: tempSeating.getStatistics(guests)
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -9870,6 +9997,7 @@ const cloneSeatingArrangement = async (req, res) => {
         syncSummary: newSeating.getSyncSummary()
       }
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -9923,6 +10051,7 @@ const getSeatingSubjestions = async (req, res) => {
       },
       suggestions
     });
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
   }
@@ -10094,6 +10223,7 @@ const suggestTables = async (req, res) => {
         details: result.details
       });
     }
+  // --- Error handling ---
   } catch (err) {
     res.status(500).json({
       message: req.t('errors.serverError'),

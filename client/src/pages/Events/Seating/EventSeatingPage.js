@@ -84,7 +84,6 @@ const EventSeatingPage = () => {
  
   const [lastSyncData, setLastSyncData] = useState(null);
   const [syncInProgress, setSyncInProgress] = useState(false);
-  const autoSyncEnabled = true;
   const [syncNotification, setSyncNotification] = useState(null);
 
   const [syncOptions, setSyncOptions] = useState([]);
@@ -104,7 +103,6 @@ const EventSeatingPage = () => {
  
   const canvasRef = useRef(null);
   const [canEdit, setCanEdit] = useState(true);
-  const syncTimeoutRef = useRef(null);
 
   const getAuthToken = useCallback(() => {
     let token = localStorage.getItem('token');
@@ -307,75 +305,6 @@ const EventSeatingPage = () => {
       gender: guest.gender
     }));
   }, []);
-
-  const detectGuestChanges = useCallback((newGuests, oldGuests) => {
-    if (!oldGuests || oldGuests.length === 0) {
-      return { hasChanges: false, changes: [] };
-    }
-
-    const changes = [];
-    const oldGuestsMap = new Map(oldGuests.map(g => [g.id, g]));
-    const newGuestsMap = new Map(newGuests.map(g => [g.id, g]));
-
-    const isGuestSeated = (guestId) => {
-      if (isSeparatedSeating) {
-        const inMale = Object.values(maleArrangement || {}).some(guestIds =>
-          Array.isArray(guestIds) && guestIds.includes(guestId)
-        );
-        const inFemale = Object.values(femaleArrangement || {}).some(guestIds =>
-          Array.isArray(guestIds) && guestIds.includes(guestId)
-        );
-        return inMale || inFemale;
-      } else {
-        return Object.values(seatingArrangement || {}).some(guestIds =>
-          Array.isArray(guestIds) && guestIds.includes(guestId)
-        );
-      }
-    };
-
-    newGuests.forEach(newGuest => {
-      const oldGuest = oldGuestsMap.get(newGuest.id);
-      if (!oldGuest) {
-        if (newGuest.status === 'confirmed') {
-          changes.push({
-            type: 'new_confirmed',
-            guestId: newGuest.id,
-            guest: newGuest
-          });
-        }
-      } else {
-        if (oldGuest.status !== newGuest.status) {
-          if (newGuest.status === 'confirmed' && oldGuest.status !== 'confirmed') {
-            changes.push({
-              type: 'became_confirmed',
-              guestId: newGuest.id,
-              guest: newGuest,
-              previousStatus: oldGuest.status
-            });
-          }
-        }
-
-        if (newGuest.status === 'confirmed' && oldGuest.status === 'confirmed') {
-          const oldCount = oldGuest.attendingCount || 1;
-          const newCount = newGuest.attendingCount || 1;
-          const guestIsSeated = isGuestSeated(newGuest.id);
-         
-          if (newCount > oldCount && guestIsSeated) {
-         
-            changes.push({
-              type: 'attending_count_increased',
-              guestId: newGuest.id,
-              guest: newGuest,
-              oldCount,
-              newCount
-            });
-          }
-        }
-      }
-    });
-
-    return { hasChanges: changes.length > 0, changes };
-  }, [isSeparatedSeating, seatingArrangement, maleArrangement, femaleArrangement]);
 
   const checkAndHandlePendingSync = useCallback(async (skipFingerprintUpdate = false) => {
     try {
