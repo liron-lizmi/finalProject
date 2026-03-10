@@ -11,8 +11,8 @@
  * - POST /: Save seating arrangement (edit permission)
  * - DELETE /: Delete seating arrangement (edit permission)
  *
- * AI & Suggestions:
- * - POST /ai-generate: Generate AI seating arrangement (edit permission)
+ * Automatic & Suggestions:
+ * - POST /automatic-generate: Generate automatic seating arrangement (edit permission)
  * - POST /suggest-tables: Get table configuration suggestions (view permission)
  *
  * Export & Validation:

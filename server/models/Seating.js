@@ -2,7 +2,7 @@
  * Seating.js - Seating Model
  *
  * Stores event seating arrangements including tables, guest assignments,
- * preferences, sync settings, and AI generation settings.
+ * preferences, sync settings, and automatic seating generation settings.
  *
  * Schemas:
  * - TableSchema: Table definition (id, name, type, capacity, position, size, rotation)

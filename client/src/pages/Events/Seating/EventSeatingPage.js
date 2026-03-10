@@ -29,7 +29,7 @@
  * - SeatingCanvas: Visual drag-drop canvas
  * - SeatingTableView: List view of tables
  * - TableDetailsModal: Edit table details
- * - AISeatingModal: AI seating configuration
+ * - AISeatingModal: Automatic seating configuration
  * - SyncOptionsModal: Handle sync conflicts
  *
  * Gender-Separated Mode:
@@ -104,6 +104,8 @@ const EventSeatingPage = () => {
   const [genderFilter, setGenderFilter] = useState('all');
  
   const canvasRef = useRef(null);
+  const tablesRef = useRef(tables);
+  tablesRef.current = tables;
   const [canEdit, setCanEdit] = useState(true);
 
   const getAuthToken = useCallback(() => {
@@ -845,7 +847,7 @@ const EventSeatingPage = () => {
    
   }, [maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, calculateTableSize, canEdit, isSeparatedSeating, tableCapacity, tableType]);
 
-  const handleAddTablesFromAI = useCallback(async (tablesToAdd, gender = null, clearExisting = false) => {
+  const handleAddTablesFromAutoArrangement = useCallback(async (tablesToAdd, gender = null, clearExisting = false) => {
     try {
       if (isSeparatedSeating && gender) {
         if (gender === 'male') {
@@ -1213,8 +1215,10 @@ const EventSeatingPage = () => {
       }
    
       setTables(newTables);
-      setSeatingArrangement(newArrangement);
-     
+      if (updates === null) {
+        setSeatingArrangement(newArrangement);
+      }
+
       const dataToSave = {
         tables: newTables,
         arrangement: newArrangement,
@@ -1755,7 +1759,7 @@ const EventSeatingPage = () => {
       setSeatingArrangement(newArrangement);
      
       setTimeout(() => {
-        const updatedTables = updateTableNamesWithGroups(tables, newArrangement);
+        const updatedTables = updateTableNamesWithGroups(tablesRef.current, newArrangement);
         setTables(updatedTables);
        
         autoSave({
@@ -3095,7 +3099,7 @@ const clearAllSeating = useCallback(() => {
           onGenerate={generateAISeating}
           onFetchTableSuggestion={fetchTableSuggestion}
           eventId={eventId}
-          onAddTables={handleAddTablesFromAI}
+          onAddTables={handleAddTablesFromAutoArrangement}
           getNextTableNumber={getNextTableNumber}
           onPreferencesChange={(newPrefs) => {
             setPreferences(prev => ({

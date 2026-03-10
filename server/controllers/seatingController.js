@@ -37,6 +37,13 @@ const Event = require('../models/Event');
 const Guest = require('../models/Guest');
 
 
+/**
+ * Converts a Mongoose preferences object into a plain JS object.
+ * Handles the case where groupPolicies is a Mongoose Map, converting it
+ * to a regular object for safe JSON serialization.
+ * @param {object} preferences - Seating preferences from Mongoose document
+ * @returns {object} Plain preferences object with groupPolicies as a plain object
+ */
 const normalizeGroupPolicies = (preferences) => {
   if (!preferences) return {};
 
@@ -60,6 +67,15 @@ const normalizeGroupPolicies = (preferences) => {
   return normalized;
 };
 
+/**
+ * Retrieves the seating arrangement for an event.
+ * Verifies access rights (owner or shared user). Returns tables, arrangement, and sync summary.
+ * Cases:
+ * - No seating document yet: returns empty default structure
+ * - Separated seating with no male/female tables but old combined tables: migrates data to separated format
+ * - Normal case: returns existing separated or combined seating data based on event.isSeparatedSeating
+ * @route GET /api/events/:eventId/seating
+ */
 const getSeatingArrangement = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -308,6 +324,16 @@ const getSeatingArrangement = async (req, res) => {
   }
 };
 
+/**
+ * Saves or creates the seating arrangement for an event.
+ * Validates edit permissions (owner or shared user with edit access).
+ * Cases:
+ * - Separated seating (isSeparatedSeating=true): saves maleTables/femaleTables/maleArrangement/femaleArrangement
+ * - Non-separated: saves tables and arrangement
+ * - New seating document: creates it; existing: updates in place
+ * Also saves preferences, layoutSettings, and syncSettings.
+ * @route POST /api/events/:eventId/seating
+ */
 const saveSeatingArrangement = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -699,6 +725,18 @@ const saveSeatingArrangement = async (req, res) => {
 
 const syncLocks = new Map();
 
+/**
+ * Processes pending seating sync triggers for an event.
+ * Uses an in-memory lock to prevent concurrent syncs for the same event+user.
+ * Validates edit permissions, then processes pending trigger queue.
+ * Cases:
+ * - Lock already active: returns "already in progress" response without processing
+ * - No pending triggers: runs cleanup only (remove empty/duplicate tables)
+ * - Single trigger, no conflicts: applies the trigger directly to the seating
+ * - Single trigger with conflicts: generates conservative + optimal sync options for user to choose
+ * - Multiple triggers: generates sync options and returns them for user decision
+ * @route POST /api/events/:eventId/seating/sync
+ */
 const processSeatingSync = async (req, res) => {
 
   const { eventId } = req.params;
@@ -1067,6 +1105,19 @@ const processSeatingSync = async (req, res) => {
   }
 };
 
+/**
+ * Saves seating data to the database with retry logic and post-save verification.
+ * Validates that no table exceeds capacity before saving (non-separated only).
+ * After saving, re-reads the document to verify the data was persisted correctly.
+ * Cases:
+ * - Separated seating: saves male/female tables and arrangements; verifies arrangement keys didn't disappear
+ * - Non-separated: saves tables and arrangement; detects and returns error on data corruption
+ * - Save or verify fails: retries up to maxRetries times with increasing delay
+ * @param {object} seating - Seating document with updated data
+ * @param {Array} guests - Confirmed guests for capacity validation
+ * @param {number} maxRetries - Maximum retry attempts (default 5)
+ * @returns {{ success: boolean, savedSeating?: object, error?: string }}
+ */
 const saveSeatingWithRetryAndValidation = async (seating, guests, maxRetries = 5) => {
   let retryCount = 0;
   const isSeparated = seating.isSeparatedSeating || false;
@@ -1150,6 +1201,20 @@ const saveSeatingWithRetryAndValidation = async (seating, guests, maxRetries = 5
   return { success: false, error: 'Unexpected end of retry loop' };
 };
 
+/**
+ * Cleans up inconsistencies in a seating arrangement (operates on a single gender context).
+ * Removes duplicates, orphaned arrangement entries, and empty auto-created tables.
+ * Also adjusts table capacity if overloaded.
+ * Cases:
+ * - Duplicate guests (seated at more than one table): removes all but the first occurrence
+ * - Orphaned arrangement entries (tableId in arrangement but not in tables array): tries to reassign guests to a valid table; if no space, leaves them unassigned
+ * - Empty auto-created tables: removes them and their arrangement entries
+ * - Overloaded tables (too many guests): expands capacity up to MAX_TABLE_CAPACITY
+ * @param {{ tables: Array, arrangement: object }} seating - Table + arrangement data for one gender context
+ * @param {Array} guests - Confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @returns {{ hasChanges: boolean, actions: Array, tables: Array, arrangement: object }}
+ */
 const cleanupEmptyTables = async (seating, guests, req) => {
   const MAX_TABLE_CAPACITY = 24;
   const actions = [];
@@ -1315,6 +1380,19 @@ const cleanupEmptyTables = async (seating, guests, req) => {
   };
 };
 
+/**
+ * Checks whether pending sync triggers contain conflicting changes that require user decision.
+ * Returns true if any trigger may displace an already-seated guest.
+ * Cases:
+ * - Guest deleted or RSVP cancelled: always conflicting (requires user decision)
+ * - Attending count increased by 2 or more: conflicting (no guaranteed space at existing table)
+ * - Attending count increased by 1 for an already-seated guest: conflicting (table might be full)
+ * - All other triggers (new guest not yet seated, etc.): not conflicting
+ * @param {object} seating - Current seating document
+ * @param {Array} triggers - Pending sync triggers
+ * @param {Array} guests - Confirmed guests
+ * @returns {boolean} true if user decision is needed, false if auto-sync can proceed
+ */
 const checkForConflictingChanges = async (seating, triggers, guests) => {
   const isSeparated = seating.isSeparatedSeating || false;
  
@@ -1478,6 +1556,20 @@ const checkForConflictingChanges = async (seating, triggers, guests) => {
   return false;
 };
 
+/**
+ * Applies a single sync trigger to the seating arrangement (modifies seating in place).
+ * Routes the trigger to the appropriate action based on changeType.
+ * Cases:
+ * - guest_added / rsvp_updated with status_became_confirmed: seats the guest (calls seatNewGuest or seatNewGuestSeparated)
+ * - rsvp_updated with status_no_longer_confirmed: removes the guest from their table (calls unseatGuest)
+ * - rsvp_updated with attending_count_increased: adjusts the guest's seat count (calls handleAttendingCountChangeOnly)
+ * - guest_deleted: removes the guest from their table (calls unseatGuest)
+ * @param {object} seating - Seating document (mutated in place)
+ * @param {object} trigger - Sync trigger { changeType, changeData }
+ * @param {Array} guests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @returns {{ success: boolean, actions: Array }}
+ */
 const processSingleTrigger = async (seating, trigger, guests, req) => {
   const { changeType, changeData } = trigger;
   const actions = [];
@@ -1530,6 +1622,21 @@ const processSingleTrigger = async (seating, trigger, guests, req) => {
   };
 };
 
+/**
+ * Handles an attending count increase for a guest who is already seated.
+ * If the guest's current table has enough remaining capacity, updates the count in place.
+ * If not, tries to find another table with enough space.
+ * Cases:
+ * - Separated seating: operates on male or female tables based on the guest's gender
+ * - Non-separated: operates on the combined tables/arrangement
+ * - Guest is already seated and table has space: updates count, records action
+ * - Guest is seated but table is full: looks for another table; if found, moves the guest; if not, records failure
+ * @param {object} seating - Seating document (mutated in place)
+ * @param {object} changeData - { guestId, guest, oldCount, newCount, ... }
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @returns {{ actions: Array }}
+ */
 const handleAttendingCountChangeOnly = async (seating, changeData, allGuests, req) => {
   const actions = [];
   const { guestId, guest, oldCount, newCount } = changeData;
@@ -1736,6 +1843,18 @@ const handleAttendingCountChangeOnly = async (seating, changeData, allGuests, re
   return { actions };
 };
 
+/**
+ * Places a newly confirmed guest into an available table in the seating arrangement.
+ * Cases:
+ * - Separated seating: delegates to seatNewGuestSeparated for the guest's gender
+ * - Non-separated with available table: seats the guest at the first fitting table
+ * - Non-separated with no available table: creates a new auto table and seats the guest there
+ * @param {object} seating - Seating document (mutated in place)
+ * @param {object} guest - Guest to seat
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n and sync settings)
+ * @returns {{ actions: Array }}
+ */
 const seatNewGuest = async (seating, guest, allGuests, req) => {
   const actions = [];
   const guestSize = guest.attendingCount || 1;
@@ -1845,10 +1964,23 @@ const seatNewGuest = async (seating, guest, allGuests, req) => {
       });
     }
   }
- 
+
   return { actions };
 };
 
+/**
+ * Places a newly confirmed guest into a gender-specific table in a separated seating arrangement.
+ * Cases:
+ * - Guest gender does not match target gender: returns a gender_mismatch action without seating
+ * - Available table found for the guest's gender: seats the guest there
+ * - No available table: creates a new auto table for that gender and seats the guest there
+ * @param {object} seating - Seating document (mutated in place)
+ * @param {object} guest - Guest to seat
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n and sync settings)
+ * @param {string} gender - 'male' or 'female'
+ * @returns {{ actions: Array }}
+ */
 const seatNewGuestSeparated = async (seating, guest, allGuests, req, gender) => {
   const actions = [];
   const guestSize = guest.attendingCount || 1;
@@ -1928,6 +2060,19 @@ const seatNewGuestSeparated = async (seating, guest, allGuests, req, gender) => 
   return { actions };
 };
 
+/**
+ * Removes a guest from all tables in the seating arrangement.
+ * Cases:
+ * - Separated seating and guest found: removes guest from their gender-specific arrangement
+ * - Non-separated or guest gender unknown: searches all tables in the combined arrangement
+ * - Guest was seated: records a guest_removed action
+ * - Guest was not seated anywhere: records a guest_not_found action
+ * @param {object} seating - Seating document (mutated in place)
+ * @param {string} guestId - ID of the guest to remove
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @returns {{ actions: Array }}
+ */
 const unseatGuest = async (seating, guestId, allGuests, req) => {
   const actions = [];
   let guestName = req.t('seating.unknownGuest');
@@ -2001,6 +2146,20 @@ const unseatGuest = async (seating, guestId, allGuests, req) => {
   return { actions };
 };
 
+/**
+ * Simulates applying all pending triggers using a given sync strategy, without modifying the real seating.
+ * Creates a deep copy of the current seating, applies all triggers to it, then computes stats.
+ * Cases:
+ * - Separated seating: simulates male and female arrangements separately, combining stats at the end
+ * - Non-separated: simulates on the combined arrangement
+ * - Optimization step: if strategy is 'optimal', runs optimizeArrangementSimulation to remove empty tables
+ * @param {object} seating - Current seating document
+ * @param {Array} triggers - Pending sync triggers
+ * @param {Array} guests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @returns {{ strategy, actions, stats, description, tables, arrangement, ... }}
+ */
 const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
 
   const isSeparated = seating.isSeparatedSeating || false;
@@ -2120,6 +2279,13 @@ const generateSyncOption = async (seating, triggers, guests, req, strategy) => {
   }
 };
 
+/**
+ * Extracts the set of genders affected by a list of sync triggers.
+ * Used in separated seating to decide which gender's tables need to be re-synced.
+ * Inspects changedGenders, attending count changes, or guest gender fields in each trigger.
+ * @param {Array} triggers - Pending sync triggers
+ * @returns {Set<string>} Set of affected genders ('male', 'female', or both)
+ */
 const getAffectedGendersFromTriggers = (triggers) => {
   const affectedGenders = new Set();
  
@@ -2152,6 +2318,13 @@ const getAffectedGendersFromTriggers = (triggers) => {
   return affectedGenders;
 };
 
+/**
+ * Calculates seating statistics for a separated seating arrangement (male + female separately).
+ * Counts occupied tables, seated people, and utilization rate for each gender and combined.
+ * @param {object} optionSeating - Simulated seating with maleTables/femaleTables/maleArrangement/femaleArrangement
+ * @param {Array} guests - All confirmed guests
+ * @returns {{ totalTables, totalCapacity, occupiedTables, seatedPeople, utilizationRate, maleStats, femaleStats }}
+ */
 const calculateArrangementStatsSeparated = (optionSeating, guests) => {
   const maleGuests = guests.filter(g => g.maleCount && g.maleCount > 0);
   const femaleGuests = guests.filter(g => g.femaleCount && g.femaleCount > 0);
@@ -2213,6 +2386,21 @@ const calculateArrangementStatsSeparated = (optionSeating, guests) => {
   };
 };
 
+/**
+ * Simulates a single sync trigger on an optionSeating copy (dry-run, does not touch real seating).
+ * Routes the trigger to the appropriate simulation function based on changeType.
+ * Cases:
+ * - guest_added / rsvp_updated with status_became_confirmed: calls simulateSeatNewGuest
+ * - rsvp_updated with status_no_longer_confirmed: calls simulateUnseatGuest
+ * - rsvp_updated with attending_count_increased: calls simulateAttendingCountChange
+ * - guest_deleted: calls simulateUnseatGuest
+ * @param {object} optionSeating - Deep copy of seating to simulate on
+ * @param {object} trigger - Sync trigger { changeType, changeData }
+ * @param {Array} guests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @returns {{ success: boolean, actions: Array }}
+ */
 const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy) => {
   const { changeType, changeData } = trigger;
   const actions = [];
@@ -2257,6 +2445,21 @@ const simulateSyncTrigger = async (optionSeating, trigger, guests, req, strategy
   };
 };
 
+/**
+ * Simulates placing a new guest into the simulated seating (dry-run).
+ * Cases:
+ * - Separated seating with male attendees: finds/creates a male table and seats the male count
+ * - Separated seating with female attendees: finds/creates a female table and seats the female count
+ * - Separated seating with both: handles male and female sides independently
+ * - Non-separated: finds or creates a table in the combined arrangement and seats the guest
+ * If no table is available, creates a new simulation table via createTableSimulation.
+ * @param {object} optionSeating - Deep copy of seating for simulation
+ * @param {object} guest - Guest to simulate seating for
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @returns {{ actions: Array }}
+ */
 const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strategy) => {
   const actions = [];
   const isSeparated = optionSeating.isSeparatedSeating || false;
@@ -2460,6 +2663,19 @@ const simulateSeatNewGuest = async (optionSeating, guest, allGuests, req, strate
   return { actions };
 };
 
+/**
+ * Simulates removing a guest from the simulated seating (dry-run).
+ * Cases:
+ * - Separated seating and guest found: removes from their gender-specific arrangement
+ * - Non-separated or guest not found: removes from combined arrangement
+ * - Guest was seated: records a guest_removed action
+ * - Guest was not seated: no action recorded
+ * @param {object} optionSeating - Deep copy of seating for simulation
+ * @param {string} guestId - ID of the guest to remove
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @returns {{ actions: Array }}
+ */
 const simulateUnseatGuest = async (optionSeating, guestId, allGuests, req) => {
   const actions = [];
   let guestName = req.t('seating.unknownGuest');
@@ -2529,6 +2745,19 @@ const simulateUnseatGuest = async (optionSeating, guestId, allGuests, req) => {
   return { actions };
 };
 
+/**
+ * Simulates adjusting seating after a guest's attending count increases (dry-run).
+ * Cases:
+ * - Non-separated: finds the guest's table; if count fits, updates in place; otherwise tries to move the guest to a larger table or create a new one
+ * - Separated seating with male count change: handles male side — finds male table, adjusts or moves
+ * - Separated seating with female count change: handles female side — finds female table, adjusts or moves
+ * @param {object} optionSeating - Deep copy of seating for simulation
+ * @param {object} changeData - { guestId, guest, oldCount, newCount, oldMaleCount, newMaleCount, ... }
+ * @param {Array} allGuests - All confirmed guests
+ * @param {object} req - Express request (for i18n)
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @returns {{ actions: Array }}
+ */
 const simulateAttendingCountChange = async (optionSeating, changeData, allGuests, req, strategy) => {
   const { guestId, guest, oldCount, newCount, oldMaleCount, newMaleCount, oldFemaleCount, newFemaleCount } = changeData;
   const actions = [];
@@ -2814,6 +3043,18 @@ const simulateAttendingCountChange = async (optionSeating, changeData, allGuests
   return { actions };
 };
 
+/**
+ * Finds the first available table in the simulated seating that fits a guest.
+ * Checks remaining capacity and mixing rules (group compatibility) before selecting.
+ * Cases:
+ * - Separated seating with gender: searches gender-specific tables (maleTables or femaleTables)
+ * - Non-separated: searches combined tables list
+ * @param {object} optionSeating - Simulated seating copy
+ * @param {number} guestSize - Number of seats needed
+ * @param {Array} allGuests - All confirmed guests (for occupancy calculation)
+ * @param {object} guestToAdd - The guest being placed (used for group mixing check)
+ * @returns {object|undefined} First fitting table, or undefined if none found
+ */
 const findAvailableTableSimulation = (optionSeating, guestSize, allGuests, guestToAdd) => {
   const isSeparated = optionSeating.isSeparatedSeating || false;
   const tables = isSeparated ? (optionSeating.tables || []) : (optionSeating.tables || []);
@@ -2873,6 +3114,17 @@ const findAvailableTableSimulation = (optionSeating, guestSize, allGuests, guest
   });
 };
 
+/**
+ * Determines the optimal capacity for a new table to be created during sync simulation.
+ * Cases:
+ * - No existing tables: picks a standard size based on guestSize (8, 10, 12, or capped at 24)
+ * - Existing tables and strategy is 'optimal': picks the most common table size in use, at least guestSize
+ * - Existing tables and strategy is 'conservative': uses a small rounded-up size just big enough for the guest
+ * @param {Array} existingTables - Tables already in the simulated seating
+ * @param {number} guestSize - Number of seats needed for the guest
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @returns {number} Recommended table capacity
+ */
 const determineOptimalTableSize = (existingTables, guestSize, strategy) => {
   const MAX_TABLE_CAPACITY = 24;
 
@@ -2926,6 +3178,21 @@ const determineOptimalTableSize = (existingTables, guestSize, strategy) => {
   }
 };
 
+/**
+ * Creates a new table object for use in a sync simulation.
+ * Determines type (round/rectangular), size (width/height), and canvas position.
+ * Adds the table to optionSeating.tables (non-separated) or returns it for manual placement (separated).
+ * Cases:
+ * - Separated seating with targetGender: positions the table in the gender-specific column (male=left, female=right)
+ * - Non-separated: positions relative to all existing tables using calculateNextTablePosition
+ * - Capacity <= 12: round table; capacity > 12: rectangular (matches most common existing type)
+ * @param {object} optionSeating - Simulated seating copy
+ * @param {number} capacity - Table capacity
+ * @param {number} tableNumber - Number used in the table name
+ * @param {object} req - Express request (for i18n table name translation)
+ * @param {string|null} targetGender - 'male', 'female', or null for non-separated
+ * @returns {object} New table definition object
+ */
 const createTableSimulation = (optionSeating, capacity, tableNumber, req, targetGender = null) => {
   if (!req || typeof req.t !== 'function') {
     throw new Error('Translation function (req.t) is required');
@@ -3035,6 +3302,16 @@ const createTableSimulation = (optionSeating, capacity, tableNumber, req, target
   return newTable;
 };
 
+/**
+ * Appends the dominant guest group name to auto-generated table names during sync.
+ * Only renames tables whose name still matches the default "Table N" pattern.
+ * If all seated guests belong to the same group, appends "- GroupName" to the table name.
+ * @param {Array} tables - Tables in the simulated arrangement
+ * @param {object} arrangement - tableId -> guestIds mapping
+ * @param {Array} guests - All confirmed guests
+ * @param {object} req - Express request (for i18n table name pattern)
+ * @returns {Array} Updated tables array with renamed tables
+ */
 const updateTableNamesWithGroupsInSync = (tables, arrangement, guests, req) => {
   return tables.map(table => {
     const tableNamePattern = new RegExp(`^${req.t('seating.tableName')} \\d+`);
@@ -3079,6 +3356,17 @@ const updateTableNamesWithGroupsInSync = (tables, arrangement, guests, req) => {
   });
 };
 
+/**
+ * Optimizes a simulated seating arrangement by removing empty tables and adjusting capacities.
+ * Removes auto-created tables that have no seated guests.
+ * Shrinks over-sized tables to fit their actual occupancy (rounded up to common sizes).
+ * Cases:
+ * - Separated seating: processes male tables and female tables separately
+ * - Non-separated: processes combined tables/arrangement
+ * @param {object} optionSeating - Simulated seating (mutated in place)
+ * @param {Array} guests - All confirmed guests
+ * @returns {{ wasOptimized: boolean, actions: Array, tables: Array, arrangement: object }}
+ */
 const optimizeArrangementSimulation = (optionSeating, guests) => {
   let optimized = false;
   const actions = [];
@@ -3248,6 +3536,17 @@ const optimizeArrangementSimulation = (optionSeating, guests) => {
   }
 };
 
+/**
+ * Generates a human-readable description of a sync option based on the actions it would perform.
+ * Counts action types (seated, moved, removed, tables created/removed) and formats a summary string.
+ * Cases:
+ * - strategy === 'conservative': description starts with the conservative label
+ * - strategy === 'optimal': description starts with the optimal label
+ * @param {Array} actions - Actions from the sync simulation
+ * @param {string} strategy - 'conservative' or 'optimal'
+ * @param {object} req - Express request (for i18n)
+ * @returns {string} Human-readable description of the sync option
+ */
 const generateOptionDescription = (actions, strategy, req) => {
   const actionCounts = {
     guest_seated: 0,
@@ -3293,6 +3592,13 @@ const generateOptionDescription = (actions, strategy, req) => {
   return description;
 };
 
+/**
+ * Calculates seating statistics for a non-separated arrangement.
+ * Counts total tables, capacity, occupied tables, seated people, and utilization rate.
+ * @param {object} optionSeating - Simulated seating with tables and arrangement
+ * @param {Array} guests - All confirmed guests
+ * @returns {{ totalTables, totalCapacity, occupiedTables, seatedPeople, utilizationRate }}
+ */
 const calculateArrangementStats = (optionSeating, guests) => {
   const stats = {
     totalTables: optionSeating.tables.length,
@@ -3320,6 +3626,15 @@ const calculateArrangementStats = (optionSeating, guests) => {
   return stats;
 };
 
+/**
+ * Extracts a list of guest objects that are affected by the given sync triggers.
+ * Collects guestIds from trigger changeData, then maps them to guest records.
+ * For separated seating, also tracks which genders changed per guest.
+ * @param {Array} triggers - Pending sync triggers
+ * @param {Array} guests - All confirmed guests
+ * @param {object} seating - Current seating document (used to detect separated mode)
+ * @returns {Array} Array of guest objects with name, attendingCount, group, gender, maleCount, femaleCount
+ */
 const extractAffectedGuests = (triggers, guests, seating) => {
   const affectedGuestIds = new Set();
   const isSeparated = seating?.isSeparatedSeating || false;
@@ -3417,6 +3732,17 @@ const extractAffectedGuests = (triggers, guests, seating) => {
   });
 };
 
+/**
+ * Applies a user-selected sync option to the real seating arrangement.
+ * The user can select a pre-generated option (conservative/optimal) or provide a custom arrangement.
+ * Validates edit permissions and saves the result.
+ * Cases:
+ * - optionId provided: applies the pre-generated option's tables and arrangement; marks triggers as processed
+ * - customArrangement provided: applies the user's custom arrangement directly to the seating
+ * - Separated seating: saves maleTables/femaleTables/maleArrangement/femaleArrangement
+ * - Non-separated: saves tables/arrangement
+ * @route POST /api/events/:eventId/seating/sync/apply
+ */
 const applySyncOption = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -3677,9 +4003,24 @@ const applySyncOption = async (req, res) => {
   }
 };
 
+/**
+ * Validates that no table in the arrangement exceeds its capacity.
+ * Also checks for orphaned arrangement entries (tableIds not in tables array).
+ * Cases:
+ * - tableGender === 'male': counts maleCount per guest for occupancy
+ * - tableGender === 'female': counts femaleCount per guest
+ * - tableGender not specified: auto-detects based on table name/id prefix, falls back to attendingCount
+ * Returns an empty array if valid, or an array of error objects if overcapacity or orphaned tables found.
+ * @param {Array} tables - Table definitions
+ * @param {object} arrangement - tableId -> guestIds mapping
+ * @param {Array} guests - All confirmed guests
+ * @param {object} req - Express request (for i18n error messages)
+ * @param {string|null} tableGender - 'male', 'female', or null for auto-detect
+ * @returns {Array} Array of validation error objects (empty if valid)
+ */
 const validateArrangementCapacity = (tables, arrangement, guests, req, tableGender = null) => {
   const errors = [];
- 
+
   const validTableIds = new Set(tables.map(t => t.id));
   const invalidTableIds = Object.keys(arrangement).filter(tableId => !validTableIds.has(tableId));
  
@@ -3752,6 +4093,15 @@ const validateArrangementCapacity = (tables, arrangement, guests, req, tableGend
   return errors;
 };
 
+/**
+ * Moves a list of specified guests from their tables back to the unassigned pool.
+ * Used when the user decides to manually handle conflicting sync guests.
+ * Validates edit permissions, then removes each guest from every table they appear in.
+ * Cases:
+ * - Separated seating: removes guests from maleArrangement and femaleArrangement based on their gender
+ * - Non-separated: removes guests from combined arrangement
+ * @route POST /api/events/:eventId/seating/sync/move-unassigned
+ */
 const moveAffectedGuestsToUnassigned = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -4031,16 +4381,16 @@ const moveAffectedGuestsToUnassigned = async (req, res) => {
 };
 
 /**
- * generateAISeating - Main function for AI-powered seating arrangement generation.
- *
- * This function handles two main flows:
- * 1. Separated seating (isSeparatedSeating=true) - Male and female guests are seated in separate table groups
- * 2. Non-separated seating (isSeparatedSeating=false) - All guests are seated together
- *
- * Within each flow, there are sub-cases:
- * - preserveExisting=true: Keep current guest assignments, only seat unassigned guests in new tables
- * - preserveExisting=false + user modified tables: Use user's custom/modified tables, create new guest assignments
- * - preserveExisting=false + no modifications: Let AI decide everything (tables + assignments) from scratch
+ * Main handler for AI-powered seating arrangement generation.
+ * Generates an optimized guest-to-table assignment using a bin-packing algorithm with group mixing rules.
+ * Cases:
+ * - Separated seating (isSeparatedSeating=true): generates male and female arrangements independently
+ * - Non-separated: generates one combined arrangement for all guests
+ * Within each flow:
+ * - preserveExisting=true: keeps current seated guests; only seats unassigned guests in new tables
+ * - preserveExisting=false + user modified tables (useUserSelectedTables=true): uses user's custom tables, reassigns all guests
+ * - preserveExisting=false + no user tables (Automatic decides): runs dry-run first to determine table count, then generates from scratch
+ * @route POST /api/events/:eventId/seating/generate
  */
 const generateAISeating = async (req, res) => {
   try {
@@ -4057,7 +4407,7 @@ const generateAISeating = async (req, res) => {
       currentFemaleArrangement,
       // true = keep current seated guests and only add unassigned ones; false = start fresh
       preserveExisting,
-      // Complete table arrays built in the AI modal (includes preset + custom tables the user configured)
+      // Complete table arrays built in the automatic modal (includes preset + custom tables the user configured)
       allTables,
       allMaleTables,
       allFemaleTables,
@@ -4190,7 +4540,7 @@ const generateAISeating = async (req, res) => {
 
       // --- Determine which tables to use for each gender ---
       // maleTablesList: The tables that will be used for male seating.
-      // Priority: allMaleTables (built in AI modal) > maleTables (existing on canvas)
+      // Priority: allMaleTables (built in automatic modal) > maleTables (existing on canvas)
       let maleTablesList = allMaleTables && allMaleTables.length > 0 ? allMaleTables : maleTables;
       let femaleTablesList = allFemaleTables && allFemaleTables.length > 0 ? allFemaleTables : femaleTables;
 
@@ -4249,7 +4599,7 @@ const generateAISeating = async (req, res) => {
 
         // If there are unassigned people, generate new tables for them
         if (unassignedMalePeopleCount > 0) {
-          // Run dry-run with empty tables array (let AI create new tables from scratch for unassigned guests only)
+          // Run dry-run with empty tables array (let automatic seating create new tables from scratch for unassigned guests only)
           const dryRunResult = runDryGenerateOptimalSeating(unassignedMaleGuests, [], enhancedPreferences, 'male');
 
           if (dryRunResult && dryRunResult.tables && dryRunResult.arrangement) {
@@ -4268,19 +4618,19 @@ const generateAISeating = async (req, res) => {
         }
 
       // --- CASE B & C: "Start from scratch" (preserveExisting=false) ---
-      // Create new guest assignments. Depending on flags, either respect user's custom tables or let AI decide.
+      // Create new guest assignments. Depending on flags, either respect user's custom tables or let automatic seating decide.
       } else {
 
         // useMaleCustom: true when user zeroed out all preset tables and ONLY added custom table sizes in the modal
         const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
-        // useMaleModifiedPreset: true when user changed the QUANTITIES of AI-suggested preset tables
+        // useMaleModifiedPreset: true when user changed the QUANTITIES of automatic-suggested preset tables
         const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
         // useMaleUserSelected: true if user modified ANYTHING about the tables (custom only OR modified preset counts)
         const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
 
         // --- CASE B: User modified/chose specific tables ---
         // The user customized the table configuration, so we must respect their table choices
-        // (capacity, type) while letting AI assign guests to those tables.
+        // (capacity, type) while letting automatic seating assign guests to those tables.
         if (useMaleUserSelected && allMaleTables && allMaleTables.length > 0) {
           // Tables of the proposal and also personally selected
           const originalMaleTables = maleTablesList.map(t => ({
@@ -4293,13 +4643,13 @@ const generateAISeating = async (req, res) => {
           }));
           const originalMaleTableIds = new Set(originalMaleTables.map(t => t.id));
 
-          // Run AI seating on the user's tables, Sends male guests, tables of the proposal and preferences
+          // Run automatic seating on the user's tables, Sends male guests, tables of the proposal and preferences
           const maleResult = generateOptimalSeating(maleGuests, maleTablesList, enhancedPreferences, 'male');
 
-          // Restore original table properties (capacity, type) that AI may have changed.
+          // Restore original table properties (capacity, type) that automatic seating may have changed.
           // For each original table:
-          //   - If AI used it (found in result): take AI's guest assignments but restore original capacity/type
-          //   - If AI didn't use it (not in result): return it empty with original properties
+          //   - If automatic seating used it (found in result): take automatic seating's guest assignments but restore original capacity/type
+          //   - If automatic seating didn't use it (not in result): return it empty with original properties
           maleTablesList = originalMaleTables.map(originalTable => {
             const resultTable = maleResult.tables.find(t => t.id === originalTable.id);
             if (resultTable) {
@@ -4322,11 +4672,11 @@ const generateAISeating = async (req, res) => {
           });
 
           // Build the arrangement, enforcing original capacity limits.
-          // AI might have assigned more guests than the original capacity allows
-          // (because AI changed the capacity internally), so we filter guests that actually fit.
+          // Automatic seating might have assigned more guests than the original capacity allows
+          // (because automatic seating changed the capacity internally), so we filter guests that actually fit.
           aiMaleArrangement = {};
           Object.entries(maleResult.arrangement).forEach(([tableId, guestIds]) => {
-            // Only include assignments to user's original tables (ignore any AI-created overflow tables)
+            // Only include assignments to user's original tables (ignore any automatic seating-created overflow tables)
             if (originalMaleTableIds.has(tableId)) {
               const originalTable = originalMaleTables.find(t => t.id === tableId);
               if (originalTable) {
@@ -4347,7 +4697,7 @@ const generateAISeating = async (req, res) => {
             }
           });
 
-          // Check if any guests were left unassigned (due to capacity filtering above, or tables AI didn't use)
+          // Check if any guests were left unassigned (due to capacity filtering above, or tables automatic seating didn't use)
           const assignedMaleGuestIds = new Set(Object.values(aiMaleArrangement).flat());
           const unassignedMaleGuestsAfterCustom = maleGuests.filter(g => !assignedMaleGuestIds.has(g._id.toString()));
 
@@ -4376,7 +4726,7 @@ const generateAISeating = async (req, res) => {
             });
           }
 
-        // --- CASE C1: User accepted AI suggestion as-is, dry run succeeded ---
+        // --- CASE C1: User accepted automatic seating suggestion as-is, dry run succeeded ---
         // No custom tables - use the pre-computed dry run result directly (already includes
         // capacity adjustments, retries, and cleanup done by runDryGenerateOptimalSeating)
         } else if (maleDryRunResult.tables && maleDryRunResult.tables.length > 0) {
@@ -4440,9 +4790,9 @@ const generateAISeating = async (req, res) => {
         const useFemaleUserSelected = useFemaleCustom || useFemaleModifiedPreset;
 
         // --- CASE B: User modified/chose specific female tables ---
-        // Same flow as male: run AI → restore original capacities → filter overflows → create emergency tables if needed
+        // Same flow as male: run automatic seating → restore original capacities → filter overflows → create emergency tables if needed
         if (useFemaleUserSelected && allFemaleTables && allFemaleTables.length > 0) {
-          // Save original table properties before AI modifies them
+          // Save original table properties before automatic seating modifies them
           const originalFemaleTables = femaleTablesList.map(t => ({
             id: t.id,
             capacity: t.capacity,
@@ -4455,7 +4805,7 @@ const generateAISeating = async (req, res) => {
 
           const femaleResult = generateOptimalSeating(femaleGuests, femaleTablesList, enhancedPreferences, 'female');
 
-          // Restore original capacities/types that AI may have changed
+          // Restore original capacities/types that automatic seating may have changed
           femaleTablesList = originalFemaleTables.map(originalTable => {
             const resultTable = femaleResult.tables.find(t => t.id === originalTable.id);
             if (resultTable) {
@@ -4523,7 +4873,7 @@ const generateAISeating = async (req, res) => {
             });
           }
 
-        // --- CASE C1: User accepted AI suggestion as-is, dry run succeeded ---
+        // --- CASE C1: User accepted automatic seating suggestion as-is, dry run succeeded ---
         } else if (femaleDryRunResult.tables && femaleDryRunResult.tables.length > 0) {
           femaleTablesList = femaleDryRunResult.tables;
           aiFemaleArrangement = femaleDryRunResult.arrangement;
@@ -4540,9 +4890,9 @@ const generateAISeating = async (req, res) => {
       // POST-PROCESSING: Cleanup empty tables, sort, position, and resize
       // =====================================================================
 
-      // --- Remove empty tables (only when AI decided the tables, not user) ---
+      // --- Remove empty tables (only when automatic seating decided the tables, not user) ---
       // If user chose custom tables, keep ALL tables (even empty ones) to respect user's layout.
-      // If AI decided, remove tables with no guests to avoid cluttering the canvas.
+      // If automatic seating decided, remove tables with no guests to avoid cluttering the canvas.
       const useMaleCustom = useMaleCustomTablesOnly || (preferences && preferences.useMaleCustomTablesOnly);
       const useMaleModifiedPreset = useMaleModifiedPresetTables || (preferences && preferences.useMaleModifiedPresetTables);
       const useMaleUserSelected = useMaleCustom || useMaleModifiedPreset;
@@ -4683,7 +5033,7 @@ const generateAISeating = async (req, res) => {
     // FLOW B: NON-SEPARATED SEATING
     // ==========================================
     } else {
-      // tablesToUse: The tables to work with. Priority: allTables (from AI modal) > tables (existing on canvas)
+      // tablesToUse: The tables to work with. Priority: allTables (from automatic arrangement modal) > tables (existing on canvas)
       let tablesToUse = allTables && allTables.length > 0 ? allTables : tables;
 
       // aiArrangement: The final guest-to-table mapping { tableId: [guestId1, ...], ... }
@@ -4758,7 +5108,7 @@ const generateAISeating = async (req, res) => {
         // useUserSelectedTables: true if user modified anything about the tables
         const useUserSelectedTables = useCustom || useModifiedPreset || useUserSelectedFromBody;
 
-        // --- CASE B: User modified/chose specific tables - respect user's choices, let AI assign guests ---
+        // --- CASE B: User modified/chose specific tables - respect user's choices, let automatic seating assign guests ---
         if (useUserSelectedTables && allTables && allTables.length > 0) {
           const originalTables = tablesToUse.map(t => ({
             id: t.id,
@@ -4917,7 +5267,7 @@ const generateAISeating = async (req, res) => {
           }
           tablesToUse.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
 
-        // --- CASE C: User accepted AI suggestion as-is - use dry run or direct generation ---
+        // --- CASE C: User accepted automatic seating suggestion as-is - use dry run or direct generation ---
         } else {
           const dryRunResult = runDryGenerateOptimalSeating(guests, tablesToUse, enhancedPreferences, null);
           if (!dryRunResult || !dryRunResult.arrangement || !dryRunResult.tables) {
@@ -5001,6 +5351,12 @@ const generateAISeating = async (req, res) => {
   }
 };
 
+/**
+ * Returns the highest table number found in any table name (matches Hebrew "שולחן N" pattern).
+ * Used to assign sequential numbers to newly created tables.
+ * @param {Array} tables - Array of table objects with name fields
+ * @returns {number} The highest table number found, or 0 if none
+ */
 function getMaxTableNumber(tables) {
   let maxNumber = 0;
   tables.forEach(t => {
@@ -5015,6 +5371,13 @@ function getMaxTableNumber(tables) {
   return maxNumber;
 }
 
+/**
+ * Builds a Union-Find cluster map from group mixing rules.
+ * Groups connected by mixing rules are merged into the same cluster (represented as a cluster ID).
+ * Used to quickly determine if two groups belong to the same "allowed to mix" cluster.
+ * @param {Array} groupMixingRules - Array of { group1, group2 } mixing rule objects
+ * @returns {Map<string, number>} Map from group name to cluster ID
+ */
 function buildMixingClusters(groupMixingRules) {
   if (!groupMixingRules || groupMixingRules.length === 0) {
     return new Map();
@@ -5070,9 +5433,25 @@ function buildMixingClusters(groupMixingRules) {
   return groupToCluster;
 }
 
+/**
+ * Checks whether two guest groups are allowed to share a table.
+ * Cases:
+ * - Same group: always allowed
+ * - Either group has policy 'S' (separate): not allowed
+ * - mixingMode === 'none': not allowed (groups must sit separately)
+ * - mixingMode === 'free': allowed (all groups may mix freely)
+ * - mixingMode === 'rules': allowed only if both groups are in the same cluster (connected by mixing rules)
+ * @param {string} group1 - First group name
+ * @param {string} group2 - Second group name
+ * @param {string} mixingMode - 'none', 'free', or 'rules'
+ * @param {Array} groupMixingRules - Mixing rule definitions
+ * @param {Map} clusterMap - Group-to-cluster mapping from buildMixingClusters
+ * @param {object} groupPolicies - Map of group name to policy ('S' = separate, 'M' = mixable)
+ * @returns {boolean} True if the two groups can share a table
+ */
 function canGroupsMix(group1, group2, mixingMode, groupMixingRules, clusterMap, groupPolicies) {
   if (group1 === group2) return true;
- 
+
   if (groupPolicies) {
     if (groupPolicies[group1] === 'S' || groupPolicies[group2] === 'S') {
       return false;
@@ -5114,6 +5493,20 @@ function canGroupsMix(group1, group2, mixingMode, groupMixingRules, clusterMap, 
   return false;
 }
 
+/**
+ * Categorizes unassigned guests into groups for the automatic seating algorithm.
+ * Cases:
+ * - Group policy is 'S' (separate): guest goes into separateGroups (must sit with own group only)
+ * - mixingMode === 'free' or 'optimal': guest goes into allFlexibleGuests (may sit anywhere)
+ * - mixingMode === 'rules' and group is in clusterMap: guest goes into clusterGuests (grouped by cluster ID)
+ * - mixingMode === 'rules' and group not in clusterMap: guest goes into noClusterGuests (no mixing rule)
+ * @param {Array} guests - Guest objects to categorize
+ * @param {string} mixingMode - 'none', 'free', 'rules', or 'optimal'
+ * @param {Map} clusterMap - Group-to-cluster mapping from buildMixingClusters
+ * @param {Set} alreadyAssigned - Set of guestIds that are already seated
+ * @param {object} groupPolicies - Map of group name to policy ('S' or 'M')
+ * @returns {{ clusterGuests, noClusterGuests, separateGroups, allFlexibleGuests }}
+ */
 function groupGuestsByClusters(guests, mixingMode, clusterMap, alreadyAssigned, groupPolicies) {
   const clusterGuests = new Map();
   const noClusterGuests = [];
@@ -5156,9 +5549,23 @@ function groupGuestsByClusters(guests, mixingMode, clusterMap, alreadyAssigned, 
   return { clusterGuests, noClusterGuests, separateGroups, allFlexibleGuests };
 }
 
+/**
+ * Assigns a guest to a specific table in the automatic seating algorithm (with full validation).
+ * Validates: guest not already assigned, table has enough remaining capacity, mixing rules allow it.
+ * On success, updates arrangement, table.assignedGuests, table.remainingCapacity, and alreadyAssigned.
+ * @param {object} guest - Guest to assign
+ * @param {object} table - Target table (with remainingCapacity and assignedGuests)
+ * @param {object} arrangement - tableId -> guestIds mapping (mutated in place)
+ * @param {Array} availableTables - All available tables (unused here but kept for API consistency)
+ * @param {object} preferences - Seating preferences including groupPolicies and mixing rules
+ * @param {Array} guests - All guests (for group compatibility checks)
+ * @param {Set} alreadyAssigned - Set of already-placed guestIds (mutated in place)
+ * @param {object} req - Express request (unused, kept for consistency)
+ * @returns {boolean} True if guest was successfully assigned, false otherwise
+ */
 function assignGuestToTableAdvanced(guest, table, arrangement, availableTables, preferences, guests, alreadyAssigned, req) {
   const guestId = guest._id.toString();
- 
+
   if (alreadyAssigned.has(guestId)) {
     return false;
   }
@@ -5251,6 +5658,15 @@ function assignGuestToTableAdvanced(guest, table, arrangement, availableTables, 
   return true;
 }
 
+/**
+ * Determines the mixing mode from event preferences.
+ * Cases:
+ * - allowGroupMixing === false: returns 'none' (groups must sit separately)
+ * - allowGroupMixing === true with no rules: returns 'free' (all groups may mix)
+ * - allowGroupMixing === true with rules: returns 'rules' (mixing allowed only per defined rules)
+ * @param {object} preferences - Seating preferences with allowGroupMixing and groupMixingRules
+ * @returns {string} 'none' | 'free' | 'rules'
+ */
 function determineMixingMode(preferences) {
 
   if (preferences.allowGroupMixing === false) {
@@ -5267,6 +5683,27 @@ function determineMixingMode(preferences) {
   return 'none';
 }
 
+/**
+ * Read-only compatibility check: can a guest be placed at a specific table?
+ * Checks group mixing policies without modifying any state.
+ * Cases:
+ * - Table is empty: always allowed
+ * - All guests at the table are the same group as the guest: allowed
+ * - Guest's policy is 'S' (separate): not allowed to mix
+ * - Table already has 'S'-policy guests from a different group: not allowed
+ * - Any table group policy is 'S' and differs from guest's group: not allowed
+ * - canGroupsMix check fails for any table group: not allowed
+ * @param {object} guest - Guest to check
+ * @param {object} table - Table to check
+ * @param {object} arrangement - tableId -> guestIds mapping
+ * @param {Array} allGuests - All guests (for group lookups)
+ * @param {object} groupPolicies - Map of group name to policy ('S' or 'M')
+ * @param {Map} clusterMap - Group-to-cluster mapping
+ * @param {string} mixingMode - 'none', 'free', or 'rules'
+ * @param {Map} tablesWithSGroupGuests - Map of tableId to Set of 'S'-policy groups at that table
+ * @param {Array} groupMixingRules - Mixing rule definitions
+ * @returns {boolean} True if the guest can be placed at the table
+ */
 function canGuestBeAssignedToTable(guest, table, arrangement, allGuests, groupPolicies, clusterMap, mixingMode, tablesWithSGroupGuests, groupMixingRules) {
   const guestGroup = guest.customGroup || guest.group;
   const guestPolicy = groupPolicies[guestGroup];
@@ -5314,6 +5751,19 @@ function canGuestBeAssignedToTable(guest, table, arrangement, allGuests, groupPo
   return true;
 }
 
+/**
+ * Creates a list of new table objects to fill a needed total capacity.
+ * Used during automatic seating generation when existing tables are insufficient.
+ * Prefers preferredSize tables; uses large rectangular (24-seat) tables when remaining capacity is large.
+ * Limits the number of 24-seat rectangular tables to MAX_RECTANGULAR_24 (2).
+ * Assigns grid positions to tables within the canvas bounds.
+ * @param {number} neededCapacity - Total additional seats required
+ * @param {number} startingNumber - The table number to start naming from
+ * @param {object} req - Express request (for i18n table name)
+ * @param {number} preferredSize - Preferred table capacity (default 12)
+ * @param {number} existing24Tables - Count of existing 24-seat tables (to respect the max limit)
+ * @returns {Array} Array of new table definition objects
+ */
 function createAdditionalTables(neededCapacity, startingNumber, req, preferredSize = 12, existing24Tables = 0) {
   const CANVAS_HEIGHT = 1600;
   const BOUNDARY_PADDING = 150;
@@ -5398,6 +5848,21 @@ function createAdditionalTables(neededCapacity, startingNumber, req, preferredSi
   return tables;
 }
 
+/**
+ * Calculates how many tables (and of which capacity) are needed to seat all guests.
+ * Implements a bin-packing heuristic adapted to event size and guest group sizes.
+ * Applies capacity presets based on event size (small/medium/large).
+ * Cases:
+ * - availableCapacities provided: uses those specific sizes as an initial pool
+ * - Large guests (attendingCount >= 6): tries to fill them into dedicated larger tables first
+ * - Small guests: packs them into remaining or new tables
+ * - isSeparatedSeating: adjusts rectangular 24-seat table allocation per gender
+ * @param {Array} guestsList - Array of { size, group } guest descriptors
+ * @param {Array} availableCapacities - Pre-configured table capacities from the user
+ * @param {number} rectangular24Used - Number of 24-seat rectangular tables already used
+ * @param {boolean} isSeparatedSeating - Whether seating is separated by gender
+ * @returns {{ tables: Array, tableSettings: object, rectangular24Used: number }}
+ */
 const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24Used = 0, isSeparatedSeating = false) => {
 
   let processedGuests = [...guestsList];
@@ -5953,6 +6418,25 @@ const calculateTablesForGuests = (guestsList, availableCapacities, rectangular24
   return { tables, tableSettings, rectangular24Used: rect24Count };
 };
 
+/**
+ * Fills tables completely for a group of guests during automatic seating generation.
+ * Uses findBestGuestCombination (0/1 knapsack) to optimally pack guests into each table.
+ * Skips tables that are temporarily reserved for other groups.
+ * Cases:
+ * - groupInfo provided: assigns guests from a specific group cluster to matching tables
+ * - No groupInfo: assigns guests from guestsPool to any compatible empty table
+ * - Table is full: moves to next table; leftover guests remain in guestsPool
+ * @param {Array} guestsPool - Guests to try placing
+ * @param {Array} availableTables - Tables available for this group
+ * @param {object} arrangement - tableId -> guestIds mapping (mutated in place)
+ * @param {Set} alreadyAssigned - Set of placed guestIds (mutated in place)
+ * @param {number} preferredSize - Preferred table capacity
+ * @param {object} preferences - Seating preferences
+ * @param {Array} allGuests - All guests (for compatibility checks)
+ * @param {object|null} groupInfo - Optional group/cluster metadata
+ * @param {Array} temporarilyReservedTables - Table IDs to skip
+ * @returns {{ filledTables: Array, remainingGuests: Array }}
+ */
 function fillFullTablesForGroup(
   guestsPool,
   availableTables,
@@ -5964,9 +6448,9 @@ function fillFullTablesForGroup(
   groupInfo = null,
   temporarilyReservedTables = []
 ) {
- 
+
   const filledTables = [];
- 
+
   guestsPool = guestsPool.filter(g =>
     g && g._id && !alreadyAssigned.has(g._id.toString())
   );
@@ -6148,6 +6632,13 @@ function fillFullTablesForGroup(
   };
 }
 
+/**
+ * Finds the optimal subset of guests to seat at a table using 0/1 knapsack dynamic programming.
+ * Maximizes total attendingCount without exceeding tableCapacity.
+ * @param {Array} guests - Candidate guests to choose from
+ * @param {number} tableCapacity - Maximum seats available at the table
+ * @returns {{ guests: Array, totalSize: number }} Best guest combination and their total size
+ */
 function findBestGuestCombination(guests, tableCapacity) {
   if (guests.length === 0) {
     return { guests: [], totalSize: 0 };
@@ -6194,6 +6685,17 @@ function findBestGuestCombination(guests, tableCapacity) {
   };
 }
 
+/**
+ * Calculates the canvas position for a new table based on existing table positions.
+ * Arranges tables in a grid pattern, avoiding collisions with occupied positions.
+ * Cases:
+ * - No existing tables: places the table at the default start position
+ * - gender === 'female': starts in the right half of the canvas (FEMALE_START_X)
+ * - gender === 'male' or null: starts in the left half of the canvas (MALE_START_X)
+ * @param {Array} existingTables - Tables already placed on the canvas (with position.x/y)
+ * @param {string|null} gender - 'male', 'female', or null for non-separated
+ * @returns {{ x: number, y: number }} Canvas position for the new table
+ */
 function calculateNextTablePosition(existingTables, gender = null) {
 
   if (gender && typeof gender === 'object') {
@@ -6285,8 +6787,25 @@ function calculateNextTablePosition(existingTables, gender = null) {
   return { x: minX, y: newY };
 }
 
+/**
+ * Core automatic seating algorithm: assigns guests to tables according to group mixing rules.
+ * Processes guests in this order:
+ * 1. Separate-policy groups (policy 'S'): fills full tables with each group's guests using knapsack
+ * 2. Cluster groups (mixingMode 'rules'): fills tables per mixing cluster
+ * 3. No-cluster guests: assigned to remaining tables one by one
+ * 4. Flexible guests (mixingMode 'free'): assigned freely to any available table
+ * 5. Overflow: any remaining unassigned guests get placed in order
+ * Cases:
+ * - gender provided: operating on a gender-specific table set (separated seating)
+ * - gender null: non-separated, all guests placed together
+ * @param {Array} guests - Confirmed guests to seat
+ * @param {Array} tables - Available tables (with capacity, type, position)
+ * @param {object} preferences - Seating preferences (allowGroupMixing, groupPolicies, groupMixingRules)
+ * @param {string|null} gender - 'male', 'female', or null for non-separated
+ * @returns {{ arrangement: object, tables: Array }} Final assignment and table list
+ */
 function generateOptimalSeating(guests, tables, preferences, gender = null) {
- 
+
   if (gender && typeof gender === 'object') {
     gender = String(gender);
   }
@@ -6516,7 +7035,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
 
   const hasMixingRules = preferences.groupMixingRules && preferences.groupMixingRules.length > 0;
  
-  // ערבוב עם חוקים
+  // Mixing with rules
   if (preferences.allowGroupMixing && hasMixingRules) {
    
     const mixableGroupPairs = new Set();
@@ -6538,9 +7057,9 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
       }
     });
      
-    const mixableGuestsByGroup = new Map(); // כללי ערבוב קבוצות
-    const nonMixableGroups = new Map(); // מדיניות קבוצות 'בחר' - אסור לערבב
-    const separateGroups = new Map(); // חייבת לשבת לבד
+    const mixableGuestsByGroup = new Map(); // Group mixing rules
+    const nonMixableGroups = new Map(); // Group policies 'Select' - mixing not allowed
+    const separateGroups = new Map(); // Groups that must sit separately
    
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
@@ -8594,7 +9113,15 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
   return { arrangement, tables };
 }
 
-
+/**
+ * Exports the seating chart data for an event.
+ * Verifies access rights (owner or shared user).
+ * Cases:
+ * - Separated seating: exports male and female tables/arrangements separately
+ * - Non-separated: exports combined tables and arrangement
+ * Returns table-by-table guest lists with guest details (name, group, attendingCount).
+ * @route GET /api/events/:eventId/seating/export
+ */
 const exportSeatingChart = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -8753,6 +9280,12 @@ const exportSeatingChart = async (req, res) => {
   }
 };
 
+/**
+ * Deletes the seating arrangement document for an event.
+ * Validates edit permissions (owner or shared user with edit access).
+ * Returns 404 if no seating document exists for the event.
+ * @route DELETE /api/events/:eventId/seating
+ */
 const deleteSeatingArrangement = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -8790,6 +9323,16 @@ const deleteSeatingArrangement = async (req, res) => {
   }
 };
 
+/**
+ * Suggests an optimal table configuration (count and capacities) based on the confirmed guest list.
+ * Runs a dry-run seating simulation to determine how many tables and of what size are needed.
+ * Cases:
+ * - Separated seating: runs the simulation separately for male and female guests; combines results
+ * - Non-separated: runs one simulation for all guests combined
+ * - preserveExisting=true: accounts for already-configured existing tables; only suggests additional ones
+ * - preserveExisting=false: suggests a fresh table configuration from scratch
+ * @route POST /api/events/:eventId/seating/suggest-tables
+ */
 const suggestTables = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -8960,8 +9503,23 @@ const suggestTables = async (req, res) => {
   }
 };
 
+/**
+ * Runs a dry-run of the optimal seating algorithm to predict table requirements.
+ * Does not save any data — only simulates generation to determine how many tables are needed.
+ * If existing tables don't have enough capacity, creates additional tables and retries.
+ * Cases:
+ * - No guests: returns empty result immediately
+ * - Existing tables sufficient: runs generateOptimalSeating and returns table stats
+ * - Existing tables insufficient: adds tables up to needed capacity, then runs again
+ * @param {Array} guests - Confirmed guests (with attendingCount)
+ * @param {Array} existingTables - Tables already configured
+ * @param {object} preferences - Seating preferences (groupPolicies, mixing rules)
+ * @param {string|null} gender - 'male', 'female', or null for non-separated
+ * @param {object} currentArrangement - Existing arrangement (used to skip already-placed guests)
+ * @returns {{ tableSettings: object, totalTables: number, details: object }}
+ */
 function runDryGenerateOptimalSeating(guests, existingTables, preferences, gender = null, currentArrangement = {}) {
- 
+
   if (!guests || guests.length === 0) {
     return {
       tableSettings: {},
