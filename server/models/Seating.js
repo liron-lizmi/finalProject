@@ -17,13 +17,10 @@
  * - syncSettings: Auto-sync configuration (enabled, create tables, optimize)
  *
  * Methods:
- * - validateArrangement: Check for overcapacity and duplicates
  * - getStatistics: Get occupancy stats per table and overall
- * - addSyncTrigger/processSyncTrigger: Manage sync queue
  * - findAvailableTable: Find table with space for N guests
  * - createTable: Auto-create table with position calculation
  * - optimizeArrangement: Remove duplicates, merge under-utilized tables
- * - exportData: Export seating for display/download
  * - getSyncSummary: Get sync status for UI
  *
  * Virtuals: totalCapacity, currentOccupancy, pendingSyncTriggers, hasPendingSync
@@ -391,183 +388,6 @@ SeatingSchema.virtual('hasPendingSync').get(function() {
   return this.pendingSyncTriggers.length > 0;
 });
 
-SeatingSchema.methods.validateArrangement = function(guests) {
-  const errors = [];
-  const isSeparated = this.isSeparatedSeating || false;
-  
-  if (isSeparated) {
-    const maleGuests = guests.filter(g => g.gender === 'male');
-    const femaleGuests = guests.filter(g => g.gender === 'female');
-    
-    for (const [tableId, guestIds] of Object.entries(this.maleArrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      const table = this.maleTables.find(t => t.id === tableId);
-      if (!table) {
-        errors.push({
-          type: 'table_not_found',
-          tableId,
-          gender: 'male',
-          messageKey: 'validation.tableNotFound',
-          params: { tableId }
-        });
-        continue;
-      }
-
-      const totalPeople = guestIds.reduce((sum, guestId) => {
-        const guest = maleGuests.find(g => g._id.toString() === guestId);
-        return sum + (guest ? (guest.attendingCount || 1) : 0);
-      }, 0);
-
-      if (totalPeople > table.capacity) {
-        errors.push({
-          type: 'overcapacity',
-          tableId,
-          tableName: table.name,
-          gender: 'male',
-          capacity: table.capacity,
-          occupancy: totalPeople,
-          messageKey: 'validation.tableOvercapacity',
-          params: { 
-            tableName: table.name, 
-            occupancy: totalPeople, 
-            capacity: table.capacity 
-          }
-        });
-      }
-    }
-    
-    for (const [tableId, guestIds] of Object.entries(this.femaleArrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      const table = this.femaleTables.find(t => t.id === tableId);
-      if (!table) {
-        errors.push({
-          type: 'table_not_found',
-          tableId,
-          gender: 'female',
-          messageKey: 'validation.tableNotFound',
-          params: { tableId }
-        });
-        continue;
-      }
-
-      const totalPeople = guestIds.reduce((sum, guestId) => {
-        const guest = femaleGuests.find(g => g._id.toString() === guestId);
-        return sum + (guest ? (guest.attendingCount || 1) : 0);
-      }, 0);
-
-      if (totalPeople > table.capacity) {
-        errors.push({
-          type: 'overcapacity',
-          tableId,
-          tableName: table.name,
-          gender: 'female',
-          capacity: table.capacity,
-          occupancy: totalPeople,
-          messageKey: 'validation.tableOvercapacity',
-          params: { 
-            tableName: table.name, 
-            occupancy: totalPeople, 
-            capacity: table.capacity 
-          }
-        });
-      }
-    }
-
-    const seatedMaleGuests = new Set();
-    for (const guestIds of Object.values(this.maleArrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      for (const guestId of guestIds) {
-        if (seatedMaleGuests.has(guestId)) {
-          errors.push({
-            type: 'duplicate_guest',
-            guestId,
-            gender: 'male',
-            messageKey: 'validation.duplicateGuest',
-            params: { guestId }
-          });
-        }
-        seatedMaleGuests.add(guestId);
-      }
-    }
-    
-    const seatedFemaleGuests = new Set();
-    for (const guestIds of Object.values(this.femaleArrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      for (const guestId of guestIds) {
-        if (seatedFemaleGuests.has(guestId)) {
-          errors.push({
-            type: 'duplicate_guest',
-            guestId,
-            gender: 'female',
-            messageKey: 'validation.duplicateGuest',
-            params: { guestId }
-          });
-        }
-        seatedFemaleGuests.add(guestId);
-      }
-    }
-  } else {
-    for (const [tableId, guestIds] of Object.entries(this.arrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      const table = this.tables.find(t => t.id === tableId);
-      if (!table) {
-        errors.push({
-          type: 'table_not_found',
-          tableId,
-          messageKey: 'validation.tableNotFound',
-          params: { tableId }
-        });
-        continue;
-      }
-
-      const totalPeople = guestIds.reduce((sum, guestId) => {
-        const guest = guests.find(g => g._id.toString() === guestId);
-        return sum + (guest ? (guest.attendingCount || 1) : 0);
-      }, 0);
-
-      if (totalPeople > table.capacity) {
-        errors.push({
-          type: 'overcapacity',
-          tableId,
-          tableName: table.name,
-          capacity: table.capacity,
-          occupancy: totalPeople,
-          messageKey: 'validation.tableOvercapacity',
-          params: { 
-            tableName: table.name, 
-            occupancy: totalPeople, 
-            capacity: table.capacity 
-          }
-        });
-      }
-    }
-
-    const seatedGuests = new Set();
-    for (const guestIds of Object.values(this.arrangement || {})) {
-      if (!Array.isArray(guestIds)) continue;
-      
-      for (const guestId of guestIds) {
-        if (seatedGuests.has(guestId)) {
-          errors.push({
-            type: 'duplicate_guest',
-            guestId,
-            messageKey: 'validation.duplicateGuest',
-            params: { guestId }
-          });
-        }
-        seatedGuests.add(guestId);
-      }
-    }
-  }
-
-  return errors;
-};
-
 SeatingSchema.methods.getStatistics = function(guests) {
   const isSeparated = this.isSeparatedSeating || false;
   
@@ -787,28 +607,6 @@ SeatingSchema.methods.getStatistics = function(guests) {
 
     return stats;
   }
-};
-
-SeatingSchema.methods.addSyncTrigger = function(changeType, changeData) {
-  if (!this.syncTriggers) {
-    this.syncTriggers = [];
-  }
-
-  const trigger = {
-    timestamp: new Date(),
-    changeType,
-    changeData,
-    processed: false
-  };
-
-  this.syncTriggers.push(trigger);
-  
-  if (this.syncTriggers.length > 20) {
-    this.syncTriggers = this.syncTriggers.slice(-20);
-  }
-
-  this.lastSyncTrigger = new Date();
-  return trigger;
 };
 
 SeatingSchema.methods.processSyncTrigger = function(trigger, result) {
@@ -1208,79 +1006,6 @@ SeatingSchema.methods.optimizeArrangement = function(guests, gender = null) {
   }
   
   return false;
-};
-
-SeatingSchema.methods.exportData = function(guests) {
-  const isSeparated = this.isSeparatedSeating || false;
-  
-  if (isSeparated) {
-    const maleGuests = guests.filter(g => g.gender === 'male');
-    const femaleGuests = guests.filter(g => g.gender === 'female');
-    
-    return {
-      event: this.event,
-      isSeparatedSeating: true,
-      maleTables: this.maleTables.map(table => ({
-        ...table.toObject(),
-        guests: (this.maleArrangement[table.id] || []).map(guestId => {
-          const guest = maleGuests.find(g => g._id.toString() === guestId);
-          return guest ? {
-            id: guest._id,
-            name: `${guest.firstName} ${guest.lastName}`,
-            attendingCount: guest.attendingCount || 1,
-            group: guest.customGroup || guest.group,
-            gender: guest.gender,
-            notes: guest.guestNotes
-          } : null;
-        }).filter(Boolean)
-      })),
-      femaleTables: this.femaleTables.map(table => ({
-        ...table.toObject(),
-        guests: (this.femaleArrangement[table.id] || []).map(guestId => {
-          const guest = femaleGuests.find(g => g._id.toString() === guestId);
-          return guest ? {
-            id: guest._id,
-            name: `${guest.firstName} ${guest.lastName}`,
-            attendingCount: guest.attendingCount || 1,
-            group: guest.customGroup || guest.group,
-            gender: guest.gender,
-            notes: guest.guestNotes
-          } : null;
-        }).filter(Boolean)
-      })),
-      statistics: this.getStatistics(guests),
-      preferences: this.preferences,
-      syncSettings: this.syncSettings,
-      syncStats: this.syncStats,
-      hasPendingSync: this.hasPendingSync,
-      generatedAt: new Date().toISOString()
-    };
-  } else {
-    return {
-      event: this.event,
-      isSeparatedSeating: false,
-      tables: this.tables.map(table => ({
-        ...table.toObject(),
-        guests: (this.arrangement[table.id] || []).map(guestId => {
-          const guest = guests.find(g => g._id.toString() === guestId);
-          return guest ? {
-            id: guest._id,
-            name: `${guest.firstName} ${guest.lastName}`,
-            attendingCount: guest.attendingCount || 1,
-            group: guest.customGroup || guest.group,
-            gender: guest.gender,
-            notes: guest.guestNotes
-          } : null;
-        }).filter(Boolean)
-      })),
-      statistics: this.getStatistics(guests),
-      preferences: this.preferences,
-      syncSettings: this.syncSettings,
-      syncStats: this.syncStats,
-      hasPendingSync: this.hasPendingSync,
-      generatedAt: new Date().toISOString()
-    };
-  }
 };
 
 SeatingSchema.methods.getSyncSummary = function() {

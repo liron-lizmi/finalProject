@@ -282,18 +282,6 @@ const SeatingTableView = ({
     return filtered;
   }, [tablesWithDetails, searchTerm, showEmptyTables, sortBy, sortOrder]);
 
-  const getGroupDisplayName = (guest) => {
-    if (guest.customGroup) {
-      return guest.customGroup;
-    }
-    
-    if (['family', 'friends', 'work', 'other'].includes(guest.group)) {
-      return t(`guests.groups.${guest.group}`);
-    }
-    
-    return guest.group;
-  };
-
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');

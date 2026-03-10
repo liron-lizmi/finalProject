@@ -49,11 +49,19 @@ import SyncOptionsModal from './components/SyncOptionsModal';
 import { apiFetch } from '../../../utils/api';
 import '../../../styles/EventSeatingPage.css';
 
+const DEFAULT_PREFERENCES = {
+  seatingRules: { mustSitTogether: [], cannotSitTogether: [] },
+  groupMixingRules: [],
+  groupPolicies: {},
+  allowGroupMixing: false,
+  preferredTableSize: 12
+};
+
 const EventSeatingPage = () => {
   const { t } = useTranslation();
   const { id: eventId } = useParams();
   const navigate = useNavigate();
- 
+
   const [guests, setGuests] = useState([]);
   const [confirmedGuests, setConfirmedGuests] = useState([]);
   const [tables, setTables] = useState([]);
@@ -66,13 +74,7 @@ const EventSeatingPage = () => {
   const [viewMode, setViewMode] = useState('visual');
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-  const [preferences, setPreferences] = useState({
-    seatingRules: { mustSitTogether: [], cannotSitTogether: [] },
-    groupMixingRules: [],
-    groupPolicies: {},
-    allowGroupMixing: false,
-    preferredTableSize: 12
-  });
+  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
   const [draggedGuest, setDraggedGuest] = useState(null);
   const [editingTable, setEditingTable] = useState(null);
  
@@ -1967,6 +1969,8 @@ const clearAllSeating = useCallback(() => {
 }, [canEdit, isSeparatedSeating, maleArrangement, femaleArrangement, maleTables, femaleTables, tables, seatingArrangement, t]);
 
   const handleConfirmClearAll = useCallback(() => {
+    setPreferences(DEFAULT_PREFERENCES);
+
     if (isSeparatedSeating) {
       setMaleArrangement({});
       setFemaleArrangement({});
@@ -1974,7 +1978,7 @@ const clearAllSeating = useCallback(() => {
       setFemaleTables([]);
       setTables([]);
       setSeatingArrangement({});
-     
+
       autoSave({
         tables: [],
         arrangement: {},
@@ -1983,30 +1987,30 @@ const clearAllSeating = useCallback(() => {
         maleArrangement: {},
         femaleArrangement: {},
         isSeparatedSeating: true,
-        preferences,
+        preferences: DEFAULT_PREFERENCES,
         layoutSettings: { canvasScale, canvasOffset }
       });
     } else {
       setSeatingArrangement({});
       setTables([]);
-     
+
       autoSave({
         tables: [],
         arrangement: {},
         isSeparatedSeating: false,
-        preferences,
+        preferences: DEFAULT_PREFERENCES,
         layoutSettings: { canvasScale, canvasOffset }
       });
     }
-   
+
     setSelectedTable(null);
     setEditingTable(null);
     setError('');
     setManuallyEditedTableNames(new Set());
     setLastSyncData(null);
-   
+
     setIsClearModalOpen(false);
-  }, [isSeparatedSeating, preferences, canvasScale, canvasOffset, autoSave]);
+  }, [isSeparatedSeating, canvasScale, canvasOffset, autoSave]);
 
   const handleCanvasClick = useCallback((event) => {
     if (!isAddingTable) return;
@@ -2467,54 +2471,6 @@ const clearAllSeating = useCallback(() => {
    
     autoSave(saveData);
   }, [canvasScale, canvasOffset, tables, maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, autoSave, isSeparatedSeating]);
-
-  const manualSync = useCallback(async () => {
-    if (syncInProgress) return;
-   
-    try {
-      setSyncInProgress(true);
-     
-      const response = await makeApiRequest(`/api/events/${eventId}/seating/sync/process`, {
-        method: 'POST'
-      });
-
-      if (!response) return;
-
-      if (response.ok) {
-        const result = await response.json();
-       
-        if (result.requiresUserDecision) {
-          setSyncOptions(result.options);
-          setAffectedGuests(result.affectedGuests);
-          setPendingSyncTriggers(result.pendingTriggers);
-          setIsSyncOptionsModalOpen(true);
-        } else if (result.hasChanges) {
-          if (isSeparatedSeating) {
-            setMaleTables(result.seating.maleTables || []);
-            setFemaleTables(result.seating.femaleTables || []);
-            setMaleArrangement(result.seating.maleArrangement || {});
-            setFemaleArrangement(result.seating.femaleArrangement || {});
-          } else {
-            setTables(result.seating.tables);
-            setSeatingArrangement(result.seating.arrangement);
-          }
-         
-          showSyncNotification('success', result.message);
-         
-          await fetchConfirmedGuests();
-        } else {
-          showSyncNotification('info', result.message);
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        showSyncNotification('error', errorData.message || t('seating.sync.manualSyncFailed'));
-      }
-    } catch (error) {
-      showSyncNotification('error', t('seating.sync.manualSyncFailed'));
-    } finally {
-      setSyncInProgress(false);
-    }
-  }, [syncInProgress, makeApiRequest, eventId, showSyncNotification, t, fetchConfirmedGuests, isSeparatedSeating]);
 
   const handleApplySyncOption = useCallback(async (optionId, customArrangement = null) => {
     try {
