@@ -384,13 +384,28 @@ const saveSeatingArrangement = async (req, res) => {
     });
 
     const errors = [];
+
+    // Validate mixing rules: each group can appear in only one rule
+    const validatedMixingRules = (() => {
+      const rules = preferences?.groupMixingRules || [];
+      const usedGroups = new Set();
+      return rules.filter(rule => {
+        if (usedGroups.has(rule.group1) || usedGroups.has(rule.group2)) {
+          return false;
+        }
+        usedGroups.add(rule.group1);
+        usedGroups.add(rule.group2);
+        return true;
+      });
+    })();
+
     let updateData = {
      preferences: {
         seatingRules: preferences?.seatingRules || {
           mustSitTogether: [],
           cannotSitTogether: []
         },
-        groupMixingRules: preferences?.groupMixingRules || [],
+        groupMixingRules: validatedMixingRules,
         allowGroupMixing: preferences?.allowGroupMixing !== undefined
           ? preferences.allowGroupMixing
           : false,
@@ -7115,24 +7130,47 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
     });
   });
 
-  mixableGuestsByGroup.forEach((groupGuests, groupName) => {
-    const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-   
-    const canMixWith = [];
-    mixableGuestsByGroup.forEach((_, otherGroupName) => {
-      if (otherGroupName !== groupName &&
-          mixableGroupPairs.has(`${groupName}|${otherGroupName}`)) {
-        canMixWith.push(otherGroupName);
+  // Add mixable groups individually (each fills its own tables first via Knapsack)
+  // Remainders will be combined per-pair after the main Knapsack loop
+  const mixableGroupNames = new Set();
+
+  preferences.groupMixingRules.forEach(rule => {
+    [rule.group1, rule.group2].forEach(groupName => {
+      if (!mixableGroupNames.has(groupName)) {
+        const groupGuests = (mixableGuestsByGroup.get(groupName) || [])
+          .filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
+        if (groupGuests.length > 0) {
+          const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+          allGroupsSorted.push({
+            name: groupName,
+            guests: groupGuests,
+            totalPeople,
+            type: 'mixable',
+            canMixWith: [rule.group1 === groupName ? rule.group2 : rule.group1]
+          });
+        }
+        mixableGroupNames.add(groupName);
       }
     });
-   
-    allGroupsSorted.push({
-      name: groupName,
-      guests: groupGuests,
-      totalPeople,
-      type: 'mixable',
-      canMixWith
-    });
+  });
+
+  // Add M-policy groups individually (not in mixing rules)
+  mPolicyGroups.forEach(groupName => {
+    if (!mixableGroupNames.has(groupName)) {
+      const groupGuests = (mixableGuestsByGroup.get(groupName) || [])
+        .filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
+      if (groupGuests.length > 0) {
+        const totalPeople = groupGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+        allGroupsSorted.push({
+          name: groupName,
+          guests: groupGuests,
+          totalPeople,
+          type: 'mixable',
+          canMixWith: mPolicyGroups.filter(g => g !== groupName)
+        });
+      }
+      mixableGroupNames.add(groupName);
+    }
   });
    
     allGroupsSorted.sort((a, b) => {
@@ -7231,15 +7269,6 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
     });
 
     allGroupsSorted.forEach(groupInfo => {
-      const hasCustomMixingRules = preferences.groupMixingRules && preferences.groupMixingRules.length > 0;
-  
-      if (hasCustomMixingRules && groupInfo.type === 'mixable') {
-        remainingGuestsByGroup.set(groupInfo.name, {
-          guests: groupInfo.guests.filter(g => !alreadyAssigned.has(g._id.toString())),
-          type: groupInfo.type,
-          canMixWith: groupInfo.canMixWith
-        });
-      } else {
         const result = fillFullTablesForGroup(
           groupInfo.guests,
           availableTables,
@@ -7259,15 +7288,110 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
             canMixWith: groupInfo.canMixWith
           });
         }
-      }
     });
-   
+
     if (temporarilyReservedTables.length > 0) {
       temporarilyReservedTables.forEach(table => {
         availableTables.push(table);
       });
     }
-     
+
+    // Phase 2: Combine remainders from mixable pairs and run Knapsack again
+    // For mixing rule pairs (A+B): combine A remainders + B remainders → Knapsack
+    // For M-policy groups (not in rules): combine all remainders → Knapsack
+    const handledRemainderGroups = new Set();
+
+    preferences.groupMixingRules.forEach(rule => {
+      const g1Remaining = remainingGuestsByGroup.get(rule.group1);
+      const g2Remaining = remainingGuestsByGroup.get(rule.group2);
+      const combinedGuests = [];
+      if (g1Remaining) combinedGuests.push(...g1Remaining.guests);
+      if (g2Remaining) combinedGuests.push(...g2Remaining.guests);
+      const unassignedCombined = combinedGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
+
+      if (unassignedCombined.length > 0) {
+        const totalPeople = unassignedCombined.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+        const combinedGroupInfo = {
+          name: `${rule.group1}+${rule.group2}`,
+          guests: unassignedCombined,
+          totalPeople,
+          type: 'non-mixable',
+          canMixWith: []
+        };
+
+        const result = fillFullTablesForGroup(
+          unassignedCombined,
+          availableTables,
+          arrangement,
+          alreadyAssigned,
+          preferences.preferredTableSize || 12,
+          preferences,
+          guests,
+          combinedGroupInfo,
+          []
+        );
+
+        // Remove old individual remainder entries
+        remainingGuestsByGroup.delete(rule.group1);
+        remainingGuestsByGroup.delete(rule.group2);
+
+        // If there are still remainders after combined Knapsack, store them as mixable
+        if (result.remainingGuests.length > 0) {
+          remainingGuestsByGroup.set(`${rule.group1}+${rule.group2}`, {
+            guests: result.remainingGuests,
+            type: 'mixable',
+            canMixWith: [rule.group1, rule.group2]
+          });
+        }
+      }
+      handledRemainderGroups.add(rule.group1);
+      handledRemainderGroups.add(rule.group2);
+    });
+
+    // Combine M-policy group remainders (not in mixing rules)
+    const mPolicyRemainderGuests = [];
+    mPolicyGroups.forEach(groupName => {
+      if (!handledRemainderGroups.has(groupName)) {
+        const remaining = remainingGuestsByGroup.get(groupName);
+        if (remaining) {
+          mPolicyRemainderGuests.push(...remaining.guests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString())));
+          remainingGuestsByGroup.delete(groupName);
+        }
+        handledRemainderGroups.add(groupName);
+      }
+    });
+
+    if (mPolicyRemainderGuests.length > 0) {
+      const totalPeople = mPolicyRemainderGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+      const mPolicyCombinedInfo = {
+        name: 'mPolicy_combined',
+        guests: mPolicyRemainderGuests,
+        totalPeople,
+        type: 'non-mixable',
+        canMixWith: []
+      };
+
+      const result = fillFullTablesForGroup(
+        mPolicyRemainderGuests,
+        availableTables,
+        arrangement,
+        alreadyAssigned,
+        preferences.preferredTableSize || 12,
+        preferences,
+        guests,
+        mPolicyCombinedInfo,
+        []
+      );
+
+      if (result.remainingGuests.length > 0) {
+        remainingGuestsByGroup.set('mPolicy_combined', {
+          guests: result.remainingGuests,
+          type: 'mixable',
+          canMixWith: mPolicyGroups
+        });
+      }
+    }
+
     const mixableRemainingGuests = [];
     remainingGuestsByGroup.forEach((groupInfo, groupName) => {
       if (groupInfo.type === 'mixable') {

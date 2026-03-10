@@ -208,6 +208,15 @@ const AISeatingModal = ({
     return Array.from(groups);
   }, [guests]);
 
+  const usedMixingGroups = React.useMemo(() => {
+    const used = new Set();
+    aiPreferences.groupMixingRules.forEach(rule => {
+      used.add(rule.group1);
+      used.add(rule.group2);
+    });
+    return used;
+  }, [aiPreferences.groupMixingRules]);
+
   const maleGuests = useMemo(() => {
     if (!isSeparatedSeating || !guests) return [];
     return guests
@@ -2215,20 +2224,20 @@ const AISeatingModal = ({
                           className="group-select guest-select"
                         >
                           <option value="">{t('seating.ai.selectFirstGroup')}</option>
-                          {availableGroups.map(group => (
+                          {availableGroups.filter(group => !usedMixingGroups.has(group)).map(group => (
                             <option key={group} value={group}>
                               {getGroupDisplayName(group)}
                             </option>
                           ))}
                         </select>
-                     
+
                         <select
                           value={newGroupMixRule.group2}
                           onChange={(e) => setNewGroupMixRule(prev => ({ ...prev, group2: e.target.value }))}
                           className="group-select guest-select"
                         >
                           <option value="">{t('seating.ai.selectSecondGroup')}</option>
-                          {availableGroups.filter(group => group !== newGroupMixRule.group1).map(group => (
+                          {availableGroups.filter(group => group !== newGroupMixRule.group1 && !usedMixingGroups.has(group)).map(group => (
                             <option key={group} value={group}>
                               {getGroupDisplayName(group)}
                             </option>
