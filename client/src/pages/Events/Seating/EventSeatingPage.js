@@ -106,6 +106,8 @@ const EventSeatingPage = () => {
   const canvasRef = useRef(null);
   const tablesRef = useRef(tables);
   tablesRef.current = tables;
+  const seatingArrangementRef = useRef(seatingArrangement);
+  seatingArrangementRef.current = seatingArrangement;
   const [canEdit, setCanEdit] = useState(true);
 
   const getAuthToken = useCallback(() => {
@@ -1722,7 +1724,8 @@ const EventSeatingPage = () => {
         return false;
       }
 
-      const currentSeatedAtTable = seatingArrangement[tableId] || [];
+      const latestArrangement = seatingArrangementRef.current;
+      const currentSeatedAtTable = latestArrangement[tableId] || [];
       const totalPeople = guest.attendingCount || 1;
       const currentOccupancy = currentSeatedAtTable.reduce((sum, guestId) => {
         const g = confirmedGuests.find(guest => guest._id === guestId);
@@ -1739,8 +1742,8 @@ const EventSeatingPage = () => {
         return false;
       }
 
-      const newArrangement = { ...seatingArrangement };
-     
+      const newArrangement = { ...latestArrangement };
+
       Object.keys(newArrangement).forEach(tId => {
         newArrangement[tId] = newArrangement[tId].filter(id => id !== actualGuestId);
         if (newArrangement[tId].length === 0) {
@@ -1751,11 +1754,12 @@ const EventSeatingPage = () => {
       if (!newArrangement[tableId]) {
         newArrangement[tableId] = [];
       }
-     
+
       if (!newArrangement[tableId].includes(actualGuestId)) {
         newArrangement[tableId].push(actualGuestId);
       }
 
+      seatingArrangementRef.current = newArrangement;
       setSeatingArrangement(newArrangement);
      
       setTimeout(() => {
