@@ -10,25 +10,25 @@
  * - preferences: Current seating preferences
  * - seatingArrangement: Current assignments
  * - onClose: Close callback
- * - onGenerate: Generate AI seating callback
+ * - onGenerate: Generate automatic seating callback
  * - onAddTables: Add new tables callback
  * - getNextTableNumber: Get next table number
  * - isSeparatedSeating: Gender-separated mode
  * - maleTables/femaleTables: Gender-assigned tables
  * - maleArrangement/femaleArrangement: Gender-specific mappings
  * - canEdit: Whether editing allowed
- * - onFetchTableSuggestion: Get AI table recommendations
+ * - onFetchTableSuggestion: Get automatic table recommendations
  * - eventId: Current event ID
  * - onPreferencesChange: Update preferences callback
  *
- * AI Preferences:
+ * Automatic Preferences:
  * - prioritizeGroups: Keep groups together
  * - balanceTableSizes: Even distribution
  * - considerSpecialNeeds: Accessibility
  * - mixGroups: Allow mixing guest groups
  * - separateAgeGroups: Age-based separation
  * - prioritizeVIPs: VIP seating priority
- * - customInstructions: Free-text AI guidance
+ * - customInstructions: Free-text automatic guidance
  *
  * Table Settings:
  * - Round tables (10, 12 capacity)
@@ -981,6 +981,13 @@ const AISeatingModal = ({
     }));
    
     setNewMustSitRule({ guest1Id: '', guest2Id: '' });
+  };
+
+  const removeMustSitRule = (ruleId) => {
+    setSeatingRules(prev => ({
+      ...prev,
+      mustSitTogether: prev.mustSitTogether.filter(rule => rule.id !== ruleId)
+    }));
   };
 
   const getGroupDisplayName = (groupName) => {
@@ -2136,18 +2143,29 @@ const AISeatingModal = ({
                       </div>
 
                       {seatingRules.mustSitTogether.length > 0 && (
-                        <div className="added-rules-summary">
+                        <div className="mix-rules-list">
                           {seatingRules.mustSitTogether.map(rule => {
                             const guest1 = guests.find(g => g._id === rule.guest1Id);
                             const guest2 = guests.find(g => g._id === rule.guest2Id);
                             if (!guest1 || !guest2) return null;
-                           
+
                             const guest1Name = `${guest1.firstName} ${guest1.lastName}`;
                             const guest2Name = `${guest2.firstName} ${guest2.lastName}`;
-                           
+
                             return (
-                              <div key={rule.id} className="validation-message success">
-                                {t('seating.ai.mustSitTogetherRule', { guest1: guest1Name, guest2: guest2Name })}
+                              <div key={rule.id} className="mix-rule-item">
+                                <div className="mix-rule-content">
+                                  <span className="mix-rule-groups">
+                                    {guest1Name} + {guest2Name}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeMustSitRule(rule.id)}
+                                  className="remove-rule-btn"
+                                >
+                                  ✕
+                                </button>
                               </div>
                             );
                           })}
