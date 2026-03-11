@@ -73,6 +73,18 @@ const ForgotPassword = () => {
         current_year: new Date().getFullYear()
       };
 
+      try {
+        const emailResult = await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          templateParams,
+          EMAILJS_USER_ID
+        );
+        
+      } catch (emailError) {
+        // Email sending error
+      }
+      
       setMessage(t('auth.resetLinkSent'));
 
       setEmail('');
