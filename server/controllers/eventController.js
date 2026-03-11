@@ -16,6 +16,10 @@
 
 const Event = require('../models/Event');
 const User = require('../models/User');
+const Guest = require('../models/Guest');
+const Task = require('../models/Task');
+const Budget = require('../models/Budget');
+const Seating = require('../models/Seating');
 
 /**
  * Returns all events accessible by the user (owned + shared).
@@ -234,6 +238,10 @@ const deleteEvent = async (req, res) => {
       return res.status(404).json({ message: req.t('events.notFound') });
     }
 
+    await Guest.deleteMany({ event: id });
+    await Task.deleteMany({ event: id });
+    await Budget.deleteMany({ event: id });
+    await Seating.deleteMany({ event: id });
     await Event.findByIdAndDelete(id);
     res.json({ message: req.t('events.deleteSuccess') });
   } catch (err) {
