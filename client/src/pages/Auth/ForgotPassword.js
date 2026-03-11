@@ -82,7 +82,7 @@ const ForgotPassword = () => {
         );
         
       } catch (emailError) {
-        // Email sending error
+        console.error('EmailJS send failed:', emailError);
       }
       
       setMessage(t('auth.resetLinkSent'));
