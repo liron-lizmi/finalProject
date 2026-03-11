@@ -309,6 +309,12 @@ const AISeatingModal = ({
           const totalFemaleCapacity = femaleTables.reduce((sum, table) => sum + table.capacity, 0);
 
           if (hasExistingArrangement && (Object.keys(maleArrangement).length > 0 || Object.keys(femaleArrangement).length > 0)) {
+            const seatedMale = getSeatedGuestsCount('male');
+            const seatedFemale = getSeatedGuestsCount('female');
+            if (seatedMale >= totalMaleGuests && seatedFemale >= totalFemaleGuests) {
+              handleExistingArrangementChoice('clear');
+              return;
+            }
             setShowExistingArrangementWarning(true);
             return;
           }
@@ -336,6 +342,11 @@ const AISeatingModal = ({
           const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
 
           if (hasExistingArrangement && Object.keys(seatingArrangement).length > 0) {
+            const seatedCount = getSeatedGuestsCount();
+            if (seatedCount >= totalGuests) {
+              handleExistingArrangementChoice('clear');
+              return;
+            }
             setShowExistingArrangementWarning(true);
             return;
           }
