@@ -347,7 +347,8 @@ const saveSeatingArrangement = async (req, res) => {
       isSeparatedSeating,
       preferences,
       layoutSettings,
-      syncSettings
+      syncSettings,
+      intentionalClear
     } = req.body;
 
     const event = await Event.findById(eventId);
@@ -433,7 +434,7 @@ const saveSeatingArrangement = async (req, res) => {
       const frontendMaleArrKeys = Object.keys(maleArrangement || {}).length;
       const frontendFemaleArrKeys = Object.keys(femaleArrangement || {}).length;
 
-      if (frontendMaleArrKeys === 0 && frontendFemaleArrKeys === 0) {
+      if (frontendMaleArrKeys === 0 && frontendFemaleArrKeys === 0 && !intentionalClear) {
         const existingSeating = await Seating.findOne({ event: eventId }).lean();
         if (existingSeating) {
           const dbMaleArrKeys = Object.keys(existingSeating.maleArrangement || {}).length;

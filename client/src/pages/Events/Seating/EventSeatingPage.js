@@ -2003,7 +2003,8 @@ const clearAllSeating = useCallback(() => {
         femaleArrangement: {},
         isSeparatedSeating: true,
         preferences: DEFAULT_PREFERENCES,
-        layoutSettings: { canvasScale, canvasOffset }
+        layoutSettings: { canvasScale, canvasOffset },
+        intentionalClear: true
       });
     } else {
       setSeatingArrangement({});
