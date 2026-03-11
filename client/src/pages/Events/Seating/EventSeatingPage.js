@@ -849,6 +849,13 @@ const EventSeatingPage = () => {
    
   }, [maleTables, femaleTables, seatingArrangement, maleArrangement, femaleArrangement, preferences, canvasScale, canvasOffset, saveSeatingArrangement, t, calculateTableSize, canEdit, isSeparatedSeating, tableCapacity, tableType]);
 
+  const handlePreferencesChange = useCallback((newPrefs) => {
+    setPreferences(prev => ({
+      ...prev,
+      ...newPrefs
+    }));
+  }, []);
+
   const handleAddTablesFromAutoArrangement = useCallback(async (tablesToAdd, gender = null, clearExisting = false) => {
     try {
       if (isSeparatedSeating && gender) {
@@ -3105,12 +3112,7 @@ const clearAllSeating = useCallback(() => {
           eventId={eventId}
           onAddTables={handleAddTablesFromAutoArrangement}
           getNextTableNumber={getNextTableNumber}
-          onPreferencesChange={(newPrefs) => {
-            setPreferences(prev => ({
-              ...prev,
-              ...newPrefs
-            }));
-          }}
+          onPreferencesChange={handlePreferencesChange}
         />
 
         <SyncOptionsModal

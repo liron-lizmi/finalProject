@@ -9302,11 +9302,11 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
      
         let retryTables = [];
          
-        const dryRunResult = generateOptimalSeating(guests, tablesCopy, preferences, gender);
+        const retryResult = generateOptimalSeating(guests, tablesCopy, preferences, gender);
         retryTables = retryResult.tables;
-     
+
         const stillHasEmergency = retryTables.some(t => t.id.includes('table_') && !t.id.includes('retry_') && !t.id.includes('temp_'));
-     
+
         if (!stillHasEmergency) {
           bestRetryTables = retryTables;
           bestRetryResult = retryResult;

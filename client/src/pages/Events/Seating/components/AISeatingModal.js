@@ -134,6 +134,15 @@ const AISeatingModal = ({
   const lastFetchKey = useRef('');
   const isInitializingPrefsRef = useRef(false);
 
+  const groupPoliciesKey = useMemo(
+    () => JSON.stringify(aiPreferences.groupPolicies),
+    [aiPreferences.groupPolicies]
+  );
+  const groupMixingRulesKey = useMemo(
+    () => JSON.stringify(aiPreferences.groupMixingRules),
+    [aiPreferences.groupMixingRules]
+  );
+
   const canAddMustSitRule = React.useMemo(() => {
   if (!newMustSitRule.guest1Id || !newMustSitRule.guest2Id) {
     return { canAdd: false, reason: '' };
@@ -215,7 +224,7 @@ const AISeatingModal = ({
       used.add(rule.group2);
     });
     return used;
-  }, [aiPreferences.groupMixingRules]);
+  }, [groupMixingRulesKey]);
 
   const maleGuests = useMemo(() => {
     if (!isSeparatedSeating || !guests) return [];
@@ -264,7 +273,7 @@ const AISeatingModal = ({
         preferredTableSize: aiPreferences.preferredTableSize
       });
     }
-  }, [seatingRules, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies, aiPreferences.preferredTableSize, isOpen, onPreferencesChange]);
+  }, [seatingRules, aiPreferences.allowGroupMixing, groupMixingRulesKey, groupPoliciesKey, aiPreferences.preferredTableSize, isOpen, onPreferencesChange]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -404,7 +413,7 @@ const AISeatingModal = ({
     };
    
     updateSuggestion();
-  }, [aiPreferences.allowGroupMixing, aiPreferences.groupPolicies]); 
+  }, [aiPreferences.allowGroupMixing, groupPoliciesKey]);
 
  useEffect(() => {
   if (!showTableCreation) {
@@ -652,7 +661,7 @@ const AISeatingModal = ({
   }
 }, [showTableCreation, tableSettings, customTableSettings, maleTableSettings, femaleTableSettings,
     customMaleTableSettings, customFemaleTableSettings, guests, tables, maleTables, femaleTables,
-    isSeparatedSeating, t, aiPreferences.allowGroupMixing, aiPreferences.groupMixingRules, aiPreferences.groupPolicies,
+    isSeparatedSeating, t, aiPreferences.allowGroupMixing, groupMixingRulesKey, groupPoliciesKey,
     suggestedTableSettings, suggestedMaleTableSettings, suggestedFemaleTableSettings]);
 
   const autoSuggestTables = async (guestsNeedingSeats, allowMixing = null, customGroupPolicies = null, gender = null, customGroupMixingRules = null, preserveExisting = false) => {

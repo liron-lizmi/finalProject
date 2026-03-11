@@ -85,7 +85,7 @@ if (!MONGO_URI) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(middleware.handle(i18next));
 
 app.use('/api/auth', authRoutes);
