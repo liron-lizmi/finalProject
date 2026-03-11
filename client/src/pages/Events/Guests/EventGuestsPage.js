@@ -9,7 +9,6 @@
  * - Add/edit/delete guests
  * - Import guests (Excel, CSV, Google Contacts)
  * - RSVP tracking and management
- * - Duplicate detection (by phone number)
  * - Guest grouping (bride side, groom side, family, friends, etc.)
  * - Selection mode for bulk operations
  * - Search and filter by group/RSVP status
@@ -56,8 +55,6 @@ const EventGuestsPage = () => {
   const [editingGuest, setEditingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [duplicates, setDuplicates] = useState({ phone: [] });
-  const [showDuplicates, setShowDuplicates] = useState(false);
   const [rsvpLink, setRsvpLink] = useState('');
   const [showGiftsModal, setShowGiftsModal] = useState(false);
   const [editingGiftsGuest, setEditingGiftsGuest] = useState(null);
@@ -149,64 +146,6 @@ const EventGuestsPage = () => {
       await navigator.clipboard.writeText(rsvpLink);
     } catch (err) {
       setError(t('errors.clipboardError'));}
-  };
-
-  const detectDuplicates = useCallback(() => {
-    const phoneDuplicates = [];
-    
-    const phoneMap = new Map();
-
-    guests.forEach(guest => {
-      if (guest.phone && guest.phone.trim()) {
-        const phone = guest.phone.trim();
-        if (phoneMap.has(phone)) {
-          const existingGuests = phoneMap.get(phone);
-          if (existingGuests.length === 1) {
-            phoneDuplicates.push({
-              type: 'phone',
-              value: phone,
-              guests: [...existingGuests, guest]
-            });
-          } else {
-            const duplicateGroup = phoneDuplicates.find(d => d.value === phone);
-            if (duplicateGroup) {
-              duplicateGroup.guests.push(guest);
-            }
-          }
-          phoneMap.set(phone, [...existingGuests, guest]);
-        } else {
-          phoneMap.set(phone, [guest]);
-        }
-      }
-    });
-
-    setDuplicates({ phone: phoneDuplicates });
-  }, [guests]);
-
-  const handleDeleteDuplicate = async (guestId, duplicateType, duplicateValue) => {
-    showConfirmModal(t('guests.confirmDeleteDuplicate'), async () => {
-      await executeDeleteDuplicate(guestId, duplicateType, duplicateValue);
-    });
-  };
-
-  const executeDeleteDuplicate = async (guestId, duplicateType, duplicateValue) => {
-    try {
-      const response = await makeApiRequest(`/api/events/${eventId}/guests/${guestId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response) return;
-
-      if (response.ok) {
-        setGuests(prevGuests => prevGuests.filter(guest => guest._id !== guestId));
-        setError('');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        setError(errorData.message || t('errors.deleteGuest'));
-      }
-    } catch (err) {
-      setError(t('errors.networkError'));
-    }
   };
 
   const getGroupDisplayName = (guest) => {
@@ -803,10 +742,6 @@ const EventGuestsPage = () => {
   };
 
   useEffect(() => {
-    detectDuplicates();
-  }, [detectDuplicates]);
-
-  useEffect(() => {
     fetchEventPermissions();
     fetchGuests();
   }, [fetchEventPermissions, fetchGuests]);
@@ -820,8 +755,6 @@ const EventGuestsPage = () => {
   useEffect(() => {
     fetchEventDate();
   }, [fetchEventDate]);
-
-  const totalDuplicates = duplicates.phone.length;
 
   if (loading) {
     return (
@@ -865,55 +798,6 @@ const EventGuestsPage = () => {
           </div>
         </div>
       )}
-
-        {totalDuplicates > 0 && (
-          <div className="guests-duplicates-warning">
-            <div className="duplicates-warning-header">
-              <span className="warning-icon">⚠️</span>
-              <span className="warning-text">
-                {t('guests.duplicatesFound', { count: totalDuplicates })}
-              </span>
-              <button
-                className="duplicates-toggle-button"
-                onClick={() => setShowDuplicates(!showDuplicates)}
-              >
-                {showDuplicates ? t('guests.hideDuplicates') : t('guests.showDuplicates')}
-              </button>
-            </div>
-            
-            {showDuplicates && (
-              <div className="duplicates-list">
-                {duplicates.phone.map((duplicate, index) => (
-                  <div key={`phone-${index}`} className="duplicate-group">
-                    <div className="duplicate-header">
-                      <span className="duplicate-type">{t('guests.duplicatePhone')}</span>
-                      <span className="duplicate-value">{duplicate.value}</span>
-                    </div>
-                    <div className="duplicate-guests">
-                      {duplicate.guests.map(guest => (
-                        <div key={guest._id} className="duplicate-guest">
-                          <span className="duplicate-guest-name">
-                            {guest.firstName} {guest.lastName}
-                          </span>
-                          <span className="duplicate-guest-group">
-                            {getGroupDisplayName(guest)}
-                          </span>
-                          <button
-                            className="duplicate-delete-button"
-                            onClick={() => handleDeleteDuplicate(guest._id, 'phone', duplicate.value)}
-                            title={t('guests.deleteDuplicate')}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="guests-stats-bar">
           <div className="guests-stat-item">

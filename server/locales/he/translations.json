@@ -204,7 +204,8 @@
       "googleTokenExpired": "פג תוקף החיבור ל-Google, נדרש חיבור מחדש",
       "googleContactsFailed": "שגיאה בקבלת אנשי קשר מ-Google",
       "googleDisconnectFailed": "שגיאה בהתנתקות מ-Google Contacts",
-      "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים"
+      "phoneNotFound": "מספר טלפון לא נמצא ברשימת המוזמנים",
+      "duplicatePhone": "מספר הטלפון הזה כבר קיים אצל מוזמן אחר"
     }
   },
   "budget": {

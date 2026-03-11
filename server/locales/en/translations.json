@@ -204,7 +204,8 @@
       "googleTokenExpired": "Google connection expired, reconnection required",
       "googleContactsFailed": "Failed to retrieve contacts from Google",
       "googleDisconnectFailed": "Error disconnecting from Google Contacts",
-      "phoneNotFound": "Phone number not found in guest list"
+      "phoneNotFound": "Phone number not found in guest list",
+      "duplicatePhone": "This phone number already exists for another guest"
     }
   },
   "budget": {

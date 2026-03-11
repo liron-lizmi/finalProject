@@ -72,12 +72,25 @@ const addGuest = async (req, res) => {
       }
     }
 
+    const trimmedPhone = phone.trim();
+    if (trimmedPhone) {
+      const existingGuest = await Guest.findOne({
+        event: eventId,
+        phone: trimmedPhone
+      });
+      if (existingGuest) {
+        return res.status(400).json({
+          message: req.t('guests.errors.duplicatePhone')
+        });
+      }
+    }
+
     const guestData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      phone: phone.trim(),
+      phone: trimmedPhone,
       group: finalGroup,
-      event: eventId,  
+      event: eventId,
       user: req.userId,
       attendingCount: 1
     };
@@ -320,7 +333,22 @@ const updateGuest = async (req, res) => {
 
     if (firstName !== undefined) guest.firstName = firstName.trim();
     if (lastName !== undefined) guest.lastName = lastName.trim();
-    if (phone !== undefined) guest.phone = phone.trim();
+    if (phone !== undefined) {
+      const trimmedPhone = phone.trim();
+      if (trimmedPhone) {
+        const existingGuest = await Guest.findOne({
+          event: eventId,
+          phone: trimmedPhone,
+          _id: { $ne: guestId }
+        });
+        if (existingGuest) {
+          return res.status(400).json({
+            message: req.t('guests.errors.duplicatePhone')
+          });
+        }
+      }
+      guest.phone = phone.trim();
+    }
 
     if (group !== undefined) {
       if (group === 'custom' || !['family', 'friends', 'work', 'other'].includes(group)) {
