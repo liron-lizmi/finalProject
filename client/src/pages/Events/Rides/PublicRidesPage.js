@@ -763,7 +763,9 @@ const handleRideInfoSubmit = async (e) => {
                     )}
                     <div className="guests-list">
                       {(() => {
-                        const ridesToShow = allRidesWithDistance.length > 0 ? allRidesWithDistance : getOfferingGuests();
+                        const suggestedIds = new Set(suggestedRides.map(sg => sg._id));
+                        const baseList = allRidesWithDistance.length > 0 ? allRidesWithDistance : getOfferingGuests();
+                        const ridesToShow = baseList.filter(g => !suggestedIds.has(g._id));
                         if (ridesToShow.length === 0) {
                           return <p className="no-guests">{t('events.features.rides.noOffering')}</p>;
                         }
