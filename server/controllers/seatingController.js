@@ -7822,58 +7822,95 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
   // ערבוב מלא
   else if (preferences.allowGroupMixing && !hasMixingRules) {
    
-    const separateGroups = [];
-    const allUnassignedGuests = [];
-   
+    // Phase 1: Each group individually through Knapsack
+    const fullMixGroups = [];
+
     sortedGroups.forEach(([groupName, groupGuests]) => {
       const groupPolicy = groupPolicies[groupName];
       const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
-     
-      if (groupPolicy === 'S') {
-        separateGroups.push({ groupName, guests: unassigned });
-      } else {
-        allUnassignedGuests.push(...unassigned);
-      }
-    });
-   
-    separateGroups.forEach(({ groupName, guests: groupGuests }) => {
-      const unassigned = groupGuests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
       if (unassigned.length === 0) return;
-         
-      const reservedTableId = reservedTablesForSGroups.get(groupName);
-      let targetTable = null;
-     
-      if (reservedTableId) {
-        targetTable = availableTables.find(t => t.id === reservedTableId);
-      }
-     
-      if (!targetTable) {
-        targetTable = availableTables.find(t =>
-          !reservedTableIds.has(t.id) &&
-          t.assignedGuests.length === 0
-        );
-      }
-     
-      if (targetTable) {
-        unassigned.forEach(guest => {
-          assignGuestToTableAdvanced(guest, targetTable, arrangement, availableTables, preferences, guests, alreadyAssigned, { t: (key) => key });
+
+      if (groupPolicy === 'S') {
+        // S groups get their reserved table directly
+        const reservedTableId = reservedTablesForSGroups.get(groupName);
+        let targetTable = null;
+        if (reservedTableId) {
+          targetTable = availableTables.find(t => t.id === reservedTableId);
+        }
+        if (!targetTable) {
+          targetTable = availableTables.find(t =>
+            !reservedTableIds.has(t.id) &&
+            t.assignedGuests.length === 0
+          );
+        }
+        if (targetTable) {
+          unassigned.forEach(guest => {
+            assignGuestToTableAdvanced(guest, targetTable, arrangement, availableTables, preferences, guests, alreadyAssigned, { t: (key) => key });
+          });
+        }
+      } else {
+        const totalPeople = unassigned.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+        fullMixGroups.push({
+          name: groupName,
+          guests: unassigned,
+          totalPeople,
+          type: 'mixable',
+          canMixWith: []
         });
       }
     });
-     
-    if (allUnassignedGuests.length > 0) {
-      allUnassignedGuests.sort((a, b) => (b.attendingCount || 1) - (a.attendingCount || 1));
-     
+
+    // Run Knapsack for each group individually
+    const remainingGuestsByGroup = new Map();
+
+    fullMixGroups.forEach(groupInfo => {
       const result = fillFullTablesForGroup(
-        allUnassignedGuests,
+        groupInfo.guests,
         availableTables,
         arrangement,
         alreadyAssigned,
         preferences.preferredTableSize || 12,
         preferences,
-        guests
+        guests,
+        groupInfo
       );
-     
+
+      if (result.remainingGuests.length > 0) {
+        remainingGuestsByGroup.set(groupInfo.name, {
+          guests: result.remainingGuests,
+          type: 'mixable',
+          canMixWith: []
+        });
+      }
+    });
+
+    // Phase 2: Combine ALL remainders and run Knapsack again
+    const allRemainingGuests = [];
+    remainingGuestsByGroup.forEach((groupInfo) => {
+      const unassigned = groupInfo.guests.filter(g => g && g._id && !alreadyAssigned.has(g._id.toString()));
+      allRemainingGuests.push(...unassigned);
+    });
+
+    if (allRemainingGuests.length > 0) {
+      const totalPeople = allRemainingGuests.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
+      const combinedGroupInfo = {
+        name: 'fullMix_combined',
+        guests: allRemainingGuests,
+        totalPeople,
+        type: 'non-mixable',
+        canMixWith: []
+      };
+
+      fillFullTablesForGroup(
+        allRemainingGuests,
+        availableTables,
+        arrangement,
+        alreadyAssigned,
+        preferences.preferredTableSize || 12,
+        preferences,
+        guests,
+        combinedGroupInfo
+      );
     }
    
   } 
