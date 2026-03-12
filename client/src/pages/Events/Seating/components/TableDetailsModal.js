@@ -306,8 +306,48 @@ const TableDetailsModal = ({
       onSeatGuest(guestId, tableId);
     });
 
+    let finalName = formData.name;
+    if ((pendingAddedGuests.length > 0 || pendingRemovedGuests.length > 0)) {
+      const basicPattern = new RegExp(`^${t('seating.tableName')} \\d+$`);
+      const groupPattern = new RegExp(`^${t('seating.tableName')} \\d+ - .+$`);
+      const isAutoName = basicPattern.test(formData.name) || groupPattern.test(formData.name);
+
+      if (isAutoName) {
+        const tableNumber = formData.name.match(/\d+/)?.[0] || '1';
+        const baseName = `${t('seating.tableName')} ${tableNumber}`;
+
+        if (seatedGuests.length > 0) {
+          const groupCounts = {};
+          seatedGuests.forEach(guest => {
+            const group = guest.customGroup || guest.group || 'other';
+            let guestCount = guest.attendingCount || 1;
+            if (isSeparatedSeating && !tableInfo.isNeutral) {
+              if (tableInfo.gender === 'male') {
+                guestCount = guest.maleCount || 0;
+              } else if (tableInfo.gender === 'female') {
+                guestCount = guest.femaleCount || 0;
+              }
+            }
+            groupCounts[group] = (groupCounts[group] || 0) + guestCount;
+          });
+
+          const dominantGroup = Object.keys(groupCounts).reduce((a, b) =>
+            groupCounts[a] > groupCounts[b] ? a : b
+          );
+
+          const groupName = ['family', 'friends', 'work', 'other'].includes(dominantGroup)
+            ? t(`guests.groups.${dominantGroup}`)
+            : dominantGroup;
+
+          finalName = `${baseName} - ${groupName}`;
+        } else {
+          finalName = baseName;
+        }
+      }
+    }
+
     onUpdateTable(table.id, {
-      name: formData.name,
+      name: finalName,
       capacity: capacity,
       type: formData.type,
       notes: formData.notes,

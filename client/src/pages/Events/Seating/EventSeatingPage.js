@@ -556,14 +556,17 @@ const EventSeatingPage = () => {
       if (response.ok) {
         const data = await response.json();
 
+        let finalMaleTables = [];
+        let finalFemaleTables = [];
+
         if (isSeparatedSeating) {
           setMaleArrangement(data.maleArrangement);
           setFemaleArrangement(data.femaleArrangement);
 
           const maleFallback = aiPreferences.clearExisting ? (aiPreferences.allMaleTables || []) : maleTables;
           const femaleFallback = aiPreferences.clearExisting ? (aiPreferences.allFemaleTables || []) : femaleTables;
-          let finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleFallback;
-          let finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleFallback;
+          finalMaleTables = data.maleTables && data.maleTables.length > 0 ? data.maleTables : maleFallback;
+          finalFemaleTables = data.femaleTables && data.femaleTables.length > 0 ? data.femaleTables : femaleFallback;
 
           if (data.maleArrangement && Object.keys(data.maleArrangement).length > 0) {
             finalMaleTables = updateTableNamesWithGroups(finalMaleTables, data.maleArrangement);
@@ -572,13 +575,24 @@ const EventSeatingPage = () => {
             finalFemaleTables = updateTableNamesWithGroups(finalFemaleTables, data.femaleArrangement);
           }
 
+          finalMaleTables = finalMaleTables.map(t => ({ ...t, isDraft: false }));
+          finalFemaleTables = finalFemaleTables.map(t => ({ ...t, isDraft: false }));
+
+          const genderTableIds = new Set([
+            ...finalMaleTables.map(t => t.id),
+            ...finalFemaleTables.map(t => t.id)
+          ]);
+          setTables(prev => prev.filter(t => !genderTableIds.has(t.id)));
+
           setMaleTables(finalMaleTables);
           setFemaleTables(finalFemaleTables);
        
           setCanvasOffset({ x: 0, y: 0 });
           setCanvasScale(1);
        
+          const cleanedNeutralTables = tables.filter(t => !genderTableIds.has(t.id));
           const layoutData = {
+            tables: cleanedNeutralTables,
             maleTables: finalMaleTables,
             femaleTables: finalFemaleTables,
             maleArrangement: data.maleArrangement,
@@ -590,7 +604,7 @@ const EventSeatingPage = () => {
               canvasOffset: { x: 0, y: 0 }
             }
           };
-       
+
           autoSave(layoutData);
         } else {
           setSeatingArrangement(data.arrangement);
@@ -630,8 +644,8 @@ const EventSeatingPage = () => {
         return isSeparatedSeating ? {
           maleArrangement: data.maleArrangement,
           femaleArrangement: data.femaleArrangement,
-          maleTables: data.maleTables,
-          femaleTables: data.femaleTables
+          maleTables: finalMaleTables,
+          femaleTables: finalFemaleTables
         } : {
           arrangement: data.arrangement,
           tables: data.tables
