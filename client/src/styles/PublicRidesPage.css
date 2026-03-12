@@ -116,7 +116,7 @@
 .submit-button {
   width: 100%;
   padding: 0.875rem;
-  background-color: #007bff;
+  background-color: #829c75;
   color: white;
   border: none;
   border-radius: 8px;
@@ -129,10 +129,6 @@
   display: block !important;
 }
 
-
-.submit-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
 
 .submit-button:disabled {
   background-color: #6c757d;

@@ -339,7 +339,7 @@
 }
 
 .rsvp-success h2 {
-  color: #28a745;
+  color: #000000;
   margin-bottom: 20px;
 }
 
@@ -431,7 +431,7 @@
 .rides-link-button {
   display: inline-block;
   padding: 15px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #829c75;
   color: white;
   text-decoration: none;
   border-radius: 8px;

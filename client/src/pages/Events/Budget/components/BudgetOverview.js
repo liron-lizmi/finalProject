@@ -138,7 +138,6 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
           <div className="card-content">
             <h3>{t('events.features.budget.totalSpent')}</h3>
             <div className="amount">₪{summary.totalSpent.toLocaleString()}</div>
-            <div className="percentage">{summary.spentPercentage}%</div>
           </div>
         </div>
 
@@ -174,7 +173,7 @@ const BudgetOverview = ({ budget, eventId, onBudgetUpdated, alertThreshold, onAl
         </div>
         <div className="progress-labels">
           <span>0%</span>
-          <span>{summary.spentPercentage.toFixed(1)}%</span>
+          <span>{Math.round(summary.spentPercentage)}%</span>
           <span>100%</span>
         </div>
       </div>

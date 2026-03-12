@@ -53,6 +53,12 @@ const EventBudgetPage = () => {
   const [alertThreshold, setAlertThreshold] = useState(80);
   const [chartColors] = useState('default');
   const [alerts, setAlerts] = useState([]);
+  const [dismissedAlerts, setDismissedAlerts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`dismissed_budget_alerts_${id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [canEdit, setCanEdit] = useState(true);
 
   const fetchEventPermissions = useCallback(async () => {
@@ -140,13 +146,19 @@ const EventBudgetPage = () => {
 
         summary.categoryBreakdown.forEach(cat => {
           if (cat.percentage >= alertThreshold) {
+            const alertType = cat.percentage > 100 ? 'danger' : 'warning';
+            const dismissKey = `${cat.category}_${alertType}`;
+
+            if (dismissedAlerts.includes(dismissKey)) return;
+
             const categoryName = t(`events.features.budget.categories.${cat.category}`);
             newAlerts.push({
               id: `${cat.category}-${Date.now()}`,
-              type: cat.percentage > 100 ? 'danger' : 'warning',
+              type: alertType,
               category: cat.category,
+              dismissKey,
               percentage: cat.percentage,
-              message: cat.percentage > 100 
+              message: cat.percentage > 100
                 ? t('events.features.budget.categoryOverBudget', {
                   category: categoryName,
                   amount: Math.abs(cat.remaining).toLocaleString()
@@ -167,7 +179,13 @@ const EventBudgetPage = () => {
   };
 
   const dismissAlert = (alertId) => {
-    setAlerts(alerts.filter(alert => alert.id !== alertId));
+    const alert = alerts.find(a => a.id === alertId);
+    if (alert && alert.dismissKey) {
+      const updated = [...dismissedAlerts, alert.dismissKey];
+      setDismissedAlerts(updated);
+      localStorage.setItem(`dismissed_budget_alerts_${id}`, JSON.stringify(updated));
+    }
+    setAlerts(alerts.filter(a => a.id !== alertId));
   };
 
   const getChartColors = () => {

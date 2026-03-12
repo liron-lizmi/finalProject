@@ -824,10 +824,6 @@ const ImportModal = ({ isOpen, onClose, onImport, eventId }) => {
               <p className="import-description">
                 {t('import.excelDescription')}
               </p>
-              <div className="import-notice">
-                <p>{t('import.excelNote')}</p>
-              </div>
-              
               <div className="import-option">
                 <label>{t('import.uploadFile')}</label>
                 <input
