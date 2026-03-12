@@ -212,7 +212,7 @@ const getSuggestedRides = async (req, res) => {
 
     const suggestions = closeSuggestions.slice(0, 3);
 
-    res.json({ suggestions });
+    res.json({ suggestions, allWithDistance: sortedGuests });
   } catch (err) {
     res.status(500).json({ message: req.t('events.rides.errors.serverError') });
   }

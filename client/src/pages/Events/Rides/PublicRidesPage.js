@@ -56,6 +56,7 @@ const PublicRidesPage = () => {
   });
   const [otherGuests, setOtherGuests] = useState([]);
   const [suggestedRides, setSuggestedRides] = useState([]);
+  const [allRidesWithDistance, setAllRidesWithDistance] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('my_info');
@@ -248,11 +249,14 @@ const fetchOtherGuests = async () => {
     if (response.ok) {
       const data = await response.json();
       setSuggestedRides(data.suggestions || []);
+      setAllRidesWithDistance(data.allWithDistance || []);
     } else {
       setSuggestedRides([]);
+      setAllRidesWithDistance([]);
     }
   } catch (err) {
     setSuggestedRides([]);
+    setAllRidesWithDistance([]);
   }
 };
 
@@ -758,15 +762,17 @@ const handleRideInfoSubmit = async (e) => {
                       <h5 className="all-rides-title">{t('events.features.rides.allAvailableRides')}</h5>
                     )}
                     <div className="guests-list">
-                      {getOfferingGuests().length === 0 ? (
-                        <p className="no-guests">{t('events.features.rides.noOffering')}</p>
-                      ) : (
-                        getOfferingGuests().map(otherGuest => {
+                      {(() => {
+                        const ridesToShow = allRidesWithDistance.length > 0 ? allRidesWithDistance : getOfferingGuests();
+                        if (ridesToShow.length === 0) {
+                          return <p className="no-guests">{t('events.features.rides.noOffering')}</p>;
+                        }
+                        return ridesToShow.map(otherGuest => {
                           const contactStatus = getContactStatus(otherGuest._id);
                           const statusText = getContactStatusText(contactStatus);
                           const isArranged = contactStatus === 'arranged_ride';
                           const isSuggested = suggestedRides.some(sg => sg._id === otherGuest._id);
-                          
+
                           return (
                             <div key={otherGuest._id} className={`guest-item offering ${isSuggested ? 'already-suggested' : ''}`}>
                               <div className="guest-info">
@@ -780,6 +786,9 @@ const handleRideInfoSubmit = async (e) => {
                                   )}
                                   {otherGuest.rideInfo && otherGuest.rideInfo.departureTime && (
                                     <p><strong>{t('events.features.rides.form.departureTime')}:</strong> {otherGuest.rideInfo.departureTime}</p>
+                                  )}
+                                  {otherGuest.distance && (
+                                    <p className="distance-info"><strong>{t('events.features.rides.distance')}:</strong> {otherGuest.distance} {t('events.features.rides.km')}</p>
                                   )}
                                 </div>
                                 <div className="contact-info">
@@ -824,8 +833,8 @@ const handleRideInfoSubmit = async (e) => {
                               </div>
                             </div>
                           );
-                        })
-                      )}
+                        });
+                      })()}
                     </div>
                   </div>
                 </div>
