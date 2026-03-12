@@ -177,12 +177,15 @@ const getSuggestedRides = async (req, res) => {
       return res.status(404).json({ message: req.t('events.rides.phoneNotFound') });
     }
 
+    const requiredSeats = requestingGuest.rideInfo?.requiredSeats || 1;
+
     const offeringGuests = await Guest.find({
       event: eventId,
       phone: { $ne: phone },
       rsvpStatus: 'confirmed',
       'rideInfo.status': 'offering',
-      'rideInfo.address': { $exists: true, $ne: '' }
+      'rideInfo.address': { $exists: true, $ne: '' },
+      'rideInfo.availableSeats': { $gte: requiredSeats }
     }).select('firstName lastName phone rideInfo').lean();
 
     const guestsWithDistance = await Promise.all(
