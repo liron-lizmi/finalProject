@@ -5214,59 +5214,19 @@ function getMaxTableNumber(tables) {
  * @param {Array} groupMixingRules - Array of { group1, group2 } mixing rule objects
  * @returns {Map<string, number>} Map from group name to cluster ID
  */
-function buildMixingClusters(groupMixingRules) {
-  if (!groupMixingRules || groupMixingRules.length === 0) {
-    return new Map();
-  }
-
-  const parent = new Map();
-  const rank = new Map();
-
-  const find = (group) => {
-    if (!parent.has(group)) {
-      parent.set(group, group);
-      rank.set(group, 0);
-      return group;
-    }
-    if (parent.get(group) !== group) {
-      parent.set(group, find(parent.get(group)));
-    }
-    return parent.get(group);
-  };
-
-  const union = (group1, group2) => {
-    const root1 = find(group1);
-    const root2 = find(group2);
-   
-    if (root1 === root2) return;
-
-    if (rank.get(root1) < rank.get(root2)) {
-      parent.set(root1, root2);
-    } else if (rank.get(root1) > rank.get(root2)) {
-      parent.set(root2, root1);
-    } else {
-      parent.set(root2, root1);
-      rank.set(root1, rank.get(root1) + 1);
-    }
-  };
-
-  groupMixingRules.forEach(rule => {
-    union(rule.group1, rule.group2);
-  });
-
-  const groupToCluster = new Map();
-  const clusterMap = new Map();
-  let clusterIdCounter = 0;
-
-  parent.forEach((_, group) => {
-    const root = find(group);
-    if (!clusterMap.has(root)) {
-      clusterMap.set(root, clusterIdCounter++);
-    }
-    groupToCluster.set(group, clusterMap.get(root));
-  });
-
-  return groupToCluster;
+/**
+ * Checks whether two groups have a direct mixing rule defined between them.
+ * @param {string} group1 - First group name
+ * @param {string} group2 - Second group name
+ * @param {Array} groupMixingRules - Mixing rule definitions
+ * @returns {boolean} True if a direct rule exists
+ */
+function hasDirectMixingRule(group1, group2, groupMixingRules) {
+  if (!groupMixingRules || groupMixingRules.length === 0) return false;
+  return groupMixingRules.some(rule =>
+    (rule.group1 === group1 && rule.group2 === group2) ||
+    (rule.group1 === group2 && rule.group2 === group1)
+  );
 }
 
 /**
@@ -5276,16 +5236,15 @@ function buildMixingClusters(groupMixingRules) {
  * - Either group has policy 'S' (separate): not allowed
  * - mixingMode === 'none': not allowed (groups must sit separately)
  * - mixingMode === 'free': allowed (all groups may mix freely)
- * - mixingMode === 'rules': allowed only if both groups are in the same cluster (connected by mixing rules)
+ * - mixingMode === 'rules': allowed only if both groups have a direct mixing rule or both have 'M' policy
  * @param {string} group1 - First group name
  * @param {string} group2 - Second group name
  * @param {string} mixingMode - 'none', 'free', or 'rules'
  * @param {Array} groupMixingRules - Mixing rule definitions
- * @param {Map} clusterMap - Group-to-cluster mapping from buildMixingClusters
  * @param {object} groupPolicies - Map of group name to policy ('S' = separate, 'M' = mixable)
  * @returns {boolean} True if the two groups can share a table
  */
-function canGroupsMix(group1, group2, mixingMode, groupMixingRules, clusterMap, groupPolicies) {
+function canGroupsMix(group1, group2, mixingMode, groupMixingRules, groupPolicies) {
   if (group1 === group2) return true;
 
   if (groupPolicies) {
@@ -5309,21 +5268,12 @@ function canGroupsMix(group1, group2, mixingMode, groupMixingRules, clusterMap, 
 
     const policy1 = groupPolicies ? groupPolicies[group1] : null;
     const policy2 = groupPolicies ? groupPolicies[group2] : null;
-   
+
     if (policy1 === 'M' && policy2 === 'M') {
       return true;
     }
 
-    if (clusterMap && clusterMap.has(group1) && clusterMap.has(group2)) {
-      return clusterMap.get(group1) === clusterMap.get(group2);
-    }
-
-    const hasDirectRule = groupMixingRules.some(rule =>
-      (rule.group1 === group1 && rule.group2 === group2) ||
-      (rule.group1 === group2 && rule.group2 === group1)
-    );
-
-    return hasDirectRule;
+    return hasDirectMixingRule(group1, group2, groupMixingRules);
   }
 
   return false;
@@ -5334,17 +5284,14 @@ function canGroupsMix(group1, group2, mixingMode, groupMixingRules, clusterMap, 
  * Cases:
  * - Group policy is 'S' (separate): guest goes into separateGroups (must sit with own group only)
  * - mixingMode === 'free' or 'optimal': guest goes into allFlexibleGuests (may sit anywhere)
- * - mixingMode === 'rules' and group is in clusterMap: guest goes into clusterGuests (grouped by cluster ID)
- * - mixingMode === 'rules' and group not in clusterMap: guest goes into noClusterGuests (no mixing rule)
+ * - Otherwise: guest goes into noClusterGuests
  * @param {Array} guests - Guest objects to categorize
  * @param {string} mixingMode - 'none', 'free', 'rules', or 'optimal'
- * @param {Map} clusterMap - Group-to-cluster mapping from buildMixingClusters
  * @param {Set} alreadyAssigned - Set of guestIds that are already seated
  * @param {object} groupPolicies - Map of group name to policy ('S' or 'M')
- * @returns {{ clusterGuests, noClusterGuests, separateGroups, allFlexibleGuests }}
+ * @returns {{ noClusterGuests, separateGroups, allFlexibleGuests }}
  */
-function groupGuestsByClusters(guests, mixingMode, clusterMap, alreadyAssigned, groupPolicies) {
-  const clusterGuests = new Map();
+function groupGuestsByClusters(guests, mixingMode, alreadyAssigned, groupPolicies) {
   const noClusterGuests = [];
   const separateGroups = new Map();
   const allFlexibleGuests = [];
@@ -5357,7 +5304,7 @@ function groupGuestsByClusters(guests, mixingMode, clusterMap, alreadyAssigned, 
 
     const group = guest.customGroup || guest.group;
     const policy = groupPolicies ? groupPolicies[group] : null;
-   
+
     if (policy === 'S') {
       if (!separateGroups.has(group)) {
         separateGroups.set(group, []);
@@ -5371,18 +5318,10 @@ function groupGuestsByClusters(guests, mixingMode, clusterMap, alreadyAssigned, 
       return;
     }
 
-    if (mixingMode === 'rules' && clusterMap && clusterMap.has(group)) {
-      const clusterId = clusterMap.get(group);
-      if (!clusterGuests.has(clusterId)) {
-        clusterGuests.set(clusterId, []);
-      }
-      clusterGuests.get(clusterId).push(guest);
-    } else {
-      noClusterGuests.push(guest);
-    }
+    noClusterGuests.push(guest);
   });
 
-  return { clusterGuests, noClusterGuests, separateGroups, allFlexibleGuests };
+  return { noClusterGuests, separateGroups, allFlexibleGuests };
 }
 
 /**
@@ -5468,12 +5407,11 @@ function assignGuestToTableAdvanced(guest, table, arrangement, availableTables, 
   }
   else if (mixingMode === 'rules') {
     const groupMixingRules = preferences.groupMixingRules || [];
-    const clusterMap = buildMixingClusters(groupMixingRules);
-   
+
     for (const tableGuest of tableGuests) {
       const tableGuestGroup = tableGuest.customGroup || tableGuest.group;
-     
-      if (!canGroupsMix(guestGroup, tableGuestGroup, mixingMode, groupMixingRules, clusterMap, groupPolicies)) {
+
+      if (!canGroupsMix(guestGroup, tableGuestGroup, mixingMode, groupMixingRules, groupPolicies)) {
         return false;
       }
     }
@@ -5534,13 +5472,12 @@ function determineMixingMode(preferences) {
  * @param {object} arrangement - tableId -> guestIds mapping
  * @param {Array} allGuests - All guests (for group lookups)
  * @param {object} groupPolicies - Map of group name to policy ('S' or 'M')
- * @param {Map} clusterMap - Group-to-cluster mapping
  * @param {string} mixingMode - 'none', 'free', or 'rules'
  * @param {Map} tablesWithSGroupGuests - Map of tableId to Set of 'S'-policy groups at that table
  * @param {Array} groupMixingRules - Mixing rule definitions
  * @returns {boolean} True if the guest can be placed at the table
  */
-function canGuestBeAssignedToTable(guest, table, arrangement, allGuests, groupPolicies, clusterMap, mixingMode, tablesWithSGroupGuests, groupMixingRules) {
+function canGuestBeAssignedToTable(guest, table, arrangement, allGuests, groupPolicies, mixingMode, tablesWithSGroupGuests, groupMixingRules) {
   const guestGroup = guest.customGroup || guest.group;
   const guestPolicy = groupPolicies[guestGroup];
  
@@ -5579,11 +5516,11 @@ function canGuestBeAssignedToTable(guest, table, arrangement, allGuests, groupPo
       return false;
     }
    
-    if (!canGroupsMix(guestGroup, tGroup, mixingMode, groupMixingRules, clusterMap, groupPolicies)) {
+    if (!canGroupsMix(guestGroup, tGroup, mixingMode, groupMixingRules, groupPolicies)) {
       return false;
     }
   }
- 
+
   return true;
 }
 
@@ -6212,8 +6149,6 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
     }
   });
 
-  const clusterMap = mixingMode === 'rules' ? buildMixingClusters(preferences.groupMixingRules) : new Map();
-
   const groupPolicies = preferences.groupPolicies || {};
   const separateGroupsList = [];
   const separateGroupSizes = {};
@@ -6449,53 +6384,22 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
     });
    
     let tablesReservedCount = 0;
-   
-    const clusterGroupsForReservation = new Map();
-    const groupToClusterForReservation = new Map();
-   
-    if (mixingMode === 'rules' && clusterMap.size > 0) {
-      clusterMap.forEach((clusterId, groupName) => {
-        if (!clusterGroupsForReservation.has(clusterId)) {
-          clusterGroupsForReservation.set(clusterId, []);
-        }
-        clusterGroupsForReservation.get(clusterId).push(groupName);
-        groupToClusterForReservation.set(groupName, clusterId);
-      });
-    } else {
-      allGroupsSorted.forEach(group => {
-        const clusterId = `cluster_${group.name}`;
-        clusterGroupsForReservation.set(clusterId, [group.name]);
-        groupToClusterForReservation.set(group.name, clusterId);
-      });
-    }
-   
-    const clustersNeedingReservation = new Set();
-    clusterGroupsForReservation.forEach((groupNames, clusterId) => {
-      let clusterTotalPeople = 0;
-      let clusterHasRemainders = false;
-     
-      groupNames.forEach(groupName => {
-        const group = allGroupsSorted.find(g => g.name === groupName);
-        if (!group) return;
-       
-        const requirements = groupTableRequirements.get(groupName);
-        const canFillPerfectly = (group.totalPeople % preferredTableSize === 0);
-       
-        clusterTotalPeople += group.totalPeople;
-       
-        if (!canFillPerfectly && requirements.minTables > 0) {
-          const fullTablesCapacity = Math.floor(group.totalPeople / preferredTableSize) * preferredTableSize;
-          const remainingPeople = group.totalPeople - fullTablesCapacity;
-         
-          if (remainingPeople > 0 && remainingPeople < preferredTableSize * 0.7) {
-            clusterHasRemainders = true;
+
+    const groupsNeedingReservation = new Set();
+    allGroupsSorted.forEach(group => {
+      const requirements = groupTableRequirements.get(group.name);
+      const canFillPerfectly = (group.totalPeople % preferredTableSize === 0);
+
+      if (!canFillPerfectly && requirements.minTables > 0) {
+        const fullTablesCapacity = Math.floor(group.totalPeople / preferredTableSize) * preferredTableSize;
+        const remainingPeople = group.totalPeople - fullTablesCapacity;
+
+        if (remainingPeople > 0 && remainingPeople < preferredTableSize * 0.7) {
+          if (!groupsNeedingReservation.has(group.name)) {
+            groupsNeedingReservation.add(group.name);
+            tablesReservedCount += 1;
           }
         }
-      });
-     
-      if (clusterHasRemainders && !clustersNeedingReservation.has(clusterId)) {
-        clustersNeedingReservation.add(clusterId);
-        tablesReservedCount += 1;
       }
     });
    
@@ -7388,7 +7292,6 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
   const { separateGroups } = groupGuestsByClusters(
     guests,
     mixingMode,
-    clusterMap,
     alreadyAssigned,
     preferences.groupPolicies
   );
@@ -7458,7 +7361,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
         const actualRemainingCapacity = table.capacity - currentOccupancy;
              
         if (actualRemainingCapacity >= guestSize) {
-          if (canGuestBeAssignedToTable(guest, table, arrangement, guests, groupPolicies, clusterMap, mixingMode, new Map())) {
+          if (canGuestBeAssignedToTable(guest, table, arrangement, guests, groupPolicies, mixingMode, new Map())) {
             const assignResult = assignGuestToTableAdvanced(guest, table, arrangement, availableTables, preferences, guests, alreadyAssigned, { t: (key) => key });
             if (assignResult) {
               assigned = true;
@@ -7637,7 +7540,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
       if (canMerge) {
         for (const g1 of groups1) {
           for (const g2 of groups2) {
-            if (!canGroupsMix(g1, g2, mixingMode, preferences.groupMixingRules, clusterMap, groupPolicies)) {
+            if (!canGroupsMix(g1, g2, mixingMode, preferences.groupMixingRules, groupPolicies)) {
               canMerge = false;
               break;
             }
@@ -7930,7 +7833,7 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
       if (canMerge) {
         for (const g1 of groups1) {
           for (const g2 of groups2) {
-            if (!canGroupsMix(g1, g2, mixingMode, preferences.groupMixingRules, clusterMap, groupPolicies)) {
+            if (!canGroupsMix(g1, g2, mixingMode, preferences.groupMixingRules, groupPolicies)) {
               canMerge = false;
               break;
             }
