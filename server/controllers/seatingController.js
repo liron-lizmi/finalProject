@@ -6298,7 +6298,7 @@ function fillFullTablesForGroup(
   });
  
   const totalPeople = guestsPool.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
- 
+
   const largestGuest = guestsPool.reduce((max, g) => {
     const gSize = g.attendingCount || 1;
     const maxSize = max ? (max.attendingCount || 1) : 0;
@@ -6365,12 +6365,18 @@ function fillFullTablesForGroup(
       return bMaxUtil - aMaxUtil;  
     }
    
+    // When group has enough people for a 24-table, prefer larger tables first
+    // so that a 24-table is filled before 12-tables (saves 1 table: 1×24 instead of 2×12)
+    if (totalPeople >= 23) {
+      return b.capacity - a.capacity;
+    }
+
     const capDiff = a.capacity - b.capacity;
 
     if (capDiff !== 0) return capDiff;
     return a.name.localeCompare(b.name);
   });
- 
+
   for (const table of tablesToSort) {
     if (guestsPool.length === 0) break;
      
@@ -9487,12 +9493,12 @@ function runDryGenerateOptimalSeating(guests, existingTables, preferences, gende
     const hasGuestsInTable = table.assignedGuests && table.assignedGuests.length > 0;
     const hasGuests = hasGuestsInResult || hasGuestsInTable;
  
-    if (table.capacity === 24 && hasGuests) {
+    if (table.capacity === 24) {
       const tableGuests = result.arrangement[table.id] || table.assignedGuests || [];
       const guestObjects = tableGuests.map(gId => guests.find(g => g._id.toString() === gId)).filter(Boolean);
       const totalPeople = guestObjects.reduce((sum, g) => sum + (g.attendingCount || 1), 0);
-   
-      if (totalPeople < 23) {
+
+      if (hasGuests && totalPeople < 23) {
         return false;
       }
     }
