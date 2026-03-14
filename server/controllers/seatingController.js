@@ -7065,8 +7065,9 @@ function generateOptimalSeating(guests, tables, preferences, gender = null) {
    
     const temporarilyReservedTables = [];
     if (tablesReservedCount > 0) {
-      for (let i = 0; i < tablesReservedCount && i < availableTables.length; i++) {
-        const table = availableTables[availableTables.length - 1 - i];
+      const reservableTables = availableTables.filter(t => t.capacity !== 24);
+      for (let i = 0; i < tablesReservedCount && i < reservableTables.length; i++) {
+        const table = reservableTables[reservableTables.length - 1 - i];
         temporarilyReservedTables.push(table);
       }
      
