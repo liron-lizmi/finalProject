@@ -345,7 +345,8 @@ const Dashboard = () => {
       setEvents(eventsResponse.data);
 
     } catch (err) {
-      // Error accepting notifications
+      setNotifications([]);
+      setShowNotifications(false);
     }
   };
 

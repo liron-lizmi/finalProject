@@ -380,42 +380,42 @@ const markNotificationRead = async (req, res) => {
 const acceptNotificationAndShare = async (req, res) => {
   try {
     const { notificationId } = req.params;
-    
+
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: req.t('errors.userNotFound') });
     }
-    
+
     const notification = user.notifications.id(notificationId);
     if (!notification) {
       return res.status(404).json({ message: req.t('errors.notificationNotFound') });
     }
-    
+
     if (notification.type !== 'event_shared') {
       return res.status(400).json({ message: req.t('errors.invalidNotificationType') });
     }
-    
+
     const event = await Event.findById(notification.eventId);
     if (!event) {
-      return res.status(404).json({ message: req.t('events.notFound') });
+      notification.read = true;
+      await user.save();
+      return res.json({ message: req.t('events.share.acceptSuccess') });
     }
-    
-    const shareInfo = event.sharedWith.find(share => 
-      share.email === user.email || 
+
+    const shareInfo = event.sharedWith.find(share =>
+      share.email === user.email ||
       (share.userId && share.userId.toString() === req.userId)
     );
-    
-    if (!shareInfo) {
-      return res.status(404).json({ message: req.t('events.share.shareNotFound') });
+
+    if (shareInfo) {
+      shareInfo.accepted = true;
+      shareInfo.userId = req.userId;
+      await event.save();
     }
-    
-    shareInfo.accepted = true;
-    shareInfo.userId = req.userId;
-    await event.save();
-    
+
     notification.read = true;
     await user.save();
-    
+
     res.json({ message: req.t('events.share.acceptSuccess') });
   } catch (err) {
     res.status(500).json({ message: req.t('errors.serverError') });
