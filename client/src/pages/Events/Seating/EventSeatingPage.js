@@ -593,6 +593,7 @@ const EventSeatingPage = () => {
           const cleanedNeutralTables = tables.filter(t => !genderTableIds.has(t.id));
           const layoutData = {
             tables: cleanedNeutralTables,
+            arrangement: seatingArrangement || {},
             maleTables: finalMaleTables,
             femaleTables: finalFemaleTables,
             maleArrangement: data.maleArrangement,
@@ -605,7 +606,7 @@ const EventSeatingPage = () => {
             }
           };
 
-          autoSave(layoutData);
+          await saveSeatingArrangement(layoutData);
         } else {
           setSeatingArrangement(data.arrangement);
 
@@ -889,6 +890,8 @@ const EventSeatingPage = () => {
           setMaleTables(newMaleTables);
          
           const layoutData = {
+            tables,
+            arrangement: seatingArrangement,
             maleTables: newMaleTables,
             femaleTables,
             maleArrangement,
@@ -900,7 +903,7 @@ const EventSeatingPage = () => {
               canvasOffset
             }
           };
-         
+
           const success = await saveSeatingArrangement(layoutData);
           if (success) {
             return true;
@@ -922,8 +925,10 @@ const EventSeatingPage = () => {
             newFemaleTables = [...updatedExistingTables, ...trulyNewTables];
           }
           setFemaleTables(newFemaleTables);
-         
+
           const layoutData = {
+            tables,
+            arrangement: seatingArrangement,
             maleTables,
             femaleTables: newFemaleTables,
             maleArrangement,

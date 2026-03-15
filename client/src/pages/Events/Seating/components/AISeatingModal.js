@@ -1308,41 +1308,7 @@ const AISeatingModal = ({
             }
           };
          
-          const result = await handleGenerate(aiPreferencesWithExisting);
-         
-          if (result && result.maleArrangement && result.femaleArrangement) {
-            let maleTablesToUpdate = result.maleTables || [];
-            let maleArrangementToUse = result.maleArrangement;
-            let femaleTablesToUpdate = result.femaleTables || [];
-            let femaleArrangementToUse = result.femaleArrangement;
-            
-            const maleCols = 5;
-            const femaleCols = 5;
-            
-            const updatedMaleTables = maleTablesToUpdate.map(table => {
-              const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
-              return {
-                ...table, 
-                name: generateTableNameWithGroup(tableNumber, table.id, maleArrangementToUse, maleGuests)
-              };
-            });
-            
-            const updatedFemaleTables = femaleTablesToUpdate.map(table => {
-              const tableNumber = parseInt(table.name.match(/\d+/)?.[0] || '1');
-              return {
-                ...table,  
-                name: generateTableNameWithGroup(tableNumber, table.id, femaleArrangementToUse, femaleGuests)
-              };
-            });
-            
-            if (updatedMaleTables.length > 0) {
-              await onAddTables(updatedMaleTables, 'male', shouldClearExisting);
-            }
-
-            if (updatedFemaleTables.length > 0) {
-              await onAddTables(updatedFemaleTables, 'female', shouldClearExisting);
-            }
-          }
+          await handleGenerate(aiPreferencesWithExisting);
 
           onClose();
         } catch (error) {
