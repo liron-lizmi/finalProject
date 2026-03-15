@@ -89,6 +89,29 @@ const TableDetailsModal = ({
     };
   }, [table, isSeparatedSeating, maleTables, femaleTables]);
 
+  const lockedGender = useMemo(() => {
+    if (!isSeparatedSeating || !tableInfo.isNeutral) return null;
+
+    const pendingGender = pendingAddedGuests.find(g => {
+      const id = g.guestId.toString();
+      return id.includes('_male') || id.includes('_female');
+    });
+    if (pendingGender) {
+      return pendingGender.guestId.toString().includes('_male') ? 'male' : 'female';
+    }
+
+    if (table && seatingArrangement && seatingArrangement[table.id]) {
+      const seatedIds = seatingArrangement[table.id];
+      for (const id of seatedIds) {
+        const idStr = id.toString();
+        if (idStr.includes('_male')) return 'male';
+        if (idStr.includes('_female')) return 'female';
+      }
+    }
+
+    return null;
+  }, [isSeparatedSeating, tableInfo, pendingAddedGuests, table, seatingArrangement]);
+
   const availableGuests = useMemo(() => {
     if (!guests) return [];
 
@@ -96,6 +119,8 @@ const TableDetailsModal = ({
 
     if (isSeparatedSeating) {
       const guestsWithGender = [];
+
+      const effectiveGender = tableInfo.gender || lockedGender;
 
       guests.forEach(guest => {
         const hasMales = (guest.maleCount || 0) > 0;
@@ -106,7 +131,7 @@ const TableDetailsModal = ({
           const maleAssigned = Object.values(maleArrangement || {}).flat().includes(guest._id.toString());
           const isPendingAdded = pendingAddedIds.includes(maleGuestId);
           if (!maleAssigned && !isPendingAdded) {
-            if (!table || tableInfo.isNeutral || tableInfo.gender === 'male') {
+            if (!table || !effectiveGender || effectiveGender === 'male') {
               guestsWithGender.push({
                 ...guest,
                 _id: maleGuestId,
@@ -123,7 +148,7 @@ const TableDetailsModal = ({
           const femaleAssigned = Object.values(femaleArrangement || {}).flat().includes(guest._id.toString());
           const isPendingAdded = pendingAddedIds.includes(femaleGuestId);
           if (!femaleAssigned && !isPendingAdded) {
-            if (!table || tableInfo.isNeutral || tableInfo.gender === 'female') {
+            if (!table || !effectiveGender || effectiveGender === 'female') {
               guestsWithGender.push({
                 ...guest,
                 _id: femaleGuestId,
@@ -149,7 +174,7 @@ const TableDetailsModal = ({
       const isPendingAdded = pendingAddedIds.includes(guest._id.toString());
       return !isAssigned && !isPendingAdded;
     });
-  }, [guests, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating, table, tableInfo, pendingAddedGuests]);
+  }, [guests, seatingArrangement, maleArrangement, femaleArrangement, isSeparatedSeating, table, tableInfo, pendingAddedGuests, lockedGender]);
 
   const seatedGuestIds = useMemo(() => {
     if (!table) return [];
@@ -197,15 +222,14 @@ const TableDetailsModal = ({
         g.guestId.toString().replace(/_male$|_female$/, '') === guestIdStr
       );
 
-      if (isSeparatedSeating && table && !tableInfo.isNeutral) {
-        if (tableInfo.gender === 'male') {
+      if (isSeparatedSeating && table) {
+        const effectiveGenderForOccupancy = tableInfo.gender || lockedGender;
+        if (effectiveGenderForOccupancy === 'male') {
           return sum + (guest.maleCount || 0);
-        } else if (tableInfo.gender === 'female') {
+        } else if (effectiveGenderForOccupancy === 'female') {
           return sum + (guest.femaleCount || 0);
         }
-      }
 
-      if (isSeparatedSeating && table && tableInfo.isNeutral) {
         const isMaleInThisTable = (maleArrangement && maleArrangement[table.id] &&
                                   maleArrangement[table.id].includes(guestIdStr)) ||
                                   (pendingEntry && pendingEntry.guestId.toString().includes('_male'));
@@ -230,7 +254,7 @@ const TableDetailsModal = ({
 
       return sum + (guest.attendingCount || 1);
     }, 0);
-  }, [seatedGuests, isSeparatedSeating, table, tableInfo, maleArrangement, femaleArrangement, pendingAddedGuests]);
+  }, [seatedGuests, isSeparatedSeating, table, tableInfo, maleArrangement, femaleArrangement, pendingAddedGuests, lockedGender]);
 
   const minAllowedCapacity = useMemo(() => {
     return Math.max(8, currentOccupancy);
@@ -613,11 +637,12 @@ const cancelDelete = () => {
                   <div className="available-guests-dropdown">
                     {filteredAvailableGuests.map(guest => {
                       let guestSize = guest.attendingCount || 1;
-                      
-                      if (isSeparatedSeating && table && !tableInfo.isNeutral) {
-                        if (tableInfo.gender === 'male') {
+
+                      const effectiveGenderForSize = tableInfo.gender || lockedGender;
+                      if (isSeparatedSeating && table && effectiveGenderForSize) {
+                        if (effectiveGenderForSize === 'male') {
                           guestSize = guest.maleCount || 0;
-                        } else if (tableInfo.gender === 'female') {
+                        } else if (effectiveGenderForSize === 'female') {
                           guestSize = guest.femaleCount || 0;
                         }
                       }
@@ -678,11 +703,12 @@ const cancelDelete = () => {
               <div className="seated-guests-list">
                 {seatedGuests.map(guest => {
                   let actualCount = guest.attendingCount || 1;
-                  
-                  if (isSeparatedSeating && table && !tableInfo.isNeutral) {
-                    if (tableInfo.gender === 'male') {
+
+                  const effectiveGenderForDisplay = tableInfo.gender || lockedGender;
+                  if (isSeparatedSeating && table && effectiveGenderForDisplay) {
+                    if (effectiveGenderForDisplay === 'male') {
                       actualCount = guest.maleCount || 0;
-                    } else if (tableInfo.gender === 'female') {
+                    } else if (effectiveGenderForDisplay === 'female') {
                       actualCount = guest.femaleCount || 0;
                     }
                   }
