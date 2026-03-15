@@ -223,7 +223,7 @@
 
 .ride-form {
   max-width: 500px;
-  margin: 0;
+  margin: 0 auto;
 }
 
 .ride-form .form-input,
