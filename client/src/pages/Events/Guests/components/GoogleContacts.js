@@ -34,25 +34,45 @@ class GoogleContactsAPI {
 
   // Initialize Google Identity Services
   async init() {
-    if (this.initialized) return true;
+    if (this.initialized) {
+      // Even if initialized, verify oauth2 is actually ready
+      if (!window.google?.accounts?.oauth2) {
+        this.initialized = false;
+      } else {
+        return true;
+      }
+    }
 
     try {
-
-      if (!window.google) {
+      if (!window.google?.accounts?.oauth2) {
         await this.loadGoogleIdentityServices();
       }
+
+      // Wait for google.accounts.oauth2 to be available
+      await this.waitForGoogleOAuth2();
 
       this.initialized = true;
       return true;
     } catch (error) {
-        throw new Error('Error initializing Google:' + error.message);
+      throw new Error('Error initializing Google:' + error.message);
+    }
+  }
+
+  // Wait for google.accounts.oauth2 to be fully available
+  async waitForGoogleOAuth2(maxWaitMs = 5000) {
+    const startTime = Date.now();
+    while (!window.google?.accounts?.oauth2) {
+      if (Date.now() - startTime > maxWaitMs) {
+        throw new Error('Google Identity Services did not load in time');
+      }
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
 
   // Loading Google Identity Services
   async loadGoogleIdentityServices() {
     return new Promise((resolve, reject) => {
-      if (window.google) {
+      if (window.google?.accounts?.oauth2) {
         resolve();
         return;
       }
