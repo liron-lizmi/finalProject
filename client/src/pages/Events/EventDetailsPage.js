@@ -35,12 +35,7 @@ const EventDetailsPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
-  const [event, setEvent] = useState({
-    title: '',
-    date: new Date(),
-    time: '18:00',
-    guestCount: 0
-  });
+  const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
   const [canEdit, setCanEdit] = useState(true);
   const [userPermission, setUserPermission] = useState('edit');
@@ -117,6 +112,18 @@ const EventDetailsPage = () => {
     navigate(`/event/${id}/share`);
   };
 
+  if (!event && !error) {
+    return (
+      <div className="event-page-wrapper">
+        <div className="event-details-container">
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            {t('general.loading')}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="event-page-wrapper">
@@ -155,7 +162,10 @@ const EventDetailsPage = () => {
   const eventTime = event.time || '18:00';
   
   const today = new Date();
-  const daysRemaining = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+  today.setHours(0, 0, 0, 0);
+  const eventDateNormalized = new Date(eventDate);
+  eventDateNormalized.setHours(0, 0, 0, 0);
+  const daysRemaining = Math.round((eventDateNormalized - today) / (1000 * 60 * 60 * 24));
 
   return (
     <div className="event-page-wrapper">
